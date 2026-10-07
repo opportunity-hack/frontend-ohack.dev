@@ -742,6 +742,10 @@ Found while building the team dashboard; NOT fixed on purpose (each needs a prod
 - **`manageteam`'s `noindex` isn't SSR'd**: the `<Head>` sits inside the `RequiredAuthProvider` subtree, so crawlers get the auth shell without the robots meta (pre-existing; the page has never been indexable content anyway — the vote page's shell puts its `noindex` outside the auth gate, which is the better pattern for new pages).
 - **`pylint -E api/submissions api/peer_votes`** reports `firebase_admin.firestore has no 'transactional'/'Increment' member` — false positives (dynamic re-exports from `google.cloud.firestore`); everything else is clean.
 
+### Data hooks: never let the first render reach the data branch with `null`
+
+A fetching hook that does `useState(false)` for `loading` + `useState(null)` for data and starts the fetch in a `useEffect` hands its consumer a first render of `loading=false, error=null, data=null`. A consumer written as `loading ? <Skeleton/> : error ? <Err/> : data.field` then throws on mount and the global ErrorBoundary blanks the page (Oct 2026: `GatewayKeyCard` took down `/manageteam` for every approved team — "Cannot read properties of null (reading 'spend')"). Rules: (1) initialize `loading` to `Boolean(enabled)` (true whenever the fetch will fire on mount — see `use-gateway-key.js`); (2) the consumer's fallback branch must be `loading || (!error && !data)`, never just `loading`; (3) remember hooks can RESET data to `null` later (token/team change, logout, failed cache refetch — `useHeartsSummary` does both), so a dialog that opened with data must still tolerate `null` (`ProfileCompletionPrompt.isFieldFilled`). Regression test pattern: `TeamDashboard/__tests__/GatewayKeyCard.test.js` (a never-resolving fetch + assert the skeleton).
+
 ### PropelAuth permission checks — `userClass`, NOT `orgHelper`
 
 `useAuthInfo()` returns both `userClass` and `orgHelper`. They look interchangeable but they are NOT:
