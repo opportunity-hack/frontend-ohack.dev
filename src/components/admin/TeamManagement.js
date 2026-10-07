@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Autocomplete,
   Box,
@@ -71,6 +71,7 @@ import {
   FaVideo,
   FaPlus,
   FaFileDownload,
+  FaKey,
 } from "react-icons/fa";
 import axios from "axios";
 import { useAuthInfo } from "@propelauth/react";
@@ -95,7 +96,18 @@ import ProjectStoryMarkdown from "../Teams/ProjectStoryMarkdown";
 import { DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
 import { buildSubmissionsCsv } from "./teamSubmissionsCsv";
 import * as ga from "../../lib/ga";
-import { fetchAdminTeamDetail } from "../../lib/adminTeamApi";
+import {
+  fetchAdminTeamDetail,
+  fetchGatewayKeyStatuses,
+  fetchAdminGatewayKey,
+  rotateGatewayKey,
+  provisionGatewayKey,
+  gatewayErrorMessage,
+} from "../../lib/adminTeamApi";
+import GatewayKeyAdminPopover, {
+  GATEWAY_STATUS_CHIP,
+  gatewayStatusFor,
+} from "./GatewayKeyAdminPopover";
 
 // Submission-status chip shown in the table's "Submission" column and the
 // filter chips row. Module-scope per the SectionBlock remount lesson (see
@@ -312,10 +324,20 @@ const MESSAGE_TEMPLATES = {
 // the component skips its own URL parsing/writeback and hides the event picker,
 // pinning the view to that one hackathon. Used by the per-event sidebar
 // section at /admin/hackathons/[event_id]?section=teams.
-const TeamManagement = ({ orgId, embeddedHackathonId }) => {
+const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   const theme = useTheme();
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
+  // Embedded in /admin/hackathons/<id>?section=teams there is NO notistack
+  // provider (CLAUDE.md), so new feedback goes through the host page's
+  // onSnack when present. Older call sites still use enqueueSnackbar.
+  const notify = useCallback(
+    (message, severity = "info") => {
+      if (onSnack) onSnack(message, severity);
+      else enqueueSnackbar(message, { variant: severity });
+    },
+    [onSnack, enqueueSnackbar],
+  );
   const router = useRouter();
 
   // Fetch hackathons using the hook
@@ -416,6 +438,18 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
     team: null,
     field: null,
   });
+
+  // Per-team AI gateway key status (metadata only — never plaintext). ONE
+  // batched request after the teams load, ONE setState. `null` = the backend
+  // doesn't have the route yet → the column, filter and bulk button hide.
+  const [gatewayKeyStatuses, setGatewayKeyStatuses] = useState({});
+  const [gatewayKeysSupported, setGatewayKeysSupported] = useState(true);
+  const [gatewayPopover, setGatewayPopover] = useState({
+    open: false,
+    anchorEl: null,
+    team: null,
+  });
+  const [bulkProvision, setBulkProvision] = useState(null); // {running, done, total, failed}
 
   // Handle URL parameters and set initial state.
   // When embedded, the parent owns event selection — pin to that hackathon
@@ -543,6 +577,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           return !team.demo_video_url;
         case "missing_devpost":
           return !team.devpost_link;
+        case "missing_ai_key": {
+          const st = gatewayStatusFor(team, gatewayKeyStatuses);
+          return st === "missing" || st === "pending";
+        }
         case "all":
         default:
           return true;
@@ -551,7 +589,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
 
     setFilteredTeams(filtered);
     setPage(0);
-  }, [searchTerm, teams, activeFilter]);
+  }, [searchTerm, teams, activeFilter, gatewayKeyStatuses]);
 
   // Sort teams when sortConfig changes
   useEffect(() => {
@@ -611,6 +649,134 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
   };
 
   // Fetch teams for a hackathon
+  const gatewayApiParams = useMemo(
+    () => ({
+      apiServerUrl: process.env.NEXT_PUBLIC_API_SERVER_URL,
+      accessToken,
+      orgId,
+    }),
+    [accessToken, orgId],
+  );
+
+  const loadGatewayKeyStatuses = async (teamList) => {
+    const ids = (teamList || []).map((t) => t.id).filter(Boolean);
+    if (ids.length === 0) return;
+    try {
+      const statuses = await fetchGatewayKeyStatuses(ids, gatewayApiParams);
+      if (statuses === null) {
+        setGatewayKeysSupported(false);
+        return;
+      }
+      setGatewayKeysSupported(true);
+      setGatewayKeyStatuses(statuses);
+    } catch (error) {
+      // Not fatal for the table — leave the last known statuses in place.
+      console.error("Gateway key status fetch failed:", error);
+    }
+  };
+
+  const gatewayApi = useMemo(
+    () => ({
+      reveal: (teamId) =>
+        fetchAdminGatewayKey(teamId, gatewayApiParams).catch((e) => {
+          throw new Error(gatewayErrorMessage(e, "Couldn't load the key"));
+        }),
+      rotate: (teamId) =>
+        rotateGatewayKey(teamId, gatewayApiParams)
+          .then((data) => {
+            ga.trackStructuredEvent(
+              ga.EventCategory.ADMIN,
+              "admin_gateway_key_rotate",
+              teamId,
+            );
+            return data;
+          })
+          .catch((e) => {
+            throw new Error(gatewayErrorMessage(e, "Rotation failed"));
+          }),
+      provision: (teamId) =>
+        provisionGatewayKey(teamId, gatewayApiParams)
+          .then((data) => {
+            ga.trackStructuredEvent(
+              ga.EventCategory.ADMIN,
+              "admin_gateway_key_provision",
+              teamId,
+            );
+            return data;
+          })
+          .catch((e) => {
+            throw new Error(gatewayErrorMessage(e, "Provisioning failed"));
+          }),
+    }),
+    [gatewayApiParams],
+  );
+
+  const handleGatewayStatusChange = useCallback((teamId, patch) => {
+    setGatewayKeyStatuses((prev) => ({
+      ...prev,
+      [teamId]: { ...(prev[teamId] || {}), ...patch },
+    }));
+  }, []);
+
+  const openGatewayPopover = (event, team) => {
+    setGatewayPopover({ open: true, anchorEl: event.currentTarget, team });
+  };
+  const closeGatewayPopover = () => {
+    setGatewayPopover((prev) => ({ ...prev, open: false }));
+  };
+
+  // Approved teams with no usable key — the bulk "Provision" audience.
+  const teamsMissingGatewayKey = useMemo(
+    () =>
+      gatewayKeysSupported
+        ? teams.filter((t) => {
+            const st = gatewayStatusFor(t, gatewayKeyStatuses);
+            return st === "missing" || st === "pending";
+          })
+        : [],
+    [teams, gatewayKeyStatuses, gatewayKeysSupported],
+  );
+
+  // Sequential on purpose: each mint is a LiteLLM call; results land in ONE
+  // statuses setState at the end (never per-team).
+  const handleBulkProvision = async () => {
+    const targets = teamsMissingGatewayKey;
+    if (targets.length === 0) return;
+    setBulkProvision({ running: true, done: 0, total: targets.length, failed: [] });
+    const patches = {};
+    const failed = [];
+    for (let i = 0; i < targets.length; i += 1) {
+      const t = targets[i];
+      try {
+        const data = await provisionGatewayKey(t.id, gatewayApiParams);
+        patches[t.id] = {
+          status: "active",
+          key_alias: data?.key_alias,
+          max_budget: data?.max_budget,
+          expires: data?.expires,
+          provisioned_at: new Date().toISOString(),
+        };
+      } catch (e) {
+        failed.push({ team: t, message: gatewayErrorMessage(e) });
+      }
+      setBulkProvision((prev) => prev && { ...prev, done: i + 1 });
+    }
+    setGatewayKeyStatuses((prev) => ({ ...prev, ...patches }));
+    setBulkProvision({ running: false, done: targets.length, total: targets.length, failed });
+    ga.trackStructuredEvent(
+      ga.EventCategory.ADMIN,
+      "admin_gateway_key_bulk_provision",
+      selectedEventSlug,
+      targets.length - failed.length,
+    );
+    notify(
+      failed.length === 0
+        ? `Minted ${targets.length} AI key${targets.length === 1 ? "" : "s"}.`
+        : `Minted ${targets.length - failed.length} of ${targets.length}; ${failed.length} failed.`,
+      failed.length === 0 ? "success" : "warning",
+    );
+  };
+
   const fetchTeams = async (hackathonId) => {
     setLoading(true);
     try {
@@ -627,6 +793,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
       if (response.data && response.data.teams) {
         setTeams(response.data.teams);
         setFilteredTeams(response.data.teams);
+        loadGatewayKeyStatuses(response.data.teams);
 
         // Fetch nonprofits to build the map for displaying nonprofit names
         fetchNonprofits(hackathonId);
@@ -2788,6 +2955,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
               { key: "late", label: "Late" },
               { key: "missing_video", label: "Missing Video" },
               { key: "missing_devpost", label: "Missing DevPost" },
+              ...(gatewayKeysSupported
+                ? [{ key: "missing_ai_key", label: "No AI key" }]
+                : []),
             ].map((f) => {
               const selected = activeFilter === f.key;
               return (
@@ -2803,6 +2973,23 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
               );
             })}
             <Box sx={{ flex: 1 }} />
+            {gatewayKeysSupported && teamsMissingGatewayKey.length > 0 && (
+              <Tooltip title="Mints a LiteLLM key for every approved team that doesn't have one (approval's mint failed, or the team predates AI keys). Runs one team at a time.">
+                <span>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<FaKey />}
+                    disabled={Boolean(bulkProvision?.running)}
+                    onClick={handleBulkProvision}
+                  >
+                    {bulkProvision?.running
+                      ? `Minting ${bulkProvision.done}/${bulkProvision.total}…`
+                      : `Provision missing AI keys (${teamsMissingGatewayKey.length})`}
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
             <Button
               size="small"
               variant="outlined"
@@ -2815,6 +3002,19 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           </Box>
         )}
       </Paper>
+
+      {bulkProvision && !bulkProvision.running && bulkProvision.failed.length > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ my: 2 }}
+          onClose={() => setBulkProvision(null)}
+        >
+          {bulkProvision.failed.length} key{bulkProvision.failed.length === 1 ? "" : "s"} could not be minted:{" "}
+          {bulkProvision.failed
+            .map((f) => `${f.team.name} (${f.message})`)
+            .join("; ")}
+        </Alert>
+      )}
 
       {loading && !editDialogOpen ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
@@ -2911,6 +3111,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                     <TableCell>GitHub</TableCell>
                     <TableCell>DevPost</TableCell>
                     <TableCell>Demo Video</TableCell>
+                    {gatewayKeysSupported && <TableCell>AI key</TableCell>}
                     <TableCell>Submission</TableCell>
                     <TableCell>Story</TableCell>
                     <TableCell>Nonprofit</TableCell>
@@ -3034,6 +3235,35 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
                             </Button>
                           )}
                         </TableCell>
+                        {gatewayKeysSupported && (
+                          <TableCell>
+                            {(() => {
+                              const st = gatewayStatusFor(team, gatewayKeyStatuses);
+                              if (st === "not_approved") {
+                                return (
+                                  <Tooltip title="Keys are minted when the team is approved.">
+                                    <Typography variant="body2" color="text.secondary">
+                                      —
+                                    </Typography>
+                                  </Tooltip>
+                                );
+                              }
+                              const cfg = GATEWAY_STATUS_CHIP[st] || GATEWAY_STATUS_CHIP.missing;
+                              return (
+                                <Chip
+                                  size="small"
+                                  icon={<FaKey size={10} />}
+                                  label={cfg.label}
+                                  color={cfg.color}
+                                  variant="outlined"
+                                  clickable
+                                  aria-label={`AI key: ${cfg.label} — manage`}
+                                  onClick={(e) => openGatewayPopover(e, team)}
+                                />
+                              );
+                            })()}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <SubmissionChip team={team} tz={selectedEventTz} />
                         </TableCell>
@@ -3661,6 +3891,18 @@ const TeamManagement = ({ orgId, embeddedHackathonId }) => {
           }}
         />
       )}
+
+      {/* AI gateway key admin actions (reveal / rotate / provision) */}
+      <GatewayKeyAdminPopover
+        key={gatewayPopover.team?.id || "none"}
+        open={gatewayPopover.open}
+        anchorEl={gatewayPopover.anchorEl}
+        onClose={closeGatewayPopover}
+        team={gatewayPopover.team}
+        status={gatewayPopover.team ? gatewayKeyStatuses[gatewayPopover.team.id] : undefined}
+        api={gatewayApi}
+        onStatusChange={handleGatewayStatusChange}
+      />
 
       {/* Inline quick-edit popover (video / devpost) */}
       <TeamFieldPopover

@@ -16,7 +16,7 @@ const TeamAssignments = dynamic(
 
 const TAB_NAMES = ["management", "assignments", "stats"];
 
-const TeamsSection = ({ admin, orgId }) => {
+const TeamsSection = ({ admin, orgId, onSnack }) => {
   const router = useRouter();
   // TeamManagement / TeamAssignments key everything off the Firestore doc id
   // (their fetchTeams hits `/api/team/${docId}`). The URL path's [event_id] is
@@ -34,7 +34,7 @@ const TeamsSection = ({ admin, orgId }) => {
     if (!subtabFromUrl) return;
     const idx = TAB_NAMES.indexOf(subtabFromUrl);
     if (idx >= 0 && idx !== activeTab) setActiveTab(idx);
-  }, [subtabFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [subtabFromUrl]);
 
   const handleTabChange = (_e, newValue) => {
     setActiveTab(newValue);
@@ -69,7 +69,7 @@ const TeamsSection = ({ admin, orgId }) => {
       </Box>
 
       <Box sx={{ p: { xs: 2, md: 3 } }}>
-        {activeTab === 0 && <TeamManagement orgId={orgId} embeddedHackathonId={hackathonDocId} />}
+        {activeTab === 0 && <TeamManagement orgId={orgId} embeddedHackathonId={hackathonDocId} onSnack={onSnack} />}
         {activeTab === 1 && <TeamAssignments orgId={orgId} embeddedHackathonId={hackathonDocId} />}
         {activeTab === 2 && (
           <Alert severity="info">
