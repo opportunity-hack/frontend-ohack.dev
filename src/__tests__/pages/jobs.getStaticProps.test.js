@@ -5,12 +5,12 @@
 // fails the whole Vercel build (Oct 2026: a transient 503 from /api/jobs took
 // down an unrelated PR's deploy). Mirrors the /blog + /nonprofits contract.
 
-jest.mock("../../../lib/ga", () => ({
+jest.mock("../../lib/ga", () => ({
   initFacebookPixel: jest.fn(),
   trackEvent: jest.fn(),
 }));
 
-const { getStaticProps } = require("../index");
+const { getStaticProps } = require("../../pages/jobs/index");
 
 const listing = { slug: "social-media-manager", title: "Social Media Manager" };
 
