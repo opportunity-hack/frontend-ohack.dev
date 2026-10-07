@@ -214,3 +214,18 @@ export function getPeerVoteSummary(eventId) {
     `/api/hackathons/${encodeURIComponent(eventId)}/peer-vote/summary`,
   );
 }
+
+// --- AI gateway key (GET /api/team/<id>/gateway-key) ---
+
+export function fetchGatewayKey(teamId, token) {
+  return request(`/api/team/${encodeURIComponent(teamId)}/gateway-key`, {
+    token,
+  });
+}
+
+/** True when `error` is the `key_not_provisioned` the backend returns before a team's gateway key is minted. */
+export function isGatewayKeyNotProvisioned(error) {
+  return (
+    error instanceof ApiError && error.body?.error === "key_not_provisioned"
+  );
+}
