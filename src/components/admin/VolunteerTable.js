@@ -253,7 +253,7 @@ const VolunteerTable = ({
   onEditVolunteer,
   onMessageVolunteer,
   onSlackInvite,
-  // onBatchEmail(volunteers, type, audience) — audience: "roster" | "denied" | "waitlisted"
+  // onBatchEmail(volunteers, type, audience) — audience: "roster" | "denied" | "waitlisted" | "pending"
   onBatchEmail,
   onBulkCertificate, // New prop for bulk certificate sending
   // Decision controls: `status` (review axis) and `isSelected` (roster axis)
@@ -603,6 +603,8 @@ const VolunteerTable = ({
   );
   const deniedForEmailCount = useMemo(() => emailableWithStatus("denied"), [emailableWithStatus]);
   const waitlistedForEmailCount = useMemo(() => emailableWithStatus("waitlisted"), [emailableWithStatus]);
+  // "pending" also covers docs with no status yet (normalizeStatus folds blank → pending).
+  const pendingForEmailCount = useMemo(() => emailableWithStatus("pending"), [emailableWithStatus]);
 
   const readyForRosterCount = useMemo(() => volunteers.filter(rosterReady).length, [volunteers]);
   const rosterConflictCount = useMemo(() => volunteers.filter(rosterConflict).length, [volunteers]);
@@ -2112,6 +2114,22 @@ const VolunteerTable = ({
                 <EmailIcon fontSize="small" />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
                   {waitlistedForEmailCount}
+                </Typography>
+              </Button>
+            </Tooltip>
+          )}
+          {onBatchEmail && pendingForEmailCount > 0 && (
+            <Tooltip title={`Email pending review (${pendingForEmailCount}) — status = pending, not yet reviewed`}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={() => onBatchEmail(volunteers, type, "pending")}
+                size={isMobile ? 'small' : 'small'}
+                sx={{ minWidth: 'auto', px: 1 }}
+              >
+                <EmailIcon fontSize="small" />
+                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                  {pendingForEmailCount}
                 </Typography>
               </Button>
             </Tooltip>
