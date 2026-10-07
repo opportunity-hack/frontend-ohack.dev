@@ -67,8 +67,9 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
 
   return (
     <DashboardSection id="ai-gateway" eyebrow="AI gateway" title="AI API Access">
-      {loading ? (
-        // Neutral skeleton while the key loads - never flash a wrong state.
+      {loading || (!error && !keyData) ? (
+        // Neutral skeleton while the key loads (or before the token/team is
+        // known) - never flash a wrong state, never touch keyData when null.
         <Box aria-label="Loading AI API access">
           <Skeleton
             variant="rectangular"
