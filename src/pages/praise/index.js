@@ -4,7 +4,26 @@ import { Box } from "@mui/material";
 import PraiseBoard from "../../components/Praise/PraiseBoard";
 import ScrollTracker from "../../components/ScrollTracker";
 import * as ga from "../../lib/ga";
-import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../components/design/refined";
+import { RefinedRoot, Eyebrow, Arrow } from "../../components/design/refined";
+import { serializeJsonLd } from "../../lib/jsonLd";
+
+const PRAISE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Community Praise Board",
+  "description": "View praises and recognition for the outstanding contributions of our community members at Opportunity Hack.",
+  "url": "https://www.ohack.dev/praise",
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Community Praises"
+      }
+    ]
+  }
+};
 
 const PraisePage = () => {
   useEffect(() => {
@@ -36,17 +55,10 @@ const PraisePage = () => {
         <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://www.ohack.dev/praise" />
-        <RefinedFonts />
-        <script type="application/ld+json">{`
-          {
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            "name": "Community Praise Board",
-            "description": "View praises and recognition for the outstanding contributions of our community members at Opportunity Hack.",
-            "url": "https://www.ohack.dev/praise",
-            "mainEntity": { "@type": "ItemList", "itemListElement": [ { "@type": "ListItem", "position": 1, "name": "Community Praises" } ] }
-          }
-        `}</script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(PRAISE_JSON_LD) }}
+        />
       </Head>
 
       <ScrollTracker pageType="praise_board" />

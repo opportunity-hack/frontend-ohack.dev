@@ -20,8 +20,9 @@ import {
 } from "@mui/material";
 import Script from "next/script";
 import NextLink from "next/link";
-import { RefinedRoot, RefinedFonts } from "../../components/design/refined";
+import { RefinedRoot } from "../../components/design/refined";
 import SurveyCTA from "../../components/Survey/SurveyCTA";
+import PeerVoteCTA from "../../components/PeerVote/PeerVoteCTA";
 import TableOfContents from "../../components/Hackathon/TableOfContents";
 import FloatingNavigation from "../../components/Hackathon/FloatingNavigation";
 
@@ -632,7 +633,6 @@ export default function HackathonEvent({ eventData }) {
         <meta name="description" content={metaDescription} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta charSet="UTF-8" />
-        <RefinedFonts />
 
         {/* Enhanced Open Graph tags */}
         <meta property="og:title" content={metaTitle} />
@@ -767,6 +767,12 @@ export default function HackathonEvent({ eventData }) {
             timezone={event.timezone}
           />
 
+          <PeerVoteCTA
+            eventId={event.event_id || event_id}
+            deadlines={event.deadlines}
+            constraints={event.constraints}
+          />
+
           {/* Expired-event recapture band — links to upcoming events so
               the 13k+ impressions on past event pages convert to engagement */}
           {hackathonExpired && (
@@ -803,6 +809,7 @@ export default function HackathonEvent({ eventData }) {
                 eventTitle={event.title}
                 githubOrg={event.github_org}
                 fullResultsHref={`/hack/${event_id}/results`}
+                peerVoteEnabled={!!event.constraints?.peer_vote_enabled}
               />
             </section>
           )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PrivacyToggle from '../PrivacyToggle';
 
@@ -19,7 +19,7 @@ describe('PrivacyToggle', () => {
       />
     );
     
-    expect(screen.getByText('Public')).toBeInTheDocument();
+    expect(screen.getByText('test_field: Public')).toBeInTheDocument();
   });
 
   it('should render with private label when isPrivate is true', () => {
@@ -30,8 +30,8 @@ describe('PrivacyToggle', () => {
         onToggle={mockOnToggle}
       />
     );
-    
-    expect(screen.getByText('Private')).toBeInTheDocument();
+
+    expect(screen.getByText('test_field: Private')).toBeInTheDocument();
   });
 
   it('should render with custom label', () => {
@@ -43,13 +43,13 @@ describe('PrivacyToggle', () => {
         label="Custom Label"
       />
     );
-    
-    expect(screen.getByText('Custom Label')).toBeInTheDocument();
+
+    expect(screen.getByText('Custom Label: Public')).toBeInTheDocument();
   });
 
   it('should call onToggle when clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <PrivacyToggle
         field="test_field"
@@ -57,15 +57,13 @@ describe('PrivacyToggle', () => {
         onToggle={mockOnToggle}
       />
     );
-    
-    await user.click(screen.getByText('Public'));
-    
+
+    await user.click(screen.getByText('test_field: Public'));
+
     expect(mockOnToggle).toHaveBeenCalledWith('test_field');
   });
 
   it('should not call onToggle when disabled', async () => {
-    const user = userEvent.setup();
-    
     render(
       <PrivacyToggle
         field="test_field"
@@ -74,9 +72,13 @@ describe('PrivacyToggle', () => {
         disabled={true}
       />
     );
-    
-    await user.click(screen.getByText('Public'));
-    
+
+    // A disabled Chip renders with `pointer-events: none`, so a real
+    // userEvent.click() correctly refuses to dispatch (matches how a real
+    // user can't click it). Use fireEvent here to still exercise the
+    // component's own defensive `handleClick` disabled guard.
+    fireEvent.click(screen.getByText('test_field: Public'));
+
     expect(mockOnToggle).not.toHaveBeenCalled();
   });
 });

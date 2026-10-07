@@ -178,7 +178,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [batchEmailDialogOpen, setBatchEmailDialogOpen] = useState(false);
   const [volunteersForBatchEmail, setVolunteersForBatchEmail] = useState([]);
   const [volunteerTypeForBatchEmail, setVolunteerTypeForBatchEmail] = useState('');
-  const [emailAudience, setEmailAudience] = useState("roster"); // roster | denied | waitlisted
+  const [emailAudience, setEmailAudience] = useState("roster"); // roster | denied | waitlisted | pending
   const [bulkCertificateDialogOpen, setBulkCertificateDialogOpen] = useState(false);
   const [volunteersForBulkCertificate, setVolunteersForBulkCertificate] = useState([]);
   const [volunteerTypeForBulkCertificate, setVolunteerTypeForBulkCertificate] = useState('');
@@ -729,7 +729,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     setVolunteerTypeForSlackInvite('');
   }, []);
 
-  // audience: "roster" (isSelected) | "denied" | "waitlisted" (by status).
+  // audience: "roster" (isSelected) | "denied" | "waitlisted" | "pending" (by status).
   // Rejection emails key on status — NOT on "not selected", which under the
   // two-axis model also covers pending and approved-but-unpublished people.
   const handleBatchEmail = useCallback((volunteers, type, audience = "roster") => {
@@ -741,7 +741,13 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
 
   const handleBatchEmailComplete = useCallback((summary) => {
     const messageType =
-      emailAudience === "denied" ? 'Denial emails' : emailAudience === "waitlisted" ? 'Waitlist emails' : 'Roster emails';
+      emailAudience === "denied"
+        ? 'Denial emails'
+        : emailAudience === "waitlisted"
+          ? 'Waitlist emails'
+          : emailAudience === "pending"
+            ? 'Pending-review emails'
+            : 'Roster emails';
     setSnackbar({
       open: true,
       message: `${messageType} completed: ${summary.successful} successful, ${summary.failed} failed`,

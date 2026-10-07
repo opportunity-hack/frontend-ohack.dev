@@ -5,10 +5,13 @@ import { useAuthInfo } from '@propelauth/react';
 
 export default function useHackathonEvents( currentOnly ){
 
-    const { user } = useAuthInfo();
+    const { user, orgHelper } = useAuthInfo();
     const { apiServerUrl } = useEnv();
     const [hackathons, setHackathons] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Set when the list request fails (status >= 400 / malformed payload);
+    // hackathons is then [] — never undefined — so consumers can .map safely.
+    const [error, setError] = useState(null);
 
 
     const makeRequest = useCallback(async (options) => {
@@ -63,12 +66,14 @@ export default function useHackathonEvents( currentOnly ){
             return null;
 
         console.log("Updating problem statement to event mapping", mapping);
+        const orgId = orgHelper?.getOrgs?.()?.[0]?.orgId;
         const config = {
             url: `${apiServerUrl}/api/problem-statements/events`,
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Accept": "application/json",
+                "X-Org-Id": orgId
             },
             data: {
                 mapping
@@ -76,6 +81,18 @@ export default function useHackathonEvents( currentOnly ){
         };
 
         const data = await makeRequest({ config, authenticated: true });
+
+        const isErrorResponse =
+            (typeof data?.status === "number" && data.status >= 400) ||
+            (data?.text === undefined && !!data?.data?.error);
+
+        if (isErrorResponse) {
+            return {
+                error: data?.data?.error || data?.statusText || "request_failed",
+                status: data?.status
+            };
+        }
+
         onComplete(data.text); // Comes from backend, something like "Updated NPO" when successful
         return data;
     };
@@ -96,17 +113,22 @@ export default function useHackathonEvents( currentOnly ){
 
 
             // Publically available, so authenticated: false here
+            // makeRequest returns the axios error.response object on a non-2xx,
+            // so a 429/5xx used to land here as "data" and setHackathons(undefined)
+            // crashed every consumer's .map.
             const data = await makeRequest({ config, authenticated: false });
-            if (data) {
-                if (data.status && data.status === 403) {
-                    setHackathons([]);
-                }
-                else {
-                    setHackathons(data.hackathons);
-                }
+            if (data && Array.isArray(data.hackathons)) {
+                setHackathons(data.hackathons);
+                setError(null);
             }
             else {
-                setHackathons([])
+                setHackathons([]);
+                const status = typeof data?.status === "number" ? data.status : undefined;
+                // 403 was always treated as "no events for you" — keep that quiet.
+                setError(status === 403 ? null : {
+                    status,
+                    message: data?.data?.error || data?.statusText || (typeof data === "string" ? data : "request_failed"),
+                });
             }
             setLoading(false);
         };
@@ -121,6 +143,7 @@ export default function useHackathonEvents( currentOnly ){
         loading,
         handle_get_hackathon,
         handle_get_hackathon_id,
-        handle_problem_statement_to_event_link_update
+        handle_problem_statement_to_event_link_update,
+        error,
     }
 }

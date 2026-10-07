@@ -3,7 +3,7 @@ import Head from "next/head";
 import { useEffect } from 'react';
 import * as ga from '../../lib/ga';
 import ScrollTracker from '../../components/ScrollTracker';
-import { RefinedFonts } from '../../components/design/refined';
+import { serializeJsonLd } from '../../lib/jsonLd';
 
 const Blog = dynamic(
     () => import("../../components/Blog/BlogPage"),
@@ -11,6 +11,26 @@ const Blog = dynamic(
         ssr: true, // Enable SSR for better indexing
     }
 );
+
+const BLOG_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Opportunity Hack Blog",
+  "description": "Technology insights, success stories, and updates from Opportunity Hack's mission to create tech solutions for nonprofits.",
+  "url": "https://www.ohack.dev/blog",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://www.ohack.dev/blog"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Opportunity Hack",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
+    }
+  }
+};
 
 export default function BlogIndexPage({ posts }) {
     useEffect(() => {
@@ -66,30 +86,10 @@ export default function BlogIndexPage({ posts }) {
           <meta property="og:type" content="website" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:site" content="@opportunityhack" />
-          <RefinedFonts />
-          <script type="application/ld+json">
-            {`
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "Blog",
-                        "name": "Opportunity Hack Blog",
-                        "description": "Technology insights, success stories, and updates from Opportunity Hack's mission to create tech solutions for nonprofits.",
-                        "url": "https://www.ohack.dev/blog",
-                        "mainEntityOfPage": {
-                            "@type": "WebPage",
-                            "@id": "https://www.ohack.dev/blog"
-                        },
-                        "publisher": {
-                            "@type": "Organization",
-                            "name": "Opportunity Hack",
-                            "logo": {
-                                "@type": "ImageObject",
-                                "url": "https://cdn.ohack.dev/ohack.dev/2024_hackathon_2.webp"
-                            }
-                        }
-                    }
-                    `}
-          </script>
+          <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(BLOG_JSON_LD) }}
+        />
         </Head>
         <ScrollTracker pageType="blog_listing" />
         <Blog posts={posts} />
@@ -100,12 +100,19 @@ export default function BlogIndexPage({ posts }) {
 // Generate static props for SEO optimization
 export async function getStaticProps() {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=50`);
+        // Builds at deploy time: MUST NEVER THROW. A non-2xx goes to the catch
+        // below (empty list, retry in 60s) instead of caching [] for an hour.
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=50`,
+            { signal: AbortSignal.timeout(15000) }
+        );
+        if (!res.ok) throw new Error(`Upstream ${res.status} for /api/messages/news`);
         const data = await res.json();
+        if (!Array.isArray(data?.text)) throw new Error("news payload missing text[]");
         
         return {
             props: {
-                posts: data.text || [],
+                posts: data.text,
             },
             // Re-generate at most once per hour
             revalidate: 3600,

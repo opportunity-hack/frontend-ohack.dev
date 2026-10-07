@@ -1,6 +1,5 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { RefinedFonts } from '../../components/design/refined';
 
 const ProjectList = dynamic(() => import('../../components/ProjectList/ProjectList'), {
   ssr: false
@@ -45,7 +44,6 @@ export default function Projects({ projects, hackathons, stats, topNonprofits })
         />
         <meta name="robots" content="index, follow" />
 
-        <RefinedFonts />
 
         {/* JSON-LD structured data */}
         <script
@@ -115,8 +113,15 @@ export async function getStaticProps() {
         .catch(() => ({ count: 500 })) // FIXME: Fallback volunteer count if endpoint doesn't exist
     ]);
 
+    // Builds at deploy time: MUST NEVER THROW (the catch below returns the
+    // empty list with revalidate: 60). A non-2xx used to parse the error body
+    // and cache an empty project list for an hour.
+    if (!projectsRes.ok) {
+      throw new Error(`Upstream ${projectsRes.status} for /api/messages/problem_statements`);
+    }
     const projectsData = await projectsRes.json();
-    const hackathonsData = await hackathonsRes.json();
+    const hackathonsOk = hackathonsRes.ok;
+    const hackathonsData = hackathonsOk ? await hackathonsRes.json() : {};
     
     // Process the data for better organization
     const projects = projectsData.problem_statements || [];
@@ -169,7 +174,8 @@ export async function getStaticProps() {
         stats,
         topNonprofits
       },
-      revalidate: 3600 // Revalidate every hour
+      // Revalidate every hour; retry sooner when the hackathons fetch failed.
+      revalidate: hackathonsOk ? 3600 : 60
     };
   } catch (error) {
     console.error('Error fetching data:', error);

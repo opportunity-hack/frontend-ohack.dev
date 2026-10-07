@@ -2,6 +2,11 @@ import axios from "axios";
 import { useAuthInfo } from '@propelauth/react';
 import { useEffect, useRef } from 'react';
 
+// Global request timeout. There was none, so a hung backend held every
+// caller forever. 30s (not shorter): admin bulk operations are slow and the
+// 401 retry below doubles the worst-case wait.
+axios.defaults.timeout = 30000;
+
 
 export default function AxiosWrapper({ children }) {
 

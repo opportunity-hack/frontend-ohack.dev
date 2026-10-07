@@ -1,42 +1,32 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Typography,
-  Box,
-  Alert,
-  LinearProgress,
-  Step,
-  Stepper,
-  StepLabel,
-  Fade,
-  CircularProgress,
-  Container,
-  Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  GlobalStyles,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import WarningIcon from "@mui/icons-material/Warning";
-import { FaRocket } from "react-icons/fa";
+import { Typography, Box, Alert, Skeleton, Button } from "@mui/material";
 import axios from "axios";
 import {
   useAuthInfo,
   RequiredAuthProvider,
-  RedirectToLogin
+  RedirectToLogin,
 } from "@propelauth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Puff } from "react-loading-icons";
 
 // Import components
 import TeamDetailsForm from "../../../components/TeamCreation/TeamDetailsForm";
 import GitHubInfoForm from "../../../components/TeamCreation/GitHubInfoForm";
 import NonprofitSelectionStep from "../../../components/TeamCreation/NonprofitSelectionStep";
 import ConfirmationSummary from "../../../components/TeamCreation/ConfirmationSummary";
-import TeamStatusPanel from "../../../components/TeamCreation/TeamStatusPanel";
-import { RefinedRoot, RefinedFonts } from "../../../components/design/refined";
+import { RefinedRoot } from "../../../components/design/refined";
 import SurveyCTA from "../../../components/Survey/SurveyCTA";
+import TeamMasthead from "../../../components/TeamDashboard/TeamMasthead";
+import TeamSwitcher from "../../../components/TeamDashboard/TeamSwitcher";
+import TeamDashboard from "../../../components/TeamDashboard/TeamDashboard";
+import CreateTeamFlow from "../../../components/TeamDashboard/CreateTeamFlow";
+import {
+  ApplicationLoadingPanel,
+  NoApplicationPanel,
+  AwaitingConfirmationPanel,
+  TeamCreationDisabledPanel,
+} from "../../../components/TeamDashboard/GatingPanels";
+import { trackEvent, EventCategory } from "../../../lib/ga";
 
 const steps = [
   "Team Details",
@@ -62,8 +52,8 @@ const FindTeammatesCTA = ({ eventId, teamFindingEnabled, heading, body }) => (
     }}
   >
     <Box>
-      <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-        👥 {heading}
+      <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 600 }}>
+        {heading}
       </Typography>
       <Typography variant="body1" sx={{ color: "var(--muted, #5B6270)" }}>
         {body}
@@ -115,6 +105,8 @@ const ManageTeamComponent = () => {
   const [myTeams, setMyTeams] = useState(null);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [showNewTeamForm, setShowNewTeamForm] = useState(false);
+  const [activeTeamId, setActiveTeamId] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
   const [isGithubValid, setIsGithubValid] = useState(null);
@@ -133,6 +125,7 @@ const ManageTeamComponent = () => {
   // Refs to prevent double-fetching lazy data
   const slackFetchedRef = useRef(false);
   const nonprofitFetchedRef = useRef(false);
+  const gaViewFiredRef = useRef(false);
 
   useEffect(() => {
     if (event_id && accessToken) {
@@ -141,6 +134,34 @@ const ManageTeamComponent = () => {
       fetchHackerApplication();
     }
   }, [event_id, accessToken]);
+
+  // findteam.js hands off starred favorites via sessionStorage['team_members']
+  // (bug #9) — read it once on mount, prefill the member picker, then clear
+  // the key so a later visit doesn't replay it.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem("team_members");
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length > 0) {
+          setTeamMembers(
+            arr
+              .filter((u) => u && u.slack_user_id)
+              .map((u) => ({
+                id: u.slack_user_id,
+                name: u.name,
+                real_name: u.name,
+              })),
+          );
+          setShowNewTeamForm(true);
+        }
+        window.sessionStorage.removeItem("team_members");
+      }
+    } catch (err) {
+      console.error("Error reading findteam handoff:", err);
+    }
+  }, []);
 
   // Lazy Slack user fetch — only when user reaches the team-member step
   const fetchActiveSlackUsers = useCallback(async () => {
@@ -152,7 +173,7 @@ const ManageTeamComponent = () => {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (response.data && response.data.users) {
         setSlackUsers(
@@ -161,7 +182,7 @@ const ManageTeamComponent = () => {
             name: user.name,
             real_name: user.real_name,
             tz: user.tz,
-          }))
+          })),
         );
       }
     } catch (err) {
@@ -172,7 +193,11 @@ const ManageTeamComponent = () => {
 
   // Trigger Slack fetch lazily when step 2 is reached or accordion opened
   useEffect(() => {
-    if ((activeStep === 2 || showNewTeamForm) && !slackFetchedRef.current && accessToken) {
+    if (
+      (activeStep === 2 || showNewTeamForm) &&
+      !slackFetchedRef.current &&
+      accessToken
+    ) {
       slackFetchedRef.current = true;
       fetchActiveSlackUsers();
     }
@@ -201,7 +226,7 @@ const ManageTeamComponent = () => {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (response && response.data) {
         setMyTeams(response.data.teams);
@@ -228,9 +253,11 @@ const ManageTeamComponent = () => {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "X-Org-Id": authInfo?.userClass?.getOrgByName("Opportunity Hack Org")?.orgId,
+            "X-Org-Id": authInfo?.userClass?.getOrgByName(
+              "Opportunity Hack Org",
+            )?.orgId,
           },
-        }
+        },
       );
       if (response.data && response.data.data) {
         setHackerApplication(response.data.data);
@@ -248,7 +275,7 @@ const ManageTeamComponent = () => {
   const fetchHackathonEvent = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
       );
       if (response && response.data) {
         setEvent(response.data);
@@ -264,19 +291,24 @@ const ManageTeamComponent = () => {
       const nonprofitResponses = await Promise.all(
         nonprofitIds.map((npo) =>
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${npo.id}`
-          )
-        )
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${npo.id}`,
+          ),
+        ),
       );
-      const detailedNonprofits = nonprofitResponses.map((r) => r.data.nonprofits);
+      const detailedNonprofits = nonprofitResponses.map(
+        (r) => r.data.nonprofits,
+      );
       const nonprofitsWithProblems = await Promise.all(
         detailedNonprofits.map(async (nonprofit) => {
-          if (nonprofit.problem_statements && nonprofit.problem_statements.length > 0) {
+          if (
+            nonprofit.problem_statements &&
+            nonprofit.problem_statements.length > 0
+          ) {
             const problemStatementDetails = await Promise.all(
               nonprofit.problem_statements.map(async (problemId) => {
                 try {
                   const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${problemId}`
+                    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${problemId}`,
                   );
                   const problemData = response.data;
                   return {
@@ -284,7 +316,8 @@ const ManageTeamComponent = () => {
                     ...problemData,
                     displayTitle:
                       problemData.title ||
-                      (problemData.description && problemData.description.length > 30
+                      (problemData.description &&
+                      problemData.description.length > 30
                         ? `${problemData.description.substring(0, 30)}...`
                         : problemData.description) ||
                       `Need ${problemId.substring(0, 6)}`,
@@ -297,14 +330,14 @@ const ManageTeamComponent = () => {
                     error: true,
                   };
                 }
-              })
+              }),
             );
             nonprofit.problem_statements = problemStatementDetails;
           } else {
             nonprofit.problem_statements = [];
           }
           return nonprofit;
-        })
+        }),
       );
       setNonprofits(nonprofitsWithProblems);
       setFilteredNonprofits(nonprofitsWithProblems);
@@ -314,7 +347,8 @@ const ManageTeamComponent = () => {
     }
   };
 
-  // Prefill GitHub username from profile
+  // Prefill GitHub username + keep the full profile payload for TeamRoster's
+  // "You" marker (own db id) — see Part 4 WS-B change #1.
   useEffect(() => {
     if (!accessToken) return;
     const fetchUserProfile = async () => {
@@ -326,10 +360,11 @@ const ManageTeamComponent = () => {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
-        if (response?.data?.github) {
-          setGithubUsername(response.data.github);
+        if (response?.data) {
+          setProfile(response.data);
+          if (response.data.github) setGithubUsername(response.data.github);
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
@@ -350,17 +385,19 @@ const ManageTeamComponent = () => {
         nonprofits.filter(
           (nonprofit) =>
             nonprofit.name.toLowerCase().includes(lowerTerm) ||
-            (nonprofit.description && nonprofit.description.toLowerCase().includes(lowerTerm)) ||
+            (nonprofit.description &&
+              nonprofit.description.toLowerCase().includes(lowerTerm)) ||
             (nonprofit.problem_statements &&
               nonprofit.problem_statements.some(
                 (p) =>
                   p.displayTitle.toLowerCase().includes(lowerTerm) ||
-                  (p.description && p.description.toLowerCase().includes(lowerTerm))
-              ))
-        )
+                  (p.description &&
+                    p.description.toLowerCase().includes(lowerTerm)),
+              )),
+        ),
       );
     },
-    [nonprofits]
+    [nonprofits],
   );
 
   const handleSearchChange = useCallback(
@@ -369,7 +406,7 @@ const ManageTeamComponent = () => {
       setSearchTerm(term);
       filterNonprofits(term);
     },
-    [filterNonprofits]
+    [filterNonprofits],
   );
 
   const clearSearch = useCallback(() => {
@@ -380,7 +417,9 @@ const ManageTeamComponent = () => {
   const toggleNonprofitSelection = useCallback((nonprofit) => {
     setSelectedNonprofits((prev) => {
       const isSelected = prev.some((np) => np.id === nonprofit.id);
-      return isSelected ? prev.filter((np) => np.id !== nonprofit.id) : [...prev, nonprofit];
+      return isSelected
+        ? prev.filter((np) => np.id !== nonprofit.id)
+        : [...prev, nonprofit];
     });
   }, []);
 
@@ -392,7 +431,7 @@ const ManageTeamComponent = () => {
       items.splice(result.destination.index, 0, reorderedItem);
       setSelectedNonprofits(items);
     },
-    [selectedNonprofits]
+    [selectedNonprofits],
   );
 
   const handleAddTeamMember = useCallback(() => {
@@ -404,10 +443,14 @@ const ManageTeamComponent = () => {
     if (!memberName) return;
 
     const isDuplicate = teamMembers.some((member) => {
-      if (typeof member === "string" && typeof memberInput === "string") return member === memberName;
-      if (typeof member === "object" && typeof memberInput === "object") return member.id === memberInput.id;
-      if (typeof member === "string" && typeof memberInput === "object") return member === memberInput.real_name || member === memberInput.name;
-      if (typeof member === "object" && typeof memberInput === "string") return member.real_name === memberInput || member.name === memberInput;
+      if (typeof member === "string" && typeof memberInput === "string")
+        return member === memberName;
+      if (typeof member === "object" && typeof memberInput === "object")
+        return member.id === memberInput.id;
+      if (typeof member === "string" && typeof memberInput === "object")
+        return member === memberInput.real_name || member === memberInput.name;
+      if (typeof member === "object" && typeof memberInput === "string")
+        return member.real_name === memberInput || member.name === memberInput;
       return false;
     });
 
@@ -451,10 +494,14 @@ const ManageTeamComponent = () => {
       setIsValidatingGithub(true);
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/github/${username}`
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/github/${username}`,
         );
         setIsGithubValid(response.data.valid);
-        setGithubError(response.data.valid ? "GitHub username exists" : response.data.message || "Invalid GitHub username");
+        setGithubError(
+          response.data.valid
+            ? "GitHub username exists"
+            : response.data.message || "Invalid GitHub username",
+        );
       } catch {
         setIsGithubValid(false);
         setGithubError("Could not verify GitHub username");
@@ -462,7 +509,7 @@ const ManageTeamComponent = () => {
         setIsValidatingGithub(false);
       }
     }, 400),
-    []
+    [],
   );
 
   const validateSlackChannel = useCallback(
@@ -475,14 +522,16 @@ const ManageTeamComponent = () => {
       }
       if (!channel.match(/^[a-z0-9-_]+$/)) {
         setIsSlackValid(false);
-        setSlackError("Use only lowercase letters, numbers, hyphens, and underscores");
+        setSlackError(
+          "Use only lowercase letters, numbers, hyphens, and underscores",
+        );
         setIsValidatingSlack(false);
         return;
       }
       setIsValidatingSlack(true);
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/slack/${channel}`
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/slack/${channel}`,
         );
         if (response.data.exists) {
           setIsSlackValid(false);
@@ -498,7 +547,7 @@ const ManageTeamComponent = () => {
         setIsValidatingSlack(false);
       }
     }, 400),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -510,39 +559,90 @@ const ManageTeamComponent = () => {
   }, [slackChannel, validateSlackChannel]);
 
   const validateForm = () => {
-    if (!teamName.trim()) { setFormError("Team name is required."); return false; }
-    if (!slackChannel.trim()) { setFormError("Slack channel is required."); return false; }
-    if (!slackChannel.match(/^[a-z0-9-_]+$/)) {
-      setFormError("Invalid Slack channel name. Use only lowercase letters, numbers, hyphens, and underscores.");
+    if (!teamName.trim()) {
+      setFormError("Team name is required.");
       return false;
     }
-    if (!githubUsername.trim()) { setFormError("GitHub username is required."); return false; }
-    if (isValidatingGithub || isValidatingSlack) { setFormError("Please wait for validation to complete."); return false; }
-    if (isGithubValid === false) { setFormError(githubError || "Invalid GitHub username."); return false; }
-    if (isSlackValid === false) { setFormError(slackError || "Invalid Slack channel name."); return false; }
-    if (selectedNonprofits.length === 0) { setFormError("Please select and rank at least one nonprofit."); return false; }
+    if (!slackChannel.trim()) {
+      setFormError("Slack channel is required.");
+      return false;
+    }
+    if (!slackChannel.match(/^[a-z0-9-_]+$/)) {
+      setFormError(
+        "Invalid Slack channel name. Use only lowercase letters, numbers, hyphens, and underscores.",
+      );
+      return false;
+    }
+    if (!githubUsername.trim()) {
+      setFormError("GitHub username is required.");
+      return false;
+    }
+    if (isValidatingGithub || isValidatingSlack) {
+      setFormError("Please wait for validation to complete.");
+      return false;
+    }
+    if (isGithubValid === false) {
+      setFormError(githubError || "Invalid GitHub username.");
+      return false;
+    }
+    if (isSlackValid === false) {
+      setFormError(slackError || "Invalid Slack channel name.");
+      return false;
+    }
+    if (selectedNonprofits.length === 0) {
+      setFormError("Please select and rank at least one nonprofit.");
+      return false;
+    }
     return true;
   };
 
   const validateCurrentStep = (step) => {
     switch (step) {
       case 0:
-        if (!teamName.trim()) { setFormError("Team name is required."); return false; }
-        if (!slackChannel.trim()) { setFormError("Slack channel is required."); return false; }
-        if (!slackChannel.match(/^[a-z0-9-_]+$/)) {
-          setFormError("Invalid Slack channel name. Use only lowercase letters, numbers, hyphens, and underscores.");
+        if (!teamName.trim()) {
+          setFormError("Team name is required.");
           return false;
         }
-        if (isValidatingSlack) { setFormError("Please wait for Slack channel validation to complete."); return false; }
-        if (isSlackValid === false) { setFormError(slackError || "Invalid Slack channel name."); return false; }
+        if (!slackChannel.trim()) {
+          setFormError("Slack channel is required.");
+          return false;
+        }
+        if (!slackChannel.match(/^[a-z0-9-_]+$/)) {
+          setFormError(
+            "Invalid Slack channel name. Use only lowercase letters, numbers, hyphens, and underscores.",
+          );
+          return false;
+        }
+        if (isValidatingSlack) {
+          setFormError("Please wait for Slack channel validation to complete.");
+          return false;
+        }
+        if (isSlackValid === false) {
+          setFormError(slackError || "Invalid Slack channel name.");
+          return false;
+        }
         return true;
       case 1:
-        if (!githubUsername.trim()) { setFormError("GitHub username is required."); return false; }
-        if (isValidatingGithub) { setFormError("Please wait for GitHub username validation to complete."); return false; }
-        if (isGithubValid === false) { setFormError(githubError || "Invalid GitHub username."); return false; }
+        if (!githubUsername.trim()) {
+          setFormError("GitHub username is required.");
+          return false;
+        }
+        if (isValidatingGithub) {
+          setFormError(
+            "Please wait for GitHub username validation to complete.",
+          );
+          return false;
+        }
+        if (isGithubValid === false) {
+          setFormError(githubError || "Invalid GitHub username.");
+          return false;
+        }
         return true;
       case 2:
-        if (selectedNonprofits.length === 0) { setFormError("Please select and rank at least one nonprofit."); return false; }
+        if (selectedNonprofits.length === 0) {
+          setFormError("Please select and rank at least one nonprofit.");
+          return false;
+        }
         return true;
       case 3:
         return validateForm();
@@ -581,14 +681,14 @@ const ManageTeamComponent = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
 
       setLoading(false);
       setProgress(100);
 
       if (response.data.success) {
-        // Refetch teams so TeamStatusPanel shows IN_REVIEW state
+        // Refetch teams so the dashboard shows the new IN_REVIEW team
         await fetchMyTeams();
         // Reset form
         setActiveStep(0);
@@ -605,12 +705,15 @@ const ManageTeamComponent = () => {
           if (el) el.scrollIntoView({ behavior: "smooth" });
         }, 100);
       } else {
-        setFormError(response.data.message || "An error occurred while creating the team.");
+        setFormError(
+          response.data.message || "An error occurred while creating the team.",
+        );
       }
     } catch (err) {
       setLoading(false);
       setFormError(
-        err.response?.data?.message || "An unexpected error occurred. Please try again."
+        err.response?.data?.message ||
+          "An unexpected error occurred. Please try again.",
       );
     }
   };
@@ -630,10 +733,24 @@ const ManageTeamComponent = () => {
   const isNextDisabled = () => {
     if (loading) return true;
     switch (activeStep) {
-      case 0: return !teamName.trim() || !slackChannel.trim() || !slackChannel.match(/^[a-z0-9-_]+$/) || isValidatingSlack || isSlackValid === false;
-      case 1: return !githubUsername.trim() || isValidatingGithub || isGithubValid === false;
-      case 2: return selectedNonprofits.length === 0;
-      default: return false;
+      case 0:
+        return (
+          !teamName.trim() ||
+          !slackChannel.trim() ||
+          !slackChannel.match(/^[a-z0-9-_]+$/) ||
+          isValidatingSlack ||
+          isSlackValid === false
+        );
+      case 1:
+        return (
+          !githubUsername.trim() ||
+          isValidatingGithub ||
+          isGithubValid === false
+        );
+      case 2:
+        return selectedNonprofits.length === 0;
+      default:
+        return false;
     }
   };
 
@@ -698,17 +815,51 @@ const ManageTeamComponent = () => {
     }
   };
 
-  // Callback for TeamStatusPanel to update local team data after DevPost/video saves
+  // Callback for TeamDashboard's editors to update local team data after
+  // project/DevPost/video/mentor-availability saves — no full refetch.
   const handleTeamUpdated = useCallback((teamId, partial) => {
     setMyTeams((prev) =>
-      prev ? prev.map((t) => (t.id === teamId ? { ...t, ...partial } : t)) : prev
+      prev
+        ? prev.map((t) => (t.id === teamId ? { ...t, ...partial } : t))
+        : prev,
     );
   }, []);
 
   const hasExistingTeam = myTeams && myTeams.length > 0;
-  const hasApprovedTeam = myTeams && myTeams.some((t) => t.status === "APPROVED" || t.status === "PROJECT_COMPLETE");
-  const teamCreationEnabled = event?.constraints?.team_creation_enabled !== false;
-  const teamFindingEnabled = event?.constraints?.team_find_a_team_enabled !== false;
+  // Bug #8: the old check compared against "APPROVED"/"PROJECT_COMPLETE",
+  // neither of which exists in TEAM_STATUS_OPTIONS, so it was always false.
+  const hasApprovedTeam =
+    myTeams &&
+    myTeams.some(
+      (t) => t.status && t.status !== "IN_REVIEW" && t.status !== "INACTIVE",
+    );
+  const teamCreationEnabled =
+    event?.constraints?.team_creation_enabled !== false;
+  const teamFindingEnabled =
+    event?.constraints?.team_find_a_team_enabled !== false;
+
+  const activeTeam =
+    (myTeams && myTeams.find((t) => t.id === activeTeamId)) ||
+    myTeams?.[0] ||
+    null;
+
+  useEffect(() => {
+    if (myTeams && myTeams.length > 0 && !activeTeamId) {
+      setActiveTeamId(myTeams[0].id);
+    }
+  }, [myTeams, activeTeamId]);
+
+  useEffect(() => {
+    if (gaViewFiredRef.current || !activeTeam) return;
+    gaViewFiredRef.current = true;
+    trackEvent({
+      action: "team_dashboard_view",
+      params: {
+        event_category: EventCategory.ENGAGEMENT,
+        event_label: activeTeam.status,
+      },
+    });
+  }, [activeTeam]);
 
   const pageTitle = hasApprovedTeam
     ? "Manage Your Hackathon Team - Opportunity Hack"
@@ -716,12 +867,6 @@ const ManageTeamComponent = () => {
 
   return (
     <RefinedRoot>
-      <GlobalStyles
-        styles={{
-          "@keyframes ohx-spin": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
-          "@keyframes ohx-fade": { "0%, 100%": { opacity: 0.7 }, "50%": { opacity: 1 } },
-        }}
-      />
       <Head>
         <title>{pageTitle}</title>
         <meta
@@ -734,34 +879,22 @@ const ManageTeamComponent = () => {
         />
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <RefinedFonts />
         <link rel="preconnect" href="https://opportunity-hack.slack.com" />
         <link rel="preconnect" href="https://github.com" />
       </Head>
 
-      <Box className="ohx-wrap" sx={{ pt: "clamp(80px, 12vh, 100px)", pb: 6 }}>
-        {/* Masthead */}
-        <Box sx={{ mb: 4 }}>
-          <a
-            href={`/hack/${event_id}`}
-            className="ohx-link"
-            style={{ fontSize: "0.9rem", display: "inline-block", marginBottom: "0.75rem" }}
-          >
-            ← {event?.title || "Back to hackathon"}
-          </a>
-          <h1
-            style={{
-              fontFamily: "var(--display)",
-              fontWeight: 600,
-              fontSize: "clamp(1.8rem, 4vw, 2.6rem)",
-              margin: 0,
-              color: "var(--ink)",
-              lineHeight: 1.2,
-            }}
-          >
-            {!myTeams || myTeams.length === 0 ? "Create a team" : "Your team"}
-          </h1>
-        </Box>
+      <Box className="ohx-wrap" sx={{ pt: "clamp(88px, 9vh, 108px)", pb: 8 }}>
+        <TeamMasthead
+          eventId={event_id}
+          eventTitle={event?.title}
+          team={activeTeam}
+          nonprofitName={
+            event?.nonprofits?.find(
+              (n) => n.id === activeTeam?.selected_nonprofit_id,
+            )?.name
+          }
+          hasTeam={hasExistingTeam}
+        />
 
         <SurveyCTA
           eventId={event_id}
@@ -770,266 +903,168 @@ const ManageTeamComponent = () => {
           timezone={event?.timezone}
         />
 
-        {/* Team Status Hub */}
+        {/* Team dashboard */}
         <div id="team-hub">
-          <TeamStatusPanel
-            eventId={event_id}
-            teams={myTeams}
-            loading={isLoadingTeams}
-            error={teamsError}
-            nonprofits={nonprofits}
-            event={event}
-            accessToken={accessToken}
-            onTeamUpdated={handleTeamUpdated}
-          />
+          {isLoadingTeams ? (
+            <Skeleton
+              variant="rectangular"
+              height={320}
+              sx={{ borderRadius: 2 }}
+            />
+          ) : teamsError ? (
+            <Box className="ohx-card" sx={{ p: 4, textAlign: "center" }}>
+              <Typography sx={{ color: "var(--muted)", mb: 2 }}>
+                {teamsError}
+              </Typography>
+              <button
+                type="button"
+                className="ohx-btn ohx-btn--ghost"
+                onClick={fetchMyTeams}
+              >
+                Retry
+              </button>
+            </Box>
+          ) : hasExistingTeam ? (
+            <>
+              <TeamSwitcher
+                teams={myTeams}
+                activeId={activeTeam?.id}
+                onChange={setActiveTeamId}
+              />
+              <TeamDashboard
+                // Keyed by team id so switching the active team (TeamSwitcher)
+                // remounts the subtree instead of leaving stale local state —
+                // several editors (demo video, DevPost, mentor availability)
+                // seed a text/toggle value from `team` only once via
+                // `useState`, and TeamDashboard itself is otherwise never
+                // unmounted across a switch. A remount here is exactly the
+                // "active team changed" case `use-team-project.js`'s reseed
+                // effect already special-cases — it never fires on an
+                // `onTeamUpdated` merge of the *same* team, since that never
+                // changes this key.
+                key={activeTeam?.id}
+                team={activeTeam}
+                event={event}
+                eventId={event_id}
+                accessToken={accessToken}
+                profile={profile}
+                onTeamUpdated={handleTeamUpdated}
+                teamFindingEnabled={teamFindingEnabled}
+              />
+            </>
+          ) : (
+            <Box
+              className="ohx-card"
+              sx={{ p: 4, textAlign: "center", minHeight: 120 }}
+            >
+              <Typography sx={{ color: "var(--muted)" }}>
+                You don&apos;t have a team yet for{" "}
+                {event?.title || "this hackathon"}. Create one below, or find
+                teammates first.
+              </Typography>
+            </Box>
+          )}
         </div>
 
         {/* Application loading */}
         {isLoadingApplication && (
-          <Box className="ohx-card" sx={{ mt: 3, p: 4, textAlign: "center" }}>
-            <CircularProgress size={40} sx={{ color: "var(--brand)" }} />
-            <Typography variant="body1" sx={{ mt: 2, color: "var(--muted)" }}>
-              Checking your participation status for {event?.title || "this hackathon"}…
-            </Typography>
-          </Box>
+          <ApplicationLoadingPanel eventTitle={event?.title} />
         )}
 
         {/* No application */}
         {!isLoadingApplication && !hackerApplication && (
-          <Box className="ohx-card" sx={{ mt: 3, p: 4, textAlign: "center" }}>
-            <Typography sx={{ fontSize: "3rem", mb: 1 }}>📝</Typography>
-            <Typography
-              variant="h5"
-              sx={{ fontFamily: "var(--display)", fontWeight: 600, mb: 2, color: "var(--brand)" }}
-            >
-              Apply first to manage a team
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3, color: "var(--muted)", maxWidth: 560, mx: "auto" }}>
-              Team management is only available to hackers who have submitted a hacker application
-              and been confirmed for {event?.title || "this hackathon"}. Submit your application to
-              get started — we&apos;ll email you once your spot is confirmed.
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, justifyContent: "center" }}>
-              <a href={`/hack/${event_id}/hacker-application`} className="ohx-btn ohx-btn--primary">
-                Submit Hacker Application
-              </a>
-              <a href={`/hack/${event_id}`} className="ohx-btn ohx-btn--ghost">
-                Back to Hackathon
-              </a>
-            </Box>
-          </Box>
+          <NoApplicationPanel eventId={event_id} eventTitle={event?.title} />
         )}
 
         {/* Application submitted but not yet confirmed */}
-        {!isLoadingApplication && hackerApplication && hackerApplication.isSelected === false && (
-          <Box className="ohx-card" sx={{ mt: 3, p: 4 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-              <Typography sx={{ fontSize: "2.5rem" }}>⏳</Typography>
-              <Typography
-                variant="h5"
-                sx={{ fontFamily: "var(--display)", fontWeight: 600, color: "var(--brand)" }}
-              >
-                Your application is awaiting confirmation
-              </Typography>
-            </Box>
-            <Typography variant="body1" sx={{ mb: 2, color: "var(--muted)" }}>
-              Thanks for applying to {event?.title || "this hackathon"}! We&apos;ve received your
-              hacker application — it just hasn&apos;t been confirmed for a spot yet, so team
-              management is locked for now.
-            </Typography>
-            <Alert severity="info" icon={false} sx={{ mb: 3 }}>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                <strong>What this means:</strong> Most applications are reviewed within about a
-                week. You&apos;ll get an email as soon as your spot is confirmed, and team
-                management will unlock automatically.
-              </Typography>
-              <Typography variant="body2">
-                If the event is close and you haven&apos;t heard back, we may have reached capacity
-                for this hackathon.
-              </Typography>
-            </Alert>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: "var(--brand)" }}>
-              While you wait
-            </Typography>
-            {[
-              ["🤝", "Join our Slack to meet hackers, mentors, and nonprofits"],
-              ["💻", "Contribute to open-source nonprofit projects year-round"],
-              ["🎯", "Browse other Opportunity Hack events you can apply to"],
-            ].map(([icon, text]) => (
-              <Typography key={text} variant="body1" sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
-                <span>{icon}</span> {text}
-              </Typography>
-            ))}
-            <Box sx={{ mt: 3, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
-              <a
-                href="https://opportunity-hack.slack.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ohx-btn ohx-btn--primary"
-              >
-                Join Our Community
-              </a>
-              <a href="/hack" className="ohx-btn ohx-btn--ghost">
-                View Upcoming Events
-              </a>
-            </Box>
-            <Typography variant="caption" sx={{ display: "block", mt: 2, color: "var(--faint)" }}>
-              Already received your confirmation email? Try refreshing — your status may not have synced yet.
-            </Typography>
-          </Box>
-        )}
+        {!isLoadingApplication &&
+          hackerApplication &&
+          hackerApplication.isSelected === false && (
+            <AwaitingConfirmationPanel eventTitle={event?.title} />
+          )}
 
         {/* Team creation content — only for confirmed hackers */}
-        {!isLoadingApplication && hackerApplication?.isSelected !== false && hackerApplication && (
-          <>
-            {/* Team creation disabled */}
-            {!teamCreationEnabled && (
-              <Alert severity="warning" icon={<WarningIcon />} sx={{ mt: 4 }}>
-                <Typography variant="h6" fontWeight="bold">
-                  Team Creation Currently Disabled
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 0.5 }}>
-                  Team creation has been disabled for this hackathon. Please check with the event
-                  organizers or wait for team creation to be re-enabled.
-                </Typography>
-              </Alert>
-            )}
+        {!isLoadingApplication &&
+          hackerApplication?.isSelected !== false &&
+          hackerApplication && (
+            <>
+              {!teamCreationEnabled && <TeamCreationDisabledPanel />}
 
-            {/* Existing team: accordion around the create form */}
-            {teamCreationEnabled && hasExistingTeam && (
-              <Box sx={{ mt: 4 }}>
-                <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
-                  <Typography variant="h6" fontWeight="bold">You Already Have a Team</Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5 }}>
-                    {hasApprovedTeam
-                      ? "You already have an approved team for this hackathon. Creating another team is not recommended unless explicitly instructed by Opportunity Hack staff."
-                      : "You already have a team application in review. Please wait for it to be processed before creating another team."}
-                  </Typography>
-                </Alert>
+              {/* Existing team: a quiet disclosure around the create form */}
+              {teamCreationEnabled && hasExistingTeam && (
+                <Box sx={{ mt: 4 }}>
+                  <Alert severity="info" icon={false} sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      {hasApprovedTeam
+                        ? "You already have a team for this hackathon. Only create another one if Opportunity Hack staff asked you to."
+                        : "You already have a team application in review. Please wait for it to be processed before creating another team."}
+                    </Typography>
+                  </Alert>
 
-                <FindTeammatesCTA
-                  eventId={event_id}
-                  teamFindingEnabled={teamFindingEnabled}
-                  heading="Need additional teammates?"
-                  body="You can find additional teammates with complementary skills before creating a new team."
-                />
+                  <FindTeammatesCTA
+                    eventId={event_id}
+                    teamFindingEnabled={teamFindingEnabled}
+                    heading="Need additional teammates?"
+                    body="You can find additional teammates with complementary skills before creating a new team."
+                  />
 
-                <Accordion
-                  expanded={showNewTeamForm}
-                  onChange={() => setShowNewTeamForm(!showNewTeamForm)}
-                  sx={{
-                    mt: 2,
-                    border: "1px solid var(--line, #E7E1D4)",
-                    borderRadius: "8px !important",
-                    overflow: "hidden",
-                    boxShadow: "none",
-                    "&:before": { display: "none" },
-                  }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: "var(--surface-2, #F4F1E9)" }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <FaRocket style={{ marginRight: "12px", color: "var(--accent, #E2552E)" }} />
-                      <Typography variant="h6" fontWeight="medium">
-                        {showNewTeamForm ? "Hide Team Creation Form" : "Show Team Creation Form"}
-                      </Typography>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ p: 0 }}>
-                    {renderCreateForm()}
-                  </AccordionDetails>
-                </Accordion>
-              </Box>
-            )}
+                  <details
+                    open={showNewTeamForm}
+                    onToggle={(e) => setShowNewTeamForm(e.currentTarget.open)}
+                    style={{ marginTop: 16 }}
+                  >
+                    <summary
+                      className="ohx-btn ohx-btn--ghost"
+                      style={{ display: "inline-flex", cursor: "pointer" }}
+                    >
+                      {showNewTeamForm
+                        ? "Hide team creation form"
+                        : "Create another team"}
+                    </summary>
+                    <CreateTeamFlow
+                      steps={steps}
+                      activeStep={activeStep}
+                      loading={loading}
+                      formError={formError}
+                      isNextDisabled={isNextDisabled}
+                      handleNext={handleNext}
+                      handleBack={handleBack}
+                      handleSubmit={handleSubmit}
+                    >
+                      {getStepContent(activeStep)}
+                    </CreateTeamFlow>
+                  </details>
+                </Box>
+              )}
 
-            {/* No existing team: show find teammates + create form directly */}
-            {teamCreationEnabled && !hasExistingTeam && (
-              <Box sx={{ mt: 4 }}>
-                <FindTeammatesCTA
-                  eventId={event_id}
-                  teamFindingEnabled={teamFindingEnabled}
-                  heading="Looking for teammates?"
-                  body="Don't create a team alone! Find other participants with complementary skills and shared interests."
-                />
-                {renderCreateForm()}
-              </Box>
-            )}
-          </>
-        )}
+              {/* No existing team: show find teammates + create form directly */}
+              {teamCreationEnabled && !hasExistingTeam && (
+                <Box sx={{ mt: 4 }}>
+                  <FindTeammatesCTA
+                    eventId={event_id}
+                    teamFindingEnabled={teamFindingEnabled}
+                    heading="Looking for teammates?"
+                    body="Don't create a team alone! Find other participants with complementary skills and shared interests."
+                  />
+                  <CreateTeamFlow
+                    steps={steps}
+                    activeStep={activeStep}
+                    loading={loading}
+                    formError={formError}
+                    isNextDisabled={isNextDisabled}
+                    handleNext={handleNext}
+                    handleBack={handleBack}
+                    handleSubmit={handleSubmit}
+                  >
+                    {getStepContent(activeStep)}
+                  </CreateTeamFlow>
+                </Box>
+              )}
+            </>
+          )}
       </Box>
     </RefinedRoot>
   );
-
-  function renderCreateForm() {
-    return (
-      <Box
-        className="ohx-card"
-        sx={{ mt: 3, p: { xs: 2, md: 3 } }}
-      >
-        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        <form onSubmit={handleSubmit}>
-          {getStepContent(activeStep)}
-
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-            <Button disabled={activeStep === 0} onClick={handleBack} sx={{ textTransform: "none" }}>
-              Back
-            </Button>
-            <Button
-              variant="contained"
-              onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
-              disabled={activeStep === steps.length - 1 ? loading : isNextDisabled()}
-              sx={{
-                textTransform: "none",
-                bgcolor: "var(--brand, #1B3A6B)",
-                "&:hover": { bgcolor: "var(--brand-ink, #0E2547)" },
-                "&:disabled": { bgcolor: "rgba(27,58,107,0.4)", color: "white" },
-              }}
-            >
-              {activeStep === steps.length - 1 ? "Create Team" : "Next"}
-              {loading && <Puff stroke="#fff" width={20} height={20} style={{ marginLeft: "8px" }} />}
-            </Button>
-          </Box>
-        </form>
-
-        {isNextDisabled() && !formError && (
-          <Typography color="textSecondary" align="right" sx={{ mt: 1, fontSize: "0.875rem", fontStyle: "italic" }}>
-            {activeStep === 0
-              ? "Please complete your team details to continue"
-              : activeStep === 1
-              ? "Please provide a valid GitHub username"
-              : activeStep === 2
-              ? "Please select a nonprofit organization"
-              : ""}
-          </Typography>
-        )}
-
-        {loading && (
-          <Fade in={loading}>
-            <Box sx={{ mt: 3 }}>
-              <LinearProgress sx={{ "& .MuiLinearProgress-bar": { bgcolor: "var(--brand)" } }} />
-              <Typography variant="body2" align="center" sx={{ mt: 1, color: "var(--muted)" }}>
-                Creating your Slack channel and GitHub repo — this takes up to a minute…
-              </Typography>
-            </Box>
-          </Fade>
-        )}
-
-        {formError && (
-          <Fade in={!!formError}>
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {formError}
-            </Alert>
-          </Fade>
-        )}
-      </Box>
-    );
-  }
 };
 
 const AuthenticatedTeam = () => {
@@ -1051,7 +1086,10 @@ const ManageTeam = () => {
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
       displayIfLoggedOut={
         <RedirectToLogin
-          postLoginRedirectUrl={currentUrl || (typeof window !== "undefined" ? window.location.href : undefined)}
+          postLoginRedirectUrl={
+            currentUrl ||
+            (typeof window !== "undefined" ? window.location.href : undefined)
+          }
         />
       }
     >

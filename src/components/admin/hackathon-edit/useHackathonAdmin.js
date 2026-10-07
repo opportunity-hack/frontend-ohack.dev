@@ -3,12 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 const SAVE_DEBOUNCE_MS = 1500;
 
 const cloneDeep = (v) =>
-  typeof structuredClone === "function" ? structuredClone(v) : JSON.parse(JSON.stringify(v));
+  typeof structuredClone === "function"
+    ? structuredClone(v)
+    : JSON.parse(JSON.stringify(v));
 
 // Sections that get explicit Save / Discard. Everything else autosaves.
 export const EXPLICIT_SAVE_SECTIONS = new Set([
   "overview-dates",
   "schedule",
+  "deadlines",
   "meals",
   "screening",
   "deposit",
@@ -18,6 +21,7 @@ export const EXPLICIT_SAVE_SECTIONS = new Set([
 export const SECTION_LABELS = {
   "overview-dates": "Overview (dates)",
   schedule: "Schedule",
+  deadlines: "Deadlines",
   meals: "Meals",
   screening: "Screening Questions",
   deposit: "Deposit",
@@ -47,7 +51,11 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   const [committed, setCommitted] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [saveState, setSaveState] = useState({ status: "idle", lastSavedAt: null, error: null });
+  const [saveState, setSaveState] = useState({
+    status: "idle",
+    lastSavedAt: null,
+    error: null,
+  });
   const [dirtySections, setDirtySections] = useState(new Set());
   const saveTimerRef = useRef(null);
   const inflightRef = useRef(null);
@@ -95,15 +103,27 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       }
       const normalized = {
         ...found,
-        start_date: found.start_date ? String(found.start_date).split("T")[0] : "",
+        start_date: found.start_date
+          ? String(found.start_date).split("T")[0]
+          : "",
         end_date: found.end_date ? String(found.end_date).split("T")[0] : "",
         countdowns: found.countdowns || [],
+        deadlines: found.deadlines || {},
         links: found.links || [],
         event_photos: found.event_photos || [],
         social_posts: found.social_posts || [],
         constraints: found.constraints || {},
-        donation_current: found.donation_current || { food: "0", prize: "0", swag: "0", thank_you: "" },
-        donation_goals: found.donation_goals || { food: "0", prize: "0", swag: "0" },
+        donation_current: found.donation_current || {
+          food: "0",
+          prize: "0",
+          swag: "0",
+          thank_you: "",
+        },
+        donation_goals: found.donation_goals || {
+          food: "0",
+          prize: "0",
+          swag: "0",
+        },
         planning: found.planning || {},
       };
       setDraft(normalized);
@@ -143,7 +163,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       }
       return payload;
     },
-    [apiBase]
+    [apiBase],
   );
 
   // Build a payload that contains the committed state plus only the keys not
@@ -181,11 +201,19 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
         const saved = await pushPatch(payload);
         if (saved) {
           setCommitted(cloneDeep(saved));
-          setSaveState({ status: "saved", lastSavedAt: Date.now(), error: null });
+          setSaveState({
+            status: "saved",
+            lastSavedAt: Date.now(),
+            error: null,
+          });
         }
       } catch (err) {
         console.error("Autosave failed:", err);
-        setSaveState({ status: "error", lastSavedAt: null, error: err.message });
+        setSaveState({
+          status: "error",
+          lastSavedAt: null,
+          error: err.message,
+        });
       }
     }, SAVE_DEBOUNCE_MS);
     return () => clearTimeout(saveTimerRef.current);
@@ -198,23 +226,36 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
 
   const setConstraint = useCallback((field, value) => {
     setDraft((prev) =>
-      prev ? { ...prev, constraints: { ...(prev.constraints || {}), [field]: value } } : prev
+      prev
+        ? {
+            ...prev,
+            constraints: { ...(prev.constraints || {}), [field]: value },
+          }
+        : prev,
     );
   }, []);
 
   const setPlanning = useCallback((patch) => {
     setDraft((prev) =>
-      prev ? { ...prev, planning: { ...(prev.planning || {}), ...patch } } : prev
+      prev
+        ? { ...prev, planning: { ...(prev.planning || {}), ...patch } }
+        : prev,
     );
   }, []);
 
   const setDeposit = useCallback((field, value) => {
     setDraft((prev) => {
       if (!prev) return prev;
-      const cur = prev.constraints?.hacker_deposit || { enabled: false, default_amount_cents: 500 };
+      const cur = prev.constraints?.hacker_deposit || {
+        enabled: false,
+        default_amount_cents: 500,
+      };
       return {
         ...prev,
-        constraints: { ...(prev.constraints || {}), hacker_deposit: { ...cur, [field]: value } },
+        constraints: {
+          ...(prev.constraints || {}),
+          hacker_deposit: { ...cur, [field]: value },
+        },
       };
     });
   }, []);
@@ -244,17 +285,25 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
         const saved = await pushPatch(draft);
         if (saved) {
           setCommitted(cloneDeep(saved));
-          setSaveState({ status: "saved", lastSavedAt: Date.now(), error: null });
+          setSaveState({
+            status: "saved",
+            lastSavedAt: Date.now(),
+            error: null,
+          });
           markSectionDirty(section, false);
           return { ok: true };
         }
         return { ok: false, error: "Concurrent save" };
       } catch (err) {
-        setSaveState({ status: "error", lastSavedAt: null, error: err.message });
+        setSaveState({
+          status: "error",
+          lastSavedAt: null,
+          error: err.message,
+        });
         return { ok: false, error: err.message };
       }
     },
-    [draft, pushPatch, markSectionDirty]
+    [draft, pushPatch, markSectionDirty],
   );
 
   const discardSection = useCallback(
@@ -271,7 +320,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       });
       markSectionDirty(section, false);
     },
-    [committed, markSectionDirty]
+    [committed, markSectionDirty],
   );
 
   // Beforeunload guard for any unsaved explicit work
@@ -317,7 +366,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
       commitSection,
       discardSection,
       fetchHackathon,
-    ]
+    ],
   );
 
   return value;
@@ -333,6 +382,17 @@ function collectKeysForSections(sectionSet) {
       keys.add("end_date");
       keys.add("timezone");
     } else if (s === "schedule") {
+      keys.add("countdowns");
+    } else if (s === "deadlines") {
+      // Deliberately also owns `countdowns` (not just `deadlines`) — the
+      // Deadlines and Schedule sections share the same top-level
+      // `countdowns` array. This means `discardSection("deadlines")`
+      // reverts any unsaved Schedule-section countdown edits too, and
+      // `commitSection("deadlines")` (which pushes the whole draft) will
+      // publish unsaved Schedule edits along with it. Acceptable given the
+      // hook's design, but keep it in mind if the two sections ever drift
+      // apart into separate save flows.
+      keys.add("deadlines");
       keys.add("countdowns");
     } else if (s === "meals" || s === "screening" || s === "deposit") {
       keys.add("constraints");

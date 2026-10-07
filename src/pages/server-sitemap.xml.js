@@ -1,4 +1,5 @@
 import { getServerSideSitemapLegacy } from 'next-sitemap';
+import { buildSitemapFields } from '../lib/sitemapFields';
 
 const BASE_URL = 'https://www.ohack.dev';
 const API_URL = process.env.NEXT_PUBLIC_API_SERVER_URL;
@@ -9,70 +10,28 @@ async function fetchJson(url) {
   return res.json();
 }
 
+async function fetchOrNull(url, label) {
+  try {
+    return await fetchJson(url);
+  } catch (e) {
+    console.error(`[server-sitemap] ${label} fetch failed:`, e.message);
+    return null;
+  }
+}
+
 export async function getServerSideProps(ctx) {
-  const fields = [];
   const now = new Date().toISOString();
 
-  // Hackathon event pages
-  try {
-    const data = await fetchJson(`${API_URL}/api/messages/hackathons`);
-    const hackathons = data.hackathons || data || [];
-    for (const h of hackathons) {
-      const id = h.event_id || h.id;
-      if (id) fields.push({ loc: `${BASE_URL}/hack/${id}`, lastmod: now, priority: '0.8', changefreq: 'weekly' });
-    }
-  } catch (e) {
-    console.error('[server-sitemap] hackathons fetch failed:', e.message);
-  }
+  // Nonprofit pages are intentionally NOT fetched here — /nonprofit/[id] is
+  // noindex (see next-sitemap.config.js exclude list).
+  const [hackathons, news, portfolios, jobs] = await Promise.all([
+    fetchOrNull(`${API_URL}/api/messages/hackathons`, 'hackathons'),
+    fetchOrNull(`${API_URL}/api/messages/news?limit=200`, 'news'),
+    fetchOrNull(`${API_URL}/api/users/portfolio/sitemap`, 'portfolios'),
+    fetchOrNull(`${API_URL}/api/jobs`, 'jobs'),
+  ]);
 
-  // Nonprofit pages
-  try {
-    const data = await fetchJson(`${API_URL}/api/messages/npos`);
-    const npos = data.nonprofits || data || [];
-    for (const n of npos) {
-      const id = n.id || n.nonprofit_id;
-      if (id) fields.push({ loc: `${BASE_URL}/nonprofit/${id}`, lastmod: now, priority: '0.6', changefreq: 'monthly' });
-    }
-  } catch (e) {
-    console.error('[server-sitemap] npos fetch failed:', e.message);
-  }
-
-  // Blog / news pages
-  try {
-    const data = await fetchJson(`${API_URL}/api/messages/news?limit=200`);
-    const news = data.news || data || [];
-    for (const n of news) {
-      const id = n.id || n.slack_ts;
-      if (!id) continue;
-      const ts = n.slack_ts ? parseFloat(n.slack_ts) * 1000 : null;
-      const lastmod = ts && !isNaN(ts) ? new Date(ts).toISOString() : now;
-      fields.push({ loc: `${BASE_URL}/blog/${id}`, lastmod, priority: '0.5', changefreq: 'monthly' });
-    }
-  } catch (e) {
-    console.error('[server-sitemap] news fetch failed:', e.message);
-  }
-
-  // Public portfolio pages (opt-in only — backend lists profile_visibility=public)
-  try {
-    const data = await fetchJson(`${API_URL}/api/users/portfolio/sitemap`);
-    const portfolios = data.portfolios || [];
-    for (const p of portfolios) {
-      if (p.slug) fields.push({ loc: `${BASE_URL}/u/${p.slug}`, lastmod: now, priority: '0.6', changefreq: 'weekly' });
-    }
-  } catch (e) {
-    console.error('[server-sitemap] portfolios fetch failed:', e.message);
-  }
-
-  // Volunteer job listing pages (published + recently closed)
-  try {
-    const data = await fetchJson(`${API_URL}/api/jobs`);
-    const listings = data.listings || [];
-    for (const l of listings) {
-      if (l.slug) fields.push({ loc: `${BASE_URL}/jobs/${l.slug}`, lastmod: now, priority: '0.8', changefreq: 'weekly' });
-    }
-  } catch (e) {
-    console.error('[server-sitemap] jobs fetch failed:', e.message);
-  }
+  const fields = buildSitemapFields({ hackathons, news, portfolios, jobs, baseUrl: BASE_URL, now });
 
   ctx.res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
   return getServerSideSitemapLegacy(ctx, fields);

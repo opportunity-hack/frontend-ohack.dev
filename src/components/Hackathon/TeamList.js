@@ -1,5 +1,11 @@
 import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import NextLink from "next/link";
 import {
   Typography,
@@ -72,6 +78,12 @@ import FlagIcon from "@mui/icons-material/Flag";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
 import GavelIcon from "@mui/icons-material/Gavel";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import {
+  getSubmissionStatus,
+  submissionLabel,
+  projectThumbUrl,
+} from "../Teams/projectMeta";
 
 // Map MUI palette color names to a hex so the dots paint reliably without
 // having to pass the whole theme down. Mirrors SCORE_META.color.
@@ -163,9 +175,19 @@ const MentorSupportSummary = ({ team, eventId }) => {
   const lastTouchedBy = team?.mentor_last_touched_by_name;
   const hasAnyRating =
     Array.isArray(team?.mentor_ratings) && team.mentor_ratings.length > 0;
+  const isHeadsDown = team?.mentor_help_wanted === false;
 
-  // Hide entirely if there's no mentor activity to report.
-  if (!doneCount && !openFlags && !lastTouchedAt && !hasAnyRating) return null;
+  // Hide entirely if there's no mentor activity to report and the team
+  // hasn't asked for heads-down time either.
+  if (
+    !doneCount &&
+    !openFlags &&
+    !lastTouchedAt &&
+    !hasAnyRating &&
+    !isHeadsDown
+  ) {
+    return null;
+  }
 
   const coverageColor =
     doneCount === MENTOR_COVERAGE_TOTAL
@@ -206,6 +228,16 @@ const MentorSupportSummary = ({ team, eventId }) => {
           </Link>
         )}
       </Box>
+      {isHeadsDown && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 0.5 }}
+        >
+          Heads-down — team asked mentors to hold off
+        </Typography>
+      )}
       <Box
         sx={{
           display: "flex",
@@ -1073,6 +1105,126 @@ const GitHubStats = ({
   );
 };
 
+/**
+ * 16:9 media slot for a team's gallery card: an uploaded project thumbnail
+ * (with a play affordance when a demo video is also set), else the demo
+ * video's own lite thumbnail, else a quiet initial placeholder. Module-scope
+ * so it never remounts on parent re-renders (SectionBlock remount lesson).
+ */
+const ProjectMedia = ({ team, onPlayVideo }) => {
+  const thumb = projectThumbUrl(team);
+  const videoUrl = team?.demo_video_url || null;
+  const boxSx = {
+    position: "relative",
+    width: "100%",
+    aspectRatio: "16 / 9",
+    borderRadius: "8px",
+    overflow: "hidden",
+    mb: 1.5,
+    background: "var(--surface-2, #F4F1E9)",
+  };
+
+  if (thumb) {
+    return (
+      <Box sx={boxSx}>
+        <Box
+          component={videoUrl ? "button" : "div"}
+          type={videoUrl ? "button" : undefined}
+          onClick={
+            videoUrl ? () => onPlayVideo?.(videoUrl, team?.name) : undefined
+          }
+          aria-label={
+            videoUrl ? `Play demo for ${team?.name || "team"}` : undefined
+          }
+          sx={{
+            position: "absolute",
+            inset: 0,
+            p: 0,
+            m: 0,
+            border: 0,
+            cursor: videoUrl ? "pointer" : "default",
+            background: "none",
+          }}
+        >
+          <img
+            src={thumb}
+            alt=""
+            width={320}
+            height={180}
+            loading="lazy"
+            decoding="async"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+          {videoUrl && (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))",
+                background: "rgba(0,0,0,0.08)",
+              }}
+            >
+              <PlayCircleFilledIcon sx={{ fontSize: 48 }} />
+            </Box>
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  if (videoUrl) {
+    return (
+      <Box sx={boxSx}>
+        {/* LiteVideoThumbnail caps itself at `maxWidth: width` — wrap it in
+            a full-bleed absolutely-positioned box (like the thumb branch
+            above) so it fills the 16:9 frame instead of sitting narrower
+            and left-aligned on a wide single-column card (xs). */}
+        <Box sx={{ position: "absolute", inset: 0 }}>
+          <LiteVideoThumbnail
+            url={videoUrl}
+            label={`Watch ${team?.name || "team"} demo`}
+            width={960}
+            height={540}
+            onClick={() => onPlayVideo?.(videoUrl, team?.name)}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        ...boxSx,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Box
+        sx={{
+          fontFamily: FONT_DISPLAY,
+          fontSize: "2.4rem",
+          fontWeight: 500,
+          color: "var(--brand, #1B3A6B)",
+          opacity: 0.5,
+        }}
+      >
+        {(team?.name || "?")[0]?.toUpperCase()}
+      </Box>
+    </Box>
+  );
+};
+
 // Team Card component - extracted for better organization
 const TeamCard = ({
   team,
@@ -1135,6 +1287,14 @@ const TeamCard = ({
   const isActive =
     !isHackathonExpired && (team.active === "True" || team.active === true);
   const canJoinLeave = isActive && teamJoinEnabled;
+
+  // Project write-up fields (Sep 2026) — all optional, null-safe for legacy teams
+  const teamTagline = team?.project_tagline || null;
+  const builtWithTags = Array.isArray(team?.project_built_with)
+    ? team.project_built_with.filter(Boolean)
+    : [];
+  const submissionStatus = getSubmissionStatus(team);
+  const submissionTag = submissionStatus ? submissionLabel(team).tag : null;
 
   // Check if joining is disabled by team status
   const joiningDisabledByStatus = isJoiningDisabledByStatus(team?.status);
@@ -1224,6 +1384,8 @@ const TeamCard = ({
         </Box>
       )}
       <CardContent>
+        <ProjectMedia team={team} onPlayVideo={onPlayVideo} />
+
         <Box
           sx={{
             display: "flex",
@@ -1250,7 +1412,52 @@ const TeamCard = ({
             </Link>
           </Typography>
           {team?.status && renderStatusChip(team?.status)}
+          {submissionTag && (
+            <Chip
+              size="small"
+              variant={submissionStatus === "submitted" ? "outlined" : "filled"}
+              color={submissionStatus === "submitted" ? "primary" : "default"}
+              label={submissionTag}
+              sx={{ ml: 1, fontWeight: 600 }}
+            />
+          )}
         </Box>
+
+        {teamTagline && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mb: 1,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {teamTagline}
+          </Typography>
+        )}
+
+        {builtWithTags.length > 0 && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
+            {builtWithTags.slice(0, 3).map((tag, i) => (
+              <Chip
+                key={`${tag}-${i}`}
+                size="small"
+                variant="outlined"
+                label={tag}
+              />
+            ))}
+            {builtWithTags.length > 3 && (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={`+${builtWithTags.length - 3}`}
+              />
+            )}
+          </Box>
+        )}
 
         {!isActive && (
           <Typography variant="body2" color="error" sx={{ mb: 1 }}>
@@ -1329,44 +1536,38 @@ const TeamCard = ({
           )}
         </Box>
 
-        {/* Demo Video */}
-        {team?.demo_video_url && (
-          <Box sx={{ mb: 1.5 }}>
-            <LiteVideoThumbnail
-              url={team.demo_video_url}
-              label={`Watch ${team?.name || "team"} demo`}
-              onClick={() => onPlayVideo?.(team.demo_video_url, team?.name)}
-            />
-          </Box>
-        )}
-
-        {/* DevPost Project */}
+        {/* DevPost — optional now that the project story lives on our own
+            team page; quiet link when present, a member-only nudge to write
+            the project story (not DevPost specifically) when absent. */}
         <Box sx={{ mb: 1 }}>
           {team?.devpost_link ? (
             <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-              <FaExternalLinkAlt style={{ marginRight: 8, fontSize: "14px" }} />
+              <FaExternalLinkAlt
+                style={{ marginRight: 8, fontSize: "12px", opacity: 0.7 }}
+              />
               <Link
                 href={team.devpost_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="body2"
+                variant="caption"
+                color="text.secondary"
               >
-                DevPost Project
+                DevPost ↗
               </Link>
             </Box>
           ) : (
-            <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-              <FaExternalLinkAlt
-                style={{ marginRight: 8, fontSize: "14px", opacity: 0.5 }}
-              />
-              <Link
-                href={`/hack/${team?.hackathon_event_id}/manageteam`}
-                variant="body2"
-                sx={{ fontStyle: "italic", color: "text.secondary" }}
-              >
-                Add DevPost Project
-              </Link>
-            </Box>
+            isUserInTeam && (
+              <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                <Link
+                  component={NextLink}
+                  href={`/hack/${event_id}/manageteam#project`}
+                  variant="body2"
+                  sx={{ fontStyle: "italic" }}
+                >
+                  Add your project story →
+                </Link>
+              </Box>
+            )
           )}
         </Box>
 
@@ -1567,7 +1768,43 @@ const TeamList = ({
     url: null,
     teamName: null,
   });
+  const [submittedOnly, setSubmittedOnly] = useState(false);
   const { isLoggedIn, accessToken } = useAuthInfo();
+
+  // Submitted-first stable sort (preserves the caller's original ordering
+  // among teams of the same submission tier); the "Submitted only" toggle
+  // filters down to submitted/late. No new fetches — reads fields already
+  // on each team doc (getSubmissionStatus returns null for legacy teams,
+  // which sort/stay last, same as "draft").
+  const submittedCount = useMemo(
+    () =>
+      (teamData || []).filter((t) => {
+        const s = getSubmissionStatus(t);
+        return s === "submitted" || s === "late";
+      }).length,
+    [teamData],
+  );
+  const visibleTeams = useMemo(() => {
+    const isActiveTeam = (t) => t?.active === "True" || t?.active === true;
+    const isSubmittedTeam = (t) => {
+      const s = getSubmissionStatus(t);
+      return s === "submitted" || s === "late";
+    };
+    // Active-first is the caller's primary order (pages/hack/[event_id].js
+    // sorts active teams first before handing `teams` to this component);
+    // submitted-first is only a secondary tiebreaker WITHIN each active
+    // group, so an inactive-but-submitted team never outranks an
+    // active-but-unsubmitted one. Stable sort preserves each bucket's
+    // original relative order.
+    const rank = (t) =>
+      (isActiveTeam(t) ? 0 : 2) + (isSubmittedTeam(t) ? 0 : 1);
+    const withRank = (teamData || []).map((t, i) => ({ t, i, r: rank(t) }));
+    const sorted = withRank
+      .slice()
+      .sort((a, b) => a.r - b.r || a.i - b.i)
+      .map((x) => x.t);
+    return submittedOnly ? sorted.filter((t) => isSubmittedTeam(t)) : sorted;
+  }, [teamData, submittedOnly]);
 
   const handlePlayVideo = useCallback((url, teamName) => {
     setVideoDialog({ open: true, url, teamName: teamName || null });
@@ -1962,29 +2199,67 @@ const TeamList = ({
         </Box>
       )}
 
-      <Grid container spacing={2}>
-        {(teamData || []).map((team) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
-            <TeamCard
-              team={team}
-              userProfile={userProfile}
-              isLoggedIn={isLoggedIn}
-              onJoin={handleJoinTeam}
-              onLeave={handleUnjoinTeam}
-              loadingTeamId={loadingTeamId}
-              isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
-              teamJoinEnabled={teamJoinEnabled}
-              hackerStatus={hackerStatus}
-              nonprofitMap={nonprofitMap}
-              accessToken={accessToken}
-              onCopyGithubUsername={handleCopyGithubUsername}
-              onPlayVideo={handlePlayVideo}
-              event_id={event_id}
-              onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {submittedCount > 0 && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>
+          <Box
+            component="button"
+            type="button"
+            onClick={() => setSubmittedOnly((v) => !v)}
+            aria-pressed={submittedOnly}
+            className="ohx-tag"
+            sx={{
+              cursor: "pointer",
+              border: "1px solid",
+              borderColor: submittedOnly
+                ? "var(--brand, #1B3A6B)"
+                : "var(--line, #E7E1D4)",
+              background: submittedOnly
+                ? "var(--brand, #1B3A6B)"
+                : "transparent",
+              color: submittedOnly ? "#fff" : "var(--muted, #5B6270)",
+              fontWeight: 600,
+            }}
+          >
+            Submitted only ({submittedCount})
+          </Box>
+        </Box>
+      )}
+
+      {visibleTeams.length === 0 ? (
+        // Only show copy when the admin/visitor explicitly filtered to
+        // "Submitted only" and got zero results. When the event simply has
+        // no teams yet (e.g. an upcoming event), render nothing — this
+        // section previously rendered nothing in that case too.
+        submittedOnly && (
+          <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+            No submitted projects yet.
+          </Typography>
+        )
+      ) : (
+        <Grid container spacing={2}>
+          {visibleTeams.map((team) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team?.id}>
+              <TeamCard
+                team={team}
+                userProfile={userProfile}
+                isLoggedIn={isLoggedIn}
+                onJoin={handleJoinTeam}
+                onLeave={handleUnjoinTeam}
+                loadingTeamId={loadingTeamId}
+                isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
+                teamJoinEnabled={teamJoinEnabled}
+                hackerStatus={hackerStatus}
+                nonprofitMap={nonprofitMap}
+                accessToken={accessToken}
+                onCopyGithubUsername={handleCopyGithubUsername}
+                onPlayVideo={handlePlayVideo}
+                event_id={event_id}
+                onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Dialog
         open={videoDialog.open}

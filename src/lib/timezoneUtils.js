@@ -6,6 +6,8 @@
  * **and** the viewer's local timezone when they differ.
  */
 
+import { parseISO } from "date-fns";
+
 /** Default timezone for events that don't have one stored yet. */
 export const DEFAULT_EVENT_TIMEZONE = "America/Phoenix";
 
@@ -47,6 +49,81 @@ export function getTimezoneAbbreviation(date, timezone) {
 }
 
 /**
+ * ISO formatter that bakes a chosen timezone offset into the saved string
+ * (e.g. "2026-10-10T15:00:00-07:00"). Used by the Schedule and Deadlines
+ * admin sections so times are saved unambiguously regardless of the
+ * browser's own timezone.
+ *
+ * The offset is emitted with a colon (`-07:00`, not `-0700`) because the
+ * backend parses these with Python's `datetime.fromisoformat`, which on
+ * Python 3.9/3.10 rejects a colon-less offset (`ValueError: Invalid
+ * isoformat string`) — a save would silently be dropped. Every frontend
+ * consumer (native `Date`, `date-fns.parseISO`) parses both forms
+ * identically, so the colon form is safe everywhere.
+ */
+export function toIsoWithTimezone(date, timezone) {
+  if (!date) return "";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => n.toString().padStart(2, "0");
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d).reduce((acc, p) => {
+    acc[p.type] = p.value;
+    return acc;
+  }, {});
+  // Some engines render midnight as "24" with hour12:false — normalise.
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  // Derive the event-timezone offset from the wall-clock parts themselves
+  // (wall-clock-as-UTC minus the real instant), NOT from the browser's own
+  // `getTimezoneOffset()` and NOT from the `timeZoneName` string. The old
+  // implementation regexed `timeZoneName: "short"`, which for America/Phoenix
+  // is "MST" (no digits) and then fell back to the BROWSER offset — an admin
+  // in any other timezone silently saved a deadline hours off. This derivation
+  // is exact for every IANA zone (DST included) and needs no name parsing.
+  const wallClockAsUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  const offsetMinutes = Math.round(
+    (wallClockAsUtc - Math.floor(d.getTime() / 1000) * 1000) / 60000,
+  );
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const abs = Math.abs(offsetMinutes);
+  const offset = `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+  return `${parts.year}-${parts.month}-${parts.day}T${hour}:${parts.minute}:${parts.second}${offset}`;
+}
+
+/**
+ * Parses an ISO-ish string into a Date, tolerating both strict ISO 8601
+ * strings (via `date-fns`'s `parseISO`) and looser inputs. Returns null
+ * rather than an Invalid Date.
+ */
+export function safeParse(value) {
+  if (!value) return null;
+  try {
+    const d = parseISO(value);
+    if (!isNaN(d.getTime())) return d;
+  } catch {
+    // fall through to the looser Date constructor below
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
  * Format a date/time for dual-timezone display.
  *
  * Returns an object with pre-formatted strings so components can render
@@ -81,4 +158,20 @@ export function formatDualTimezone(dateInput, eventTimezone) {
     eventAbbr,
     userAbbr,
   };
+}
+
+/**
+ * Compact single-string version of `formatDualTimezone` for inline copy
+ * (snackbars, alert banners) that need a deadline moment but don't have
+ * room for the full dual-timezone layout `DeadlineStrip` uses. Always
+ * includes the event timezone abbreviation; appends the viewer's local
+ * time in parens only when it differs, so a viewer in a different
+ * timezone isn't left to guess what "5pm" means for them.
+ */
+export function formatDeadlineMoment(dateInput, eventTimezone) {
+  if (!dateInput) return "";
+  const dual = formatDualTimezone(dateInput, eventTimezone);
+  return dual.isSameTimezone
+    ? `${dual.eventTime} ${dual.eventAbbr}`
+    : `${dual.eventTime} ${dual.eventAbbr} (${dual.userTime} ${dual.userAbbr} your time)`;
 }

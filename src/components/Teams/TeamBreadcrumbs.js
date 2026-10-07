@@ -1,6 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import NextLink from "next/link";
+import { serializeJsonLd } from "../../lib/jsonLd";
 
 // Refined-scoped breadcrumb trail for the team page family. Styled with the
 // <RefinedRoot> CSS-var tokens (navy --brand links, Hanken Grotesk) so it sits
@@ -38,9 +39,12 @@ export default function TeamBreadcrumbs({ items = [], current }) {
   return (
     <>
       <Head>
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbStructuredData)}
-        </script>
+        {/* Raw <script> (not <JsonLd/>): next/head's client head-manager
+            builds DOM from each child's `type`, so a component child breaks. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbStructuredData) }}
+        />
       </Head>
       <nav aria-label="Breadcrumb" style={{ marginBottom: 22 }}>
         <ol

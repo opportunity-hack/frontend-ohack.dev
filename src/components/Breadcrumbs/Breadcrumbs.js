@@ -3,6 +3,7 @@ import { Breadcrumbs as MUIBreadcrumbs, Typography, Box } from '@mui/material';
 import Link from 'next/link';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import Head from 'next/head';
+import { serializeJsonLd } from '../../lib/jsonLd';
 
 const Breadcrumbs = ({ items, currentPage }) => {
   // Generate structured data for breadcrumbs
@@ -25,8 +26,8 @@ const Breadcrumbs = ({ items, currentPage }) => {
       ...(currentPage ? [{
         "@type": "ListItem",
         "position": items.length + 2,
-        "name": currentPage,
-        "item": typeof window !== 'undefined' ? window.location.href : ''
+        // Leaf crumb: schema.org allows omitting `item` for the current page.
+        "name": currentPage
       }] : [])
     ]
   };
@@ -34,9 +35,12 @@ const Breadcrumbs = ({ items, currentPage }) => {
   return (
     <>
       <Head>
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbStructuredData)}
-        </script>
+        {/* Raw <script> (not <JsonLd/>): next/head's client head-manager
+            builds DOM from each child's `type`, so a component child breaks. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbStructuredData) }}
+        />
       </Head>
       <Box sx={{ py: 1, px: 0 }}>
         <MUIBreadcrumbs

@@ -33,6 +33,7 @@ jest.mock('next/router', () => ({
     pathname: '/blog',
     query: {},
     push: jest.fn(),
+    replace: jest.fn(),
     isReady: true
   })
 }));
@@ -124,9 +125,15 @@ jest.mock('../../../styles/nonprofit/styles', () => ({
   LayoutContainer: (props) => <div {...props} data-testid="layout-container">{props.children}</div>,
 }));
 
-// Mock News component to simplify testing
+// Mock News component to simplify testing. Records every props object it's
+// called with (via a `mock`-prefixed var so babel-plugin-jest-hoist allows
+// referencing it inside the factory) so tests can inspect exactly what the
+// very FIRST render pass — before any effect has run — received.
+var mockNewsCalls = [];
 jest.mock('../../News/News', () => {
-  return function MockNews({ newsData, loading }) {
+  return function MockNews(props) {
+    mockNewsCalls.push(props);
+    const { newsData, loading } = props;
     return (
       <div data-testid="news-component">
         {loading ? (
@@ -184,12 +191,37 @@ describe('BlogPage Component', () => {
   test('renders posts passed as props without fetching', async () => {
     // Arrange & Act
     render(<BlogPage posts={mockPosts} />);
-    
+
     // Assert - should not be in loading state
     await waitFor(() => {
       expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
     });
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('renders post titles synchronously on first render when posts are provided as props', () => {
+    // Arrange & Act — no waitFor/findBy: this must be true on the very first render.
+    render(<BlogPage posts={mockPosts} />);
+
+    // Assert
+    expect(screen.getByText('Test Post 1')).toBeInTheDocument();
+    expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('seeds state from the posts prop directly (no SSR/hydration skeleton flash)', () => {
+    // The very first call News is rendered with — i.e. the initial render
+    // pass, before any useEffect has had a chance to run — must already
+    // carry the real data. RTL's render() flushes passive effects
+    // synchronously, which would otherwise mask a `useState([])` +
+    // `useEffect(() => setNewsData(posts))` implementation (it "self-heals"
+    // in this one synchronous act() flush, but not during an actual SSR
+    // pass, which never runs effects at all).
+    mockNewsCalls.length = 0;
+    render(<BlogPage posts={mockPosts} />);
+
+    expect(mockNewsCalls[0].loading).toBe(false);
+    expect(mockNewsCalls[0].newsData).toEqual(mockPosts);
   });
 
   test('fetches posts when none are provided as props', async () => {
@@ -212,7 +244,7 @@ describe('BlogPage Component', () => {
     });
     
     // Act - search for "post 1"
-    const searchInput = screen.getByPlaceholderText('Search blog posts...');
+    const searchInput = screen.getByPlaceholderText(/search posts/i);
     fireEvent.change(searchInput, { target: { value: 'post 1' } });
     
     // Assert
@@ -263,7 +295,7 @@ describe('BlogPage Component', () => {
     });
     
     // Act - find and click the GitHub code button
-    const githubButton = screen.getByText('View Blog Code');
+    const githubButton = screen.getByText(/view the blog code/i);
     fireEvent.click(githubButton);
     
     // Assert

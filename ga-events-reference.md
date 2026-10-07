@@ -115,6 +115,40 @@ This enables:
 - Blog conversion (`SingleNews.js` `gaButton`): every `gaButton` call sends `conversion` with `send_to: AW-11474351176/2qwxCOXE8vccEMjost8q` — the "News button click" conversion action (secondary, page-view category) in that account. The older label `JCk6COG-q4kZEMjost8q` was a deleted action in the same account. Setting `GOOGLE_ADS_BLOG_CONVERSION_LABEL = null` skips the ping.
 - GA4's Google tag `G-EM3BV6M5EF` is combined with `AW-11474351176` (destinations: ohack.dev GA4 + Opportunity Hack Inc. Ads only). `AW-10941512308` is the cancelled Ads account 659-034-6027 and was split off on 2026-09-17 — never re-add it as a tag id or destination.
 
+## Team Dashboard, Project Pages & Hackers' Choice (Sep 2026)
+
+Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost-replacement.md`). Dashboard/vote events fire via `trackEvent({ action, params })`; admin events via `trackStructuredEvent(EventCategory.ADMIN, action, label, value)` (which sets `event_category` + `event_label`).
+
+### Team dashboard (`/hack/[event_id]/manageteam`, `event_category: "engagement"`)
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `team_dashboard_view` | `pages/hack/[event_id]/manageteam.js` | `{ event_category, event_label: <team status>, event_id }` | Once per page load (ref guard) when a team is present. Funnel top for everything below. |
+| `team_deadline_strip_view` | `TeamDashboard/DeadlineStrip.js` | `{ event_category, event_label: <deadlineState kind: open\|late_open\|closed\|submitted\|event_ends\|none> }` | Once per mount. Compare `submitted` vs `closed` counts to measure late-submission drop. |
+| `team_project_saved` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: <team id> }` | First successful autosave per page load only (not every keystroke). |
+| `team_project_submitted` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: "submitted" \| "late" }` | Fired after `POST /api/team/<id>/project/submit` succeeds. The core conversion of the dashboard. |
+| `team_demo_video_saved` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /demo-video`. |
+| `team_devpost_saved` | `TeamDashboard/DevPostEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /devpost` (DevPost is optional now — expect this to trend down). |
+| `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
+| `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
+
+### Hackers' Choice peer vote (`/hack/[event_id]/vote` + CTAs)
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `peer_vote_view` | `PeerVote/PeerVotePage.js` | `{ event_label: <slate status: disabled\|not_eligible\|upcoming\|open\|voted\|closed\|voided>, event_id, page: "hackers_choice_vote" }` | Once per distinct status per page visit (not re-fired by the upcoming-state refocus poll). `disabled` also covers a 404 from an older backend. |
+| `peer_vote_cta_click` | `PeerVote/PeerVoteCTA.js` | `{ event_label: "event" \| "dashboard", event_id }` | Which surface drove the voter to the page (event page vs team dashboard card). |
+| `peer_vote_submitted` | `PeerVote/PeerVotePage.js` | `{ value: <number of picks>, event_id, page: "hackers_choice_vote" }` | Ballot accepted (`POST …/peer-vote/ballot`). Re-votes fire again. No tallies are ever exposed to the client. |
+
+### Admin (`event_category: "admin"`)
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `admin_deadline_reminder_sent` | `admin/hackathon-edit/sections/DeadlinesSection.js` | `{ event_category: "admin", event_label: <event_id>, value: <hours_before 24\|6\|1> }` | Manual "Send reminder now" (the hourly cron path is server-side and untracked). |
+| `admin_peer_vote_void_ballot` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | A ballot was voided. |
+| `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
+| `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
+
 ## Business Intelligence Applications
 
 ### User Acquisition Optimization

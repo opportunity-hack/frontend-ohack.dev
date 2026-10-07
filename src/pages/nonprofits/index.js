@@ -12,17 +12,29 @@ export default function NonProfits() {
   return <NonProfitList />;
 }
 
+// Builds at deploy time, so it MUST NEVER THROW (a throw fails the whole
+// Vercel build). On any upstream failure, render count-free meta and retry
+// after 60s instead of freezing the degraded copy until the next deploy.
 export const getStaticProps = async ({ params = {} } = {}) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`
-  );
-  const data = await res.json();
-  const nonprofits = data.nonprofits;
-  // Number of nonprofits
-  var countOfNonProfits = nonprofits.length;
+  let countOfNonProfits = null;
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npos`,
+      { signal: AbortSignal.timeout(15000) }
+    );
+    if (!res.ok) throw new Error(`Upstream ${res.status} for /api/messages/npos`);
+    const data = await res.json();
+    if (!Array.isArray(data?.nonprofits)) throw new Error("npos payload missing nonprofits[]");
+    countOfNonProfits = data.nonprofits.length;
+  } catch (error) {
+    console.error("Failed to fetch nonprofits:", error);
+  }
+  const degraded = countOfNonProfits === null;
 
   var title = "Nonprofit Project List: Opportunity Hack Developer Portal";
-  var metaDescription = 'A listing of ' + countOfNonProfits + ' nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships.';
+  var metaDescription = degraded
+    ? 'A listing of nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships.'
+    : 'A listing of ' + countOfNonProfits + ' nonprofits and projects we have worked on from hackathons, senior capstone projects, and internships.';
 
   // Helpful Docs:
   // https://medium.com/slack-developer-blog/everything-you-ever-wanted-to-know-about-unfurling-but-were-afraid-to-ask-or-how-to-make-your-e64b4bb9254
@@ -82,17 +94,22 @@ export const getStaticProps = async ({ params = {} } = {}) => {
           content: 'ohack.dev',
           key: 'twitterdomain',
         },
-        {
-          property: 'twitter:label1',
-          value: 'Nonprofits',
-          key: 'twitterlabel1',
-        },
-        {
-          property: 'twitter:data1',
-          value: countOfNonProfits,
-          key: 'twitterdata1',
-        }
+        ...(degraded
+          ? []
+          : [
+              {
+                property: 'twitter:label1',
+                content: 'Nonprofits',
+                key: 'twitterlabel1',
+              },
+              {
+                property: 'twitter:data1',
+                content: String(countOfNonProfits),
+                key: 'twitterdata1',
+              },
+            ]),
       ],
     },
+    revalidate: degraded ? 60 : 3600,
   };
 };

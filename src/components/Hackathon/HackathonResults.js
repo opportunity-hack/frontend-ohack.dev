@@ -105,6 +105,83 @@ const RankBadge = styled(Avatar)(({ gradient }) => ({
   marginBottom: 8,
 }));
 
+/**
+ * Hackers' Choice teaser for the results widget. Renders nothing when the
+ * event has the peer vote disabled; otherwise fetches the public summary
+ * (never tallies — just the published winner, once admin publishes) and
+ * degrades gracefully to an "announced later" line on 404/older backends.
+ * Module-scope so it's stable across HackathonResults re-renders.
+ */
+const HackersChoiceCard = ({ eventId, peerVoteEnabled }) => {
+  const [summary, setSummary] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!peerVoteEnabled || !eventId) return;
+    let cancelled = false;
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hackathons/${eventId}/peer-vote/summary`,
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setSummary(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, peerVoteEnabled]);
+
+  if (!peerVoteEnabled) return null;
+
+  return (
+    <Box
+      sx={{
+        mt: 4,
+        minHeight: 148,
+        p: 3,
+        borderRadius: 2,
+        border: "1px solid var(--line, #E7E1D4)",
+        background: "var(--surface, #FFFFFF)",
+        textAlign: "center",
+      }}
+    >
+      <Typography
+        variant="overline"
+        sx={{ color: "var(--muted, #5B6270)", letterSpacing: "0.14em" }}
+      >
+        Hackers' Choice
+      </Typography>
+      {summary?.published ? (
+        <>
+          <Typography
+            variant="h5"
+            sx={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 500,
+              color: "var(--ink, #16181D)",
+              mt: 0.5,
+            }}
+          >
+            {summary.winner_team_name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {summary.ballots} peer ballot{summary.ballots === 1 ? "" : "s"} ·
+            chosen by fellow hackers
+          </Typography>
+        </>
+      ) : (
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          {loaded ? "Hackers' Choice — announced at the awards ceremony." : " "}
+        </Typography>
+      )}
+    </Box>
+  );
+};
+
 const HackathonResults = ({
   teams,
   nonprofitMap,
@@ -112,6 +189,7 @@ const HackathonResults = ({
   eventTitle,
   githubOrg,
   fullResultsHref,
+  peerVoteEnabled = false,
 }) => {
   const [leaderboardStats, setLeaderboardStats] = useState(null);
   const [volunteerCounts, setVolunteerCounts] = useState({});
@@ -397,6 +475,7 @@ const HackathonResults = ({
                   : null;
               const githubLink = team.github_links?.[0]?.link;
               const memberCount = team.users?.length || 0;
+              const awards = Array.isArray(team.awards) ? team.awards : [];
 
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={team.id}>
@@ -469,6 +548,55 @@ const HackathonResults = ({
                         )}
                       </Box>
                     </Box>
+
+                    {team.project_tagline && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 1,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {team.project_tagline}
+                      </Typography>
+                    )}
+
+                    {awards.length > 0 && (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 0.75,
+                          mb: 1.5,
+                        }}
+                      >
+                        {awards.map((award, i) => (
+                          <Box
+                            key={`${award}-${i}`}
+                            component="span"
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              fontSize: "0.78rem",
+                              fontWeight: 600,
+                              color: "var(--ink, #16181D)",
+                              border: "1px solid var(--line, #E7E1D4)",
+                              background: "var(--accent-soft, #FBE9E2)",
+                              borderRadius: "999px",
+                              px: 1.1,
+                              py: 0.3,
+                            }}
+                          >
+                            🏆 {award}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
 
                     {nonprofitName && (
                       <Typography
@@ -587,6 +715,8 @@ const HackathonResults = ({
           </Typography>
         </Box>
       )}
+
+      <HackersChoiceCard eventId={eventId} peerVoteEnabled={peerVoteEnabled} />
 
       {/* CTA row */}
       <Box

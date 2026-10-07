@@ -132,9 +132,9 @@ const BatchEmailDialog = ({
   orgId,
   eventId,
   onComplete,
-  // audience: "roster" (isSelected — on the event page), "denied" or
-  // "waitlisted" (application status). Rejection emails key on STATUS, never
-  // on "not selected" — that also covers pending / approved-unpublished people.
+  // audience: "roster" (isSelected — on the event page), "denied",
+  // "waitlisted" or "pending" (application status). Rejection emails key on
+  // STATUS, never on "not selected" — that also covers approved-unpublished people.
   audience,
   isSelectedUsers = true, // legacy boolean; ignored when `audience` is given
   onSnack, // optional page-level snackbar; there is no SnackbarProvider in the app, so notistack calls are silently swallowed without this
@@ -190,7 +190,9 @@ const BatchEmailDialog = ({
       ? "denied"
       : effectiveAudience === "waitlisted"
         ? "waitlisted"
-        : "on-roster";
+        : effectiveAudience === "pending"
+          ? "pending-review"
+          : "on-roster";
   const allEligibleUsers = BatchEmailService.filterUsersByAudience(
     volunteers,
     effectiveAudience,
@@ -227,16 +229,19 @@ const BatchEmailDialog = ({
       // Auto-suggest the matching template for the audience: denial
       // templates for status=denied, the hacker waitlist template for
       // status=waitlisted (other types have no waitlist template yet).
+      // "pending" has no dedicated template — the admin picks one.
       const isJudge = volunteerType === "judge" || volunteerType === "judges";
       const isHacker = volunteerType === "hacker" || volunteerType === "hackers";
       const templateId =
-        effectiveAudience === "waitlisted"
-          ? isHacker
-            ? "hacker_waitlisted"
-            : null
-          : isJudge
-            ? "judge_application_denied"
-            : "application_denied";
+        effectiveAudience === "pending"
+          ? null
+          : effectiveAudience === "waitlisted"
+            ? isHacker
+              ? "hacker_waitlisted"
+              : null
+            : isJudge
+              ? "judge_application_denied"
+              : "application_denied";
       if (!templateId) return;
       // Prefer the admin-managed version; fall back to the hardcoded one
       const denialTemplate =
@@ -632,7 +637,9 @@ const BatchEmailDialog = ({
               ? `Email the ${volunteerType} roster`
               : effectiveAudience === "waitlisted"
                 ? `Email waitlisted ${volunteerType}`
-                : `Email denied ${volunteerType}`}
+                : effectiveAudience === "pending"
+                  ? `Email pending-review ${volunteerType}`
+                  : `Email denied ${volunteerType}`}
           </Typography>
         </Box>
         <Stepper activeStep={currentStep} sx={{ mt: 2 }}>

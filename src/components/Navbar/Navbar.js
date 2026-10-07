@@ -5,6 +5,7 @@ import Head from "next/head";
 import Image from "next/image";
 import MenuIcon from "@mui/icons-material/Menu";
 import { trackEvent, initFacebookPixel, set } from "../../lib/ga";
+import { redirectToLoginPageWithLogging } from "../../lib/authRedirectLogging";
 import Button from "@mui/material/Button";
 import {
   useLogoutFunction,
@@ -25,6 +26,7 @@ import {
   Menu,
   Divider,
   ListSubheader,
+  Skeleton,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 
@@ -82,8 +84,13 @@ const auth_settings = [
 ];
 
 export default function NavBar() {
-  const { isLoggedIn, user } = useAuthInfo();
-  const { redirectToLoginPage } = useRedirectFunctions();
+  // `loading` is true while the PropelAuth client validates the session.
+  // During that window `isLoggedIn` is undefined (falsy), so the auth slot
+  // must render a neutral placeholder instead of the logged-out "Log In"
+  // button — otherwise signed-in users see a login flash on every
+  // navigation until the client resolves.
+  const { isLoggedIn, user, loading: authLoading } = useAuthInfo();
+  const redirectFns = useRedirectFunctions();
   const logout = useLogoutFunction();
   // Hearts tier for the avatar ring/badge + dropdown status. Module-cached
   // fetch shared with ProfileCompletionPrompt — one request per page load,
@@ -135,52 +142,6 @@ export default function NavBar() {
   const handleCloseGetInvolvedMenu = () => setAnchorElGetInvolved(null);
   const handleCloseHackathonsMenu = () => setAnchorElHackathons(null);
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Opportunity Hack",
-    url: "https://www.ohack.dev/",
-    logo: "https://cdn.ohack.dev/ohack.dev/ohack_white.webp",
-    description:
-      "Opportunity Hack connects technology with nonprofits to create innovative solutions through hackathons and ongoing projects. Based in Phoenix, Arizona.",
-    sameAs: [
-      "https://www.facebook.com/opportunityhack",
-      "https://twitter.com/opportunityhack",
-      "https://threads.net/opportunityhack",
-      "https://www.linkedin.com/company/opportunity-hack",
-      "https://www.instagram.com/opportunityhack",
-    ],
-    knowsAbout: [
-      "Hackathons",
-      "Nonprofit Technology",
-      "Social Impact",
-      "Volunteer Coding",
-      "Tech for Good",
-      "Arizona Tech",
-    ],
-    event: {
-      "@type": "Event",
-      name: "Opportunity Hack Arizona Hackathon",
-      startDate: "2024-10-12T08:00:00-07:00",
-      endDate: "2024-10-13T18:00:00-07:00",
-      location: {
-        "@type": "Place",
-        name: "ASU Tempe Engineering Center - Generator Labs",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "501 E Tyler Mall",
-          addressLocality: "Tempe",
-          addressRegion: "AZ",
-          postalCode: "85281",
-          addressCountry: "US",
-        },
-      },
-      description:
-        "Annual hackathon bringing together developers, designers, and nonprofits to create tech solutions for social good.",
-      url: "https://www.ohack.dev/hack",
-    },
-  };
-
   return (
     <AppBar
       position="fixed"
@@ -200,9 +161,6 @@ export default function NavBar() {
           href="https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_Logo_Dark_Blue_Banner.png"
           as="image"
         />
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
       </Head>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
@@ -551,7 +509,19 @@ export default function NavBar() {
               minHeight: "56px",
             }}
           >
-            {isLoggedIn ? (
+            {authLoading ? (
+              // Session still validating: neutral skeleton in the fixed-width
+              // auth slot. Never render the "Log In" button (or the avatar)
+              // until the client has resolved, so no wrong-state flash.
+              <Skeleton
+                variant="circular"
+                width={40}
+                height={40}
+                animation="wave"
+                sx={{ margin: "4px" }}
+                aria-label="Checking sign-in status"
+              />
+            ) : isLoggedIn ? (
               <>
                 <Tooltip title="Open settings">
                   <IconButton
@@ -659,9 +629,13 @@ export default function NavBar() {
                 variant="contained"
                 disableElevation
                 onClick={() =>
-                  redirectToLoginPage({
-                    postLoginRedirectUrl: window.location.href,
-                  })
+                  redirectToLoginPageWithLogging(
+                    redirectFns,
+                    {
+                      postLoginRedirectUrl: window.location.href,
+                    },
+                    "navbar"
+                  )
                 }
                 className="login-button"
               >

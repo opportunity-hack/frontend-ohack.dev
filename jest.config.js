@@ -13,6 +13,8 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/.next/',
     '<rootDir>/src/tests/e2e/',
+    // agent worktrees / plan scratch under .claude must never be collected
+    '<rootDir>/.claude/',
   ],
   moduleNameMapper: {
     // Handle module aliases (if you configured them in Next.js)
