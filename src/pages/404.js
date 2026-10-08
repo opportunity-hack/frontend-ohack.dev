@@ -105,10 +105,8 @@ const Custom404 = () => {
         </Box>
         <Box mt={4}>
           <Typography variant="body1" color="textSecondary">
-            If you believe this is an error, please contact us at{' '}
-            <Link href="mailto:support@ohack.org">
-              support@ohack.org
-            </Link>
+            If you believe this is an error, please{' '}
+            <Link href="/contact?type=technical">let us know</Link>.
           </Typography>
         </Box>
       </StyledContainer>

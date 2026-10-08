@@ -105,14 +105,14 @@ const PrivacyPolicy = () => {
           <li>The right to withdraw consent at any time for data processing based on consent</li>
         </Typography>
         <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
-          To exercise these rights, please contact us at privacy@ohack.org. We will respond to your request within 30 days.
+          To exercise these rights, please contact us through our contact page at ohack.dev/contact. We will respond to your request within 30 days.
         </Typography>
 
         <Typography variant="h4" gutterBottom sx={{ mt: 4, fontSize: '2rem' }}>
           9. Your Rights
         </Typography>
         <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem' }}>
-          Regardless of your location, you have the right to access, correct, or delete your personal information at any time. If you would like to exercise these rights or have any questions about our privacy practices, please contact us at privacy@ohack.org.
+          Regardless of your location, you have the right to access, correct, or delete your personal information at any time. If you would like to exercise these rights or have any questions about our privacy practices, please contact us through our contact page at ohack.dev/contact.
         </Typography>
 
         <Typography variant="h4" gutterBottom sx={{ mt: 4, fontSize: '2rem' }}>
