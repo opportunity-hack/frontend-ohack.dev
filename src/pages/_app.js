@@ -117,6 +117,11 @@ export default function MyApp({ Component, pageProps }) {
               description:
                 "501(c)(3) nonprofit connecting volunteer software developers with nonprofits to build free, custom software since 2013.",
               foundingDate: "2013",
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                email: "help@ohack.org",
+              },
               sameAs: [
                 "https://www.linkedin.com/company/opportunity-hack/",
                 "https://github.com/opportunity-hack",
