@@ -736,7 +736,7 @@ export default function JobApplicationForm({ listing }) {
               {alreadyApplied.status ? ` (status: ${alreadyApplied.status})` : ""}.
               Check your inbox for the confirmation email — if you haven&apos;t
               replied to it yet, doing so confirms your application is active.
-              We&apos;ll reach out from questions@ohack.org for next steps.
+              We&apos;ll reach out by email for next steps.
             </Typography>
           </Alert>
         </Box>

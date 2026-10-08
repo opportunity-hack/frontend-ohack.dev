@@ -31,7 +31,7 @@ const organizationSchema = {
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
-    email: "board@ohack.org",
+    url: "https://www.ohack.dev/contact",
   },
   founder: [
     { "@type": "Person", name: "Prashanthi Ravanavarapu", sameAs: "https://www.linkedin.com/in/pravanavarapu/" },
@@ -472,7 +472,7 @@ export const getStaticProps = async () => {
             foundingDate: "2013",
             description:
               "Harness the power of code for social good, fostering an inclusive society and championing impactful, sustainable change through technology volunteering and hackathons since 2013.",
-            contactPoint: { "@type": "ContactPoint", contactType: "customer service", email: "board@ohack.org" },
+            contactPoint: { "@type": "ContactPoint", contactType: "customer service", url: "https://www.ohack.dev/contact" },
             founder: [
               { "@type": "Person", name: "Prashanthi Ravanavarapu" },
               { "@type": "Person", name: "Jot Powers" },
