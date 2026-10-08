@@ -127,7 +127,7 @@ const pitfalls = [
 const faqItems = [
   {
     q: "Can I use this rubric for my own hackathon?",
-    a: "Yes — copy and adapt freely. We open-source the Opportunity Hack judging framework and explicitly invite other hackathon organizers to use it. No attribution is required, though we'd love to hear how you adapt it. Email greg@ohack.org with feedback.",
+    a: "Yes — copy and adapt freely. We open-source the Opportunity Hack judging framework and explicitly invite other hackathon organizers to use it. No attribution is required, though we'd love to hear how you adapt it. Share feedback through our contact page at ohack.dev/contact.",
   },
   {
     q: "How long does scoring one project take with this rubric?",
@@ -445,8 +445,8 @@ const HackathonJudgingCriteria = () => {
 
           <Alert severity="info" sx={{ mb: 3 }}>
             Copy and paste this template for your own hackathon. We open-source the framework — no
-            attribution required, but we'd love to hear if you adapt it. Email greg@ohack.org with
-            feedback.
+            attribution required, but we'd love to hear if you adapt it. Send feedback through our{" "}
+            <Link href="/contact">contact page</Link>.
           </Alert>
 
           <Box
@@ -707,7 +707,7 @@ export const getStaticProps = async () => {
                 name: "Can I use this rubric for my own hackathon?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Yes — copy and adapt freely. We open-source the Opportunity Hack judging framework and explicitly invite other hackathon organizers to use it. No attribution is required, though we'd love to hear how you adapt it. Email greg@ohack.org with feedback.",
+                  text: "Yes — copy and adapt freely. We open-source the Opportunity Hack judging framework and explicitly invite other hackathon organizers to use it. No attribution is required, though we'd love to hear how you adapt it. Share feedback through our contact page at ohack.dev/contact.",
                 },
               },
               {
