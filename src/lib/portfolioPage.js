@@ -45,9 +45,12 @@ export async function buildPortfolioServerSideProps({ param, res, route }) {
   }
 
   if (res) {
+    // 60s edge cache (was 300s): privacy toggles on the portfolio editor
+    // must show up on the public page fast, or users think the toggle is
+    // broken (validated live Oct 6, 2026 - stale page for up to 5 min).
     res.setHeader(
       "Cache-Control",
-      "public, s-maxage=300, stale-while-revalidate=600"
+      "public, s-maxage=60, stale-while-revalidate=60"
     );
   }
 
