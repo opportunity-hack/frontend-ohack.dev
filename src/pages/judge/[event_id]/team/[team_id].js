@@ -285,10 +285,8 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
           judgeApi.getTeamDetails(team_id, accessToken),
           judgeApi.getJudgeScores(user.userId, event_id, accessToken),
         ]);
-        console.log("Team Response:", teamResponse);
         setTeamData(teamResponse.team);
 
-        console.log("Scores Response:", scoresResponse);
 
         // Find existing submitted score for this team
         const existingScore = scoresResponse.scores?.find(
@@ -299,7 +297,6 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
           // Use submitted score if it exists
           setScores(existingScore.scores);
           setFeedback(existingScore.feedback || {});
-          console.log("Loaded submitted score:", existingScore.scores);
         } else {
           // If no submitted score, check for draft
           try {
@@ -310,7 +307,6 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
               round,
               accessToken,
             );
-            console.log("Draft Response:", draftResponse);
             if (
               draftResponse &&
               draftResponse.draft &&
@@ -320,19 +316,12 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
               const { total, ...draftScores } = draftResponse.draft.scores;
               setScores(draftScores);
               setFeedback(draftResponse.draft.feedback || {});
-              console.log("Loaded draft score:", draftScores);
-              console.log(
-                "Loaded draft feedback:",
-                draftResponse.draft.feedback,
-              );
               enqueueSnackbar("Draft scores loaded", { variant: "info" });
             } else {
               setScores(initializeScores());
               setFeedback({});
-              console.log("No existing scores or drafts, initialized defaults");
             }
           } catch (draftError) {
-            console.log("No draft found, using default scores");
             setScores(initializeScores());
             setFeedback({});
           }
@@ -391,7 +380,6 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
   };
 
   const calculateTotal = () => {
-    console.log("Calculating total score:", scores);
 
     // Get all special category keys to exclude from main total
     const specialCategoryKeys = SPECIAL_CATEGORIES.flatMap((category) =>
@@ -403,10 +391,6 @@ const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
       .filter(([key]) => key !== "total" && !specialCategoryKeys.includes(key))
       .reduce((sum, [, score]) => sum + (score || 0), 0);
 
-    console.log(
-      "Total score calculated (excluding special categories):",
-      total_score,
-    );
     return total_score;
   };
 

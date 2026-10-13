@@ -55,11 +55,9 @@ export default function usePrivacySettings() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched privacy settings:', data);
         setPrivacySettings({ ...DEFAULT_PRIVACY_SETTINGS, ...data.privacy_settings });
       } else if (response.status === 404) {
         // If no privacy settings exist yet, use defaults
-        console.log('No privacy settings found, using defaults');
         setPrivacySettings(DEFAULT_PRIVACY_SETTINGS);
       } else {
         throw new Error(`Failed to fetch privacy settings: ${response.status}`);
@@ -81,7 +79,6 @@ export default function usePrivacySettings() {
     try {
       const updateData = { [field]: value };
 
-      console.log(`Updating privacy setting: ${field} = ${value}`);
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile/privacy-settings`,
@@ -101,7 +98,6 @@ export default function usePrivacySettings() {
           ...prev,
           [field]: value
         }));
-        console.log(`Privacy setting updated: ${field} = ${value}`);
       } else {
         throw new Error(`Failed to update privacy setting: ${response.status}`);
       }

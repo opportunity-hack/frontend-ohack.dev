@@ -1,7 +1,12 @@
-// Minimal flat config — currently exists to enforce ONE contract:
-// font families come from src/styles/fonts.js (see CLAUDE.md "Typography
-// system"). next/font renames loaded families to hashed names, so a hardcoded
-// 'Hanken Grotesk' / 'Fraunces' literal silently renders a fallback font.
+// Minimal flat config — currently exists to enforce two contracts:
+// 1. Font families come from src/styles/fonts.js (see CLAUDE.md "Typography
+//    system"). next/font renames loaded families to hashed names, so a
+//    hardcoded 'Hanken Grotesk' / 'Fraunces' literal silently renders a
+//    fallback font.
+// 2. No console.log/debug in app code: production pages were dumping API
+//    responses and user settings to the browser console. console.warn and
+//    console.error stay allowed. Warning only (not error) because console
+//    calls elsewhere are being cleaned up gradually.
 // Run with: npm run lint
 
 export default [
@@ -30,6 +35,7 @@ export default [
       reportUnusedDisableDirectives: "off",
     },
     rules: {
+      "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-restricted-syntax": [
         "error",
         {

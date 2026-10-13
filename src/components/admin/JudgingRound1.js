@@ -78,7 +78,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     if (selectedHackathon && hackathons.length > 0) {
       const hackathon = hackathons.find(h => h.event_id === selectedHackathon);
       setSelectedHackathonData(hackathon);
-      console.log('Selected Hackathon Data:', hackathon);
     }
   }, [selectedHackathon, hackathons]);
 
@@ -217,7 +216,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     try {
       // Step 1: Load judges first
       setLoadingJudges(true);
-      console.log('Fetching judges for hackathon:', selectedHackathon);
       const judgesResponse = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon/${selectedHackathon}/judge`,
         {
@@ -228,15 +226,11 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         }
       );
       
-      console.log('Raw judges response:', judgesResponse.data);
       
       // Only get accepted judges
       const allJudges = judgesResponse.data.data || [];
       const acceptedJudges = allJudges.filter(judge => judge.isSelected) || [];
       
-      console.log('All judges:', allJudges.length);
-      console.log('Accepted judges:', acceptedJudges.length);
-      console.log('First few judges:', allJudges.slice(0, 3));
       
       setJudges(acceptedJudges);
       setLoadingJudges(false);
@@ -383,7 +377,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     if (group.teams.length > 0) {
       try {
         for (const team of group.teams) {
-          console.log('Assigning judge to team:', team.id, 'judge.user_id:', judge.user_id);
           await axios.post(
             `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
             {
@@ -473,7 +466,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     const isAlreadyAssigned = group.teams.some(t => t.id === teamId);
     if (isAlreadyAssigned) return;
 
-    console.log('Assigning team to group:', { groupId, teamId, group, judgesInGroup: group.judges.length });
 
     // If panel exists in backend, create assignments for all judges in the panel
     if (group.panel_id) {
@@ -487,7 +479,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         // Create assignments for each judge in the panel
         for (const judge of group.judges) {
           const judgeId = judge.user_id || judge.id || judge.judge_id;
-          console.log('Assigning team to judge:', judgeId, 'Judge object:', judge);
           
           if (!judgeId) {
             console.error('No valid judge ID found for judge:', judge);
@@ -580,14 +571,11 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       group.judges.map(j => j.user_id || j.id || j.judge_id)
     );
     
-    console.log('Assigned judge IDs from groups:', assignedJudgeIds);
-    console.log('All judges user_ids:', judges.map(j => j.user_id));
     
     const unassigned = judges.filter(judge => 
       !assignedJudgeIds.includes(judge.user_id)
     );
     
-    console.log('Unassigned judges count:', unassigned.length);
     return unassigned;
   };
 
@@ -597,7 +585,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       group.teams.map(t => t.id)
     );
 
-    console.log("Teams:", teams);
     const filteredTeams = teams.filter(team => 
       !assignedTeamIds.includes(team.id) && 
       team.status !== 'INACTIVE'
@@ -765,7 +752,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           // Create judge assignments for this panel
           for (const judge of group.judges) {
             for (const team of group.teams) {
-              console.log('Saving assignment for judge:', judge.user_id, 'team:', team.id);
               await axios.post(
                 `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
                 {
@@ -808,7 +794,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     setLoadingPanels(true);
     try {
       // Step 1: Load panels
-      console.log('Loading existing panels for hackathon:', selectedHackathon);
       const panelsResponse = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/panels/${selectedHackathon}`,
         {
@@ -820,7 +805,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       );
 
       const panels = panelsResponse.data.panels || [];
-      console.log('Loaded Panels:', panels);
       
       if (panels.length > 0) {
         const loadedGroups = [];
@@ -861,8 +845,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           const groupJudges = Array.from(judgeMap.values());
           const groupTeams = Array.from(teamSet);
           
-          console.log('Loaded judges for panel', panel.panel_name, ':', groupJudges);
-          console.log('Judge ID fields:', groupJudges.map(j => ({ user_id: j.user_id, id: j.id, judge_id: j.judge_id })));
           
           loadedGroups.push({
             id: panel.id, // Use panel.id as the group id
@@ -874,11 +856,6 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           });
         }
         
-        console.log('Final loaded groups with judges:', loadedGroups.map(g => ({
-          name: g.name,
-          judgeCount: g.judges.length,
-          judgeIds: g.judges.map(j => j.user_id || j.id || j.judge_id)
-        })));
         
         setJudgeGroups(loadedGroups);
       }
