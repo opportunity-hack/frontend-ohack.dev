@@ -529,27 +529,9 @@ export async function getStaticProps({ params }) {
 }
 
 export async function getStaticPaths() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/all`);
-    const hackathons = await res.json();
-
-    const paths = hackathons.map((event) => ({
-      params: {
-        event_id: event.event_id || event.id || event._id || "unknown-event",
-      },
-    }));
-
-    return {
-      paths,
-      fallback: true,
-    };
-  } catch (error) {
-    console.error("Error fetching hackathon paths:", error);
-    return {
-      paths: [],
-      fallback: true,
-    };
-  }
+  // On demand only — no build-time fetch of every event (see /hack/[event_id]
+  // for why; a backend blip during `next build` must not fail the deploy).
+  return { paths: [], fallback: true };
 }
 
 export default AgendaPage;

@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens after I apply?",
-    a: "You'll get a confirmation email right away — reply to it within 5 days to confirm your application is active (consider it the first task). We review every application by hand, typically within a week, then reach out from questions@ohack.org to set up a short call.",
+    a: "You'll get a confirmation email right away — reply to it within 5 days to confirm your application is active (consider it the first task). We review every application by hand, typically within a week, then reach out by email to set up a short call.",
   },
   {
     q: "Will this actually help my career?",

@@ -36,8 +36,11 @@ export default function ErrorSubmittingApplication() {
                   Please try again.
                   <br />
                   <br />
-                  If the problem persists, please contact us at{" "}
-                  <span style={{ color: "blue" }}>help@ohack.org</span>.
+                  If the problem persists, please reach us through{" "}
+                  <a href="/contact?type=nonprofit" style={{ color: "blue" }}>
+                    our contact page
+                  </a>
+                  .
                 </h4>
               </div>
             </div>

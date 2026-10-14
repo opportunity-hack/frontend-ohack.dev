@@ -698,12 +698,9 @@ const JudgeTrainingGate = ({
                 >
                   #ask-a-mentor on Slack
                 </a>{" "}
-                or email{" "}
-                <a
-                  href="mailto:questions@ohack.org"
-                  style={{ color: "inherit" }}
-                >
-                  questions@ohack.org
+                or{" "}
+                <a href="/contact?type=judge" style={{ color: "inherit" }}>
+                  send us a message
                 </a>
                 .
               </Typography>

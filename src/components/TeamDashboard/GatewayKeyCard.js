@@ -5,14 +5,16 @@ import useGatewayKey from "../../hooks/use-gateway-key";
 import { isGatewayKeyNotProvisioned } from "../../lib/teamDashboardApi";
 import { trackEvent, EventCategory } from "../../lib/ga";
 
-const GATEWAY_ENDPOINT = "https://ai.ohack.dev/v1";
-const GUIDE_URL = "https://ai.ohack.dev/ui/guide/";
-const FALLBACK_MODELS = ["muse-spark", "kimi-k2.7-code", "gpt-oss-120b"];
-const TOOL_LINKS = [
-  { label: "Cursor", href: `${GUIDE_URL}#cursor` },
-  { label: "Claude Code", href: `${GUIDE_URL}#claude-code` },
-  { label: "Python", href: `${GUIDE_URL}#python` },
-];
+import {
+  buildSetupSnippets,
+  maskSnippet,
+  GATEWAY_OPENAI_BASE,
+  GUIDE_URL,
+  DEFAULT_MODEL,
+} from "./gatewaySnippets";
+
+const GATEWAY_ENDPOINT = GATEWAY_OPENAI_BASE;
+const FALLBACK_MODELS = [DEFAULT_MODEL, "kimi-k2.7-code", "gpt-oss-120b"];
 
 function copyToClipboard(text) {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -29,6 +31,92 @@ function RowLabel({ children }) {
   return (
     <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mb: 0.5 }}>
       {children}
+    </Box>
+  );
+}
+
+/**
+ * "Copy everything you need" — one block per tool with the team's key already
+ * filled in. On screen the key is masked unless the card's Reveal is on; the
+ * Copy button always copies the real thing.
+ */
+function SetupSnippets({ keyValue, model, revealed, onCopy }) {
+  const snippets = buildSetupSnippets({ key: keyValue, model });
+  const [activeId, setActiveId] = useState(snippets[0].id);
+  const active = snippets.find((sn) => sn.id === activeId) || snippets[0];
+  const shown = revealed ? active.text : maskSnippet(active.text, keyValue);
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <RowLabel>Copy everything you need</RowLabel>
+      <Box
+        role="tablist"
+        aria-label="Setup snippets by tool"
+        sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 1 }}
+      >
+        {snippets.map((sn) => {
+          const selected = sn.id === active.id;
+          return (
+            <button
+              key={sn.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className={`ohx-btn ohx-btn--ghost${selected ? " is-active" : ""}`}
+              onClick={() => setActiveId(sn.id)}
+              style={{
+                padding: "4px 10px",
+                fontSize: "0.8rem",
+                borderColor: selected ? "var(--brand, #1B3A6B)" : undefined,
+                color: selected ? "var(--brand, #1B3A6B)" : undefined,
+                fontWeight: selected ? 600 : 400,
+              }}
+            >
+              {sn.label}
+            </button>
+          );
+        })}
+      </Box>
+      <Box sx={{ fontSize: "0.85rem", color: "var(--muted)", mb: 1 }}>
+        {active.hint}{" "}
+        <a
+          href={`${GUIDE_URL}${active.guideAnchor}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-link"
+        >
+          Guide ↗
+        </a>
+      </Box>
+      <Box
+        component="pre"
+        role="tabpanel"
+        aria-label={`${active.label} setup`}
+        sx={{
+          m: 0,
+          p: 1.5,
+          fontSize: "0.8rem",
+          lineHeight: 1.5,
+          overflowX: "auto",
+          borderRadius: "6px",
+          border: "1px solid var(--border, #e0e0e0)",
+          background: "var(--surface-2, #F6F3EC)",
+          whiteSpace: "pre",
+        }}
+      >
+        {shown}
+      </Box>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          className="ohx-btn ohx-btn--primary"
+          onClick={() => onCopy(active.text, `snippet_${active.id}`)}
+        >
+          Copy {active.label} setup (includes key)
+        </button>
+        <Box sx={{ fontSize: "0.8rem", color: "var(--faint)" }}>
+          Paste it straight in. Don&apos;t commit it or screen-share it.
+        </Box>
+      </Box>
     </Box>
   );
 }
@@ -51,7 +139,13 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
         event_label: label,
       },
     });
-    if (onNotify) onNotify("Copied to clipboard");
+    if (onNotify) {
+      onNotify(
+        label.startsWith("snippet_")
+          ? "Copied — this includes your team's key, keep it private"
+          : "Copied to clipboard",
+      );
+    }
   };
 
   const toggleReveal = () => {
@@ -195,28 +289,27 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
             </Box>
           </Box>
 
+          <SetupSnippets
+            keyValue={keyData.key}
+            model={
+              keyData.models && keyData.models.length > 0
+                ? keyData.models[0]
+                : DEFAULT_MODEL
+            }
+            revealed={revealed}
+            onCopy={copy}
+          />
+
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
             <a
               href={GUIDE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="ohx-btn ohx-btn--primary"
+              className="ohx-btn ohx-btn--ghost"
               style={{ display: "inline-block", textDecoration: "none" }}
             >
-              Setup guide
+              Full setup guide ↗
             </a>
-            {TOOL_LINKS.map((t) => (
-              <a
-                key={t.label}
-                href={t.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ohx-btn ohx-btn--ghost"
-                style={{ display: "inline-block", textDecoration: "none" }}
-              >
-                {t.label}
-              </a>
-            ))}
           </Box>
 
           <Box sx={{ fontSize: "0.85rem", color: "var(--faint)" }}>

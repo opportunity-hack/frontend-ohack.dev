@@ -191,7 +191,7 @@ export default function LoginAndSignup({ seoMetadata }) {
                 contactPoint: {
                   "@type": "ContactPoint",
                   contactType: "customer service",
-                  email: "hi@ohack.org",
+                  email: "help@ohack.org",
                 },
                 memberOf: {
                   "@type": "ProgramMembership",

@@ -1634,49 +1634,11 @@ export async function getStaticProps({ params }) {
 }
 
 export async function getStaticPaths() {
-  try {
-    // Fetch a list of all hackathon IDs
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathons`,
-    );
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("Failed to fetch hackathon paths:", data);
-      return {
-        paths: [],
-        fallback: "blocking",
-      };
-    }
-
-    // Get data.hackathons if it exists, otherwise use data directly
-    const hackathons = data.hackathons;
-
-    if (!hackathons || !Array.isArray(hackathons)) {
-      console.error("Invalid hackathon data format:", hackathons);
-      return {
-        paths: [],
-        fallback: "blocking",
-      };
-    }
-
-    const paths = hackathons.map((event) => ({
-      // Handle case when event.event_id is null or undefined
-      params: {
-        event_id: event.event_id || event.id || event._id || "unknown-event",
-      },
-    }));
-
-    return {
-      paths,
-      // Generate pages for new events on demand
-      fallback: "blocking",
-    };
-  } catch (error) {
-    console.error("Error fetching hackathon paths:", error);
-    return {
-      paths: [],
-      fallback: "blocking",
-    };
-  }
+  // Rendered on demand (ISR, `revalidate: 60` in getStaticProps), NOT
+  // prerendered at build time. Prerendering every event fired ~40 backend
+  // fetches during `next build`; one network blip ("fetch failed" on
+  // /hack/9, Oct 7 2026) aborted the whole Vercel deploy — the same class of
+  // failure as the /jobs 503 on Oct 5. Same rule as /nonprofit, /project,
+  // /blog, /praise and the team pages (see CLAUDE.md "SSG error semantics").
+  return { paths: [], fallback: "blocking" };
 }

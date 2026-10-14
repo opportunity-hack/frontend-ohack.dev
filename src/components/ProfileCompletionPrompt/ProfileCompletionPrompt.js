@@ -79,7 +79,9 @@ const StyledLinearProgress = styled(LinearProgress)(({ theme }) => ({
  * Checks if a profile field is filled
  */
 function isFieldFilled(profile, fieldKey) {
-  const value = profile[fieldKey];
+  // `profile` can go back to null while the dialog is open (useHeartsSummary
+  // resets it on logout or a failed cache refetch) — treat that as unfilled.
+  const value = profile ? profile[fieldKey] : undefined;
   if (fieldKey === 'expertise') {
     return Array.isArray(value) && value.length > 0;
   }

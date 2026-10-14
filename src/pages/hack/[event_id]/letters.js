@@ -170,7 +170,6 @@ function LettersComponent() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event_id, apiServerUrl, user]);
 
   // Mirror current state into ?d= (debounced, shallow) so the link is shareable.
@@ -186,7 +185,6 @@ function LettersComponent() {
       );
     }, 400);
     return () => urlTimerRef.current && clearTimeout(urlTimerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers, fields, signer]);
 
   // Keep the visible shareable link in sync with the encoded state.
@@ -273,7 +271,7 @@ function LettersComponent() {
       setSuccess(true);
     } catch (e) {
       setSubmitError(
-        "Failed to submit your request. Please try again or email volunteer@ohack.org."
+        "Failed to submit your request. Please try again or reach us through the contact page at ohack.dev/contact."
       );
     } finally {
       setSubmitting(false);
