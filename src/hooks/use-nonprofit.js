@@ -77,7 +77,6 @@ export default function useNonprofit( nonprofit_id ){
                 }
             };
 
-            console.log("Authenticated user, adding token to request");            
             const data = await makeRequest({ config, authenticated: true });        
             onComplete(data);
         }
@@ -85,11 +84,7 @@ export default function useNonprofit( nonprofit_id ){
         {
             if( ip === null || ip === undefined || ip === "" )
             {
-                console.log("IP is null, cannot make request");
                 return null;
-            }
-            else{
-                console.log("IP is not null, making request");
             }
 
             const config = {
@@ -100,10 +95,8 @@ export default function useNonprofit( nonprofit_id ){
                     "X-IP-Address": ip
                 }
             };
-            console.log("Unauthenticated user");
             const data = await makeRequest({ config, authenticated: false });      
             
-            console.log("Data from request: ", data);
             onComplete(data);
         }        
         
@@ -130,7 +123,6 @@ export default function useNonprofit( nonprofit_id ){
             setNonprofitApplications([]);
         }
         else{
-            console.log("DATA: ", data);
             setNonprofitApplications(data);
         }            
     

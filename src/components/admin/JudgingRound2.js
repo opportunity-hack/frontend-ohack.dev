@@ -100,7 +100,6 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     if (selectedHackathon && hackathons.length > 0) {
       const hackathon = hackathons.find(h => h.event_id === selectedHackathon);
       setSelectedHackathonData(hackathon);
-      console.log('Selected Hackathon Data:', hackathon);
     }
   }, [selectedHackathon, hackathons]);
 
@@ -130,7 +129,6 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       );
       
       const judgeDetails = response.data.judge;
-      console.log('Successfully fetched judge details for', judgeId, ':', judgeDetails);
       
       // Ensure consistent user_id field
       if (judgeDetails && !judgeDetails.user_id) {
@@ -149,7 +147,6 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       // Try to find the judge in the initially loaded judges as fallback
       const fallbackJudge = judges.find(j => j.user_id === judgeId);
       if (fallbackJudge) {
-        console.log('Using fallback judge from initial load:', fallbackJudge);
         setJudgeDetailsCache(prev => ({ ...prev, [judgeId]: fallbackJudge }));
         return fallbackJudge;
       }
@@ -267,7 +264,6 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       );
 
       const allScores = scoresResponse.data.scores || [];
-      console.log('Fetched all Round 1 scores:', allScores);
       
       // Group scores by team
       const teamScoreMap = new Map();
@@ -400,8 +396,6 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
 
       // Only get accepted judges
       const acceptedJudges = judgesResponse.data.data?.filter(judge => judge.isSelected) || [];
-      console.log('Loaded judges in Round 2:', acceptedJudges);
-      console.log('Sample judge structure:', acceptedJudges[0]);
       setJudges(acceptedJudges);
       
       const allTeams = teamsResponse.data.teams || [];
