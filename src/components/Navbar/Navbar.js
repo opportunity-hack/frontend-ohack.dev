@@ -11,6 +11,7 @@ import {
   useLogoutFunction,
   useAuthInfo,
   useRedirectFunctions,
+  useHostedPageUrls,
 } from "@propelauth/react";
 import {
   AppBar,
@@ -90,7 +91,12 @@ export default function NavBar() {
   // button — otherwise signed-in users see a login flash on every
   // navigation until the client resolves.
   const { isLoggedIn, user, loading: authLoading } = useAuthInfo();
+  // redirectToLoginPage comes from useRedirectFunctions(); getLoginPageUrl
+  // (diagnostics only) comes from useHostedPageUrls(). They are different
+  // hooks — reading getLoginPageUrl off the redirect object was the bug that
+  // killed the Log In button (Oct 2026).
   const redirectFns = useRedirectFunctions();
+  const hostedUrls = useHostedPageUrls();
   const logout = useLogoutFunction();
   // Hearts tier for the avatar ring/badge + dropdown status. Module-cached
   // fetch shared with ProfileCompletionPrompt — one request per page load,
@@ -630,7 +636,10 @@ export default function NavBar() {
                 disableElevation
                 onClick={() =>
                   redirectToLoginPageWithLogging(
-                    redirectFns,
+                    {
+                      redirectToLoginPage: redirectFns.redirectToLoginPage,
+                      getLoginPageUrl: hostedUrls?.getLoginPageUrl,
+                    },
                     {
                       postLoginRedirectUrl: window.location.href,
                     },
