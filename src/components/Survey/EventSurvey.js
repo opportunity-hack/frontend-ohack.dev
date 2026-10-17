@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import NextLink from "next/link";
 import axios from "axios";
 import { useAuthInfo } from "@propelauth/react";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -155,25 +156,62 @@ function QuestionField({ q, mode, value, onChange }) {
   let control = null;
   switch (q.type) {
     case "scale":
-      control = <ScaleInput value={value ?? null} onChange={onChange} labels={q.scaleLabels} />;
+      control = (
+        <ScaleInput
+          value={value ?? null}
+          onChange={onChange}
+          labels={q.scaleLabels}
+        />
+      );
       break;
     case "single":
-      control = <ChoiceInput options={q.options} value={value ?? null} onChange={onChange} />;
+      control = (
+        <ChoiceInput
+          options={q.options}
+          value={value ?? null}
+          onChange={onChange}
+        />
+      );
       break;
     case "yesno":
-      control = <ChoiceInput options={YESNO} value={value ?? null} onChange={onChange} />;
+      control = (
+        <ChoiceInput
+          options={YESNO}
+          value={value ?? null}
+          onChange={onChange}
+        />
+      );
       break;
     case "yesnomaybe":
-      control = <ChoiceInput options={YESNOMAYBE} value={value ?? null} onChange={onChange} />;
+      control = (
+        <ChoiceInput
+          options={YESNOMAYBE}
+          value={value ?? null}
+          onChange={onChange}
+        />
+      );
       break;
     case "multi":
-      control = <ChoiceInput options={q.options} value={value || []} onChange={onChange} multi />;
+      control = (
+        <ChoiceInput
+          options={q.options}
+          value={value || []}
+          onChange={onChange}
+          multi
+        />
+      );
       break;
     case "text":
-      control = <TextInput value={value ?? ""} onChange={onChange} placeholder={q.placeholder} />;
+      control = (
+        <TextInput
+          value={value ?? ""}
+          onChange={onChange}
+          placeholder={q.placeholder}
+        />
+      );
       break;
     case "scale_text": {
-      const scaleVal = composite ? value.value ?? null : null;
+      const scaleVal = composite ? (value.value ?? null) : null;
       // `noteWhen` (e.g. onboarding) reveals the text box only on low scores;
       // without it the note is always shown.
       const showNote = !q.noteWhen || q.noteWhen(scaleVal);
@@ -183,7 +221,10 @@ function QuestionField({ q, mode, value, onChange }) {
             value={scaleVal}
             onChange={(v) => {
               const keepNote = !q.noteWhen || q.noteWhen(v);
-              onChange({ value: v, note: keepNote && composite ? value.note || "" : "" });
+              onChange({
+                value: v,
+                note: keepNote && composite ? value.note || "" : "",
+              });
             }}
             labels={q.scaleLabels}
           />
@@ -204,11 +245,18 @@ function QuestionField({ q, mode, value, onChange }) {
           <ChoiceInput
             options={YESNO}
             value={composite ? value.value : null}
-            onChange={(v) => onChange({ value: v, note: composite ? value.note || "" : "" })}
+            onChange={(v) =>
+              onChange({ value: v, note: composite ? value.note || "" : "" })
+            }
           />
           <TextInput
             value={composite ? value.note || "" : ""}
-            onChange={(t) => onChange({ value: composite ? value.value ?? null : null, note: t })}
+            onChange={(t) =>
+              onChange({
+                value: composite ? (value.value ?? null) : null,
+                note: t,
+              })
+            }
             placeholder={q.textLabel}
           />
         </div>
@@ -219,17 +267,29 @@ function QuestionField({ q, mode, value, onChange }) {
   }
 
   return (
-    <div className="ohx-card" style={{ padding: "20px 22px", display: "grid", gap: 12 }}>
+    <div
+      className="ohx-card"
+      style={{ padding: "20px 22px", display: "grid", gap: 12 }}
+    >
       <div>
-        <label style={{ fontWeight: 600, fontSize: "1.05rem", display: "block" }}>
+        <label
+          style={{ fontWeight: 600, fontSize: "1.05rem", display: "block" }}
+        >
           {questionLabel(q, mode)}
           {q.required && <span style={{ color: "var(--accent)" }}> *</span>}
           {q.optional && (
-            <span style={{ color: "var(--faint)", fontWeight: 400 }}> (optional)</span>
+            <span style={{ color: "var(--faint)", fontWeight: 400 }}>
+              {" "}
+              (optional)
+            </span>
           )}
         </label>
         {q.helper && (
-          <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}>{q.helper}</div>
+          <div
+            style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}
+          >
+            {q.helper}
+          </div>
         )}
       </div>
       {control}
@@ -253,7 +313,8 @@ function Shell({ eventTitle, children }) {
     <RefinedRoot>
       <Head>
         <title>
-          {eventTitle ? `Feedback · ${eventTitle}` : "Event feedback"} — Opportunity Hack
+          {eventTitle ? `Feedback · ${eventTitle}` : "Event feedback"} —
+          Opportunity Hack
         </title>
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -334,8 +395,12 @@ export default function EventSurvey({ source = "survey" }) {
   // volunteer can only choose a role they're isSelected for; everyone else → nonprofit.
   useEffect(() => {
     if (!ctx) return;
-    const allowed = ctx.allowed_roles?.length ? ctx.allowed_roles : ["nonprofit"];
-    setRole((prev) => (allowed.includes(prev) ? prev : ctx.primary_role || allowed[0] || ""));
+    const allowed = ctx.allowed_roles?.length
+      ? ctx.allowed_roles
+      : ["nonprofit"];
+    setRole((prev) =>
+      allowed.includes(prev) ? prev : ctx.primary_role || allowed[0] || "",
+    );
   }, [ctx]);
 
   const visibleQuestions = useMemo(() => {
@@ -393,15 +458,30 @@ export default function EventSurvey({ source = "survey" }) {
         { headers },
       );
       setSubmitted(true);
-      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      // Re-submitting updates the same response — reflect that if they come
+      // back via "Edit your answers" so the banner tells the truth.
+      setCtx((c) => (c ? { ...c, already_submitted: true } : c));
+      if (typeof window !== "undefined")
+        window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(
-        err?.response?.data?.error || "Something went wrong saving your feedback. Please try again.",
+        err?.response?.data?.error ||
+          "Something went wrong saving your feedback. Please try again.",
       );
     } finally {
       setSubmitting(false);
     }
-  }, [role, answers, mode, requiresCaptcha, visibleQuestions, accessToken, eventId, source, getRecaptchaToken]);
+  }, [
+    role,
+    answers,
+    mode,
+    requiresCaptcha,
+    visibleQuestions,
+    accessToken,
+    eventId,
+    source,
+    getRecaptchaToken,
+  ]);
 
   // ----------------------------------------------------------------- rendering
 
@@ -419,8 +499,12 @@ export default function EventSurvey({ source = "survey" }) {
     return (
       <Shell eventTitle={eventTitle}>
         <Card>
-          <h1 className="ohx-display" style={{ fontSize: "1.6rem" }}>Feedback</h1>
-          <p className="ohx-muted" style={{ marginTop: 12 }}>{loadError}</p>
+          <h1 className="ohx-display" style={{ fontSize: "1.6rem" }}>
+            Feedback
+          </h1>
+          <p className="ohx-muted" style={{ marginTop: 12 }}>
+            {loadError}
+          </p>
         </Card>
       </Shell>
     );
@@ -431,11 +515,15 @@ export default function EventSurvey({ source = "survey" }) {
       <Shell eventTitle={eventTitle}>
         <Card style={{ textAlign: "center" }}>
           <p className="ohx-eyebrow">{eventTitle}</p>
-          <h1 className="ohx-display" style={{ fontSize: "1.8rem", marginTop: 8 }}>
+          <h1
+            className="ohx-display"
+            style={{ fontSize: "1.8rem", marginTop: 8 }}
+          >
             This event hasn't started yet
           </h1>
           <p className="ohx-lead" style={{ margin: "12px auto 0" }}>
-            The feedback form opens once the event is underway. Check back during or after the event.
+            The feedback form opens once the event is underway. Check back
+            during or after the event.
           </p>
         </Card>
       </Shell>
@@ -443,15 +531,80 @@ export default function EventSurvey({ source = "survey" }) {
   }
 
   if (submitted) {
+    // Don't strand people on the thank-you card: one primary way back to the
+    // event hub, plus the most relevant next step for the role they just
+    // answered as (hackers → their dashboard, mentors → check-in, everyone
+    // else after the event → results).
+    const eventHref = `/hack/${eventId}`;
+    const backLabel =
+      eventTitle && eventTitle.length <= 40
+        ? `Back to ${eventTitle}`
+        : "Back to the event page";
+    const nextStep =
+      role === "hacker"
+        ? {
+            href: `/hack/${eventId}/manageteam`,
+            label: "Your team dashboard →",
+          }
+        : role === "mentor"
+          ? {
+              href: `/hack/${eventId}/mentor-checkin`,
+              label: "Mentor check-in →",
+            }
+          : mode === "post"
+            ? { href: `/hack/${eventId}/results`, label: "See the results →" }
+            : null;
     return (
       <Shell eventTitle={eventTitle}>
         <Card style={{ textAlign: "center" }}>
           <p className="ohx-eyebrow">{eventTitle}</p>
-          <h1 className="ohx-display" style={{ fontSize: "2rem", marginTop: 8 }}>
-            Thank you{" "}<span className="ohx-italic">truly</span>.
+          <h1
+            className="ohx-display"
+            style={{ fontSize: "2rem", marginTop: 8 }}
+          >
+            Thank you <span className="ohx-italic">truly</span>.
           </h1>
           <p className="ohx-lead" style={{ margin: "14px auto 0" }}>
-            Your feedback goes straight to the organizing team and shapes the next event.
+            Your feedback goes straight to the organizing team and shapes the
+            next event.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              justifyContent: "center",
+              flexWrap: "wrap",
+              marginTop: 24,
+            }}
+          >
+            <NextLink href={eventHref} className="ohx-btn ohx-btn--primary">
+              {backLabel}
+            </NextLink>
+            {nextStep && (
+              <NextLink href={nextStep.href} className="ohx-btn ohx-btn--ghost">
+                {nextStep.label}
+              </NextLink>
+            )}
+          </div>
+          <p style={{ marginTop: 18, fontSize: "0.9rem" }}>
+            <button
+              type="button"
+              className="ohx-link"
+              onClick={() => setSubmitted(false)}
+              style={{
+                background: "none",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+                font: "inherit",
+              }}
+            >
+              Edit your answers
+            </button>
+            <span className="ohx-faint">
+              {" "}
+              — submitting again updates your response.
+            </span>
           </p>
         </Card>
       </Shell>
@@ -464,9 +617,14 @@ export default function EventSurvey({ source = "survey" }) {
 
   // You may only give feedback for the role you were selected for; nonprofits
   // (and anyone not on the volunteer list) get the nonprofit form.
-  const allowedRoleValues = ctx?.allowed_roles?.length ? ctx.allowed_roles : ["nonprofit"];
-  const allowedRoleOptions = ROLE_OPTIONS.filter((r) => allowedRoleValues.includes(r.value));
-  const fixedRole = allowedRoleOptions.length === 1 ? allowedRoleOptions[0] : null;
+  const allowedRoleValues = ctx?.allowed_roles?.length
+    ? ctx.allowed_roles
+    : ["nonprofit"];
+  const allowedRoleOptions = ROLE_OPTIONS.filter((r) =>
+    allowedRoleValues.includes(r.value),
+  );
+  const fixedRole =
+    allowedRoleOptions.length === 1 ? allowedRoleOptions[0] : null;
 
   return (
     <Shell eventTitle={eventTitle}>
@@ -475,7 +633,10 @@ export default function EventSurvey({ source = "survey" }) {
           {eventTitle ? `${eventTitle} · ` : ""}
           {modeLabel}
         </p>
-        <h1 className="ohx-display" style={{ fontSize: "clamp(2rem, 5vw, 3rem)", marginTop: 10 }}>
+        <h1
+          className="ohx-display"
+          style={{ fontSize: "clamp(2rem, 5vw, 3rem)", marginTop: 10 }}
+        >
           Share your feedback
         </h1>
         <p className="ohx-lead" style={{ marginTop: 14 }}>
@@ -487,19 +648,30 @@ export default function EventSurvey({ source = "survey" }) {
         {ctx?.already_submitted && (
           <div
             className="ohx-card"
-            style={{ marginTop: 16, padding: "12px 16px", borderColor: "var(--brand)" }}
+            style={{
+              marginTop: 16,
+              padding: "12px 16px",
+              borderColor: "var(--brand)",
+            }}
           >
-            You've already shared {modeLabel.toLowerCase()} feedback — thank you! Submitting again
-            updates your previous response.
+            You've already shared {modeLabel.toLowerCase()} feedback — thank
+            you! Submitting again updates your previous response.
           </div>
         )}
       </header>
 
-      <div style={{ maxWidth: 680, margin: "0 auto", display: "grid", gap: 16 }}>
+      <div
+        style={{ maxWidth: 680, margin: "0 auto", display: "grid", gap: 16 }}
+      >
         {/* Universal: role — limited to the role(s) you're selected for */}
-        <div className="ohx-card" style={{ padding: "20px 22px", display: "grid", gap: 12 }}>
+        <div
+          className="ohx-card"
+          style={{ padding: "20px 22px", display: "grid", gap: 12 }}
+        >
           <label style={{ fontWeight: 600, fontSize: "1.05rem" }}>
-            {fixedRole ? "You're giving feedback as" : "What's your role today?"}
+            {fixedRole
+              ? "You're giving feedback as"
+              : "What's your role today?"}
             <span style={{ color: "var(--accent)" }}> *</span>
           </label>
 
@@ -522,22 +694,29 @@ export default function EventSurvey({ source = "survey" }) {
             <>
               <ChoiceInput
                 options={allowedRoleOptions.map((r) => r.label)}
-                value={allowedRoleOptions.find((r) => r.value === role)?.label ?? null}
+                value={
+                  allowedRoleOptions.find((r) => r.value === role)?.label ??
+                  null
+                }
                 onChange={(label) => {
-                  const found = allowedRoleOptions.find((r) => r.label === label);
+                  const found = allowedRoleOptions.find(
+                    (r) => r.label === label,
+                  );
                   setRole(found ? found.value : "");
                 }}
               />
               <div style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-                You were selected for more than one role — pick the one you're giving feedback as.
+                You were selected for more than one role — pick the one you're
+                giving feedback as.
               </div>
             </>
           )}
 
           {loggedInNotEligible && (
             <div style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-              You're not listed as a selected volunteer for this event, so this form is for our
-              nonprofit partners. If that's not right, reach out to the organizers.
+              You're not listed as a selected volunteer for this event, so this
+              form is for our nonprofit partners. If that's not right, reach out
+              to the organizers.
             </div>
           )}
           {isGuest && (
@@ -560,13 +739,24 @@ export default function EventSurvey({ source = "survey" }) {
         {error && (
           <div
             className="ohx-card"
-            style={{ padding: "12px 16px", borderColor: "var(--accent)", color: "var(--accent)" }}
+            style={{
+              padding: "12px 16px",
+              borderColor: "var(--accent)",
+              color: "var(--accent)",
+            }}
           >
             {error}
           </div>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
           <button
             type="button"
             className="ohx-btn ohx-btn--primary"

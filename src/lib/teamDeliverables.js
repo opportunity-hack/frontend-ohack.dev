@@ -66,10 +66,18 @@ export function endOfEventDay(dateStr, timezone) {
  * to the submission deadline, for the `DeadlineStrip` countdown.
  *
  * - `kind`: 'submitted' | 'open' | 'late_open' | 'closed' | 'event_ends' | 'none'
- * - `target`: the Date the countdown/label refers to, or null
+ * - `target`: the Date the countdown/label refers to, or null. For `closed`
+ *    this is the moment submissions actually closed — the late window's end
+ *    when one was configured, else the deadline itself.
  * - `label`: a short lead-in ("Submissions close in", "Late submissions
  *    open until", "Submissions closed", "Event ends in", "")
  * - `urgent`: true when open and under 6 hours remain
+ * - `closed` only: `reason` ('deadline' | 'late_window' | 'event_ended'),
+ *    `deadline` (the configured submission Date, or null for the end-of-event
+ *    fallback) and `lateUntil` (Date|null) so the strip/editor can explain
+ *    the cutoff instead of just announcing it. NB the backend treats "no
+ *    deadline configured" as OPEN (`no_deadline`), so `event_ended` is
+ *    informational — never gate edits on it.
  */
 export function deadlineState({
   deadlines,
@@ -122,9 +130,15 @@ export function deadlineState({
         urgent: false,
       };
     }
+    const lateValid = Boolean(
+      lateTarget && !Number.isNaN(lateTarget.getTime()),
+    );
     return {
       kind: "closed",
-      target: submissionTarget,
+      target: lateValid ? lateTarget : submissionTarget,
+      deadline: submissionTarget,
+      lateUntil: lateValid ? lateTarget : null,
+      reason: lateValid ? "late_window" : "deadline",
       label: "Submissions closed",
       urgent: false,
     };
@@ -144,6 +158,9 @@ export function deadlineState({
     return {
       kind: "closed",
       target: fallbackTarget,
+      deadline: null,
+      lateUntil: null,
+      reason: "event_ended",
       label: "Event ended",
       urgent: false,
     };

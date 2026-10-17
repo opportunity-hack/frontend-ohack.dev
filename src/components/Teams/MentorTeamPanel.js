@@ -18,6 +18,7 @@ import {
   ButtonGroup,
   Chip,
   CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -29,6 +30,7 @@ import {
   Link,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -55,6 +57,9 @@ import {
   Done as DoneIcon,
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  History as HistoryIcon,
+  TaskAlt as ResolvedIcon,
   ChatBubbleOutline as NoteIcon,
   Gavel as GavelIcon,
   OpenInNew as OpenInNewIcon,
@@ -71,6 +76,10 @@ import {
   latestRatingsByMentor,
   consensusForCriterion,
   relativeTime,
+  splitMentorFlags,
+  durationLabel,
+  applyOptimisticCoverage,
+  applyOptimisticRatings,
 } from "./mentorCoverage";
 import { parseLocalDate } from "../../lib/dateUtils";
 
@@ -84,6 +93,35 @@ function authHeaders(accessToken) {
 }
 
 // ------------------------- helpers --------------------------------------
+
+// Immutable add/remove on a Set held in state (per-item pending markers —
+// a mentor may rate five criteria in a row, so a single boolean won't do).
+function withKey(set, key, present) {
+  const next = new Set(set);
+  if (present) next.add(key);
+  else next.delete(key);
+  return next;
+}
+
+function omitKey(obj, key) {
+  const { [key]: _dropped, ...rest } = obj || {};
+  return rest;
+}
+
+const FLAG_SEVERITY = {
+  blocked: {
+    color: "error",
+    chipBg: "rgba(244,67,54,0.12)",
+    icon: <BlockedIcon fontSize="small" />,
+    label: "Blocked",
+  },
+  needs_attention: {
+    color: "warning",
+    chipBg: "rgba(255,167,38,0.16)",
+    icon: <WarningIcon fontSize="small" />,
+    label: "Needs attention",
+  },
+};
 
 function NoteRow({ note, canDelete, onDelete }) {
   if (note.deleted_at) {
@@ -158,19 +196,7 @@ function NoteRow({ note, canDelete, onDelete }) {
 
 function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
   const severityMeta =
-    flag.severity === "blocked"
-      ? {
-          color: "error",
-          chipBg: "rgba(244,67,54,0.12)",
-          icon: <BlockedIcon fontSize="small" />,
-          label: "Blocked",
-        }
-      : {
-          color: "warning",
-          chipBg: "rgba(255,167,38,0.16)",
-          icon: <WarningIcon fontSize="small" />,
-          label: "Needs attention",
-        };
+    FLAG_SEVERITY[flag.severity] || FLAG_SEVERITY.needs_attention;
   return (
     <Paper
       variant="outlined"
@@ -234,6 +260,89 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
   );
 }
 
+// A resolved flag in the history list: muted, read-only, and led by the
+// resolution note (the part the next mentor on shift actually needs), with
+// "open for …" so you can see how long the team waited. Module scope — a
+// component defined inside the panel would remount on every state tick.
+function ResolvedFlagRow({ flag }) {
+  const severityMeta =
+    FLAG_SEVERITY[flag.severity] || FLAG_SEVERITY.needs_attention;
+  const openFor = durationLabel(flag.created_at, flag.resolved_at);
+  const resolvedBy = flag.resolved_by_name || flag.owner_name || "a mentor";
+  return (
+    <Box
+      component="li"
+      sx={{
+        listStyle: "none",
+        py: 1.5,
+        pl: 2,
+        borderLeft: 3,
+        borderLeftColor: "success.light",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 1,
+          alignItems: "center",
+          mb: 0.5,
+        }}
+      >
+        <Chip
+          size="small"
+          variant="outlined"
+          color={severityMeta.color}
+          icon={severityMeta.icon}
+          label={severityMeta.label}
+          sx={{ opacity: 0.8 }}
+        />
+        <Typography variant="caption" color="text.secondary">
+          Raised {relativeTime(flag.created_at)} by{" "}
+          {flag.raised_by_name || "a mentor"}
+          {openFor ? ` · open for ${openFor}` : ""}
+        </Typography>
+      </Box>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ whiteSpace: "pre-wrap", mb: 1 }}
+      >
+        {flag.body}
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          alignItems: "flex-start",
+          backgroundColor: "rgba(76,175,80,0.08)",
+          borderRadius: 1,
+          px: 1.5,
+          py: 1,
+        }}
+      >
+        <ResolvedIcon
+          fontSize="small"
+          sx={{ color: "success.main", mt: 0.25 }}
+        />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 700, display: "block" }}
+          >
+            Resolved {relativeTime(flag.resolved_at)} by {resolvedBy}
+          </Typography>
+          {flag.resolution_note && (
+            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+              {flag.resolution_note}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 // ------------------------- main component -------------------------------
 
 export default function MentorTeamPanel({
@@ -249,7 +358,13 @@ export default function MentorTeamPanel({
   const [isMentor, setIsMentor] = useState(false);
   const [mentorCheckLoading, setMentorCheckLoading] = useState(true);
 
-  const [pendingSlug, setPendingSlug] = useState(null);
+  // Per-item in-flight markers + optimistic overlays (see mentorCoverage.js
+  // applyOptimistic*). `busy` stays for the dialog/notes flows only.
+  const [pendingCoverage, setPendingCoverage] = useState(() => new Set());
+  const [optimisticCoverage, setOptimisticCoverage] = useState({});
+  const [pendingCriteria, setPendingCriteria] = useState(() => new Set());
+  const [optimisticRatings, setOptimisticRatings] = useState({});
+  const [showResolved, setShowResolved] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
@@ -303,26 +418,37 @@ export default function MentorTeamPanel({
   }, [isLoggedIn, accessToken, eventId]);
 
   // -- derived state from team
-  const checklist = team?.mentor_checklist || {};
+  const myPropelId = user?.userId || null;
+  const myName = user?.firstName || null;
+  const checklist = useMemo(
+    () =>
+      applyOptimisticCoverage(
+        team?.mentor_checklist,
+        optimisticCoverage,
+        myPropelId,
+        myName,
+      ),
+    [team?.mentor_checklist, optimisticCoverage, myPropelId, myName],
+  );
   const notes = useMemo(
     () =>
       Array.isArray(team?.mentor_notes) ? [...team.mentor_notes].reverse() : [],
     [team?.mentor_notes],
   );
-  const flagsAll = Array.isArray(team?.mentor_flags) ? team.mentor_flags : [];
-  const openFlags = useMemo(
-    () =>
-      flagsAll
-        .filter((f) => !f.resolved_at)
-        .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")),
-    [flagsAll],
+  const { open: openFlags, resolved: resolvedFlags } = useMemo(
+    () => splitMentorFlags(team?.mentor_flags),
+    [team?.mentor_flags],
   );
   const doneCount = coverageDoneCount(checklist);
   const ratingsByMentor = useMemo(
-    () => latestRatingsByMentor(team?.mentor_ratings),
-    [team?.mentor_ratings],
+    () =>
+      applyOptimisticRatings(
+        latestRatingsByMentor(team?.mentor_ratings),
+        optimisticRatings,
+        myPropelId,
+      ),
+    [team?.mentor_ratings, optimisticRatings, myPropelId],
   );
-  const myPropelId = user?.userId || null;
 
   const eventEnded = useMemo(() => {
     if (!event?.end_date) return false;
@@ -388,7 +514,10 @@ export default function MentorTeamPanel({
   // `done` here means "add MY check" (true) or "clear MY check" (false) — the
   // backend only ever touches the calling mentor's own check on the item.
   const toggleCoverage = async (slug, done) => {
-    setPendingSlug(slug);
+    // Flip locally first; the server copy replaces the overlay on success and
+    // the overlay is simply dropped (reverting the row) on failure.
+    setOptimisticCoverage((o) => ({ ...o, [slug]: done }));
+    setPendingCoverage((s) => withKey(s, slug, true));
     try {
       const data = await post(`/api/team/${team.id}/mentor/coverage`, {
         item: slug,
@@ -399,7 +528,8 @@ export default function MentorTeamPanel({
     } catch (e) {
       showSnack(e.message || "Couldn't update coverage", "error");
     } finally {
-      setPendingSlug(null);
+      setOptimisticCoverage((o) => omitKey(o, slug));
+      setPendingCoverage((s) => withKey(s, slug, false));
     }
   };
 
@@ -495,6 +625,7 @@ export default function MentorTeamPanel({
       updateTeamFromResponse(data);
       setResolveFlag(null);
       setResolveNote("");
+      setShowResolved(true); // it moves to history — keep it in view
       showSnack("Flag resolved");
     } catch (e) {
       showSnack(e.message || "Couldn't resolve flag", "error");
@@ -504,7 +635,14 @@ export default function MentorTeamPanel({
   };
 
   const setRating = async (criterion, score, note) => {
-    setBusy(true);
+    if (pendingCriteria.has(criterion)) return; // one in-flight write per row
+    // Paint the pressed button + consensus immediately (the round-trip is
+    // ~1-3s: mentor check, Firestore write, Slack audit, team re-read).
+    setOptimisticRatings((o) => ({
+      ...o,
+      [criterion]: { score, rated_at: new Date().toISOString() },
+    }));
+    setPendingCriteria((s) => withKey(s, criterion, true));
     try {
       const body = { criterion, score };
       if (note) body.note = note;
@@ -514,7 +652,8 @@ export default function MentorTeamPanel({
     } catch (e) {
       showSnack(e.message || "Couldn't save rating", "error");
     } finally {
-      setBusy(false);
+      setOptimisticRatings((o) => omitKey(o, criterion));
+      setPendingCriteria((s) => withKey(s, criterion, false));
     }
   };
 
@@ -594,6 +733,15 @@ export default function MentorTeamPanel({
           label={`${openFlags.length} open flag${openFlags.length === 1 ? "" : "s"}`}
         />
       )}
+      {resolvedFlags.length > 0 && (
+        <Chip
+          size="small"
+          variant="outlined"
+          color="success"
+          icon={<ResolvedIcon fontSize="small" />}
+          label={`${resolvedFlags.length} resolved`}
+        />
+      )}
       <Chip
         size="small"
         variant="outlined"
@@ -628,6 +776,9 @@ export default function MentorTeamPanel({
       {openFlags.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No open mentor flags.{" "}
+          {resolvedFlags.length > 0
+            ? `${resolvedFlags.length} ${resolvedFlags.length === 1 ? "was" : "were"} raised earlier and resolved — see the history below. `
+            : ""}
           {canInteract ? "Raise one below if a team needs attention." : ""}
         </Typography>
       ) : (
@@ -656,6 +807,48 @@ export default function MentorTeamPanel({
         >
           Raise a flag
         </Button>
+      )}
+
+      {/* Resolved history — collapsed by default so the section stays about
+          what's open now, but one click away so a mentor arriving on shift
+          can see what this team already struggled with and who helped. */}
+      {resolvedFlags.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Button
+            size="small"
+            color="inherit"
+            startIcon={<HistoryIcon fontSize="small" />}
+            endIcon={
+              showResolved ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )
+            }
+            onClick={() => setShowResolved((v) => !v)}
+            aria-expanded={showResolved}
+            aria-controls={`resolved-flags-${team?.id || "team"}`}
+            sx={{ color: "text.secondary", textTransform: "none" }}
+          >
+            {showResolved ? "Hide" : "Show"} {resolvedFlags.length} resolved{" "}
+            {resolvedFlags.length === 1 ? "flag" : "flags"}
+          </Button>
+          <Collapse in={showResolved} unmountOnExit>
+            <Box
+              component="ul"
+              id={`resolved-flags-${team?.id || "team"}`}
+              aria-label="Resolved flag history"
+              sx={{ m: 0, mt: 1, p: 0 }}
+            >
+              {resolvedFlags.map((f, idx) => (
+                <React.Fragment key={f.id || idx}>
+                  {idx > 0 && <Divider component="li" sx={{ my: 0.5 }} />}
+                  <ResolvedFlagRow flag={f} />
+                </React.Fragment>
+              ))}
+            </Box>
+          </Collapse>
+        </Box>
       )}
     </Box>
   );
@@ -695,14 +888,17 @@ export default function MentorTeamPanel({
           const mine = checks.some((c) => c.propel_id === myPropelId);
           const covered = count >= COVERAGE_TARGET_MENTORS;
           const lockedForMe = covered && !mine;
-          const isPending = pendingSlug === item.slug;
-          const clickable = canInteract && !isPending && (mine || !covered);
+          const isPending = pendingCoverage.has(item.slug);
+          // Rows a mentor can act on render as real buttons (focusable,
+          // Enter/Space); locked and read-only rows stay plain list items.
+          const interactive = canInteract && (mine || !covered);
 
           const countChip = (
             <Chip
               size="small"
               variant={covered ? "filled" : "outlined"}
               color={covered ? "success" : count > 0 ? "primary" : "default"}
+              icon={isPending ? <CircularProgress size={12} /> : undefined}
               label={
                 covered
                   ? `${count}/${COVERAGE_TARGET_MENTORS} ✓`
@@ -711,26 +907,100 @@ export default function MentorTeamPanel({
             />
           );
 
+          const rowIcon = (
+            <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
+              {mine ? (
+                <Tooltip title="You checked this — tap to clear your check">
+                  <CheckCircleIcon sx={{ color: "success.main" }} />
+                </Tooltip>
+              ) : lockedForMe ? (
+                <LockIcon sx={{ color: "success.light" }} />
+              ) : canInteract ? (
+                <AddCheckIcon sx={{ color: "primary.main" }} />
+              ) : (
+                <UncheckedIcon sx={{ color: "action.disabled" }} />
+              )}
+            </ListItemIcon>
+          );
+
+          const rowText = (
+            <ListItemText
+              primary={
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, mr: { xs: 5, md: 9 } }}
+                >
+                  {item.label}
+                </Typography>
+              }
+              secondary={
+                <Box component="span" sx={{ display: "block", mt: 0.25 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    component="span"
+                    sx={{ display: "block" }}
+                  >
+                    {item.blurb}
+                  </Typography>
+                  {count > 0 && (
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      sx={{
+                        display: "block",
+                        mt: 0.5,
+                        color: "text.secondary",
+                      }}
+                    >
+                      {checks
+                        .map(
+                          (c) =>
+                            `${c.propel_id === myPropelId ? "You" : c.name || "A mentor"}${
+                              c.checked_at
+                                ? ` · ${relativeTime(c.checked_at)}`
+                                : ""
+                            }`,
+                        )
+                        .join("  ·  ")}
+                    </Typography>
+                  )}
+                  {canInteract && !mine && !covered && (
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      sx={{
+                        display: "block",
+                        mt: 0.25,
+                        color: "primary.main",
+                        fontWeight: 600,
+                      }}
+                    >
+                      + Add your check
+                    </Typography>
+                  )}
+                </Box>
+              }
+            />
+          );
+
+          const rowSx = {
+            py: 1.25,
+            alignItems: "flex-start",
+            width: "100%",
+          };
+          const rowBg = covered
+            ? "rgba(76,175,80,0.07)"
+            : count > 0
+              ? "rgba(72,219,251,0.05)"
+              : "transparent";
+
           return (
             <React.Fragment key={item.slug}>
               {idx > 0 && <Divider component="li" />}
               <ListItem
-                onClick={
-                  clickable ? () => handleCoverageClick(item) : undefined
-                }
-                sx={{
-                  py: 1.25,
-                  cursor: clickable ? "pointer" : "default",
-                  backgroundColor: covered
-                    ? "rgba(76,175,80,0.07)"
-                    : count > 0
-                      ? "rgba(72,219,251,0.05)"
-                      : "transparent",
-                  alignItems: "flex-start",
-                  "&:hover": clickable
-                    ? { backgroundColor: "rgba(72,219,251,0.1)" }
-                    : {},
-                }}
+                disablePadding
+                sx={{ backgroundColor: rowBg, alignItems: "flex-start" }}
                 secondaryAction={
                   lockedForMe ? (
                     <Tooltip
@@ -743,79 +1013,27 @@ export default function MentorTeamPanel({
                   )
                 }
               >
-                <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
-                  {isPending ? (
-                    <CircularProgress size={20} />
-                  ) : mine ? (
-                    <Tooltip title="You checked this — tap to clear your check">
-                      <CheckCircleIcon sx={{ color: "success.main" }} />
-                    </Tooltip>
-                  ) : lockedForMe ? (
-                    <LockIcon sx={{ color: "success.light" }} />
-                  ) : canInteract ? (
-                    <AddCheckIcon sx={{ color: "primary.main" }} />
-                  ) : (
-                    <UncheckedIcon sx={{ color: "action.disabled" }} />
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, mr: { xs: 5, md: 9 } }}
-                    >
-                      {item.label}
-                    </Typography>
-                  }
-                  secondary={
-                    <Box component="span" sx={{ display: "block", mt: 0.25 }}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        component="span"
-                        sx={{ display: "block" }}
-                      >
-                        {item.blurb}
-                      </Typography>
-                      {count > 0 && (
-                        <Typography
-                          variant="caption"
-                          component="span"
-                          sx={{
-                            display: "block",
-                            mt: 0.5,
-                            color: "text.secondary",
-                          }}
-                        >
-                          {checks
-                            .map(
-                              (c) =>
-                                `${c.propel_id === myPropelId ? "You" : c.name || "A mentor"}${
-                                  c.checked_at
-                                    ? ` · ${relativeTime(c.checked_at)}`
-                                    : ""
-                                }`,
-                            )
-                            .join("  ·  ")}
-                        </Typography>
-                      )}
-                      {canInteract && !mine && !covered && (
-                        <Typography
-                          variant="caption"
-                          component="span"
-                          sx={{
-                            display: "block",
-                            mt: 0.25,
-                            color: "primary.main",
-                            fontWeight: 600,
-                          }}
-                        >
-                          + Add your check
-                        </Typography>
-                      )}
-                    </Box>
-                  }
-                />
+                {interactive ? (
+                  <ListItemButton
+                    onClick={() => {
+                      if (!isPending) handleCoverageClick(item);
+                    }}
+                    aria-pressed={mine}
+                    aria-busy={isPending || undefined}
+                    sx={{
+                      ...rowSx,
+                      "&:hover": { backgroundColor: "rgba(72,219,251,0.1)" },
+                    }}
+                  >
+                    {rowIcon}
+                    {rowText}
+                  </ListItemButton>
+                ) : (
+                  <Box sx={{ ...rowSx, display: "flex", px: 2 }}>
+                    {rowIcon}
+                    {rowText}
+                  </Box>
+                )}
               </ListItem>
             </React.Fragment>
           );
@@ -851,6 +1069,7 @@ export default function MentorTeamPanel({
           const byMentor = ratingsByMentor[c.slug] || {};
           const myLatest = myPropelId ? byMentor[myPropelId] : null;
           const consensus = consensusForCriterion(byMentor);
+          const isPending = pendingCriteria.has(c.slug);
           return (
             <Paper key={c.slug} variant="outlined" sx={{ p: 1.5 }}>
               <Box
@@ -880,7 +1099,12 @@ export default function MentorTeamPanel({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={`You: ${SCORE_META[myLatest.score].emoji} ${relativeTime(myLatest.rated_at)}`}
+                    icon={
+                      isPending ? <CircularProgress size={12} /> : undefined
+                    }
+                    label={`You: ${SCORE_META[myLatest.score].emoji} ${
+                      isPending ? "saving…" : relativeTime(myLatest.rated_at)
+                    }`}
                   />
                 )}
               </Box>
@@ -895,6 +1119,7 @@ export default function MentorTeamPanel({
                 <ButtonGroup
                   size="small"
                   variant="outlined"
+                  aria-label={`Rate ${c.label}`}
                   sx={{ flexWrap: "wrap" }}
                 >
                   {["green", "yellow", "red"].map((s) => (
@@ -903,6 +1128,8 @@ export default function MentorTeamPanel({
                       onClick={() => setRating(c.slug, s)}
                       color={SCORE_META[s].color}
                       variant={myLatest?.score === s ? "contained" : "outlined"}
+                      aria-pressed={myLatest?.score === s}
+                      aria-busy={isPending || undefined}
                       sx={{ minWidth: 80 }}
                     >
                       {SCORE_META[s].emoji} {SCORE_META[s].label}
