@@ -9,6 +9,7 @@ import {
   latestRatingsByMentor,
   consensusForCriterion,
   relativeTime,
+  splitMentorFlags,
 } from "./mentorCoverage";
 
 // Refined-token consensus dot colors (calmer than the loud MUI palette ones
@@ -33,6 +34,7 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   const checklist = team?.mentor_checklist || {};
   const doneCount = coverageDoneCount(checklist);
   const openFlags = Number(team?.mentor_open_flag_count || 0);
+  const resolvedFlags = splitMentorFlags(team?.mentor_flags).resolved.length;
   const lastTouchedAt = team?.mentor_last_touched_at;
   const lastTouchedBy = team?.mentor_last_touched_by_name;
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
@@ -40,7 +42,11 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
     (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
   const hasActivity =
-    doneCount > 0 || openFlags > 0 || !!lastTouchedAt || hasAnyRating;
+    doneCount > 0 ||
+    openFlags > 0 ||
+    resolvedFlags > 0 ||
+    !!lastTouchedAt ||
+    hasAnyRating;
   const isHeadsDown = team?.mentor_help_wanted === false;
 
   const href = `/hack/${eventId}/team/${teamId}/mentor`;
@@ -102,6 +108,9 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
               <span className="ohx-tag ohx-tag--accent">
                 ⚑ {openFlags} open flag{openFlags === 1 ? "" : "s"}
               </span>
+            )}
+            {resolvedFlags > 0 && (
+              <span className="ohx-tag">✓ {resolvedFlags} resolved</span>
             )}
             {lastTouchedAt && (
               <span className="ohx-tag">

@@ -74,7 +74,49 @@ export default function DeadlineStrip({ deadlines, event, team }) {
       </span>
     );
   } else if (state.kind === "closed") {
-    body = <span>Submissions closed</span>;
+    // Say when and why — a bare "Submissions closed" left teams guessing
+    // whether they missed a deadline, a late window, or just the event.
+    const fallback = state.reason === "event_ended";
+    const deadlineDual = state.deadline
+      ? formatDualTimezone(state.deadline, tz)
+      : null;
+    const when = (d) =>
+      d
+        ? `${d.eventTime} ${d.eventAbbr}${
+            d.isSameTimezone ? "" : ` (${d.userTime} ${d.userAbbr})`
+          }`
+        : "";
+    let why;
+    if (fallback) {
+      why =
+        "No submission cutoff was set for this event, so you can still update your write-up.";
+    } else if (state.reason === "late_window") {
+      why = `The deadline was ${when(deadlineDual)}; the late window ended ${when(dual)}. Reach out in #ask-a-mentor if something went wrong.`;
+    } else {
+      why =
+        "No late window was set. Reach out in #ask-a-mentor if something went wrong.";
+    }
+    body = (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+        <span>
+          {fallback ? "Event ended" : "Submissions closed"}
+          {dual && (
+            <span
+              style={{
+                color: "var(--muted)",
+                marginLeft: 8,
+                fontSize: "0.85rem",
+              }}
+            >
+              · {when(dual)}
+            </span>
+          )}
+        </span>
+        <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
+          {why}
+        </span>
+      </Box>
+    );
   } else if (!countdown.mounted) {
     body = <span style={{ color: "var(--muted)" }}>—</span>;
   } else {
@@ -149,7 +191,7 @@ export default function DeadlineStrip({ deadlines, event, team }) {
         {state.kind === "submitted"
           ? "Project submitted"
           : state.kind === "closed"
-            ? "Submissions closed"
+            ? `${state.label}${state.target ? ` ${state.target.toLocaleString("en-US", { timeZone: tz })}` : ""}`
             : `${state.label} ${countdown.mounted ? `${countdown.days} days ${countdown.hours} hours` : ""}`}
       </span>
     </Box>

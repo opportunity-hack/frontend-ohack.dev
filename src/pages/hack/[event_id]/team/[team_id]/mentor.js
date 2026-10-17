@@ -11,6 +11,8 @@ import { Eyebrow } from "../../../../../components/design/refined";
 import { Shell } from "../../../../../components/Teams/RefinedTeamShell";
 import TeamBreadcrumbs from "../../../../../components/Teams/TeamBreadcrumbs";
 import useLiveTeam from "../../../../../hooks/use-live-team";
+import { slackChannelUrl } from "../../../../../lib/slackLinks";
+import { repoEntriesFromTeam } from "../../../../../lib/githubLinks";
 import {
   fetchTeamAndEvent,
   COMPLETION_VISIBLE_STATUSES,
@@ -21,9 +23,106 @@ const MentorTeamPanel = dynamic(
   () => import("../../../../../components/Teams/MentorTeamPanel"),
   {
     ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={420} sx={{ borderRadius: 1 }} />,
-  }
+    loading: () => (
+      <Skeleton variant="rectangular" height={420} sx={{ borderRadius: 1 }} />
+    ),
+  },
 );
+
+// Compact "who / what / where" strip for a mentor arriving on this page: the
+// nonprofit, the people, and one-click ways to reach the team (Slack is the
+// primary action — mentors drop in via the channel). Everything here is
+// already in the public team + event payloads; no extra fetch. Module scope
+// so it doesn't remount on every live-team refetch.
+function TeamAtAGlance({ team, event }) {
+  const nonprofitName =
+    event?.nonprofits?.find((n) => n.id === team?.selected_nonprofit_id)
+      ?.name || null;
+  const users = Array.isArray(team?.users) ? team.users : [];
+  const memberNames = users
+    .map((u) => (u && typeof u === "object" ? u.name || u.nickname : null))
+    .filter(Boolean);
+  const memberCount = users.length;
+  const slackChannel =
+    typeof team?.slack_channel === "string"
+      ? team.slack_channel.trim().replace(/^#/, "")
+      : "";
+  const slackUrl = slackChannelUrl(slackChannel);
+  const repos = repoEntriesFromTeam(team);
+  const demoUrl = team?.demo_video_url || null;
+  const devpostUrl = team?.devpost_link || null;
+  const isHeadsDown = team?.mentor_help_wanted === false;
+
+  const hasLinks = Boolean(slackUrl || repos.length || demoUrl || devpostUrl);
+  if (!nonprofitName && memberCount === 0 && !hasLinks) return null;
+
+  const ext = { target: "_blank", rel: "noopener noreferrer" };
+
+  return (
+    <Box className="ohx-card" sx={{ p: { xs: 2, md: 2.5 }, mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          flexWrap: "wrap",
+          mb: memberCount > 0 || hasLinks ? 1.25 : 0,
+        }}
+      >
+        <Box className="ohx-eyebrow">Team at a glance</Box>
+        {nonprofitName && <span className="ohx-tag">{nonprofitName}</span>}
+        {isHeadsDown && (
+          <span className="ohx-tag ohx-tag--accent">
+            Heads-down — check Slack before dropping in
+          </span>
+        )}
+      </Box>
+
+      {memberCount > 0 && (
+        <Box
+          sx={{
+            color: "var(--muted)",
+            fontSize: "0.95rem",
+            mb: hasLinks ? 1.5 : 0,
+          }}
+        >
+          {memberCount} {memberCount === 1 ? "member" : "members"}
+          {memberNames.length > 0 ? `: ${memberNames.join(", ")}` : ""}
+        </Box>
+      )}
+
+      {hasLinks && (
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {slackUrl && (
+            <a className="ohx-btn ohx-btn--primary" href={slackUrl} {...ext}>
+              Open #{slackChannel} in Slack
+            </a>
+          )}
+          {repos.map((r) => (
+            <a
+              key={r.link}
+              className="ohx-btn ohx-btn--ghost"
+              href={r.link}
+              {...ext}
+            >
+              GitHub: {r.name} ↗
+            </a>
+          ))}
+          {demoUrl && (
+            <a className="ohx-btn ohx-btn--ghost" href={demoUrl} {...ext}>
+              Demo video ↗
+            </a>
+          )}
+          {devpostUrl && (
+            <a className="ohx-btn ohx-btn--ghost" href={devpostUrl} {...ext}>
+              DevPost ↗
+            </a>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 export default function TeamMentorPage({ teamData, eventData }) {
   const router = useRouter();
@@ -32,7 +131,7 @@ export default function TeamMentorPage({ teamData, eventData }) {
     event_id,
     team_id,
     teamData,
-    eventData
+    eventData,
   );
 
   if (loading) {
@@ -89,7 +188,8 @@ export default function TeamMentorPage({ teamData, eventData }) {
     return !Number.isNaN(start.getTime()) && start <= new Date();
   })();
   const showCompletionLink =
-    isWinningStatus(team.status) || COMPLETION_VISIBLE_STATUSES.has(team.status);
+    isWinningStatus(team.status) ||
+    COMPLETION_VISIBLE_STATUSES.has(team.status);
 
   const startDateLabel = event?.start_date
     ? parseLocalDate(event.start_date).toLocaleDateString()
@@ -123,7 +223,15 @@ export default function TeamMentorPage({ teamData, eventData }) {
           <Eyebrow>
             {eventName} · {teamName}
           </Eyebrow>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mt: 1.5, mb: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              mt: 1.5,
+              mb: 1,
+            }}
+          >
             <MentorIcon sx={{ color: "var(--accent)", fontSize: 30 }} />
             <Box
               component="h1"
@@ -134,11 +242,14 @@ export default function TeamMentorPage({ teamData, eventData }) {
             </Box>
           </Box>
           <Box sx={{ color: "var(--muted)", maxWidth: "60ch" }}>
-            Coverage, open concerns, judging readiness, and the running notes feed
-            for this team. Approved mentors can update; everyone can view.
+            Coverage, concerns (open and resolved), judging readiness, and the
+            running notes feed for this team. Approved mentors can update;
+            everyone can view.
           </Box>
           <hr className="ohx-rule" style={{ marginTop: 20 }} />
         </Box>
+
+        <TeamAtAGlance team={team} event={event} />
 
         {eventHasStarted ? (
           <MentorTeamPanel
@@ -149,7 +260,10 @@ export default function TeamMentorPage({ teamData, eventData }) {
           />
         ) : (
           <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
-            <Box className="ohx-display" sx={{ fontSize: "1.2rem", color: "var(--ink)", mb: 1 }}>
+            <Box
+              className="ohx-display"
+              sx={{ fontSize: "1.2rem", color: "var(--ink)", mb: 1 }}
+            >
               Mentor support opens when the event starts
             </Box>
             <Box sx={{ color: "var(--muted)", lineHeight: 1.6 }}>
@@ -175,7 +289,10 @@ export default function TeamMentorPage({ teamData, eventData }) {
               Definition of Done →
             </NextLink>
           )}
-          <NextLink href={`/hack/${event_id}`} className="ohx-btn ohx-btn--ghost">
+          <NextLink
+            href={`/hack/${event_id}`}
+            className="ohx-btn ohx-btn--ghost"
+          >
             Back to event
           </NextLink>
         </Box>
