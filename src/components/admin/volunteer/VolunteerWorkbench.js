@@ -36,6 +36,7 @@ import {
   Share as ShareIcon,
   ContentCopy as CopyIcon,
   Close as CloseIcon,
+  Download as DownloadIcon,
 } from "@mui/icons-material";
 
 // Import components individually to avoid circular dependencies
@@ -56,6 +57,7 @@ import useJudgeTrainingStatus from "../../../hooks/use-judge-training-status";
 import { statusLabel, statusSortIndex } from "../../../lib/applicationStatus";
 import { getSearchValues } from "./applicationSchema";
 import { RosterConfirmDialog } from "./RosterControls";
+import VolunteerExportDialog from "./VolunteerExportDialog";
 
 // Define initial state outside component to prevent re-initialization
 const INITIAL_VOLUNTEERS_STATE = {
@@ -186,6 +188,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   // One page-level player dialog serves both the table and review views
   // (TeamList pattern — never an iframe per row/card).
   const [videoDialog, setVideoDialog] = useState({ open: false, url: null, name: null });
+  // "Download CSV" dialog — scoped by roster / status, seeded from the tab's filters.
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // Filter state management
   const [filterStates, setFilterStates] = useState(() =>
@@ -1188,6 +1192,19 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                   <ShareIcon />
                 </IconButton>
               </Tooltip>
+              <Tooltip title="Download this tab as CSV (by status / roster)">
+                <span>
+                  <IconButton
+                    onClick={() => setExportDialogOpen(true)}
+                    color="primary"
+                    disabled={!selectedEventId || loading}
+                    size={isSmallMobile ? 'small' : 'medium'}
+                    aria-label="Download CSV"
+                  >
+                    <DownloadIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
 
             {/* Search Field - Only show in table mode */}
@@ -1302,6 +1319,21 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 >
                   <ShareIcon />
                 </IconButton>
+              </Tooltip>
+            </Grid>
+            <Grid>
+              <Tooltip title="Download this tab as CSV (by status / roster)">
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<DownloadIcon />}
+                    onClick={() => setExportDialogOpen(true)}
+                    disabled={!selectedEventId || loading}
+                    sx={{ whiteSpace: "nowrap" }}
+                  >
+                    Download CSV
+                  </Button>
+                </span>
               </Tooltip>
             </Grid>
             {viewMode === "table" && (
@@ -1522,6 +1554,16 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
           )}
         </Box>
       )}
+
+      <VolunteerExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        type={getCurrentVolunteerType(tabValue)}
+        volunteers={volunteers?.[getCurrentVolunteerType(tabValue)] || []}
+        eventId={selectedEventId}
+        filterState={getCurrentFilterState()}
+        searchText={viewMode === "table" ? filter : getCurrentFilterState().filter}
+      />
 
       {/* Intro-video player — one dialog for every row/card */}
       <Dialog

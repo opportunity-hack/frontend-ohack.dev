@@ -94,7 +94,8 @@ import {
 } from "../Teams/projectMeta";
 import ProjectStoryMarkdown from "../Teams/ProjectStoryMarkdown";
 import { DEFAULT_EVENT_TIMEZONE } from "../../lib/timezoneUtils";
-import { buildSubmissionsCsv } from "./teamSubmissionsCsv";
+import { buildSubmissionsCsv, teamExportColumns } from "./teamSubmissionsCsv";
+import ExportCsvButton from "./ExportCsvButton";
 import * as ga from "../../lib/ga";
 import {
   fetchAdminTeamDetail,
@@ -1087,6 +1088,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       /drive\.google\.com\/file\/d\//i.test(trimmed);
     return valid ? null : "Enter a YouTube, Vimeo, Loom, or Google Drive URL.";
   };
+
+  // Column spec for "Export teams CSV" (everything the table shows).
+  const teamCsvColumns = React.useMemo(
+    () =>
+      teamExportColumns({
+        nonprofitMap,
+        gatewayKeyStatuses: gatewayKeysSupported ? gatewayKeyStatuses : null,
+      }),
+    [nonprofitMap, gatewayKeyStatuses, gatewayKeysSupported],
+  );
 
   // Export the currently-filtered submissions list as a CSV file. Pure CSV
   // building lives in teamSubmissionsCsv.js — this just turns the string
@@ -2990,6 +3001,15 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                 </span>
               </Tooltip>
             )}
+            <ExportCsvButton
+              rows={filteredTeams}
+              columns={teamCsvColumns}
+              filenameParts={[selectedEventSlug, "teams", activeFilter !== "all" ? activeFilter : ""]}
+              table="teams"
+              eventId={selectedEventSlug}
+              label="Export teams CSV"
+              tooltip={`Download the ${filteredTeams.length} teams in the current filter with every column`}
+            />
             <Button
               size="small"
               variant="outlined"

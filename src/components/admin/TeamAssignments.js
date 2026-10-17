@@ -36,6 +36,7 @@ import {
   Tab
 } from '@mui/material';
 import { TEAM_STATUS_OPTIONS, getStatusOption } from '../../constants/teamStatus';
+import ExportCsvButton from './ExportCsvButton';
 import { 
   FaEdit, 
   FaUsers, 
@@ -344,9 +345,9 @@ const TeamAssignments = ({ orgId, embeddedHackathonId }) => {
     );
   };
 
-  // Render nonprofit view using the teams data structure
-  const renderNonprofitView = () => {
-    // Group teams by nonprofit assignment
+  // Nonprofits with their assigned teams, filtered by the search box and
+  // sorted like the table. Shared by the Nonprofit View table and its CSV.
+  const getNonprofitList = () => {
     const nonprofitMap = {};
     
     // First, create a map of all nonprofits
@@ -383,6 +384,53 @@ const TeamAssignments = ({ orgId, embeddedHackathonId }) => {
         }
         return 0;
       });
+    return nonprofitList;
+  };
+
+  const assignmentStatusLabel = (nonprofit) => {
+    const n = nonprofit.assignedTeams?.length || 0;
+    if (n === 0) return "Unassigned";
+    return n > 1 ? "Multiple teams" : "Assigned";
+  };
+
+  const NONPROFIT_CSV_COLUMNS = [
+    { key: "name", label: "Nonprofit" },
+    { key: "assignment", label: "Assignment status", get: assignmentStatusLabel },
+    { key: "teams", label: "Assigned teams", get: (np) => (np.assignedTeams || []).map((t) => t.name) },
+    {
+      key: "team_statuses",
+      label: "Team statuses",
+      get: (np) => (np.assignedTeams || []).map((t) => getStatusOption(t.status || "IN_REVIEW").label),
+    },
+    { key: "contact_people", label: "Primary contact" },
+    { key: "id", label: "Id" },
+  ];
+
+  const TEAM_CSV_COLUMNS = [
+    { key: "name", label: "Team" },
+    { key: "status", label: "Status", get: (t) => getStatusOption(t.status || "IN_REVIEW").label },
+    {
+      key: "nonprofit",
+      label: "Assigned nonprofit",
+      get: (t) => (t.selected_nonprofit_id ? nonprofits.find((np) => np.id === t.selected_nonprofit_id)?.name || t.selected_nonprofit_id : ""),
+    },
+    {
+      key: "members",
+      label: "Members",
+      get: (t) => (t.team_members || []).map((m) => (typeof m === "string" ? m : m?.real_name || m?.name || "")).filter(Boolean),
+    },
+    { key: "member_count", label: "Member count", get: (t) => (t.team_members || []).length },
+    { key: "slack_channel", label: "Slack channel" },
+    { key: "created", label: "Created" },
+    { key: "id", label: "Id" },
+  ];
+
+  const exportEventId =
+    hackathons.find((h) => h?.id === selectedHackathon)?.event_id || selectedHackathon || "";
+
+  // Render nonprofit view using the teams data structure
+  const renderNonprofitView = () => {
+    const nonprofitList = getNonprofitList();
 
     return (
       <TableContainer component={Paper} elevation={2}>
@@ -1010,7 +1058,7 @@ const TeamAssignments = ({ orgId, embeddedHackathonId }) => {
           {renderAssignmentStats()}
 
           {/* Toggle between Nonprofit and Team views */}
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
             <Tabs 
               value={viewMode} 
               onChange={(e, newValue) => setViewMode(newValue)}
@@ -1019,6 +1067,25 @@ const TeamAssignments = ({ orgId, embeddedHackathonId }) => {
               <Tab label="Nonprofit View" />
               <Tab label="Team View" />
             </Tabs>
+            {viewMode === 0 ? (
+              <ExportCsvButton
+                rows={getNonprofitList()}
+                columns={NONPROFIT_CSV_COLUMNS}
+                filenameParts={[exportEventId, "nonprofit-assignments"]}
+                table="team_assignments_nonprofits"
+                eventId={exportEventId}
+                label="Download nonprofit view CSV"
+              />
+            ) : (
+              <ExportCsvButton
+                rows={teams}
+                columns={TEAM_CSV_COLUMNS}
+                filenameParts={[exportEventId, "team-assignments"]}
+                table="team_assignments_teams"
+                eventId={exportEventId}
+                label="Download team view CSV"
+              />
+            )}
           </Box>
 
           {/* Render the appropriate view */}

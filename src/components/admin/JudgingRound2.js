@@ -58,6 +58,71 @@ import {
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
+import ExportCsvButton from './ExportCsvButton';
+
+// ---- CSV helpers for the Round 1 results table (module scope, no state) ----
+const criteriaLabel = (c) => c.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+const round1 = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 10) / 10 : '');
+
+// Union of rubric criteria seen across every submitted score.
+const criteriaKeysOf = (teamScores) => {
+  const keys = new Set();
+  (teamScores || []).forEach((ts) => (ts.scores || []).forEach((s) => Object.keys(s?.score?.scores || {}).forEach((k) => keys.add(k))));
+  return Array.from(keys);
+};
+
+// Team summary: one row per team, averages per criterion across judges.
+const round1SummaryColumns = (teamScores, nonprofitNames, finalistTeams) => {
+  const criteria = criteriaKeysOf(teamScores);
+  return [
+    { key: 'rank', label: 'Rank' },
+    { key: 'team', label: 'Team', get: (r) => r.team?.name },
+    {
+      key: 'nonprofit',
+      label: 'Nonprofit',
+      get: (r) => (r.team?.selected_nonprofit_id ? nonprofitNames?.[r.team.selected_nonprofit_id] || r.team.selected_nonprofit_id : ''),
+    },
+    { key: 'finalist', label: 'Finalist', get: (r) => (finalistTeams || []).some((t) => t.id === r.team?.id) },
+    { key: 'judgeCount', label: 'Judges scored' },
+    { key: 'averageScore', label: 'Average', get: (r) => (r.judgeCount > 0 ? round1(r.averageScore) : '') },
+    { key: 'totalScore', label: 'Total', get: (r) => (r.judgeCount > 0 ? round1(r.totalScore) : '') },
+    { key: 'standardDeviation', label: 'Std dev', get: (r) => (r.judgeCount > 0 ? round1(r.standardDeviation) : '') },
+    { key: 'medianScore', label: 'Median', get: (r) => (r.judgeCount > 0 ? round1(r.medianScore) : '') },
+    { key: 'highestScore', label: 'Highest', get: (r) => (r.judgeCount > 0 ? round1(r.highestScore) : '') },
+    { key: 'lowestScore', label: 'Lowest', get: (r) => (r.judgeCount > 0 ? round1(r.lowestScore) : '') },
+    ...criteria.map((c) => ({
+      key: `avg_${c}`,
+      label: `Avg ${criteriaLabel(c)}`,
+      get: (r) => {
+        const vals = (r.scores || []).map((s) => s?.score?.scores?.[c]).filter((v) => typeof v === 'number');
+        return vals.length ? round1(vals.reduce((a, b) => a + b, 0) / vals.length) : '';
+      },
+    })),
+  ];
+};
+
+// Long format: one row per (team, judge) score with the raw rubric values.
+const round1DetailRows = (teamScores) =>
+  (teamScores || []).flatMap((ts) =>
+    (ts.scores || []).map((s) => ({ team: ts.team, judge: s.judge, score: s.score })),
+  );
+
+const round1DetailColumns = (teamScores, nonprofitNames) => {
+  const criteria = criteriaKeysOf(teamScores);
+  return [
+    { key: 'team', label: 'Team', get: (r) => r.team?.name },
+    {
+      key: 'nonprofit',
+      label: 'Nonprofit',
+      get: (r) => (r.team?.selected_nonprofit_id ? nonprofitNames?.[r.team.selected_nonprofit_id] || r.team.selected_nonprofit_id : ''),
+    },
+    { key: 'judge', label: 'Judge', get: (r) => r.judge?.name },
+    { key: 'total', label: 'Total', get: (r) => round1(r.score?.total_score) },
+    ...criteria.map((c) => ({ key: c, label: criteriaLabel(c), get: (r) => r.score?.scores?.[c] ?? '' })),
+    { key: 'feedback', label: 'Feedback', get: (r) => r.score?.feedback || '' },
+    { key: 'submitted_at', label: 'Submitted at', get: (r) => r.score?.submitted_at || r.score?.created_at || '' },
+  ];
+};
 
 const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
   const { accessToken } = useAuthInfo();
@@ -1109,6 +1174,27 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                 >
                   Clear All
                 </Button>
+                <Box sx={{ flex: 1 }} />
+                <ExportCsvButton
+                  rows={getSortedTeamsWithScores().map((r, i) => ({ ...r, rank: i + 1 }))}
+                  columns={round1SummaryColumns(round1Scores, nonprofitNames, finalistTeams)}
+                  filenameParts={[selectedHackathon, 'round1-team-scores']}
+                  table="judging_round1_team_scores"
+                  eventId={selectedHackathon}
+                  label="Download team scores"
+                  disabled={loadingScores}
+                  tooltip="One row per team: averages, spread and finalist flag (what this table shows)"
+                />
+                <ExportCsvButton
+                  rows={round1DetailRows(round1Scores)}
+                  columns={round1DetailColumns(round1Scores, nonprofitNames)}
+                  filenameParts={[selectedHackathon, 'round1-judge-scores']}
+                  table="judging_round1_judge_scores"
+                  eventId={selectedHackathon}
+                  label="Download every judge score"
+                  disabled={loadingScores}
+                  tooltip="One row per judge × team with each rubric score and feedback"
+                />
               </Box>
 
               <TableContainer component={Paper} variant="outlined">

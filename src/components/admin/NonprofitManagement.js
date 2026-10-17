@@ -41,6 +41,7 @@ import {
 import { useRouter } from "next/router";
 import axios from "axios";
 import ProblemStatementManagement from "./ProblemStatementManagement";
+import ExportCsvButton from "./ExportCsvButton";
 
 // Memoize the component to prevent unnecessary re-renders
 const NonprofitManagement = memo(({ 
@@ -375,6 +376,33 @@ const NonprofitManagement = memo(({
     return nonprofit || null;
   };
 
+  // Rows + columns for the "Nonprofits in this Hackathon" CSV.
+  const nonprofitCsvRows = hackathonNonprofits.map(getNonprofit).filter(Boolean);
+  const nonprofitCsvColumns = [
+    { key: "name", label: "Nonprofit" },
+    { key: "description", label: "Description" },
+    { key: "website", label: "Website" },
+    { key: "contact_email", label: "Contact email" },
+    { key: "contact_people", label: "Contact people" },
+    { key: "slack_channel", label: "Slack channel" },
+    {
+      key: "projects",
+      label: "Projects",
+      get: (np) =>
+        getNonprofitProblemStatements(np.id).map((psId) => {
+          const id = typeof psId === "object" ? psId?.id : psId;
+          return problemStatements.find((p) => p.id === id)?.title || id;
+        }),
+    },
+    {
+      key: "visible_projects",
+      label: "Visible projects",
+      get: (np) =>
+        getNonprofitProblemStatements(np.id).filter((psId) => isPsVisible(typeof psId === "object" ? psId?.id : psId)).length,
+    },
+    { key: "id", label: "Id" },
+  ];
+
   // Render component
   return (
     <Box sx={{ mt: 4 }}>
@@ -491,13 +519,23 @@ const NonprofitManagement = memo(({
           <Typography variant="subtitle1">
             Nonprofits in this Hackathon
           </Typography>
-          {hackathonNonprofits.length > 0 && (
-            <Typography variant="caption" color="text.secondary">
-              {visiblePsIds === null
-                ? `All projects visible`
-                : `${visiblePsIds.length} of ${getAllProblemStatementIds().length} projects visible`}
-            </Typography>
-          )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {hackathonNonprofits.length > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {visiblePsIds === null
+                  ? `All projects visible`
+                  : `${visiblePsIds.length} of ${getAllProblemStatementIds().length} projects visible`}
+              </Typography>
+            )}
+            <ExportCsvButton
+              rows={nonprofitCsvRows}
+              columns={nonprofitCsvColumns}
+              filenameParts={[hackathon?.event_id, "nonprofits"]}
+              table="nonprofits"
+              eventId={hackathon?.event_id}
+              label="Download CSV"
+            />
+          </Box>
         </Box>
         
         {loading && hackathonNonprofits.length === 0 ? (
