@@ -1,88 +1,63 @@
 import { redirectToLoginPageWithLogging } from "../authRedirectLogging";
 
-describe("authRedirectLogging", () => {
-  let infoSpy;
-  let errorSpy;
-
+describe("redirectToLoginPageWithLogging", () => {
+  let info, error;
   beforeEach(() => {
     jest.useFakeTimers();
-    infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    info = jest.spyOn(console, "info").mockImplementation(() => {});
+    error = jest.spyOn(console, "error").mockImplementation(() => {});
   });
-
   afterEach(() => {
     jest.useRealTimers();
-    infoSpy.mockRestore();
-    errorSpy.mockRestore();
+    info.mockRestore();
+    error.mockRestore();
   });
 
-  it("logs the computed login URL and calls through to the SDK", () => {
-    const redirectFns = {
-      getLoginPageUrl: jest.fn(() => "https://auth.example/login?rt=abc"),
-      redirectToLoginPage: jest.fn(),
-    };
-    const options = { postLoginRedirectUrl: "https://app.example/" };
+  const options = { postLoginRedirectUrl: "https://www.ohack.dev/x" };
 
-    redirectToLoginPageWithLogging(redirectFns, options, "navbar");
-
-    expect(redirectFns.getLoginPageUrl).toHaveBeenCalledWith(options);
-    expect(redirectFns.redirectToLoginPage).toHaveBeenCalledWith(options);
-    expect(infoSpy).toHaveBeenCalledWith(
-      "[auth][login] (navbar) navigating to https://auth.example/login?rt=abc"
-    );
+  it("still redirects when getLoginPageUrl is not provided (useRedirectFunctions() shape)", () => {
+    // Regression: the first version read getLoginPageUrl off the
+    // useRedirectFunctions() object, threw, and never redirected.
+    const redirectToLoginPage = jest.fn();
+    redirectToLoginPageWithLogging({ redirectToLoginPage }, options, "navbar");
+    expect(redirectToLoginPage).toHaveBeenCalledWith(options);
+    expect(info).toHaveBeenCalledWith(expect.stringContaining("navigating to <unavailable>"));
+    expect(error).not.toHaveBeenCalled();
   });
 
-  it("reports when the page is still alive after the redirect call", () => {
-    const redirectFns = {
-      getLoginPageUrl: () => "https://auth.example/login?rt=abc",
-      // Simulates window.location.href assignment that never navigates.
-      redirectToLoginPage: () => {},
-    };
+  it("still redirects when getLoginPageUrl throws", () => {
+    const redirectToLoginPage = jest.fn();
+    const getLoginPageUrl = jest.fn(() => {
+      throw new Error("client not ready");
+    });
+    redirectToLoginPageWithLogging({ redirectToLoginPage, getLoginPageUrl }, options);
+    expect(redirectToLoginPage).toHaveBeenCalledWith(options);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("getLoginPageUrl threw"), expect.any(Error));
+  });
 
-    redirectToLoginPageWithLogging(redirectFns, {}, "navbar");
+  it("logs the computed URL, redirects, and reports a silent non-navigation", () => {
+    const redirectToLoginPage = jest.fn();
+    const getLoginPageUrl = jest.fn(() => "https://auth.ohack.dev/login?rt=x");
+    redirectToLoginPageWithLogging({ redirectToLoginPage, getLoginPageUrl }, options, "navbar");
+    expect(getLoginPageUrl).toHaveBeenCalledWith(options);
+    expect(info).toHaveBeenCalledWith("[auth][login] (navbar) navigating to https://auth.ohack.dev/login?rt=x");
+    expect(redirectToLoginPage).toHaveBeenCalledWith(options);
+    jest.runAllTimers(); // page still alive → the redirect silently failed
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("did not navigate"));
+  });
+
+  it("reports when redirectToLoginPage is missing or throws", () => {
+    redirectToLoginPageWithLogging({}, options, "navbar");
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("redirectToLoginPage is not available"));
+
+    const redirectToLoginPage = jest.fn(() => {
+      throw new Error("boom");
+    });
+    error.mockClear();
+    redirectToLoginPageWithLogging({ redirectToLoginPage }, options);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("redirectToLoginPage threw"), expect.any(Error));
     jest.runAllTimers();
-
-    expect(errorSpy).toHaveBeenCalledWith(
-      "[auth][login] (navbar) redirectToLoginPage returned but the page did not navigate; computed URL was https://auth.example/login?rt=abc"
-    );
-  });
-
-  it("logs and stops when getLoginPageUrl throws", () => {
-    const redirectFns = {
-      getLoginPageUrl: () => {
-        throw new Error("Client is not initialized");
-      },
-      redirectToLoginPage: jest.fn(),
-    };
-
-    redirectToLoginPageWithLogging(redirectFns, {}, "navbar");
-    jest.runAllTimers();
-
-    expect(redirectFns.redirectToLoginPage).not.toHaveBeenCalled();
-    expect(infoSpy).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(errorSpy.mock.calls[0][0]).toContain(
-      "[auth][login] (navbar) getLoginPageUrl threw before navigating"
-    );
-  });
-
-  it("logs and stops when redirectToLoginPage throws", () => {
-    const thrown = new Error("Client is not initialized");
-    const redirectFns = {
-      getLoginPageUrl: () => "https://auth.example/login?rt=abc",
-      redirectToLoginPage: () => {
-        throw thrown;
-      },
-    };
-
-    redirectToLoginPageWithLogging(redirectFns, {}, "navbar");
-    jest.runAllTimers();
-
-    expect(errorSpy).toHaveBeenCalledWith(
-      "[auth][login] (navbar) redirectToLoginPage threw",
-      thrown
-    );
-    // No silent-no-navigation report on top of the thrown error.
-    expect(errorSpy).toHaveBeenCalledTimes(1);
+    // No silent-no-navigation report stacked on top of the thrown error.
+    expect(error).toHaveBeenCalledTimes(1);
   });
 });

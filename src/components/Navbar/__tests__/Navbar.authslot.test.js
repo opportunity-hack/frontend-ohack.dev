@@ -15,6 +15,7 @@ const mockAuth = { loading: false, isLoggedIn: false, user: null };
 jest.mock("@propelauth/react", () => ({
   useAuthInfo: () => mockAuth,
   useLogoutFunction: () => jest.fn(),
+  useHostedPageUrls: () => ({ getLoginPageUrl: () => "https://auth.test/login" }),
   useRedirectFunctions: () => ({
     redirectToLoginPage: jest.fn(),
     redirectToSignupPage: jest.fn(),

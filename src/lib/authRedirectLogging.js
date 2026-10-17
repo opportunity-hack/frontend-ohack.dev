@@ -11,22 +11,35 @@
 // which means the redirect silently failed; on a successful redirect the page
 // unloads and the timer never runs.
 //
-// redirectFns is the object returned by useRedirectFunctions() (it carries
-// both getLoginPageUrl and redirectToLoginPage). options are passed straight
-// through to the SDK. source is a short label like "navbar" so the log line
-// identifies which button was clicked.
-export function redirectToLoginPageWithLogging(redirectFns, options, source) {
+// `fns` is a plain object carrying `redirectToLoginPage` (from
+// useRedirectFunctions()) and, optionally, `getLoginPageUrl` (from
+// useHostedPageUrls() — a DIFFERENT hook; useRedirectFunctions() does NOT
+// return it). The URL lookup is diagnostics only: if it is missing or throws
+// we log that and STILL redirect. Oct 2026 regression: the first version of
+// this helper read getLoginPageUrl off the useRedirectFunctions() object,
+// got a TypeError, and returned early — the navbar Log In button did nothing
+// on every page. Diagnostics must never be able to block the redirect.
+// `options` are passed straight through to the SDK. `source` is a short
+// label like "navbar" so the log line identifies which button was clicked.
+export function redirectToLoginPageWithLogging(fns, options, source) {
   const label = `[auth][login]${source ? ` (${source})` : ""}`;
-  let loginUrl = "<unknown>";
-  try {
-    loginUrl = redirectFns.getLoginPageUrl(options);
-  } catch (err) {
-    console.error(`${label} getLoginPageUrl threw before navigating`, err);
-    return;
+
+  let loginUrl = "<unavailable>";
+  if (fns && typeof fns.getLoginPageUrl === "function") {
+    try {
+      loginUrl = fns.getLoginPageUrl(options);
+    } catch (err) {
+      console.error(`${label} getLoginPageUrl threw (continuing to redirect)`, err);
+    }
   }
   console.info(`${label} navigating to ${loginUrl}`);
+
+  if (!fns || typeof fns.redirectToLoginPage !== "function") {
+    console.error(`${label} redirectToLoginPage is not available; cannot navigate`);
+    return;
+  }
   try {
-    redirectFns.redirectToLoginPage(options);
+    fns.redirectToLoginPage(options);
   } catch (err) {
     console.error(`${label} redirectToLoginPage threw`, err);
     return;
