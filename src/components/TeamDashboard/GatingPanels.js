@@ -13,7 +13,15 @@ export function ApplicationLoadingPanel({ eventTitle }) {
   );
 }
 
-export function NoApplicationPanel({ eventId, eventTitle }) {
+// `title`/`feature` let the Team Finder (/findteam) reuse these panels with
+// its own wording while the structure + copy stay in lockstep (the two pages
+// must never drift — see CLAUDE.md "Hacker isSelected gating UX").
+export function NoApplicationPanel({
+  eventId,
+  eventTitle,
+  title = "Apply first to manage a team",
+  feature = "Team management",
+}) {
   return (
     <Box className="ohx-card" sx={{ mt: 3, p: 4, textAlign: "center" }}>
       <Typography
@@ -25,13 +33,13 @@ export function NoApplicationPanel({ eventId, eventTitle }) {
           color: "var(--brand)",
         }}
       >
-        Apply first to manage a team
+        {title}
       </Typography>
       <Typography
         variant="body1"
         sx={{ mb: 3, color: "var(--muted)", maxWidth: 560, mx: "auto" }}
       >
-        Team management is only available to hackers who have submitted a hacker
+        {feature} is only available to hackers who have submitted a hacker
         application and been confirmed for {eventTitle || "this hackathon"}.
         Submit your application to get started — we&apos;ll email you once your
         spot is confirmed.
@@ -58,7 +66,10 @@ export function NoApplicationPanel({ eventId, eventTitle }) {
   );
 }
 
-export function AwaitingConfirmationPanel({ eventTitle }) {
+export function AwaitingConfirmationPanel({
+  eventTitle,
+  feature = "team management",
+}) {
   const { slackSignupUrl } = useEnv();
   return (
     <Box className="ohx-card" sx={{ mt: 3, p: 4 }}>
@@ -76,13 +87,13 @@ export function AwaitingConfirmationPanel({ eventTitle }) {
       <Typography variant="body1" sx={{ mb: 2, color: "var(--muted)" }}>
         Thanks for applying to {eventTitle || "this hackathon"}! We&apos;ve
         received your hacker application — it just hasn&apos;t been confirmed
-        for a spot yet, so team management is locked for now.
+        for a spot yet, so {feature} is locked for now.
       </Typography>
       <Alert severity="info" icon={false} sx={{ mb: 3 }}>
         <Typography variant="body2" sx={{ mb: 0.5 }}>
           <strong>What this means:</strong> Most applications are reviewed
           within about a week. You&apos;ll get an email as soon as your spot is
-          confirmed, and team management will unlock automatically.
+          confirmed, and {feature} will unlock automatically.
         </Typography>
         <Typography variant="body2">
           If the event is close and you haven&apos;t heard back, we may have
