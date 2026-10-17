@@ -1629,12 +1629,12 @@ export async function getStaticProps({ params }) {
   if (!data || !data.id) return { notFound: true, revalidate: 60 };
   return {
     props: { eventData: data },
-    revalidate: 60,
+    revalidate: 10,
   };
 }
 
 export async function getStaticPaths() {
-  // Rendered on demand (ISR, `revalidate: 60` in getStaticProps), NOT
+  // Rendered on demand (ISR, `revalidate: 10` in getStaticProps), NOT
   // prerendered at build time. Prerendering every event fired ~40 backend
   // fetches during `next build`; one network blip ("fetch failed" on
   // /hack/9, Oct 7 2026) aborted the whole Vercel deploy — the same class of
