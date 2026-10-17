@@ -39,6 +39,13 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import SectionContainer from "../SectionContainer";
+import ExportCsvButton from "../../ExportCsvButton";
+
+const COUNTDOWN_CSV_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "time", label: "Time" },
+  { key: "description", label: "Description" },
+];
 import {
   DEFAULT_EVENT_TIMEZONE,
   toIsoWithTimezone,
@@ -302,6 +309,7 @@ const ScheduleSection = ({ admin }) => {
       title="Schedule"
       description="Countdowns shown publicly on the hackathon page. Pick presets to seed common moments — Kickoff, Lunch, Judging, Awards. Edits are explicit-save."
       actions={
+        <Stack direction="row" spacing={1} alignItems="center">
         <Tabs
           value={view}
           onChange={(_, v) => setView(v)}
@@ -322,6 +330,16 @@ const ScheduleSection = ({ admin }) => {
             sx={{ minHeight: 0, py: 0.5 }}
           />
         </Tabs>
+        <ExportCsvButton
+          rows={countdowns}
+          columns={COUNTDOWN_CSV_COLUMNS}
+          filenameParts={[hackathon.event_id, "schedule"]}
+          table="schedule_countdowns"
+          eventId={hackathon.event_id}
+          label="Download CSV"
+          iconOnly
+        />
+        </Stack>
       }
       dirty={dirty}
       saving={saving}

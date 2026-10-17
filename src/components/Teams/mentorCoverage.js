@@ -177,3 +177,93 @@ export function relativeTime(iso) {
   if (days < 30) return `${days}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+
+// Split a team's append-only `mentor_flags` into the two lists the panel
+// renders: open flags (newest raised first) and the resolved history (most
+// recently resolved first). Tolerates a missing/non-array field. A flag is
+// "resolved" iff it carries `resolved_at` — the same test the backend's
+// `_open_flag_count` uses, so the header count and these lists agree.
+export function splitMentorFlags(flags) {
+  const list = Array.isArray(flags) ? flags.filter(Boolean) : [];
+  const open = list
+    .filter((f) => !f.resolved_at)
+    .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+  const resolved = list
+    .filter((f) => Boolean(f.resolved_at))
+    .sort((a, b) => (b.resolved_at || "").localeCompare(a.resolved_at || ""));
+  return { open, resolved };
+}
+
+// Human-readable span between two ISO timestamps ("12m", "2h 14m", "1d 3h").
+// Used for "open for …" on resolved flags so a mentor can see how long the
+// team waited. Returns "" for missing/invalid input or a negative span.
+export function durationLabel(startIso, endIso) {
+  if (!startIso || !endIso) return "";
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "";
+  const totalMins = Math.round((end - start) / 60000);
+  if (totalMins < 1) return "under a minute";
+  const days = Math.floor(totalMins / (60 * 24));
+  const hours = Math.floor((totalMins % (60 * 24)) / 60);
+  const mins = totalMins % 60;
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
+}
+
+// ---- optimistic overlays ----------------------------------------------------
+// Every mentor write round-trips the backend (mentor check, Firestore write,
+// synchronous Slack audit, team re-read) — ~1-3s with no local feedback, which
+// read as "the button is laggy". The panel overlays the calling mentor's
+// in-flight changes on the server copy so the UI flips on click and reconciles
+// (or reverts) when the response lands. Neither helper mutates its input.
+
+// `overrides` is {[slug]: true|false} — add/clear MY check on that item.
+export function applyOptimisticCoverage(checklist, overrides, myPropelId, myName) {
+  const base = checklist || {};
+  const slugs = Object.keys(overrides || {});
+  if (!myPropelId || slugs.length === 0) return base;
+  const out = { ...base };
+  for (const slug of slugs) {
+    const checks = {};
+    for (const c of coverageChecks(out[slug])) {
+      checks[c.propel_id] = { name: c.name, checked_at: c.checked_at };
+    }
+    if (overrides[slug]) {
+      if (!checks[myPropelId]) {
+        checks[myPropelId] = {
+          name: myName || "You",
+          checked_at: new Date().toISOString(),
+        };
+      }
+    } else {
+      delete checks[myPropelId];
+    }
+    out[slug] = { checks };
+  }
+  return out;
+}
+
+// `overrides` is {[criterion]: {score, rated_at}} — MY newest rating on it.
+export function applyOptimisticRatings(byCriterion, overrides, myPropelId) {
+  const base = byCriterion || {};
+  const slugs = Object.keys(overrides || {});
+  if (!myPropelId || slugs.length === 0) return base;
+  const out = { ...base };
+  for (const slug of slugs) {
+    const o = overrides[slug];
+    if (!o?.score) continue;
+    out[slug] = {
+      ...(out[slug] || {}),
+      [myPropelId]: {
+        criterion: slug,
+        score: o.score,
+        rated_at: o.rated_at,
+        rated_by_propel_id: myPropelId,
+        optimistic: true,
+      },
+    };
+  }
+  return out;
+}

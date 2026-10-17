@@ -31,6 +31,24 @@ import {
 import axios from "axios";
 import * as ga from "../../lib/ga";
 import { FONT_MONO } from "../../styles/fonts";
+import ExportCsvButton from "./ExportCsvButton";
+
+const RANKING_CSV_COLUMNS = [
+  { key: "rank", label: "Rank" },
+  { key: "name", label: "Team" },
+  { key: "team_id", label: "Team id" },
+  { key: "shown", label: "Shown" },
+  { key: "approvals", label: "Approvals" },
+  { key: "approval_rate", label: "Approval rate" },
+  { key: "wilson_lower_bound", label: "Wilson LB" },
+];
+
+const BALLOT_CSV_COLUMNS = [
+  { key: "voter_propel_id", label: "Voter (propel id)" },
+  { key: "voted_at", label: "Voted at" },
+  { key: "picks_count", label: "Picks" },
+  { key: "voided", label: "Voided", get: (b) => Boolean(b?.voided) },
+];
 
 const LOW_EXPOSURE_THRESHOLD = 3;
 
@@ -280,9 +298,19 @@ const PeerVoteResults = ({
             {results?.voided ? ` · ${results.voided} voided` : ""}
           </Typography>
         </Box>
-        <Button size="small" startIcon={<RefreshIcon />} onClick={() => load()}>
-          Refresh
-        </Button>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <ExportCsvButton
+            rows={teams}
+            columns={RANKING_CSV_COLUMNS}
+            filenameParts={[eventId, "hackers-choice-rankings"]}
+            table="peer_vote_rankings"
+            eventId={eventId}
+            label="Download rankings"
+          />
+          <Button size="small" startIcon={<RefreshIcon />} onClick={() => load()}>
+            Refresh
+          </Button>
+        </Stack>
       </Stack>
 
       {!enabled && (
@@ -394,9 +422,17 @@ const PeerVoteResults = ({
         </TableContainer>
       )}
 
-      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-        Ballots
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+        <Typography variant="subtitle2">Ballots</Typography>
+        <ExportCsvButton
+          rows={ballotsDetail}
+          columns={BALLOT_CSV_COLUMNS}
+          filenameParts={[eventId, "hackers-choice-ballots"]}
+          table="peer_vote_ballots"
+          eventId={eventId}
+          label="Download ballots"
+        />
+      </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         Void removes one voter's picks from the tally (e.g. a duplicate account
         or abuse report). Cannot be undone from here.

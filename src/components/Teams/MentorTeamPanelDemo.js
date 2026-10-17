@@ -45,10 +45,25 @@ const DEMO_TEAM = {
       raised_by_propel_id: "demo-priya",
       raised_by_name: "Priya R.",
       severity: "needs_attention",
-      body:
-        "Team is stuck on auth setup — would love a mentor with NextAuth experience to do a quick screen-share.",
+      body: "Team is stuck on auth setup — would love a mentor with NextAuth experience to do a quick screen-share.",
       owner_propel_id: "demo-priya",
       owner_name: "Priya R.",
+    },
+    // A resolved flag so the "history" disclosure has something to show.
+    {
+      id: "demo-flag-0",
+      created_at: hoursAgo(19),
+      raised_by_propel_id: "demo-greg",
+      raised_by_name: "Greg V.",
+      severity: "blocked",
+      body: "No commits in the repo 6 hours in — team may be building locally without pushing.",
+      owner_propel_id: "demo-greg",
+      owner_name: "Greg V.",
+      resolved_at: hoursAgo(17),
+      resolved_by_propel_id: "demo-greg",
+      resolved_by_name: "Greg V.",
+      resolution_note:
+        "They hadn't set up git remotes yet. Paired on it — first four commits are in and CI is green.",
     },
   ],
   mentor_notes: [
@@ -57,24 +72,21 @@ const DEMO_TEAM = {
       created_at: hoursAgo(20),
       author_propel_id: "demo-priya",
       author_name: "Priya R.",
-      body:
-        "Said hello in their Slack channel. Strong product idea, but they're trying to scope way too much for a weekend — recommended trimming to a single workflow.",
+      body: "Said hello in their Slack channel. Strong product idea, but they're trying to scope way too much for a weekend — recommended trimming to a single workflow.",
     },
     {
       id: "demo-note-2",
       created_at: hoursAgo(5),
       author_propel_id: "demo-greg",
       author_name: "Greg V.",
-      body:
-        "Reviewed the repo — clean commits, README is forming. Recommended they wire up CI before the demo cutoff so judges see a green badge (Polish).",
+      body: "Reviewed the repo — clean commits, README is forming. Recommended they wire up CI before the demo cutoff so judges see a green badge (Polish).",
     },
     {
       id: "demo-note-3",
       created_at: minutesAgo(30),
       author_propel_id: "demo-jasmine",
       author_name: "Jasmine T.",
-      body:
-        "Walked them through judging criteria with concrete examples for Scope and Documentation. They have great impact potential — need to lean into nonprofit storytelling for the demo video.",
+      body: "Walked them through judging criteria with concrete examples for Scope and Documentation. They have great impact potential — need to lean into nonprofit storytelling for the demo video.",
     },
   ],
   mentor_ratings: [

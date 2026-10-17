@@ -76,6 +76,12 @@ describe("deadlineState", () => {
       now: NOW,
     });
     expect(state.kind).toBe("closed");
+    // The closing moment is the late window's end; the deadline is kept so
+    // the UI can say "deadline was X, late window ended Y".
+    expect(state.reason).toBe("late_window");
+    expect(state.target.toISOString()).toBe("2026-10-11T15:00:00.000Z");
+    expect(state.deadline.toISOString()).toBe("2026-10-11T13:00:00.000Z");
+    expect(state.lateUntil.toISOString()).toBe("2026-10-11T15:00:00.000Z");
   });
 
   it("reports 'closed' when the deadline passed with no late window at all", () => {
@@ -84,6 +90,9 @@ describe("deadlineState", () => {
       now: NOW,
     });
     expect(state.kind).toBe("closed");
+    expect(state.reason).toBe("deadline");
+    expect(state.target.toISOString()).toBe("2026-10-11T13:00:00.000Z");
+    expect(state.lateUntil).toBeNull();
   });
 
   it("falls back to the event's end-of-day when there's no deadlines.submission", () => {
@@ -105,6 +114,9 @@ describe("deadlineState", () => {
       now: NOW,
     });
     expect(state.kind).toBe("closed");
+    // Informational only — the backend treats a missing deadline as open.
+    expect(state.reason).toBe("event_ended");
+    expect(state.deadline).toBeNull();
   });
 
   it("reports 'none' with no deadlines and no end date", () => {

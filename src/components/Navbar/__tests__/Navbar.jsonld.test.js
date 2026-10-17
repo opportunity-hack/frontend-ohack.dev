@@ -12,6 +12,7 @@ jest.mock("next/head", () => ({ __esModule: true, default: ({ children }) => chi
 jest.mock("@propelauth/react", () => ({
   useAuthInfo: () => ({ isLoggedIn: false, user: null }),
   useLogoutFunction: () => jest.fn(),
+  useHostedPageUrls: () => ({ getLoginPageUrl: () => "https://auth.test/login" }),
   useRedirectFunctions: () => ({
     redirectToLoginPage: jest.fn(),
     redirectToSignupPage: jest.fn(),

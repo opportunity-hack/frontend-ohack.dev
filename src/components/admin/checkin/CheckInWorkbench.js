@@ -32,6 +32,21 @@ import ErrorIcon from '@mui/icons-material/Error';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonIcon from '@mui/icons-material/Person';
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
+import ExportCsvButton from "../ExportCsvButton";
+
+const CHECKED_IN_CSV_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "email", label: "Email" },
+  { key: "volunteerType", label: "Type" },
+  { key: "checkedInAt", label: "Checked in at" },
+  {
+    key: "checkedInBy",
+    label: "Checked in by",
+    get: (p) => [p?.checkedInBy?.firstName, p?.checkedInBy?.lastName].filter(Boolean).join(" "),
+  },
+  { key: "company", label: "Company", get: (p) => p?.company || p?.companyName || "" },
+  { key: "id", label: "Id" },
+];
 
 // When `embedded` is true, this component is rendered inside the per-event
 // hackathon admin page. The host page already owns the AdminPage wrapper and
@@ -666,14 +681,24 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <PersonIcon sx={{ mr: 1 }} />
               <Typography variant="h6">All Checked-In People</Typography>
-              {allCheckedInPeople.length > 0 && (
-                <Chip
-                  size="small"
-                  label={`${allCheckedInPeople.length} total`}
-                  variant="outlined"
-                  sx={{ ml: 'auto' }}
+              <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+                {allCheckedInPeople.length > 0 && (
+                  <Chip
+                    size="small"
+                    label={`${allCheckedInPeople.length} total`}
+                    variant="outlined"
+                  />
+                )}
+                <ExportCsvButton
+                  rows={allCheckedInPeople}
+                  columns={CHECKED_IN_CSV_COLUMNS}
+                  filenameParts={[selectedEventId, "checked-in"]}
+                  table="checkin_people"
+                  eventId={selectedEventId}
+                  label="Download CSV"
+                  iconOnly
                 />
-              )}
+              </Box>
             </Box>
 
             {allCheckedInPeople.length === 0 ? (

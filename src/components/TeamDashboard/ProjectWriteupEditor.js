@@ -29,6 +29,7 @@ import {
   getEventTimezone,
 } from "../../lib/timezoneUtils";
 import { STORY_LEAD } from "./copy";
+import { deadlineState } from "../../lib/teamDeliverables";
 
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((m) => m.default),
@@ -110,6 +111,34 @@ function SaveIndicator({ saveState }) {
       </span>
     );
   return null;
+}
+
+// Turns `{deadline, lateUntil}` (ISO strings from a 409 body or the client
+// clock) into a headline + one-sentence explanation. Exported for tests.
+export function describeClosedWindow(
+  { deadline, lateUntil },
+  event,
+  now = Date.now(),
+) {
+  const tz = getEventTimezone(event);
+  const fmt = (iso) => formatDeadlineMoment(iso, tz);
+  const lateMs = lateUntil ? new Date(lateUntil).getTime() : NaN;
+  const lateOpen = !Number.isNaN(lateMs) && lateMs > now;
+  const latePassed = !Number.isNaN(lateMs) && lateMs <= now;
+  const closedAt = latePassed ? lateUntil : deadline;
+  const headline = lateOpen
+    ? `The submission deadline${deadline ? ` (${fmt(deadline)})` : ""} has passed.`
+    : `Submissions closed${closedAt ? ` ${fmt(closedAt)}` : ""}.`;
+  let detail;
+  if (lateOpen) {
+    detail = `Late submissions are still open until ${fmt(lateUntil)} — anything you submit now is marked late.`;
+  } else if (latePassed) {
+    detail = `The deadline was ${deadline ? fmt(deadline) : "earlier"} and the late window has ended. Changes made now won't be saved — reach out in #ask-a-mentor if something went wrong.`;
+  } else {
+    detail =
+      "No late window was set for this event. Changes made now won't be saved — reach out in #ask-a-mentor if something went wrong.";
+  }
+  return { headline, detail };
 }
 
 /**
@@ -254,10 +283,40 @@ export default function ProjectWriteupEditor({
   // 409, which can happen even with no pending autosave) fills in only when
   // the hook hasn't already flagged it — otherwise the same notice rendered
   // twice.
+  // Pre-empt the first 409: when a CONFIGURED deadline has already passed,
+  // say so before the first keystroke. The end-of-event fallback is left
+  // out on purpose — the backend treats "no deadline" as open.
+  const windowState = useMemo(
+    () =>
+      deadlineState({
+        deadlines: event?.deadlines,
+        endDate: event?.end_date,
+        timezone: getEventTimezone(event),
+        submissionStatus: team?.project_submission_status,
+        submittedAt: team?.project_submitted_at,
+      }),
+    [
+      event?.deadlines,
+      event?.end_date,
+      event?.timezone,
+      team?.project_submission_status,
+      team?.project_submitted_at,
+    ],
+  );
+  const closedByClock =
+    windowState.kind === "closed" && windowState.reason !== "event_ended"
+      ? {
+          deadline: windowState.deadline?.toISOString() || null,
+          lateUntil: windowState.lateUntil?.toISOString() || null,
+        }
+      : null;
   const closedInfo =
     saveState.status === "closed"
       ? { deadline: saveState.deadline, lateUntil: saveState.lateUntil }
-      : closedNotice;
+      : closedNotice || closedByClock;
+  const closedCopy = closedInfo
+    ? describeClosedWindow(closedInfo, event)
+    : null;
 
   return (
     <DashboardSection id="project" eyebrow="Your project" title="Project story">
@@ -271,16 +330,9 @@ export default function ProjectWriteupEditor({
         </Box>
       )}
 
-      {closedInfo && (
+      {closedCopy && (
         <Alert severity="warning" sx={{ ...warningAlertSx, mb: 2 }}>
-          Submissions closed
-          {closedInfo.deadline
-            ? ` ${formatDeadlineMoment(closedInfo.deadline, getEventTimezone(event))}`
-            : ""}
-          .
-          {closedInfo.lateUntil
-            ? ` Late submissions are open until ${formatDeadlineMoment(closedInfo.lateUntil, getEventTimezone(event))}.`
-            : " Reach out in #ask-a-mentor if something went wrong."}
+          <strong>{closedCopy.headline}</strong> {closedCopy.detail}
         </Alert>
       )}
 

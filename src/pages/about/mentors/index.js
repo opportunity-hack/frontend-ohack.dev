@@ -116,9 +116,11 @@ export default function Mentors() {
 
                         <h3 className="ohx-display" style={{ fontSize: "1.3rem", marginBottom: 8 }}>2. What you&apos;ll see on every team&apos;s page</h3>
                         <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 20, maxWidth: "70ch", fontSize: "0.96rem" }}>
-                            On <code>/hack/&lt;event&gt;/team/&lt;team_id&gt;</code>, every mentor sees a shared support panel:
-                            open concerns owned by a specific mentor so others don&apos;t duplicate effort, a 6-item coverage
-                            checklist with attribution, a 4-criterion judging-readiness rubric (worst rating wins, so you
+                            Every team has its own mentor support page — open it from the team&apos;s page on the event
+                            site, or from the &ldquo;Mentor&rdquo; link beside each team on your mentor check-in page. Every
+                            mentor sees the same shared panel: open concerns owned by a specific mentor so others don&apos;t
+                            duplicate effort (plus the history of what&apos;s already been resolved), a 6-item coverage
+                            checklist with attribution, a 5-criterion judging-readiness rubric (worst rating wins, so you
                             coach the weakest area first), and a public notes feed. Live preview below.
                         </p>
                         <Box><MentorTeamPanelDemo /></Box>
