@@ -43,6 +43,8 @@ import {
   ContentCopy as ContentCopyIcon
 } from '@mui/icons-material';
 import { useAuthInfo } from '@propelauth/react';
+import { buildCsv, csvFilename, downloadCsv } from '../../lib/csvExport';
+import * as ga from '../../lib/ga';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
 
@@ -398,39 +400,38 @@ const JudgingResults = ({ orgId, hackathons, selectedHackathon, setSelectedHacka
     }
   };
 
-  // Export results to CSV
+  // Export results to CSV (shared RFC-4180 builder — team names with commas
+  // used to split into extra columns).
   const exportResults = () => {
     if (round2Scores.length === 0) {
       enqueueSnackbar('No results to export', { variant: 'warning' });
       return;
     }
 
-    const csvContent = [
-      ['Rank', 'Team Name', 'Nonprofit', 'Average Score', 'Total Score', 'Judges Complete', 'Total Assigned', 'Completion %'],
-      ...round2Scores.map((teamData, index) => [
-        index + 1,
-        teamData.team.name,
-        teamData.team.selected_nonprofit_id ? 
-          (nonprofitNames[teamData.team.selected_nonprofit_id] || 'Unknown') : 
-          'No nonprofit',
-        teamData.judgeCount > 0 ? teamData.averageScore.toFixed(1) : 'N/A',
-        teamData.judgeCount > 0 ? teamData.totalScore.toFixed(1) : 'N/A',
-        teamData.judgeCount,
-        teamData.totalAssignedJudges,
-        teamData.completionPercentage.toFixed(0) + '%'
-      ])
-    ].map(row => row.join(',')).join('\n');
+    const rows = round2Scores.map((teamData, index) => ({ ...teamData, rank: index + 1 }));
+    const columns = [
+      { key: 'rank', label: 'Rank' },
+      { key: 'team', label: 'Team Name', get: (r) => r.team?.name },
+      {
+        key: 'nonprofit',
+        label: 'Nonprofit',
+        get: (r) =>
+          r.team?.selected_nonprofit_id
+            ? nonprofitNames[r.team.selected_nonprofit_id] || 'Unknown'
+            : 'No nonprofit',
+      },
+      { key: 'averageScore', label: 'Average Score', get: (r) => (r.judgeCount > 0 ? r.averageScore.toFixed(1) : 'N/A') },
+      { key: 'totalScore', label: 'Total Score', get: (r) => (r.judgeCount > 0 ? r.totalScore.toFixed(1) : 'N/A') },
+      { key: 'judgeCount', label: 'Judges Complete' },
+      { key: 'totalAssignedJudges', label: 'Total Assigned' },
+      { key: 'completionPercentage', label: 'Completion %', get: (r) => `${(r.completionPercentage ?? 0).toFixed(0)}%` },
+    ];
+    const filename = csvFilename(selectedHackathon || selectedHackathonData?.title || 'hackathon', 'round2-results');
+    downloadCsv(filename, buildCsv(rows, columns));
+    ga.trackStructuredEvent(ga.EventCategory.ADMIN, 'admin_csv_export', 'judging_round2_results', rows.length, {
+      event_id: selectedHackathon || undefined,
+    });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `round2-results-${selectedHackathonData?.title || 'hackathon'}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
     enqueueSnackbar('Results exported successfully!', { variant: 'success' });
   };
 

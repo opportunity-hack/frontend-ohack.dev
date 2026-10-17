@@ -45,6 +45,19 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, parseISO } from "date-fns";
 import SectionContainer from "../SectionContainer";
+import ExportCsvButton from "../../ExportCsvButton";
+
+const MEAL_CSV_COLUMNS = [
+  { key: "name", label: "Meal" },
+  { key: "time", label: "Time" },
+  { key: "catering_provided", label: "Catering provided", get: (m) => Boolean(m?.catering_provided) },
+  { key: "dietary_tags", label: "Dietary tags" },
+  { key: "headcount_override", label: "Headcount override" },
+  { key: "items", label: "Items", get: (m) => (m?.items || []).map((it) => it?.name).filter(Boolean) },
+  { key: "item_count", label: "Item count", get: (m) => (m?.items || []).length },
+  { key: "vendors", label: "Vendors", get: (m) => Array.from(new Set((m?.items || []).map((it) => it?.vendor).filter(Boolean))) },
+  { key: "id", label: "Id" },
+];
 import MenuCatalogPicker from "../catalog/MenuCatalogPicker";
 import MealSchedule, {
   MEALS_MODE_MENU,
@@ -617,15 +630,26 @@ const MealsSection = ({ admin }) => {
           : "Configure meals, pick items from a vendor catalog (Fat Freddy's seeded), and see live cost estimates. Drag to reorder. Hackers pick one option per slot."
       }
       actions={
-        <ToggleButtonGroup
-          value={showPreview ? "preview" : "edit"}
-          exclusive
-          size="small"
-          onChange={(_, v) => v && setShowPreview(v === "preview")}
-        >
-          <ToggleButton value="edit"><PreviewOffIcon fontSize="small" sx={{ mr: 0.5 }} />Edit only</ToggleButton>
-          <ToggleButton value="preview"><PreviewIcon fontSize="small" sx={{ mr: 0.5 }} />With preview</ToggleButton>
-        </ToggleButtonGroup>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <ToggleButtonGroup
+            value={showPreview ? "preview" : "edit"}
+            exclusive
+            size="small"
+            onChange={(_, v) => v && setShowPreview(v === "preview")}
+          >
+            <ToggleButton value="edit"><PreviewOffIcon fontSize="small" sx={{ mr: 0.5 }} />Edit only</ToggleButton>
+            <ToggleButton value="preview"><PreviewIcon fontSize="small" sx={{ mr: 0.5 }} />With preview</ToggleButton>
+          </ToggleButtonGroup>
+          <ExportCsvButton
+            rows={meals}
+            columns={MEAL_CSV_COLUMNS}
+            filenameParts={[hackathon.event_id, "meals"]}
+            table="meals"
+            eventId={hackathon.event_id}
+            label="Download CSV"
+            iconOnly
+          />
+        </Stack>
       }
       dirty={dirty}
       saving={saving}

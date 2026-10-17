@@ -47,6 +47,26 @@ import {
 import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
+import ExportCsvButton from './ExportCsvButton';
+
+const judgeDisplayName = (j) => j?.name || [j?.firstName, j?.lastName].filter(Boolean).join(' ');
+
+// One row per panel — mirrors the panel cards. `nonprofitNames` is the
+// id→name map the component already loads for the team list.
+const panelCsvColumns = (nonprofitNames) => [
+  { key: 'name', label: 'Panel' },
+  { key: 'judge_count', label: 'Judge count', get: (g) => (g.judges || []).length },
+  { key: 'judges', label: 'Judges', get: (g) => (g.judges || []).map(judgeDisplayName) },
+  { key: 'judge_emails', label: 'Judge emails', get: (g) => (g.judges || []).map((j) => j?.email).filter(Boolean) },
+  { key: 'judge_companies', label: 'Judge companies', get: (g) => (g.judges || []).map((j) => j?.company || j?.companyName || '') },
+  { key: 'team_count', label: 'Team count', get: (g) => (g.teams || []).length },
+  { key: 'teams', label: 'Teams', get: (g) => (g.teams || []).map((t) => t?.name) },
+  {
+    key: 'team_nonprofits',
+    label: 'Team nonprofits',
+    get: (g) => (g.teams || []).map((t) => (t?.selected_nonprofit_id ? nonprofitNames?.[t.selected_nonprofit_id] || t.selected_nonprofit_id : '')),
+  },
+];
 
 const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
   const { accessToken } = useAuthInfo();
@@ -898,14 +918,25 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={addJudgeGroup}
-              disabled={!selectedHackathon || !dataLoadComplete}
-            >
-              Add Judge Panel
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={addJudgeGroup}
+                disabled={!selectedHackathon || !dataLoadComplete}
+              >
+                Add Judge Panel
+              </Button>
+              <ExportCsvButton
+                rows={judgeGroups}
+                columns={panelCsvColumns(nonprofitNames)}
+                filenameParts={[selectedHackathon, 'round1-panels']}
+                table="judging_round1_panels"
+                eventId={selectedHackathon}
+                label="Download panels CSV"
+                size="medium"
+              />
+            </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Button

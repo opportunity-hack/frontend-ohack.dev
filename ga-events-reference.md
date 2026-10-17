@@ -148,6 +148,7 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `admin_peer_vote_void_ballot` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | A ballot was voided. |
 | `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
+| `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
 ## Business Intelligence Applications
 
