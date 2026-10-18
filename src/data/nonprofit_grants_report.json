@@ -270,5 +270,519 @@
       "source_api": "propublica",
       "verified_at": "2026-10-16"
     }
-  ]
+  ],
+  "salary_benchmarks": [
+    {
+      "role": "Executive Director / CEO",
+      "revenue_band": "All sizes",
+      "count": 17,
+      "median": 119791.0,
+      "p25": 86668.0,
+      "p75": 200000.0
+    },
+    {
+      "role": "Executive Director / CEO",
+      "revenue_band": "Under $1M",
+      "count": 4,
+      "median": 93254.0,
+      "p25": 86668.0,
+      "p75": 106517.0
+    },
+    {
+      "role": "Executive Director / CEO",
+      "revenue_band": "$1M - $10M",
+      "count": 13,
+      "median": 157032.0,
+      "p25": 100935.0,
+      "p75": 202057.0
+    },
+    {
+      "role": "Other Directors & Officers",
+      "revenue_band": "All sizes",
+      "count": 21,
+      "median": 155120.0,
+      "p25": 59936.0,
+      "p75": 174022.0
+    },
+    {
+      "role": "Other Directors & Officers",
+      "revenue_band": "$1M - $10M",
+      "count": 20,
+      "median": 157528.0,
+      "p25": 64346.0,
+      "p75": 175875.0
+    }
+  ],
+  "salary_samples": [
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "PRESIDENT & CEO",
+      "role": "Executive Director / CEO",
+      "hours": 38,
+      "comp_total": 504589.0
+    },
+    {
+      "org_name": "Equality Health Foundation",
+      "ein": "830778650",
+      "city": "Scottsdale",
+      "revenue": 1294327,
+      "filing_year": 2023,
+      "title": "President/Executive Director",
+      "role": "Executive Director / CEO",
+      "hours": 35,
+      "comp_total": 406847.0
+    },
+    {
+      "org_name": "Vitalyst Health Foundation",
+      "ein": "860097240",
+      "city": "Phoenix",
+      "revenue": 7425107,
+      "filing_year": 2023,
+      "title": "CEO",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 330971.0
+    },
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "SENIOR ADVISOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 256727.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "EXECUTIVE DI",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 240925.0
+    },
+    {
+      "org_name": "Vitalyst Health Foundation",
+      "ein": "860097240",
+      "city": "Phoenix",
+      "revenue": 7425107,
+      "filing_year": 2023,
+      "title": "COO",
+      "role": "Operations (COO)",
+      "hours": 40,
+      "comp_total": 238673.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "PRESIDENT",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 202057.0
+    },
+    {
+      "org_name": "Orme School",
+      "ein": "860120990",
+      "city": "Mayer",
+      "revenue": 5336531,
+      "filing_year": 2023,
+      "title": "President & CFO",
+      "role": "Executive Director / CEO",
+      "hours": 50,
+      "comp_total": 200000.0
+    },
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "VP, CARE IMPROVEMENT",
+      "role": "Other Directors & Officers",
+      "hours": 39,
+      "comp_total": 192288.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "MGR GROWTH S",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 190367.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "ORG CONSULTA",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 175875.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "MGR BUSINESS",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 174022.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "ORG CONSULTA",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 173242.0
+    },
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "DIRECTOR, FINANCIAL POLICY/REIMB",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 170700.0
+    },
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "VP, FINANCE AND OPERATIONS",
+      "role": "Finance (CFO / Controller)",
+      "hours": 40,
+      "comp_total": 170565.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "VICE PRESIDE",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 169252.0
+    },
+    {
+      "org_name": "Advance Community",
+      "ein": "237087997",
+      "city": "Phoenix",
+      "revenue": 1752311,
+      "filing_year": 2023,
+      "title": "PRESIDENT/CE",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 160000.0
+    },
+    {
+      "org_name": "Arizona Education Association",
+      "ein": "860002685",
+      "city": "Phoenix",
+      "revenue": 8731120,
+      "filing_year": 2023,
+      "title": "ORG CONSULTA",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 159936.0
+    },
+    {
+      "org_name": "Crown Charter School",
+      "ein": "861013916",
+      "city": "Litchfield Pk",
+      "revenue": 3767149,
+      "filing_year": 2024,
+      "title": "PRESIDENT",
+      "role": "Executive Director / CEO",
+      "hours": 45,
+      "comp_total": 157032.0
+    },
+    {
+      "org_name": "Arizona Hospital Assn Inc",
+      "ein": "866052341",
+      "city": "Phoenix",
+      "revenue": 5953172,
+      "filing_year": 2023,
+      "title": "VP, POLICY AND ADVOCACY",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 155120.0
+    },
+    {
+      "org_name": "New School For The Arts Middle School",
+      "ein": "900063833",
+      "city": "Tempe",
+      "revenue": 1027067,
+      "filing_year": 2023,
+      "title": "Executive Dean/President",
+      "role": "Executive Director / CEO",
+      "hours": 20,
+      "comp_total": 153643.0
+    },
+    {
+      "org_name": "Vitalyst Health Foundation",
+      "ein": "860097240",
+      "city": "Phoenix",
+      "revenue": 7425107,
+      "filing_year": 2023,
+      "title": "DIRECTOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 130211.0
+    },
+    {
+      "org_name": "Vitalyst Health Foundation",
+      "ein": "860097240",
+      "city": "Phoenix",
+      "revenue": 7425107,
+      "filing_year": 2023,
+      "title": "DIRECTOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 129434.0
+    },
+    {
+      "org_name": "Challenge School Inc",
+      "ein": "860833507",
+      "city": "Glendale",
+      "revenue": 4326044,
+      "filing_year": 2023,
+      "title": "CEO/SECRETARY/PRINCIPAL",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 119791.0
+    },
+    {
+      "org_name": "Wickenburg Community Hospital Foundation Inc",
+      "ein": "742521618",
+      "city": "Wickenburg",
+      "revenue": 315063,
+      "filing_year": 2023,
+      "title": "Executive Director",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 106517.0
+    },
+    {
+      "org_name": "Midtown Primary School",
+      "ein": "753049690",
+      "city": "Phoenix",
+      "revenue": 1617793,
+      "filing_year": 2023,
+      "title": "PRINCIPAL OF OPERATIONS/CHARTER REP",
+      "role": "Operations (COO)",
+      "hours": 40,
+      "comp_total": 106346.0
+    },
+    {
+      "org_name": "Midtown Primary School",
+      "ein": "753049690",
+      "city": "Phoenix",
+      "revenue": 1617793,
+      "filing_year": 2023,
+      "title": "PRESIDENT/CHARTER REPRESENTATIVE",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 100935.0
+    },
+    {
+      "org_name": "Rightpath Health Screenings",
+      "ein": "813067940",
+      "city": "Chandler",
+      "revenue": 412228,
+      "filing_year": 2023,
+      "title": "President/CEO",
+      "role": "Executive Director / CEO",
+      "hours": 50,
+      "comp_total": 99840.0
+    },
+    {
+      "org_name": "Rising Schools Inc",
+      "ein": "454488256",
+      "city": "Tucson",
+      "revenue": 845133,
+      "filing_year": 2019,
+      "title": "President & CEO",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 86668.0
+    },
+    {
+      "org_name": "Challenge School Inc",
+      "ein": "860833507",
+      "city": "Glendale",
+      "revenue": 4326044,
+      "filing_year": 2023,
+      "title": "PRESIDENT",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 85002.0
+    },
+    {
+      "org_name": "Challenge School Inc",
+      "ein": "860833507",
+      "city": "Glendale",
+      "revenue": 4326044,
+      "filing_year": 2023,
+      "title": "DIRECTOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 72083.0
+    },
+    {
+      "org_name": "Community 43",
+      "ein": "844211454",
+      "city": "Phoenix",
+      "revenue": 1565978,
+      "filing_year": 2022,
+      "title": "CEO",
+      "role": "Executive Director / CEO",
+      "hours": 50,
+      "comp_total": 70000.0
+    },
+    {
+      "org_name": "Skyview School Inc",
+      "ein": "860820600",
+      "city": "Prescott",
+      "revenue": 2504067,
+      "filing_year": 2023,
+      "title": "EXECUTIVE DIRECTOR",
+      "role": "Executive Director / CEO",
+      "hours": 40,
+      "comp_total": 69559.0
+    },
+    {
+      "org_name": "Skyview School Inc",
+      "ein": "860820600",
+      "city": "Prescott",
+      "revenue": 2504067,
+      "filing_year": 2023,
+      "title": "CHARTER REPRESENTATIVE",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 64346.0
+    },
+    {
+      "org_name": "Skyview School Inc",
+      "ein": "860820600",
+      "city": "Prescott",
+      "revenue": 2504067,
+      "filing_year": 2023,
+      "title": "DIRECTOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 59936.0
+    },
+    {
+      "org_name": "Faith Christian School",
+      "ein": "742521613",
+      "city": "Mesa",
+      "revenue": 1732102,
+      "filing_year": 2023,
+      "title": "ADMINISTRATOR",
+      "role": "Other Directors & Officers",
+      "hours": 50,
+      "comp_total": 59202.0
+    },
+    {
+      "org_name": "Happy Trails School",
+      "ein": "384027584",
+      "city": "Tucson",
+      "revenue": 1092782,
+      "filing_year": 2022,
+      "title": "Treasurer",
+      "role": "Finance (CFO / Controller)",
+      "hours": 40,
+      "comp_total": 58092.0
+    },
+    {
+      "org_name": "Faith Christian School",
+      "ein": "742521613",
+      "city": "Mesa",
+      "revenue": 1732102,
+      "filing_year": 2023,
+      "title": "HIGH SCHOOL PRINCIPAL",
+      "role": "Other Directors & Officers",
+      "hours": 45,
+      "comp_total": 55034.0
+    },
+    {
+      "org_name": "Hopi School Inc",
+      "ein": "481269229",
+      "city": "Kykotsmovi",
+      "revenue": 666651,
+      "filing_year": 2023,
+      "title": "FACILITATOR",
+      "role": "Other Directors & Officers",
+      "hours": 40,
+      "comp_total": 52917.0
+    },
+    {
+      "org_name": "Faith Christian School",
+      "ein": "742521613",
+      "city": "Mesa",
+      "revenue": 1732102,
+      "filing_year": 2023,
+      "title": "ELEMENTARY PRINCIPAL",
+      "role": "Other Directors & Officers",
+      "hours": 45,
+      "comp_total": 44542.0
+    },
+    {
+      "org_name": "School Connect",
+      "ein": "823762263",
+      "city": "Glendale",
+      "revenue": 399798,
+      "filing_year": 2023,
+      "title": "CEO",
+      "role": "Executive Director / CEO",
+      "hours": 32,
+      "comp_total": 36000.0
+    },
+    {
+      "org_name": "Faith Christian School",
+      "ein": "742521613",
+      "city": "Mesa",
+      "revenue": 1732102,
+      "filing_year": 2023,
+      "title": "BOARD MEMBER",
+      "role": "Other Directors & Officers",
+      "hours": 20,
+      "comp_total": 20330.0
+    }
+  ],
+  "salary_methodology": {
+    "source": "IRS Form 990 Part VII via ProPublica Nonprofit Explorer",
+    "universe": "Arizona nonprofits filing Form 990 with paid officers; latest filing per organization",
+    "filters": "Only people with >= 20 avg hours/week and >= $20,000 total compensation (reportable from org + related orgs + other comp)",
+    "organizations_used": 19,
+    "people_counted": 42,
+    "generated_at": "2026-10-16"
+  }
 }
