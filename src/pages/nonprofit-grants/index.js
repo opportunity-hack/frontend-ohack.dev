@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Box, Container, Typography, Grid, Card, CardContent, TextField,
-  InputAdornment, Button, Divider, useMediaQuery } from '@mui/material';
+  InputAdornment, Button, Divider, useMediaQuery, Chip, LinearProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -40,6 +40,20 @@ const formatVerified = (isoDate) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
+const daysUntil = (isoDate) => {
+  if (!isoDate) return null;
+  const ms = new Date(`${isoDate}T00:00:00`) - new Date(`${todayIso()}T00:00:00`);
+  return Math.round(ms / 86400000);
+};
+
+const closingChip = (grant) => {
+  const days = daysUntil(grant.deadline_iso);
+  if (days == null || days < 0) return null;
+  const label = days === 0 ? 'Closes today' : days === 1 ? 'Closes tomorrow' : `${days} days left`;
+  const color = days <= 14 ? 'error' : days <= 45 ? 'warning' : 'success';
+  return <Chip label={label} color={color} size="small" sx={{ ml: 1 }} />;
+};
+
 const NonprofitGrants = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -50,6 +64,18 @@ const NonprofitGrants = () => {
   const federalGrants = openGrants.filter((g) => g.source_api !== 'curated');
   const funders = reportData.funders || [];
   const summary = reportData.summary || {};
+  const salaryBenchmarks = reportData.salary_benchmarks || [];
+  const salaryMethodology = reportData.salary_methodology || {};
+
+  const closingSoon = federalGrants
+    .filter((g) => {
+      const days = daysUntil(g.deadline_iso);
+      return days != null && days >= 0 && days <= 60;
+    })
+    .sort((a, b) => a.deadline_iso.localeCompare(b.deadline_iso));
+  const edBenchmark = salaryBenchmarks.find(
+    (b) => b.revenue_band === 'All sizes' && b.role.startsWith('Executive Director'),
+  );
 
   const matchesSearch = (grant) => {
     const term = searchTerm.toLowerCase();
@@ -110,6 +136,7 @@ const NonprofitGrants = () => {
                 <CalendarTodayIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="body2">
                   <strong>Deadline:</strong> {grant.deadline || 'Rolling - no fixed deadline'}
+                  {closingChip(grant)}
                 </Typography>
               </Box>
             </Grid>
@@ -153,16 +180,16 @@ const NonprofitGrants = () => {
   return (
     <>
       <Head>
-        <title>Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack</title>
-        <meta name="description" content="Not a cash grant — something better. Opportunity Hack connects 501(c)(3) nonprofits with volunteer developers who build free, custom software. No cost, no strings. Apply to get matched with a team." />
-        <meta name="keywords" content="nonprofit grants, free software for nonprofits, nonprofit technology funding, grant alternative, free custom software, nonprofit tech development, Opportunity Hack" />
-        <meta property="og:title" content="Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack" />
-        <meta property="og:description" content="Not a cash grant — something better. Volunteer developers build free custom software for your nonprofit. No cost to your organization." />
+        <title>Nonprofit Grants Directory: Open Grants & Funding for Nonprofits | Opportunity Hack</title>
+        <meta name="description" content="A free directory of open grants for nonprofits: federal opportunities from Grants.gov with real deadlines, technology programs open year-round, and Arizona foundations researched from IRS Form 990 filings. No paywall, no fees." />
+        <meta name="keywords" content="nonprofit grants, grants for nonprofits, nonprofit funding, technology grants, Grants.gov nonprofit opportunities, foundation grants, Opportunity Hack" />
+        <meta property="og:title" content="Nonprofit Grants Directory: Open Grants & Funding for Nonprofits" />
+        <meta property="og:description" content="Open federal grants with real deadlines, year-round technology programs, and foundations researched from Form 990 data. Free, no paywall." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.ohack.dev/nonprofit-grants" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free Software Development for Nonprofits (a Grant Alternative) | Opportunity Hack" />
-        <meta name="twitter:description" content="Not a cash grant — something better. Volunteer developers build free custom software for your nonprofit. No cost to your organization." />
+        <meta name="twitter:title" content="Nonprofit Grants Directory: Open Grants & Funding for Nonprofits" />
+        <meta name="twitter:description" content="Open federal grants with real deadlines, year-round technology programs, and foundations researched from Form 990 data. Free, no paywall." />
         <link rel="canonical" href="https://www.ohack.dev/nonprofit-grants" />
       </Head>
 
@@ -210,9 +237,9 @@ const NonprofitGrants = () => {
                     <Card elevation={0} sx={{ bgcolor: 'success.light', p: 2, height: '100%' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <EventAvailableIcon color="success" sx={{ mr: 1 }} />
-                        <Typography variant="subtitle2" color="black">With Upcoming Deadlines</Typography>
+                        <Typography variant="subtitle2" color="black">Closing in Next 60 Days</Typography>
                       </Box>
-                      <Typography variant="h4">{summary.grants_with_deadlines ?? 0}</Typography>
+                      <Typography variant="h4">{closingSoon.length}</Typography>
                     </Card>
                   </Grid>
 
@@ -288,6 +315,59 @@ const NonprofitGrants = () => {
             </>
           )}
 
+          {closingSoon.length > 0 && searchTerm === '' && (
+            <>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 2 }}>
+                Closing Soon
+              </Typography>
+              <Typography variant="body1" color="textSecondary" paragraph>
+                Federal deadlines land whether the application is ready or not. These close in the
+                next 60 days, soonest first; the bar drains as the deadline approaches.
+              </Typography>
+              <Card sx={{ mb: 6 }}>
+                <CardContent>
+                  {closingSoon.map((grant) => {
+                    const days = daysUntil(grant.deadline_iso);
+                    return (
+                      <Box
+                        key={grant.source_id || grant.title}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          py: 1.25,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box sx={{ width: { xs: 130, sm: 300 }, flexShrink: 0, pr: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+                            {grant.title}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {grant.source_name} · {grant.deadline}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.max(2, (days / 60) * 100)}
+                            color={days <= 14 ? 'error' : days <= 30 ? 'warning' : 'success'}
+                            sx={{ height: 10, borderRadius: 5 }}
+                          />
+                        </Box>
+                        <Box sx={{ width: { xs: 76, sm: 110 }, flexShrink: 0, pl: 2, textAlign: 'right' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {days === 0 ? 'Today' : `${days}d left`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
           <Typography variant="h4" component="h2" gutterBottom>
             Open Federal Opportunities
           </Typography>
@@ -356,6 +436,31 @@ const NonprofitGrants = () => {
                 ))}
               </Grid>
             </>
+          )}
+
+
+          {salaryBenchmarks.length > 0 && (
+            <Card sx={{ mb: 6, bgcolor: 'primary.light' }}>
+              <CardContent>
+                <Typography variant="h4" component="h2" gutterBottom>
+                  What Do Nonprofits Pay?
+                </Typography>
+                <Typography variant="body1" paragraph sx={{ maxWidth: '800px' }}>
+                  The same Form 990 filings behind this directory also disclose what nonprofits pay
+                  their leaders. We turned them into salary benchmarks by role and organization size
+                  {edBenchmark && (
+                    <>: the typical executive director or CEO earns <strong>{formatMoney(edBenchmark.median)}</strong> in
+                    total compensation (median, n={edBenchmark.count})</>
+                  )}
+                  {salaryMethodology.people_counted && (
+                    <>, from {salaryMethodology.people_counted} people at {salaryMethodology.organizations_used} organizations</>
+                  )}.
+                </Typography>
+                <Button variant="contained" color="primary" size="large" href="/nonprofit-salaries">
+                  See the Salary Benchmarks
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           <Box sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
