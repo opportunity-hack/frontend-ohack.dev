@@ -203,11 +203,11 @@ const NonprofitGrants = () => {
         }}
       >
         <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" align="center" gutterBottom>
+          <Typography variant="h2" component="h1" align="center" gutterBottom sx={{ fontSize: { xs: '1.9rem', sm: '2.75rem', md: '3.75rem' } }}>
             Nonprofit Technology Grants Directory
           </Typography>
 
-          <Typography variant="h5" component="h2" align="center" color="textSecondary" paragraph sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h2" align="center" color="textSecondary" paragraph sx={{ mb: 4, fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
             Free access to technology grant opportunities for nonprofits - no paywall, no fees
           </Typography>
 
@@ -302,7 +302,7 @@ const NonprofitGrants = () => {
 
           {visibleCurated.length > 0 && (
             <>
-              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 2 }}>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 2, fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Start Here: Programs Open Year-Round
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph>
@@ -317,7 +317,7 @@ const NonprofitGrants = () => {
 
           {closingSoon.length > 0 && searchTerm === '' && (
             <>
-              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 2 }}>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 2, fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Closing Soon
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph>
@@ -333,13 +333,14 @@ const NonprofitGrants = () => {
                         key={grant.source_id || grant.title}
                         sx={{
                           display: 'flex',
-                          alignItems: 'center',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'stretch', sm: 'center' },
                           py: 1.25,
                           borderBottom: '1px solid',
                           borderColor: 'divider',
                         }}
                       >
-                        <Box sx={{ width: { xs: 130, sm: 300 }, flexShrink: 0, pr: 2 }}>
+                        <Box sx={{ width: { xs: '100%', sm: 300 }, flexShrink: 0, pr: { sm: 2 } }}>
                           <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
                             {grant.title}
                           </Typography>
@@ -347,18 +348,20 @@ const NonprofitGrants = () => {
                             {grant.source_name} · {grant.deadline}
                           </Typography>
                         </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.max(2, (days / 60) * 100)}
-                            color={days <= 14 ? 'error' : days <= 30 ? 'warning' : 'success'}
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                        <Box sx={{ width: { xs: 76, sm: 110 }, flexShrink: 0, pl: 2, textAlign: 'right' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {days === 0 ? 'Today' : `${days}d left`}
-                          </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, mt: { xs: 1, sm: 0 } }}>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.max(2, (days / 60) * 100)}
+                              color={days <= 14 ? 'error' : days <= 30 ? 'warning' : 'success'}
+                              sx={{ height: 10, borderRadius: 5 }}
+                            />
+                          </Box>
+                          <Box sx={{ width: { xs: 76, sm: 110 }, flexShrink: 0, pl: 2, textAlign: 'right' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {days === 0 ? 'Today' : `${days}d left`}
+                            </Typography>
+                          </Box>
                         </Box>
                       </Box>
                     );
@@ -368,7 +371,7 @@ const NonprofitGrants = () => {
             </>
           )}
 
-          <Typography variant="h4" component="h2" gutterBottom>
+          <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
             Open Federal Opportunities
           </Typography>
           <Typography variant="body1" color="textSecondary" paragraph>
@@ -391,7 +394,7 @@ const NonprofitGrants = () => {
 
           {funders.length > 0 && (
             <>
-              <Typography variant="h4" component="h2" gutterBottom>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Arizona Foundations to Research
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
@@ -442,7 +445,7 @@ const NonprofitGrants = () => {
           {salaryBenchmarks.length > 0 && (
             <Card sx={{ mb: 6, bgcolor: 'primary.light' }}>
               <CardContent>
-                <Typography variant="h4" component="h2" gutterBottom>
+                <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                   What Do Nonprofits Pay?
                 </Typography>
                 <Typography variant="body1" paragraph sx={{ maxWidth: '800px' }}>
@@ -456,7 +459,7 @@ const NonprofitGrants = () => {
                     <>, from {salaryMethodology.people_counted} people at {salaryMethodology.organizations_used} organizations</>
                   )}.
                 </Typography>
-                <Button variant="contained" color="primary" size="large" href="/nonprofit-salaries">
+                <Button variant="contained" color="primary" size="large" href="/nonprofit-salaries" sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   See the Salary Benchmarks
                 </Button>
               </CardContent>
@@ -477,6 +480,7 @@ const NonprofitGrants = () => {
               color="primary"
               size="large"
               href="/nonprofits"
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Learn How We Can Help Your Nonprofit
             </Button>

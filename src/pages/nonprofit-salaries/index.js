@@ -132,10 +132,10 @@ const NonprofitSalaries = () => {
 
       <Box sx={{ bgcolor: theme.palette.background.default, pt: 8, pb: 4 }}>
         <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" align="center" gutterBottom>
+          <Typography variant="h2" component="h1" align="center" gutterBottom sx={{ fontSize: { xs: '2rem', sm: '2.75rem', md: '3.75rem' } }}>
             What Do Nonprofits Pay?
           </Typography>
-          <Typography variant="h5" component="h2" align="center" color="textSecondary" paragraph sx={{ mb: 4, maxWidth: '820px', mx: 'auto' }}>
+          <Typography variant="h5" component="h2" align="center" color="textSecondary" paragraph sx={{ mb: 4, maxWidth: '820px', mx: 'auto', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
             Salary benchmarks from the IRS Form 990 filings nonprofits already make public,
             so your board can set pay that is fair, competitive, and defensible.
           </Typography>
@@ -153,46 +153,46 @@ const NonprofitSalaries = () => {
           ) : (
             <>
               <Grid container spacing={3} sx={{ mb: 6 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Card elevation={0} sx={{ bgcolor: 'primary.light', p: 2, height: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <GroupsIcon color="primary" sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" color="black">People Counted</Typography>
                     </Box>
-                    <Typography variant="h4">{methodology.people_counted ?? samples.length}</Typography>
+                    <Typography variant="h4" sx={{ fontSize: { xs: '1.35rem', sm: '2.125rem' } }}>{methodology.people_counted ?? samples.length}</Typography>
                   </Card>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Card elevation={0} sx={{ bgcolor: 'success.light', p: 2, height: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <AccountBalanceIcon color="success" sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" color="black">Organizations</Typography>
                     </Box>
-                    <Typography variant="h4">{methodology.organizations_used ?? 0}</Typography>
+                    <Typography variant="h4" sx={{ fontSize: { xs: '1.35rem', sm: '2.125rem' } }}>{methodology.organizations_used ?? 0}</Typography>
                   </Card>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Card elevation={0} sx={{ bgcolor: 'warning.light', p: 2, height: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <PublicIcon color="warning" sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" color="black">States Represented</Typography>
                     </Box>
-                    <Typography variant="h4">{states.length || 1}</Typography>
+                    <Typography variant="h4" sx={{ fontSize: { xs: '1.35rem', sm: '2.125rem' } }}>{states.length || 1}</Typography>
                   </Card>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Card elevation={0} sx={{ bgcolor: 'info.light', p: 2, height: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <TrendingUpIcon color="info" sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" color="black">Executive Director / CEO Median</Typography>
                     </Box>
-                    <Typography variant="h4">{edAll ? formatMoney(edAll.median) : '—'}</Typography>
+                    <Typography variant="h4" sx={{ fontSize: { xs: '1.35rem', sm: '2.125rem' } }}>{edAll ? formatMoney(edAll.median) : '—'}</Typography>
                   </Card>
                 </Grid>
               </Grid>
 
               <Box sx={{ mb: 6, maxWidth: '800px', mx: 'auto' }}>
-                <Typography variant="h4" component="h2" gutterBottom>The takeaways</Typography>
+                <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>The takeaways</Typography>
                 {edAll && (
                   <Typography paragraph>
                     The typical nonprofit executive director or CEO in this data earns{' '}
@@ -219,7 +219,7 @@ const NonprofitSalaries = () => {
                 )}
               </Box>
 
-              <Typography variant="h4" component="h2" gutterBottom>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Median pay by role
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
@@ -243,7 +243,7 @@ const NonprofitSalaries = () => {
                 </CardContent>
               </Card>
 
-              <Typography variant="h4" component="h2" gutterBottom>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Pay by organization size
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
@@ -275,7 +275,7 @@ const NonprofitSalaries = () => {
                 );
               })}
 
-              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 6 }}>
+              <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 6, fontSize: { xs: '1.55rem', sm: '2.125rem' } }}>
                 Look up pay at organizations like yours
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
@@ -300,7 +300,7 @@ const NonprofitSalaries = () => {
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField select fullWidth label="Role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
                     <MenuItem value="All roles">All roles</MenuItem>
                     {roles.map((role) => (
@@ -308,7 +308,7 @@ const NonprofitSalaries = () => {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 6, md: 2 }}>
+                <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                   <TextField select fullWidth label="Org revenue" value={bandFilter} onChange={(e) => setBandFilter(e.target.value)}>
                     <MenuItem value="All sizes">All sizes</MenuItem>
                     {BAND_ORDER.map((band) => (
@@ -316,7 +316,7 @@ const NonprofitSalaries = () => {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 3, md: 3 }}>
                   <TextField select fullWidth label="State" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
                     <MenuItem value="All states">All states</MenuItem>
                     {states.map((state) => (
@@ -333,10 +333,10 @@ const NonprofitSalaries = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell><strong>Organization / Title</strong></TableCell>
-                      <TableCell><strong>Location</strong></TableCell>
-                      <TableCell><strong>Role</strong></TableCell>
-                      <TableCell align="right"><strong>Org revenue</strong></TableCell>
-                      <TableCell align="right"><strong>Hours/wk</strong></TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Location</strong></TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}><strong>Role</strong></TableCell>
+                      <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}><strong>Org revenue</strong></TableCell>
+                      <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}><strong>Hours/wk</strong></TableCell>
                       <TableCell align="right"><strong>Total comp</strong></TableCell>
                     </TableRow>
                   </TableHead>
@@ -349,10 +349,10 @@ const NonprofitSalaries = () => {
                             {s.title} · filed {s.filing_year}
                           </Typography>
                         </TableCell>
-                        <TableCell>{s.city}{s.state ? `, ${s.state}` : ''}</TableCell>
-                        <TableCell>{s.role}</TableCell>
-                        <TableCell align="right">{s.revenue != null ? formatMoney(s.revenue) : '—'}</TableCell>
-                        <TableCell align="right">{s.hours ?? '—'}</TableCell>
+                        <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{s.city}{s.state ? `, ${s.state}` : ''}</TableCell>
+                        <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{s.role}</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>{s.revenue != null ? formatMoney(s.revenue) : '—'}</TableCell>
+                        <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{s.hours ?? '—'}</TableCell>
                         <TableCell align="right"><strong>{formatMoney(s.comp_total)}</strong></TableCell>
                       </TableRow>
                     ))}
