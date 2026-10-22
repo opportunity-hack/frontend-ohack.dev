@@ -9,6 +9,7 @@
  */
 import React from "react";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -181,7 +182,7 @@ describe("/judge/[event_id]", () => {
     expect(feedback.general).toMatch(/clear README/);
 
     expect(
-      await screen.findByText(/saved — alpha is now 26 of 40/i),
+      await screen.findByText(/saved your changes for alpha/i),
     ).toBeInTheDocument();
     expect(
       within(alpha).getByText(/your score · 26 of 40/i),
@@ -215,6 +216,90 @@ describe("/judge/[event_id]", () => {
     expect(
       within(alpha).getByText(/your score · 24 of 40/i),
     ).toBeInTheDocument();
+  });
+
+  it("offers only the full page when a team is marked judged but no complete score row exists", async () => {
+    api.getJudgeScores.mockResolvedValue({ scores: [] });
+    render(<HackathonJudgePage />);
+    const alpha = await screen.findByRole("article", { name: "Alpha" });
+    expect(
+      within(alpha).queryByRole("button", { name: /adjust scores/i }),
+    ).toBeNull();
+    expect(
+      within(alpha).getByText(/open full scoring page/i),
+    ).toBeInTheDocument();
+  });
+
+  it("disables Close and other cards' Adjust while a save is in flight, and keeps the error on the card", async () => {
+    let rejectSave;
+    api.submitScore.mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectSave = reject;
+      }),
+    );
+    api.getJudgeTeams.mockResolvedValue({
+      ...teams(),
+      round1_teams: [
+        ...teams().round1_teams,
+        {
+          id: "t-other",
+          name: "Gamma",
+          judged: true,
+          score: 24,
+          members: [],
+          problem_statement: {},
+        },
+      ],
+    });
+    api.getJudgeScores.mockResolvedValue({
+      scores: [
+        ...scores().scores,
+        {
+          team_id: "t-other",
+          round: "round1",
+          scores: { ...CORE, total: 24 },
+          feedback: { general: "Fine work overall, ship it soon please." },
+        },
+      ],
+    });
+    render(<HackathonJudgePage />);
+    const alpha = await screen.findByRole("article", { name: "Alpha" });
+    const gamma = screen.getByRole("article", { name: "Gamma" });
+    fireEvent.click(
+      within(alpha).getByRole("button", { name: /adjust scores/i }),
+    );
+    fireEvent.click(
+      within(alpha)
+        .getByRole("radiogroup", { name: "Impact on Community" })
+        .querySelector('[data-value="4"]'),
+    );
+    fireEvent.click(
+      within(alpha).getByRole("button", { name: /save changes/i }),
+    );
+
+    expect(
+      await within(alpha).findByRole("button", { name: /^close$/i }),
+    ).toBeDisabled();
+    expect(
+      within(gamma).getByRole("button", { name: /adjust scores/i }),
+    ).toBeDisabled();
+
+    await act(async () => {
+      rejectSave(
+        Object.assign(new Error("Couldn't submit your score (HTTP 500)"), {
+          status: 500,
+        }),
+      );
+    });
+    expect(await within(alpha).findByRole("alert")).toHaveTextContent(
+      /HTTP 500/,
+    );
+    expect(
+      within(alpha).getByRole("button", { name: /^close$/i }),
+    ).toBeEnabled();
+    expect(
+      within(gamma).getByRole("button", { name: /adjust scores/i }),
+    ).toBeEnabled();
   });
 
   it("hides scoring actions and shows a closed notice when the round is locked", async () => {

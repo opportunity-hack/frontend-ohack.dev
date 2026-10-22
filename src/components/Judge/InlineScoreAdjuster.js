@@ -6,6 +6,7 @@ import {
   categoryTotal,
   feedbackCharCount,
   feedbackCharsRemaining,
+  hasAllCoreScores,
   isFeedbackValid,
   roundLabel,
   scoreDiff,
@@ -16,9 +17,10 @@ import {
 
 const rowStyle = {
   display: "flex",
+  flexWrap: "wrap", // phones: the label takes the row, the scale drops under it
   alignItems: "center",
   justifyContent: "space-between",
-  gap: 16,
+  gap: "8px 16px",
   padding: "10px 0",
   borderTop: "1px solid var(--line, #E7E1D4)",
 };
@@ -78,10 +80,14 @@ const InlineScoreAdjuster = ({
   const feedbackOk = isFeedbackValid(feedback);
   const beforeTotal = calculateTotal(initialScores);
   const afterTotal = calculateTotal(draft);
-  const canSave = hasChanges && feedbackOk && !saving;
+  // A score with a missing criterion would be rejected by the backend (400
+  // "Invalid score for …") — never let Save send one.
+  const complete = hasAllCoreScores(draft);
+  const canSave = hasChanges && feedbackOk && complete && !saving;
 
   const handleKeyDown = (e) => {
-    if (e.key === "Escape" && !saving) {
+    // Esc discards — except while typing feedback, where it's too easy to hit.
+    if (e.key === "Escape" && !saving && e.target?.tagName !== "TEXTAREA") {
       e.stopPropagation();
       onCancel();
     }
@@ -166,13 +172,15 @@ const InlineScoreAdjuster = ({
                     {sub.description}
                   </div>
                 </div>
-                <ScoreScale
-                  compact
-                  label={sub.name}
-                  value={draft[sub.key]}
-                  onChange={(v) => setScore(sub.key, v)}
-                  disabled={saving}
-                />
+                <div style={{ marginLeft: "auto" }}>
+                  <ScoreScale
+                    compact
+                    label={sub.name}
+                    value={draft[sub.key]}
+                    onChange={(v) => setScore(sub.key, v)}
+                    disabled={saving}
+                  />
+                </div>
               </div>
             );
           })}
@@ -216,13 +224,15 @@ const InlineScoreAdjuster = ({
                     {sub.description}
                   </div>
                 </div>
-                <ScoreScale
-                  compact
-                  label={sub.name}
-                  value={draft[sub.key]}
-                  onChange={(v) => setScore(sub.key, v)}
-                  disabled={saving}
-                />
+                <div style={{ marginLeft: "auto" }}>
+                  <ScoreScale
+                    compact
+                    label={sub.name}
+                    value={draft[sub.key]}
+                    onChange={(v) => setScore(sub.key, v)}
+                    disabled={saving}
+                  />
+                </div>
               </div>
             );
           })}
@@ -329,11 +339,13 @@ const InlineScoreAdjuster = ({
           style={{ margin: 0, fontSize: 13, color: "var(--muted, #5B6270)" }}
           aria-live="polite"
         >
-          {changes.length === 0 && !feedbackChanged
-            ? "No changes yet."
-            : changes.length === 0
-              ? "Feedback edited."
-              : `${changes.length} change${changes.length === 1 ? "" : "s"} · total ${beforeTotal} → ${afterTotal} of ${MAX_TOTAL}${feedbackChanged ? " · feedback edited" : ""}`}
+          {!complete
+            ? "Pick a score for every criterion before saving."
+            : changes.length === 0 && !feedbackChanged
+              ? "No changes yet."
+              : changes.length === 0
+                ? "Feedback edited."
+                : `${changes.length} change${changes.length === 1 ? "" : "s"} · total ${beforeTotal} → ${afterTotal} of ${MAX_TOTAL}${feedbackChanged ? " · feedback edited" : ""}`}
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <button

@@ -22,6 +22,7 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import judgeApi, { isRoundLocked } from "../../../../lib/judgeApi";
+import { trackEvent } from "../../../../lib/ga";
 import { slackChannelUrl } from "../../../../lib/slackLinks";
 import { RefinedRoot, Eyebrow } from "../../../../components/design/refined";
 import {
@@ -303,14 +304,63 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
     if (router.isReady && hasToken && hasUser) load();
   }, [router.isReady, hasToken, hasUser, load]);
 
+  const markDirty = () => {
+    if (!hydratedRef.current) return;
+    setDirty(true);
+    // Unsubmitted scores: "pending" until the debounced draft save lands.
+    if (!submittedAt) setDraftState((s) => ({ ...s, status: "pending" }));
+  };
   const setScore = (key, value) => {
     setScores((prev) => ({ ...prev, [key]: value }));
-    if (hydratedRef.current) setDirty(true);
+    markDirty();
   };
   const onFeedbackChange = (e) => {
     setFeedback(e.target.value);
-    if (hydratedRef.current) setDirty(true);
+    markDirty();
   };
+
+  // Unsaved-changes guard. Edits to a SUBMITTED score are never autosaved,
+  // so Back / the "← teams" link would silently drop them; for a new score
+  // the 2s autosave window can lose the last change. Browser dialog on
+  // unload, confirm() on in-app navigation. Suppressed for the post-submit
+  // redirect.
+  const hasUnsaved =
+    !locked &&
+    dirty &&
+    (submittedAt
+      ? true
+      : ["pending", "saving", "error"].includes(draftState.status));
+  const unsavedRef = useRef(false);
+  unsavedRef.current = hasUnsaved;
+  const leavingRef = useRef(false);
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (!unsavedRef.current || leavingRef.current) return undefined;
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+    const onRouteChangeStart = () => {
+      if (!unsavedRef.current || leavingRef.current) return;
+      if (
+        window.confirm(
+          "You have unsaved changes to this score. Leave without saving?",
+        )
+      ) {
+        leavingRef.current = true;
+        return;
+      }
+      router.events?.emit?.("routeChangeError");
+      // Next's documented way to abort a client-side navigation.
+      throw new Error("Route change aborted: unsaved score changes");
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    router.events?.on?.("routeChangeStart", onRouteChangeStart);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      router.events?.off?.("routeChangeStart", onRouteChangeStart);
+    };
+  }, [router.events]);
 
   // Draft autosave: only for scores that have NOT been submitted yet, only
   // after the judge actually changed something, never while the round is
@@ -370,12 +420,18 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
         { general: feedback },
       );
       setConfirmOpen(false);
+      trackEvent({
+        action: "judge_score_submitted",
+        params: {
+          event_id,
+          round,
+          event_label: submittedAt ? "update" : "submit",
+          page: "judge_team",
+        },
+      });
       setSubmittedAt(new Date().toISOString());
       setDirty(false);
-      setToast({
-        severity: "success",
-        message: "Score and feedback submitted.",
-      });
+      leavingRef.current = true; // the redirect below must not trip the guard
       router.push(backHref);
     } catch (err) {
       setConfirmOpen(false);
@@ -408,6 +464,7 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
       return dirty
         ? "Edited — press Update score to save"
         : `Submitted ${formatWhen(submittedAt) || ""}`.trim();
+    if (draftState.status === "pending") return "Unsaved changes…";
     if (draftState.status === "saving") return "Saving draft…";
     if (draftState.status === "saved")
       return `Draft saved ${draftState.at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
@@ -574,11 +631,29 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
                     style={{
                       position: "sticky",
                       top: 84,
+                      maxHeight: "calc(100vh - 100px)",
+                      overflowY: "auto",
                       display: "flex",
                       flexDirection: "column",
                       gap: 16,
                     }}
                   >
+                    {/* Deliberately small and uncolored: no verdict readable
+                        over a shoulder. First in the aside so it's always in
+                        view while scoring. */}
+                    <p style={{ ...quietTotalStyle, paddingLeft: 2 }}>
+                      Total {total} of {MAX_TOTAL}
+                      {specials.map((c) =>
+                        c.subCriteria.map((sp) => (
+                          <span key={sp.key}>
+                            {" "}
+                            · {c.name} {scores[sp.key] ?? "–"} of {c.maxPoints}{" "}
+                            (separate prize)
+                          </span>
+                        )),
+                      )}
+                    </p>
+
                     <div className="ohx-card" style={cardStyle}>
                       {(teamData.problem_statement?.title ||
                         teamData.problem_statement?.description) && (
@@ -751,20 +826,6 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
                         </details>
                       </div>
                     )}
-
-                    {/* Deliberately small and uncolored: no verdict readable over a shoulder. */}
-                    <p style={quietTotalStyle}>
-                      Total {total} of {MAX_TOTAL}
-                      {specials.map((c) =>
-                        c.subCriteria.map((s) => (
-                          <span key={s.key}>
-                            {" "}
-                            · {c.name} {scores[s.key] ?? "–"} of {c.maxPoints}{" "}
-                            (separate prize)
-                          </span>
-                        )),
-                      )}
-                    </p>
                   </aside>
 
                   {/* ---- Scoring ---- */}
@@ -811,7 +872,26 @@ const TeamScoringPage = withRequiredAuthInfo(() => {
                         scores={scores}
                         onChange={setScore}
                         disabled={locked || submitting}
-                        note={`Special-category prize — judged separately and not part of the ${MAX_TOTAL}-point total. ${criterion.description}`}
+                        note={
+                          <>
+                            Special-category prize — judged separately and not
+                            part of the {MAX_TOTAL}-point total.{" "}
+                            {criterion.description}
+                            {criterion.reference && (
+                              <>
+                                {" "}
+                                <a
+                                  className="ohx-link"
+                                  href={criterion.reference}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  W3C principles ↗
+                                </a>
+                              </>
+                            )}
+                          </>
+                        }
                       />
                     ))}
 

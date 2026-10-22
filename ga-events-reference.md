@@ -149,6 +149,7 @@ Judge-side events fire via `trackEvent({ action, params })` from the refined jud
 | `judge_dash_start` | `pages/judge/index.js` | `{ event_label: <event_id>, page: "judge_dashboard" }` | "Open judging" on a hackathon card (pre-existing event, kept). |
 | `judge_inline_adjust_open` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Judge pressed "Adjust scores" on an already-scored team card (editor opened; nothing saved yet). |
 | `judge_inline_adjust_saved` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Inline "Save changes" succeeded (`POST /api/judge/score` re-submit). Ratio to `_open` = how often judges actually change their mind after a demo. |
+| `judge_score_submitted` | `pages/judge/[event_id]/team/[team_id].js` | `{ event_id, round, event_label: "submit" \| "update", page: "judge_team" }` | Full scoring page submit succeeded; `update` = re-submitting an already-submitted score. |
 
 ### Admin (`event_category: "admin"`)
 

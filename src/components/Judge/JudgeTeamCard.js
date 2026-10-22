@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import InlineScoreAdjuster from "./InlineScoreAdjuster";
 import { slackChannelUrl } from "../../lib/slackLinks";
 import {
   calculateTotal,
   feedbackText,
+  hasAllCoreScores,
   MAX_TOTAL,
   SPECIAL_CATEGORIES,
 } from "./judgingCriteria";
@@ -47,10 +48,23 @@ const JudgeTeamCard = ({
   onCloseAdjust,
   onSaveAdjust,
   saving = false,
+  anySaving = false,
   saveError = null,
   onWatchVideo,
 }) => {
   const judged = Boolean(scoreEntry) || Boolean(team.judged);
+  // Inline adjusting needs the full stored score; a team the teams payload
+  // calls "judged" but with no complete score row goes to the full page.
+  const canAdjust =
+    judged && Boolean(scoreEntry) && hasAllCoreScores(scoreEntry.scores);
+  const adjustButtonRef = useRef(null);
+  const wasAdjustingRef = useRef(isAdjusting);
+  // Return focus to the trigger when the editor closes (Save, Cancel, Esc).
+  useEffect(() => {
+    if (wasAdjustingRef.current && !isAdjusting)
+      adjustButtonRef.current?.focus();
+    wasAdjustingRef.current = isAdjusting;
+  }, [isAdjusting]);
   const total = scoreEntry?.scores
     ? calculateTotal(scoreEntry.scores)
     : team.score;
@@ -92,7 +106,7 @@ const JudgeTeamCard = ({
         ) : judged ? (
           <span className="ohx-tag">Scored</span>
         ) : (
-          <span className="ohx-tag ohx-tag--accent">Not scored yet</span>
+          <span className="ohx-tag">Not scored yet</span>
         )}
         {demoTime && <span className="ohx-tag">Demo {demoTime}</span>}
         {round === "round2" && team.room && (
@@ -231,14 +245,18 @@ const JudgeTeamCard = ({
           <Link href={fullPageHref} className="ohx-btn ohx-btn--primary">
             Score this team
           </Link>
-        ) : (
+        ) : canAdjust ? (
           <>
             <button
+              ref={adjustButtonRef}
               type="button"
               className="ohx-btn ohx-btn--ghost"
               onClick={isAdjusting ? onCloseAdjust : onOpenAdjust}
               aria-expanded={isAdjusting}
               aria-controls={`adjust-${team.id}`}
+              // While any save is in flight, no editor may be closed or
+              // another opened — a result must land on the card it belongs to.
+              disabled={isAdjusting ? saving : anySaving}
             >
               {isAdjusting ? "Close" : "Adjust scores"}
             </button>
@@ -246,10 +264,14 @@ const JudgeTeamCard = ({
               Open full scoring page →
             </Link>
           </>
+        ) : (
+          <Link href={fullPageHref} className="ohx-link" style={linkStyle}>
+            Open full scoring page →
+          </Link>
         )}
       </div>
 
-      {isAdjusting && judged && !locked && (
+      {isAdjusting && canAdjust && !locked && (
         <div id={`adjust-${team.id}`}>
           <InlineScoreAdjuster
             team={team}

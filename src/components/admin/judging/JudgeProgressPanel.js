@@ -90,8 +90,13 @@ const JudgeProgressPanel = ({
   orgId,
   onSnack,
   onLockChange,
+  refreshSignal = 0,
 }) => {
   const [progress, setProgress] = useState(null);
+  // Lock state lives apart from `progress` so it survives a failed progress
+  // load (falls back to the public locks route) and a successful toggle
+  // always lands, whether or not the board is loaded. null = unknown.
+  const [lock, setLock] = useState(null);
   const [loading, setLoading] = useState(Boolean(accessToken && eventId));
   const [error, setError] = useState(null);
   const [unavailable, setUnavailable] = useState(false);
@@ -131,11 +136,19 @@ const JudgeProgressPanel = ({
         } else {
           setUnavailable(false);
           setProgress(data);
+          setLock(data.lock || { locked: false });
           setError(null);
           setUpdatedAt(new Date());
         }
       } catch (err) {
         setError(err?.message || "Couldn't load judging progress");
+        // Still try to learn the lock state so the toggle can't lie.
+        try {
+          const res = await judgeApi.getRoundLocks(eventId, tokenRef.current);
+          if (res?.locks?.[round]) setLock((prev) => prev || res.locks[round]);
+        } catch (lockErr) {
+          /* leave lock unknown */
+        }
       } finally {
         inFlightRef.current = false;
         setLoading(false);
@@ -149,6 +162,12 @@ const JudgeProgressPanel = ({
   useEffect(() => {
     if (hasToken) load();
   }, [hasToken, load]);
+
+  // Host tabs bump this after they change assignments; refetch quietly
+  // (no remount, so the By judge / By team choice is kept).
+  useEffect(() => {
+    if (refreshSignal) load({ silent: true });
+  }, [refreshSignal, load]);
 
   const complete =
     progress?.summary &&
@@ -187,7 +206,8 @@ const JudgeProgressPanel = ({
     [progress],
   );
 
-  const lock = progress?.lock || { locked: false };
+  const lockKnown = lock !== null;
+  const isLocked = Boolean(lock?.locked);
   const label = ROUND_LABEL[round] || round;
 
   const applyLock = async (locked) => {
@@ -200,9 +220,9 @@ const JudgeProgressPanel = ({
         tokenRef.current,
         orgRef.current,
       );
-      setProgress((prev) =>
-        prev ? { ...prev, lock: res.lock || { ...prev.lock, locked } } : prev,
-      );
+      const nextLock = res?.lock || { ...(lock || {}), locked };
+      setLock(nextLock);
+      setProgress((prev) => (prev ? { ...prev, lock: nextLock } : prev));
       setConfirm(null);
       notify(
         locked
@@ -219,8 +239,7 @@ const JudgeProgressPanel = ({
           event_id: eventId,
         },
       );
-      if (typeof onLockChange === "function")
-        onLockChange(res.lock || { locked });
+      if (typeof onLockChange === "function") onLockChange(nextLock);
     } catch (err) {
       notify(err?.message || "Couldn't update the lock", "error");
     } finally {
@@ -251,30 +270,44 @@ const JudgeProgressPanel = ({
         }}
       >
         <Chip
-          icon={lock.locked ? <LockIcon /> : <LockOpenIcon />}
+          icon={isLocked ? <LockIcon /> : <LockOpenIcon />}
           label={
-            lock.locked ? `${label} scoring locked` : `${label} scoring open`
+            !lockKnown
+              ? `${label} lock state unknown`
+              : isLocked
+                ? `${label} scoring locked`
+                : `${label} scoring open`
           }
-          color={lock.locked ? "default" : "success"}
-          variant={lock.locked ? "filled" : "outlined"}
+          color={!lockKnown ? "default" : isLocked ? "default" : "success"}
+          variant={isLocked ? "filled" : "outlined"}
         />
-        {lock.locked && (
+        {isLocked && (
           <Typography variant="caption" color="text.secondary">
             Locked {lock.locked_by_name ? `by ${lock.locked_by_name} ` : ""}
             {lock.locked_at ? `at ${fmtTime(lock.locked_at)}` : ""}
           </Typography>
         )}
         <Box sx={{ flex: 1 }} />
-        <Button
-          size="small"
-          variant={lock.locked ? "outlined" : "contained"}
-          color={lock.locked ? "primary" : "warning"}
-          startIcon={lock.locked ? <LockOpenIcon /> : <LockIcon />}
-          onClick={() => setConfirm(lock.locked ? "unlock" : "lock")}
-          disabled={lockBusy || (loading && !progress)}
+        <Tooltip
+          title={
+            lockKnown
+              ? ""
+              : "Can't change the lock until its current state has loaded"
+          }
         >
-          {lock.locked ? `Unlock ${label} scoring` : `Lock ${label} scoring`}
-        </Button>
+          <span>
+            <Button
+              size="small"
+              variant={isLocked ? "outlined" : "contained"}
+              color={isLocked ? "primary" : "warning"}
+              startIcon={isLocked ? <LockOpenIcon /> : <LockIcon />}
+              onClick={() => setConfirm(isLocked ? "unlock" : "lock")}
+              disabled={lockBusy || !lockKnown}
+            >
+              {isLocked ? `Unlock ${label} scoring` : `Lock ${label} scoring`}
+            </Button>
+          </span>
+        </Tooltip>
         <Tooltip title="Refresh now">
           <span>
             <IconButton size="small" onClick={() => load()} disabled={loading}>
@@ -444,15 +477,17 @@ const JudgeProgressPanel = ({
                                 gap: 0.5,
                               }}
                             >
-                              {j.missing_team_ids.slice(0, 4).map((tid) => (
-                                <Chip
-                                  key={tid}
-                                  size="small"
-                                  variant="outlined"
-                                  label={teamName(tid)}
-                                />
-                              ))}
-                              {j.missing_team_ids.length > 4 && (
+                              {(j.missing_team_ids || [])
+                                .slice(0, 4)
+                                .map((tid) => (
+                                  <Chip
+                                    key={tid}
+                                    size="small"
+                                    variant="outlined"
+                                    label={teamName(tid)}
+                                  />
+                                ))}
+                              {(j.missing_team_ids || []).length > 4 && (
                                 <Tooltip
                                   title={j.missing_team_ids
                                     .slice(4)
@@ -461,11 +496,11 @@ const JudgeProgressPanel = ({
                                 >
                                   <Chip
                                     size="small"
-                                    label={`+${j.missing_team_ids.length - 4}`}
+                                    label={`+${(j.missing_team_ids || []).length - 4}`}
                                   />
                                 </Tooltip>
                               )}
-                              {j.draft_team_ids.map((tid) => (
+                              {(j.draft_team_ids || []).map((tid) => (
                                 <Tooltip
                                   key={`d-${tid}`}
                                   title="Draft saved, not submitted yet"
@@ -482,7 +517,7 @@ const JudgeProgressPanel = ({
                           )}
                         </TableCell>
                         <TableCell align="center">
-                          {j.draft_team_ids.length || "—"}
+                          {(j.draft_team_ids || []).length || "—"}
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption" color="text.secondary">
@@ -507,8 +542,8 @@ const JudgeProgressPanel = ({
                 </TableHead>
                 <TableBody>
                   {(progress.teams || []).map((t) => {
-                    const waiting = t.assigned_judge_ids.filter(
-                      (id) => !t.submitted_judge_ids.includes(id),
+                    const waiting = (t.assigned_judge_ids || []).filter(
+                      (id) => !(t.submitted_judge_ids || []).includes(id),
                     );
                     return (
                       <TableRow key={t.team_id}>
@@ -557,8 +592,8 @@ const JudgeProgressPanel = ({
             <Alert severity="info" sx={{ mt: 2 }}>
               {progress.summary.orphan_submitted} submitted score
               {progress.summary.orphan_submitted === 1 ? " is" : "s are"} from a
-              judge who is no longer assigned to that team. They still appear in
-              Results.
+              judge who is no longer assigned to that team. They are not counted
+              in Results.
             </Alert>
           )}
 

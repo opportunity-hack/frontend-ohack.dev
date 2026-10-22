@@ -803,6 +803,13 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       notify('Please select finalist teams before saving', { variant: 'warning' });
       return;
     }
+    // The save replaces the Round 2 panel's assignment set with judges ×
+    // finalists. If the judges fetch failed (judges = []), an empty set
+    // would wipe every Round 2 assignment — refuse instead.
+    if (judges.filter((j) => j.user_id).length === 0) {
+      notify('No accepted judges are loaded, so Round 2 cannot be saved. Reload the page and try again.', { variant: 'error' });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -846,6 +853,12 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           }
         );
         panelId = panelResponse.data.panel_id || panelResponse.data.panel?.id;
+        // Record the new panel BEFORE assigning, so a failed assignment call
+        // can't lead to a second "Round 2 - Final Judging" panel next save.
+        setJudgeGroups(prev => [
+          ...prev,
+          { id: panelId, panel_id: panelId, name: 'Round 2 - Final Judging', judges: [], teams: [], room: sessionSettings.room || '' },
+        ]);
       }
 
       // Judges × finalists in ONE request (replace:true prunes a finalist or
@@ -895,20 +908,12 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       }
       setProgressRefreshKey((k) => k + 1);
 
-      // Update local state
-      if (!existingPanel) {
-        setJudgeGroups(prev => [
-          ...prev,
-          {
-            id: panelId,
-            panel_id: panelId,
-            name: 'Round 2 - Final Judging',
-            judges: judges,
-            teams: finalistTeams,
-            room: sessionSettings.room || ''
-          }
-        ]);
-      }
+      // Update local state (the panel row already exists; sync its contents)
+      setJudgeGroups(prev => prev.map(g => (
+        g.panel_id === panelId
+          ? { ...g, judges: judges, teams: finalistTeams, room: sessionSettings.room || '' }
+          : g
+      )));
 
       notify(
         summary
@@ -1165,7 +1170,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             </AccordionSummary>
             <AccordionDetails>
               <JudgeProgressPanel
-                key={progressRefreshKey}
+                refreshSignal={progressRefreshKey}
                 eventId={selectedHackathon}
                 round="round2"
                 accessToken={accessToken}

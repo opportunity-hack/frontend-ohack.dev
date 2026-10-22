@@ -35,9 +35,10 @@ const ScoreScale = ({
   const handleKeyDown = (e) => {
     if (disabled) return;
     let next = null;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+    // ARIA radio-group pattern: Right/Down = next, Left/Up = previous.
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       next = Math.min(SCORE_MAX, (current ?? SCORE_MIN - 1) + 1);
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       next = Math.max(SCORE_MIN, (current ?? SCORE_MAX + 1) - 1);
     } else if (e.key === "Home") {
       next = SCORE_MIN;

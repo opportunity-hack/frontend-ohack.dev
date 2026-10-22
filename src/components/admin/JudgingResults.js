@@ -69,6 +69,167 @@ const feedbackOf = (score) =>
     ? score?.feedback?.general || ""
     : score?.feedback || "";
 
+const getTrophyColor = (index) => {
+  switch (index) {
+    case 0:
+      return "warning";
+    case 1:
+      return "action";
+    case 2:
+      return "#CD7F32";
+    default:
+      return "action";
+  }
+};
+
+const WinnerPodium = ({ winners, nonprofitLabel, eventTimezone }) => (
+  <Box sx={{ mb: 4 }}>
+    <Typography
+      variant="h4"
+      gutterBottom
+      align="center"
+      sx={{ mb: 4, fontWeight: "bold" }}
+    >
+      🏆 Final Results 🏆
+    </Typography>
+    <Grid container spacing={3} justifyContent="center">
+      {winners.slice(0, 3).map((row, index) => (
+        <Grid size={{ xs: 12, sm: 4 }} key={row.team.id}>
+          <Card
+            sx={{
+              textAlign: "center",
+              border:
+                index === 0
+                  ? "3px solid gold"
+                  : index === 1
+                    ? "2px solid silver"
+                    : "1px solid #CD7F32",
+              backgroundColor:
+                index === 0 ? "rgba(255, 215, 0, 0.1)" : "inherit",
+              minHeight: 260,
+            }}
+          >
+            <CardContent>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  mx: "auto",
+                  mb: 2,
+                  fontSize: "2rem",
+                  bgcolor:
+                    index === 0
+                      ? "warning.main"
+                      : index === 1
+                        ? "grey.400"
+                        : "#CD7F32",
+                }}
+              >
+                {row.rank}
+              </Avatar>
+              <Typography
+                variant={index === 0 ? "h5" : "h6"}
+                sx={{ fontWeight: "bold", mb: 1 }}
+              >
+                {row.team.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {nonprofitLabel(row.team)}
+              </Typography>
+              {row.tieGroup && (
+                <Box sx={{ mb: 1 }}>
+                  <TieChip row={row} />
+                </Box>
+              )}
+              {row.judgeCount > 0 ? (
+                <>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="h4"
+                      color="primary"
+                      sx={{ fontWeight: "bold" }}
+                    >
+                      {row.averageScore.toFixed(1)}
+                    </Typography>
+                    <Box sx={{ display: "flex" }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <StarIcon
+                          key={star}
+                          sx={{
+                            fontSize: 20,
+                            color:
+                              star <= row.averageScore / 2
+                                ? "warning.main"
+                                : "action.disabled",
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                  <Chip
+                    label={`${row.judgeCount}/${row.totalAssignedJudges} judges`}
+                    size="small"
+                    color={
+                      row.completionPercentage === 100 ? "success" : "warning"
+                    }
+                    variant="outlined"
+                  />
+                  {row.team.project_submitted_at && (
+                    <Typography
+                      variant="caption"
+                      display="block"
+                      color="text.secondary"
+                      sx={{ mt: 1 }}
+                    >
+                      Project submitted{" "}
+                      {formatSubmittedAt(
+                        row.team.project_submitted_at,
+                        eventTimezone,
+                      )}
+                    </Typography>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Typography
+                    variant="h4"
+                    color="text.secondary"
+                    sx={{ fontWeight: "bold", mb: 2 }}
+                  >
+                    --
+                  </Typography>
+                  <Chip
+                    label={`0/${row.totalAssignedJudges} judges`}
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                  />
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    Awaiting scores
+                  </Typography>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  </Box>
+);
+
 const TieChip = ({ row }) => {
   if (!row?.tieGroup) return null;
   const reason = row.tieBrokenBy ? TIE_BREAK_LABELS[row.tieBrokenBy] : null;
@@ -129,7 +290,6 @@ const JudgingResults = ({
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [nonprofitNames, setNonprofitNames] = useState({});
   const [loadingNonprofits, setLoadingNonprofits] = useState(false);
-  const [panelAssignmentsCache, setPanelAssignmentsCache] = useState({});
 
   const eventTimezone = selectedHackathonData?.timezone;
 
@@ -142,13 +302,13 @@ const JudgingResults = ({
   }, [selectedHackathon, hackathons]);
 
   useEffect(() => {
-    setPanelAssignmentsCache({});
     setRound2Scores([]);
   }, [selectedHackathon]);
 
+  // No cache on purpose: "Refresh" must see assignment changes made on the
+  // Round 2 tab since the page loaded.
   const fetchPanelAssignments = useCallback(
     async (panelId) => {
-      if (panelAssignmentsCache[panelId]) return panelAssignmentsCache[panelId];
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/panel/${panelId}/assignments`,
@@ -159,12 +319,7 @@ const JudgingResults = ({
             },
           },
         );
-        const assignments = response.data.assignments || [];
-        setPanelAssignmentsCache((prev) => ({
-          ...prev,
-          [panelId]: assignments,
-        }));
-        return assignments;
+        return response.data.assignments || [];
       } catch (error) {
         console.error(
           `Error fetching assignments for panel ${panelId}:`,
@@ -173,7 +328,7 @@ const JudgingResults = ({
         return [];
       }
     },
-    [accessToken, orgId, panelAssignmentsCache],
+    [accessToken, orgId],
   );
 
   const fetchNonprofitNames = useCallback(
@@ -295,13 +450,18 @@ const JudgingResults = ({
           },
           assigned: assignedJudgeIds.has(s.judge_id),
         }));
-        const totals = scores.map((s) => s.score.total_score || 0);
-        const judgeCount = scores.length;
+        // Only CURRENTLY ASSIGNED judges count (same rule as the old page,
+        // which only ever fetched scores per assignment). A judge removed
+        // from the Round 2 panel after scoring is shown in the dialog as
+        // "not counted" but never moves the average.
+        const counted = scores.filter((s) => s.assigned);
+        const totals = counted.map((s) => s.score.total_score || 0);
+        const judgeCount = counted.length;
         const totalScore = totals.reduce((sum, v) => sum + v, 0);
-        const submittedByAssigned = scores.filter((s) => s.assigned).length;
         return {
           team,
           scores,
+          uncountedScores: scores.length - counted.length,
           judgeCount,
           totalScore,
           averageScore: judgeCount > 0 ? totalScore / judgeCount : 0,
@@ -310,7 +470,7 @@ const JudgingResults = ({
           totalAssignedJudges: assignedJudgeIds.size,
           completionPercentage:
             assignedJudgeIds.size > 0
-              ? (submittedByAssigned / assignedJudgeIds.size) * 100
+              ? (judgeCount / assignedJudgeIds.size) * 100
               : 0,
         };
       });
@@ -353,19 +513,6 @@ const JudgingResults = ({
     team?.selected_nonprofit_id
       ? nonprofitNames[team.selected_nonprofit_id] || "Loading..."
       : "No nonprofit";
-
-  const getTrophyColor = (index) => {
-    switch (index) {
-      case 0:
-        return "warning";
-      case 1:
-        return "action";
-      case 2:
-        return "#CD7F32";
-      default:
-        return "action";
-    }
-  };
 
   const exportResults = () => {
     if (round2Scores.length === 0) {
@@ -456,10 +603,12 @@ const JudgingResults = ({
       `Judges Complete: ${row.judgeCount}/${row.totalAssignedJudges}`,
       "",
       "--- Individual Judge Feedback ---",
-      ...row.scores.map(
-        (js) =>
-          `Judge Feedback: ${feedbackOf(js.score) || "No feedback provided"}\n`,
-      ),
+      ...row.scores
+        .filter((js) => js.assigned)
+        .map(
+          (js) =>
+            `Judge Feedback: ${feedbackOf(js.score) || "No feedback provided"}\n`,
+        ),
     ].join("\n");
     navigator.clipboard
       .writeText(text)
@@ -470,158 +619,6 @@ const JudgingResults = ({
         notify("Failed to copy feedback to clipboard", { variant: "error" });
       });
   };
-
-  const WinnerPodium = ({ winners }) => (
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        align="center"
-        sx={{ mb: 4, fontWeight: "bold" }}
-      >
-        🏆 Final Results 🏆
-      </Typography>
-      <Grid container spacing={3} justifyContent="center">
-        {winners.slice(0, 3).map((row, index) => (
-          <Grid size={{ xs: 12, sm: 4 }} key={row.team.id}>
-            <Card
-              sx={{
-                textAlign: "center",
-                border:
-                  index === 0
-                    ? "3px solid gold"
-                    : index === 1
-                      ? "2px solid silver"
-                      : "1px solid #CD7F32",
-                backgroundColor:
-                  index === 0 ? "rgba(255, 215, 0, 0.1)" : "inherit",
-                minHeight: 260,
-              }}
-            >
-              <CardContent>
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    mx: "auto",
-                    mb: 2,
-                    fontSize: "2rem",
-                    bgcolor:
-                      index === 0
-                        ? "warning.main"
-                        : index === 1
-                          ? "grey.400"
-                          : "#CD7F32",
-                  }}
-                >
-                  {row.rank}
-                </Avatar>
-                <Typography
-                  variant={index === 0 ? "h5" : "h6"}
-                  sx={{ fontWeight: "bold", mb: 1 }}
-                >
-                  {row.team.name}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 1 }}
-                >
-                  {nonprofitLabel(row.team)}
-                </Typography>
-                {row.tieGroup && (
-                  <Box sx={{ mb: 1 }}>
-                    <TieChip row={row} />
-                  </Box>
-                )}
-                {row.judgeCount > 0 ? (
-                  <>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography
-                        variant="h4"
-                        color="primary"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        {row.averageScore.toFixed(1)}
-                      </Typography>
-                      <Box sx={{ display: "flex" }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <StarIcon
-                            key={star}
-                            sx={{
-                              fontSize: 20,
-                              color:
-                                star <= row.averageScore / 2
-                                  ? "warning.main"
-                                  : "action.disabled",
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                    <Chip
-                      label={`${row.judgeCount}/${row.totalAssignedJudges} judges`}
-                      size="small"
-                      color={
-                        row.completionPercentage === 100 ? "success" : "warning"
-                      }
-                      variant="outlined"
-                    />
-                    {row.team.project_submitted_at && (
-                      <Typography
-                        variant="caption"
-                        display="block"
-                        color="text.secondary"
-                        sx={{ mt: 1 }}
-                      >
-                        Project submitted{" "}
-                        {formatSubmittedAt(
-                          row.team.project_submitted_at,
-                          eventTimezone,
-                        )}
-                      </Typography>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Typography
-                      variant="h4"
-                      color="text.secondary"
-                      sx={{ fontWeight: "bold", mb: 2 }}
-                    >
-                      --
-                    </Typography>
-                    <Chip
-                      label={`0/${row.totalAssignedJudges} judges`}
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                    />
-                    <Typography
-                      variant="caption"
-                      display="block"
-                      color="text.secondary"
-                      sx={{ mt: 0.5 }}
-                    >
-                      Awaiting scores
-                    </Typography>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
 
   const anyTies = round2Scores.some((r) => r.tieGroup);
 
@@ -790,7 +787,11 @@ const JudgingResults = ({
                 </Alert>
               )}
 
-              <WinnerPodium winners={round2Scores} />
+              <WinnerPodium
+                winners={round2Scores}
+                nonprofitLabel={nonprofitLabel}
+                eventTimezone={eventTimezone}
+              />
 
               <Accordion defaultExpanded sx={{ mb: 3 }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1162,12 +1163,13 @@ const JudgingResults = ({
                               {judgeScore.judge.name}
                             </Typography>
                             {!judgeScore.assigned && (
-                              <Tooltip title="This judge is no longer assigned to the team; the score still counts.">
+                              <Tooltip title="This judge is no longer assigned to the team, so this score is NOT counted in the average.">
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
+                                  display="block"
                                 >
-                                  unassigned
+                                  not counted (judge unassigned)
                                 </Typography>
                               </Tooltip>
                             )}

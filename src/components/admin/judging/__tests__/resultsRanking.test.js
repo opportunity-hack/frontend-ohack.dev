@@ -2,7 +2,7 @@ import {
   rankRound2Teams,
   compareSubmittedAt,
   formatSubmittedAt,
-  TIE_EPSILON,
+  AVERAGE_PRECISION,
 } from "../resultsRanking";
 
 const row = (
@@ -64,14 +64,26 @@ describe("rankRound2Teams", () => {
     expect(ranked[2].tieBrokenBy).toBe("name");
   });
 
-  it("treats averages within the epsilon as tied and separate groups independently", () => {
+  it("compares averages at the displayed precision (two decimals), never with an epsilon", () => {
+    expect(AVERAGE_PRECISION).toBe(2);
+    // 14 vs 15 judges: 425/14 = 30.357… and 455/15 = 30.333… display as
+    // 30.36 and 30.33 — different averages, so NOT a tie, whatever the
+    // submission times say.
     const ranked = rankRound2Teams([
-      row("A", 30.001, { submitted: "2026-10-11T20:00:00Z" }),
+      row("Fifteen", 455 / 15, { judges: 15, submitted: "2026-10-11T18:00:00Z" }),
+      row("Fourteen", 425 / 14, { judges: 14, submitted: "2026-10-11T20:00:00Z" }),
+    ]);
+    expect(ranked.map((r) => r.team.name)).toEqual(["Fourteen", "Fifteen"]);
+    expect(ranked.every((r) => r.tieGroup === null)).toBe(true);
+  });
+
+  it("averages that round to the same two decimals are tied, and groups are independent", () => {
+    const ranked = rankRound2Teams([
+      row("A", 30.004, { submitted: "2026-10-11T20:00:00Z" }),
       row("B", 30.0, { submitted: "2026-10-11T19:00:00Z" }),
       row("C", 25, { submitted: "2026-10-11T18:00:00Z" }),
       row("D", 25, { submitted: "2026-10-11T18:30:00Z" }),
     ]);
-    expect(TIE_EPSILON).toBeGreaterThan(0.001);
     expect(ranked.map((r) => r.team.name)).toEqual(["B", "A", "C", "D"]);
     expect(ranked.map((r) => r.tieGroup)).toEqual([1, 1, 2, 2]);
   });

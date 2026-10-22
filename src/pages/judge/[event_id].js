@@ -290,10 +290,11 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
           ),
         };
       });
-      setAdjustingKey(null);
+      if (adjustingRef.current === key) setAdjustingKey(null);
+      // No numbers in the toast — it's a big filled bar anyone nearby can read.
       setToast({
         severity: "success",
-        message: `Saved — ${team.name} is now ${total} of ${MAX_TOTAL}.`,
+        message: `Saved your changes for ${team.name}.`,
       });
       trackEvent({
         action: "judge_inline_adjust_saved",
@@ -312,15 +313,24 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
               }
             : prev,
         );
-        setAdjustingKey(null);
+        if (adjustingRef.current === key) setAdjustingKey(null);
         setToast({
           severity: "warning",
           message: `${roundLabel(round)} scoring was just closed by the organizers — your change wasn't saved.`,
         });
       } else {
-        setSaveError(
-          err?.message || "Couldn't save your changes. Please try again.",
-        );
+        const message =
+          err?.message || "Couldn't save your changes. Please try again.";
+        if (adjustingRef.current === key) {
+          setSaveError(message);
+        } else {
+          // Defensive: the editor can't normally close mid-save (buttons are
+          // disabled), but a failure must never be silent.
+          setToast({
+            severity: "error",
+            message: `Couldn't save your changes for ${team.name}: ${message}`,
+          });
+        }
       }
     } finally {
       setSavingKey(null);
@@ -433,6 +443,7 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
                     saveAdjust(team, round, draft, fb)
                   }
                   saving={savingKey === key}
+                  anySaving={Boolean(savingKey)}
                   saveError={adjustingKey === key ? saveError : null}
                   onWatchVideo={(url, name) => setVideo({ url, title: name })}
                 />
@@ -513,12 +524,12 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
               >
                 <Tab
                   id="tab-round1"
-                  aria-controls="panel-round1"
+                  aria-controls={activeTab === 0 ? "judging-panel" : undefined}
                   label={`Round 1${status === "ready" ? ` (${counts.r1Done}/${counts.r1})` : ""}`}
                 />
                 <Tab
                   id="tab-round2"
-                  aria-controls="panel-round2"
+                  aria-controls={activeTab === 1 ? "judging-panel" : undefined}
                   label={`Round 2${status === "ready" ? ` (${counts.r2Done}/${counts.r2})` : ""}`}
                 />
               </Tabs>
@@ -567,7 +578,7 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
 
             {status === "ready" && (
               <div
-                id={`panel-${ROUNDS[activeTab]}`}
+                id="judging-panel"
                 role="tabpanel"
                 aria-labelledby={`tab-${ROUNDS[activeTab]}`}
               >

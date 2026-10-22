@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
 import { ThemeProvider } from "@mui/material/styles";
@@ -127,7 +126,6 @@ const HackathonCard = ({ hackathon, onOpen }) => {
 
 const JudgeDashboard = withRequiredAuthInfo(() => {
   const { accessToken, user } = useAuthInfo();
-  const router = useRouter();
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [assignments, setAssignments] = useState([]);

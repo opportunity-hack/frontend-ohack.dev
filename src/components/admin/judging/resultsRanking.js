@@ -2,7 +2,11 @@
  * Final-results ranking for Round 2 (pure, unit-tested).
  *
  * Order: teams with at least one submitted score first, by average score
- * descending. Ties (averages within TIE_EPSILON) are broken by the EARLIEST
+ * descending. Averages are compared at the precision the table DISPLAYS
+ * (two decimals) — never with an epsilon: an epsilon wider than the smallest
+ * real gap (1/210 with 14 vs 15 judges) would reorder teams whose displayed
+ * averages differ, and epsilon-equality isn't transitive, which makes a sort
+ * undefined. Ties at that precision are broken by the EARLIEST
  * `project_submitted_at` — the first time the team pressed "Submit your
  * project" on its dashboard (the backend only stamps it once). A team with no
  * submission timestamp loses the tie to one that has it. If that still ties
@@ -10,7 +14,8 @@
  * team name. Teams with no scores sort last, by name.
  */
 
-export const TIE_EPSILON = 0.005;
+export const AVERAGE_PRECISION = 2;
+const SCALE = 10 ** AVERAGE_PRECISION;
 
 export const parseSubmittedAt = (team) => {
   const raw = team?.project_submitted_at;
@@ -29,25 +34,28 @@ export function compareSubmittedAt(a, b) {
   return ta - tb;
 }
 
-const avgOf = (row) =>
-  row?.judgeCount > 0 ? Number(row.averageScore) || 0 : null;
+/** The average as an integer at display precision, or null when unscored. */
+export const averageKey = (row) =>
+  row?.judgeCount > 0
+    ? Math.round((Number(row.averageScore) || 0) * SCALE)
+    : null;
+
 const sdOf = (row) => Number(row?.standardDeviation) || 0;
 const nameOf = (row) => String(row?.team?.name || "");
 
 const tiedOnAverage = (a, b) => {
-  const x = avgOf(a);
-  const y = avgOf(b);
-  if (x === null || y === null) return false;
-  return Math.abs(x - y) < TIE_EPSILON;
+  const x = averageKey(a);
+  const y = averageKey(b);
+  return x !== null && y !== null && x === y;
 };
 
 function compareRows(a, b) {
-  const x = avgOf(a);
-  const y = avgOf(b);
+  const x = averageKey(a);
+  const y = averageKey(b);
   if (x === null && y === null) return nameOf(a).localeCompare(nameOf(b));
   if (x === null) return 1;
   if (y === null) return -1;
-  if (!tiedOnAverage(a, b)) return y - x;
+  if (x !== y) return y - x;
   const bySubmission = compareSubmittedAt(a, b);
   if (bySubmission !== 0) return bySubmission;
   const bySd = sdOf(a) - sdOf(b);

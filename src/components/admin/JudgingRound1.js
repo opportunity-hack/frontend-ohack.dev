@@ -717,6 +717,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     }
 
     setSaving(true);
+    const skipped = [];
     try {
       // First, create/update panels (without judge data)
       for (const group of judgeGroups) {
@@ -770,6 +771,13 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         ));
         }
 
+          // A panel with no judges or no teams has nothing to assign — and a
+          // replace with an empty set would wipe it, so skip it on purpose.
+          if (group.judges.length === 0 || group.teams.length === 0) {
+            skipped.push(group.name);
+            continue;
+          }
+
           // Judges × teams for this panel in ONE request; replace:true makes
           // the backend's set match what's on screen (removed pairs pruned).
           await createAssignments({
@@ -785,7 +793,12 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         }
       }
 
-      notify('Judge assignments saved successfully!', { variant: 'success' });
+      notify(
+        skipped.length
+          ? `Judge assignments saved. Skipped ${skipped.join(', ')} (needs at least one judge and one team).`
+          : 'Judge assignments saved successfully!',
+        { variant: skipped.length ? 'warning' : 'success' }
+      );
     } catch (error) {
       console.error('Error saving judge assignments:', error);
       notify('Failed to save judge assignments', { variant: 'error' });
@@ -1167,7 +1180,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             </AccordionSummary>
             <AccordionDetails>
               <JudgeProgressPanel
-                key={progressRefreshKey}
+                refreshSignal={progressRefreshKey}
                 eventId={selectedHackathon}
                 round="round1"
                 accessToken={accessToken}
