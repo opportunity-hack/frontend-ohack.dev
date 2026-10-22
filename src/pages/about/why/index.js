@@ -1,88 +1,64 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  Button,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Box,
-  Chip,
-} from "@mui/material";
-import {
-  School as SchoolIcon,
-  Work as WorkIcon,
-  Code as CodeIcon,
-  CloudQueue as CloudIcon,
-  Groups as TeamsIcon,
-  TrendingUp as CareerIcon,
-  Lightbulb as ImpactIcon,
-  Search as FindProjectIcon,
-} from "@mui/icons-material";
-
-import { whyPages } from "../../../data/why-content";
-import {
-  TitleContainer,
-  LayoutContainer,
-  ProjectsContainer,
-} from "../../../styles/nonprofit/styles";
 import Head from "next/head";
+import { whyPages } from "../../../data/why-content";
+import { serializeJsonLd } from "../../../lib/jsonLd";
+import {
+  RefinedPage,
+  PageMasthead,
+} from "../../../components/design/RefinedPage";
+import { Eyebrow } from "../../../components/design/refined";
 
 const LoginOrRegister = dynamic(
   () => import("../../../components/LoginOrRegister/LoginOrRegister2"),
-  { ssr: false }
+  { ssr: false, loading: () => <div style={{ minHeight: 120 }} /> },
 );
-
-const style = { fontSize: 13 };
 
 // Organized content by career stage/goal
 const careerPathContent = [
   {
-    title: "Early Career",
-    icon: SchoolIcon,
-    description: "Build your foundation in tech through real-world experience",
+    title: "Early career",
+    description: "Build your foundation in tech through real-world experience.",
     links: [
       {
         slug: "internship-success-build-portfolio-through-nonprofit-projects",
-        title: "Stand Out for Summer Internships",
+        title: "Stand out for summer internships",
       },
       {
         slug: "bootcamp-projects-real-world-experience",
-        title: "Bootcamp Success: Build Real Projects",
+        title: "Bootcamp success: build real projects",
       },
     ],
   },
   {
-    title: "Career Transition",
-    icon: CareerIcon,
-    description: "Make your move into tech meaningful and impactful",
+    title: "Career transition",
+    description: "Make your move into tech meaningful and impactful.",
     links: [
       {
         slug: "career-transition-tech-nonprofit",
-        title: "Transition to Tech Through Nonprofit Projects",
+        title: "Transition to tech through nonprofit projects",
       },
       {
         slug: "remote-work-experience-nonprofit",
-        title: "Gain Remote Work Experience",
+        title: "Gain remote work experience",
       },
       {
-        "slug": "how-to-get-experience-coding-when-laid-off",
-        "title": "Build your Portfolio After a Layoff"
-      }
+        slug: "how-to-get-experience-coding-when-laid-off",
+        title: "Build your portfolio after a layoff",
+      },
     ],
   },
   {
-    title: "Leadership Growth",
-    icon: TeamsIcon,
-    description: "Develop leadership skills while making a difference",
+    title: "Leadership growth",
+    description: "Develop leadership skills while making a difference.",
     links: [
       {
         slug: "team-leadership-nonprofit-projects",
-        title: "Lead Technical Teams for Nonprofits",
+        title: "Lead technical teams for nonprofits",
       },
       {
         slug: "senior-developer-impact",
-        title: "Senior Developers: Create Lasting Impact",
+        title: "Senior developers: create lasting impact",
       },
     ],
   },
@@ -92,149 +68,29 @@ const careerPathContent = [
 const impactPathways = [
   {
     slug: "coding-for-good-how-to-use-your-programming-skills-to-make-a-difference-in-the-world",
-    title: "Code for Social Impact",
-    icon: ImpactIcon,
+    title: "Code for social impact",
     description:
-      "Use your programming skills to create positive change in communities",
+      "Use your programming skills to create positive change in communities.",
   },
   {
     slug: "how-to-find-and-work-on-nonprofit-projects-that-match-your-coding-interests-and-expertise",
-    title: "Find Your Perfect Project",
-    icon: FindProjectIcon,
+    title: "Find your perfect project",
     description:
-      "Match your skills and interests with impactful nonprofit projects",
+      "Match your skills and interests with impactful nonprofit projects.",
   },
   {
     slug: "open-source-contribution",
-    title: "Contribute to Open Source",
-    icon: CodeIcon,
+    title: "Contribute to open source",
     description:
-      "Make meaningful open source contributions that help nonprofits",
+      "Make meaningful open source contributions that help nonprofits.",
   },
   {
     slug: "remote-work-experience-nonprofit",
-    title: "Master Remote Collaboration",
-    icon: CloudIcon,
+    title: "Master remote collaboration",
     description:
-      "Build essential remote work skills through nonprofit projects",
+      "Build essential remote work skills through nonprofit projects.",
   },
 ];
-
-const CareerPathCard = ({ title, icon: Icon, description, links }) => (
-  <Card
-    sx={{
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      transition: "transform 0.2s",
-      "&:hover": {
-        transform: "translateY(-4px)",
-        boxShadow: 3,
-      },
-    }}
-  >
-    <CardContent>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Icon sx={{ mr: 1, color: "primary.main", fontSize: 32 }} />
-        <Typography variant="h5" component="h2">
-          {title}
-        </Typography>
-      </Box>
-      <Typography
-        variant="body1"
-        style={style}
-        gutterBottom
-        color="text.secondary"
-      >
-        {description}
-      </Typography>
-      <Box sx={{ mt: 2 }}>
-        {links.map((link) => (
-          <Button
-            key={link.slug}
-            variant="outlined"
-            fullWidth
-            sx={{
-              mb: 1,
-              justifyContent: "flex-start",
-              textAlign: "left",
-              py: 1.5,
-            }}
-            component={Link}
-            href={`/about/why/${link.slug}`}
-          >
-            {link.title}
-            {whyPages[link.slug]?.highlights && (
-              <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {whyPages[link.slug].highlights
-                  .slice(0, 2)
-                  .map((highlight, i) => (
-                    <Chip
-                      key={i}
-                      label={highlight}
-                      size="small"
-                      sx={{ fontSize: "0.7rem" }}
-                    />
-                  ))}
-              </Box>
-            )}
-          </Button>
-        ))}
-      </Box>
-    </CardContent>
-  </Card>
-);
-
-const ImpactPathwayCard = ({ slug, title, icon: Icon, description }) => (
-  <Card
-    sx={{
-      mb: 2,
-      transition: "transform 0.2s",
-      "&:hover": {
-        transform: "translateX(4px)",
-        boxShadow: 2,
-      },
-    }}
-  >
-    <CardContent>
-      <Button
-        variant="text"
-        size="large"
-        fullWidth
-        startIcon={<Icon sx={{ fontSize: 28 }} />}
-        component={Link}
-        href={`/about/why/${slug}`}
-        sx={{
-          justifyContent: "flex-start",
-          textAlign: "left",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          py: 2,
-        }}
-      >
-        <Typography variant="h6" component="div" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" style={style}>
-          {description}
-        </Typography>
-        {whyPages[slug]?.highlights && (
-          <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {whyPages[slug].highlights.slice(0, 2).map((highlight, i) => (
-              <Chip
-                key={i}
-                label={highlight}
-                size="small"
-                variant="outlined"
-                sx={{ fontSize: "0.7rem" }}
-              />
-            ))}
-          </Box>
-        )}
-      </Button>
-    </CardContent>
-  </Card>
-);
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -242,12 +98,72 @@ const structuredData = {
   mainEntity: careerPathContent.map((path) => ({
     "@type": "Question",
     name: `Why choose Opportunity Hack for ${path.title.toLowerCase()}?`,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: path.description,
-    },
+    acceptedAnswer: { "@type": "Answer", text: path.description },
   })),
 };
+
+const Highlights = ({ slug }) => {
+  const items = whyPages[slug]?.highlights?.slice(0, 2) || [];
+  if (items.length === 0) return null;
+  return (
+    <span style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+      {items.map((h) => (
+        <span key={h} className="ohx-tag">
+          {h}
+        </span>
+      ))}
+    </span>
+  );
+};
+
+const CareerPathCard = ({ title, description, links }) => (
+  <article
+    className="ohx-card"
+    style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10 }}
+  >
+    <h2 className="ohx-display" style={{ fontSize: 22 }}>
+      {title}
+    </h2>
+    <p
+      style={{
+        margin: 0,
+        fontSize: 14.5,
+        color: "var(--muted)",
+        lineHeight: 1.55,
+      }}
+    >
+      {description}
+    </p>
+    <ul
+      style={{
+        listStyle: "none",
+        margin: "6px 0 0",
+        padding: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {links.map((link) => (
+        <li
+          key={link.slug}
+          style={{ borderTop: "1px solid var(--line)", padding: "12px 0" }}
+        >
+          <Link
+            href={`/about/why/${link.slug}`}
+            className="ohx-link"
+            style={{ fontSize: 15 }}
+          >
+            {link.title}{" "}
+            <span className="ohx-arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+          <Highlights slug={link.slug} />
+        </li>
+      ))}
+    </ul>
+  </article>
+);
 
 export default function WhyIndex() {
   return (
@@ -264,52 +180,92 @@ export default function WhyIndex() {
           name="keywords"
           content="tech volunteering, coding bootcamp projects, remote work experience, tech leadership, career transition, nonprofit technology, social impact coding"
         />
+        <link rel="canonical" href="https://www.ohack.dev/about/why" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
         />
       </Head>
 
-      <LayoutContainer key="why" container>
-        <TitleContainer container>
-          <Typography variant="h2" gutterBottom>
-            Why Code with Opportunity Hack?
-          </Typography>
+      <RefinedPage>
+        <PageMasthead
+          eyebrow="Why Opportunity Hack"
+          title="Why code with Opportunity Hack?"
+          italic="Build skills. Make impact."
+          lead="Whether you're starting your journey in tech, making a career transition, or looking to grow as a leader, Opportunity Hack provides real-world experience building technology that makes a difference. Work on meaningful projects, learn from experienced mentors, and build a portfolio that stands out."
+          style={{ marginTop: 0 }}
+        />
 
-          <Typography variant="body1" style={style} paragraph>
-            Whether you're starting your journey in tech, making a career
-            transition, or looking to grow as a leader - Opportunity Hack
-            provides real-world experience building technology that makes a
-            difference. Work on meaningful projects, learn from experienced
-            mentors, and build a portfolio that stands out.
-          </Typography>
-        </TitleContainer>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+            gap: 20,
+            marginTop: 36,
+          }}
+        >
+          {careerPathContent.map((content) => (
+            <CareerPathCard key={content.title} {...content} />
+          ))}
+        </div>
 
-        <ProjectsContainer>
-          <Grid container spacing={4} mb={6}>
-            {careerPathContent.map((content, index) => (
-              <Grid size={{ xs: 12, md: 4 }} key={index}>
-                <CareerPathCard {...content} />
-              </Grid>
+        <section style={{ marginTop: 56 }} aria-labelledby="impact-heading">
+          <Eyebrow>Make an impact</Eyebrow>
+          <h2
+            id="impact-heading"
+            className="ohx-display"
+            style={{ marginTop: 8 }}
+          >
+            Pick the path that fits you.
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
+              gap: 16,
+              marginTop: 20,
+            }}
+          >
+            {impactPathways.map((pathway) => (
+              <Link
+                key={pathway.slug}
+                href={`/about/why/${pathway.slug}`}
+                className="ohx-card ohx-card--hover"
+                style={{
+                  padding: 20,
+                  display: "block",
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <h3 className="ohx-display" style={{ fontSize: 18 }}>
+                  {pathway.title}
+                </h3>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    fontSize: 14,
+                    color: "var(--muted)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {pathway.description}
+                </p>
+                <Highlights slug={pathway.slug} />
+              </Link>
             ))}
-          </Grid>
+          </div>
+        </section>
 
-          <Typography variant="h4" gutterBottom>
-            Make an Impact
-          </Typography>
-
-          <Box mb={4}>
-            {impactPathways.map((pathway, index) => (
-              <ImpactPathwayCard key={index} {...pathway} />
-            ))}
-          </Box>
-
+        <div style={{ marginTop: 56, maxWidth: 720 }}>
           <LoginOrRegister
             introText="Ready to start building technology that matters?"
             previousPage="/about/why"
           />
-        </ProjectsContainer>
-      </LayoutContainer>
+        </div>
+      </RefinedPage>
     </>
   );
 }
@@ -330,11 +286,7 @@ export async function getStaticProps() {
             "Join Opportunity Hack to build real-world experience, transition careers, or grow leadership skills while creating technology that matters. Perfect for students, career changers, and tech leaders.",
           key: "ogdesc",
         },
-        {
-          property: "og:type",
-          content: "website",
-          key: "ogtype",
-        },
+        { property: "og:type", content: "website", key: "ogtype" },
         {
           property: "og:image",
           content: "https://cdn.ohack.dev/ohack.dev/2023_hackathon_1.webp",

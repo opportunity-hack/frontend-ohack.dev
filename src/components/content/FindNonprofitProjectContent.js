@@ -2,7 +2,7 @@
 import { Typography, Box } from "@mui/material";
 import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: "14px" };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const FindNonprofitProjectContent = () => (
   <>
@@ -12,7 +12,7 @@ const FindNonprofitProjectContent = () => (
       them to your skills, and make meaningful contributions.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Assess Your Skills and Interests
     </Typography>
 
@@ -43,7 +43,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Project Evaluation Checklist
     </Typography>
 
@@ -73,7 +73,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Where to Find Projects
     </Typography>
 
@@ -108,7 +108,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Project Types by Experience Level
     </Typography>
 
@@ -148,7 +148,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Getting Started Successfully
     </Typography>
 
@@ -179,7 +179,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Red Flags to Watch For
     </Typography>
 
@@ -206,7 +206,7 @@ const FindNonprofitProjectContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Tips for Long-term Success
     </Typography>
 

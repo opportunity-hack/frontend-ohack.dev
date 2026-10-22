@@ -1,10 +1,14 @@
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import NextLink from "next/link";
 import { useRouter } from "next/router";
-import { Box, Button, Container, Link, Stack, Typography } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { serializeJsonLd } from "../../../lib/jsonLd";
+import {
+  RefinedPage,
+  BackLink,
+  PageMasthead,
+  LinkRow,
+} from "../../../components/design/RefinedPage";
 
 const HackathonResults = dynamic(
   () => import("../../../components/Hackathon/HackathonResults"),
@@ -28,25 +32,32 @@ const ResultsPage = ({ eventData, funnel }) => {
     return map;
   }, [eventData?.nonprofits]);
 
-  const hasResults = useMemo(() => {
-    return Boolean(funnel?.winners?.won_prize);
-  }, [funnel]);
+  const hasResults = useMemo(
+    () => Boolean(funnel?.winners?.won_prize),
+    [funnel],
+  );
 
   if (router.isFallback) {
     return (
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography>Loading event…</Typography>
-      </Container>
+      <RefinedPage>
+        <div aria-busy="true" className="ohx-card" style={{ minHeight: 360 }} />
+      </RefinedPage>
     );
   }
 
   if (!eventData) {
     return (
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography variant="h4" align="center">
-          Event not found
-        </Typography>
-      </Container>
+      <RefinedPage>
+        <PageMasthead
+          eyebrow="Hackathon outcomes"
+          title="Event not found"
+          style={{ marginTop: 0 }}
+        />
+        <LinkRow
+          style={{ marginTop: 24 }}
+          primary={{ href: "/hack", label: "All hackathons" }}
+        />
+      </RefinedPage>
     );
   }
 
@@ -123,68 +134,45 @@ const ResultsPage = ({ eventData, funnel }) => {
           <script
             key={i}
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(sd) }}
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(sd) }}
           />
         ))}
       </Head>
 
-      <Container maxWidth="lg" sx={{ pt: { xs: 10, md: 12 }, pb: 6 }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          justifyContent="space-between"
-          sx={{ mb: 3 }}
-        >
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            component={NextLink}
-            href={`/hack/${event_id}`}
-            sx={{ textTransform: "none" }}
-          >
-            Back to event
-          </Button>
-        </Stack>
-
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="overline" color="text.secondary">
-            Hackathon outcomes
-          </Typography>
-          <Typography
-            variant="h3"
-            component="h1"
-            sx={{ fontWeight: 700, mb: 1 }}
-          >
-            {eventTitle}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Winning teams and how the field of hackers narrowed from
-            registration to finished project.
-          </Typography>
-        </Box>
-
-        <HackathonResults
-          teams={eventData.teams}
-          nonprofitMap={nonprofitMap}
-          eventId={event_id}
-          eventTitle={eventTitle}
-          githubOrg={eventData.github_org}
-          peerVoteEnabled={!!eventData.constraints?.peer_vote_enabled}
+      <RefinedPage>
+        <BackLink href={`/hack/${event_id}`}>Back to {eventTitle}</BackLink>
+        <PageMasthead
+          eyebrow="Hackathon outcomes"
+          title={eventTitle}
+          lead="Winning teams, and how the field of hackers narrowed from registration to a finished project."
         />
 
-        <HackathonFunnel funnel={funnel} hasResults={hasResults} />
+        <div style={{ marginTop: 32, minHeight: 320 }}>
+          <HackathonResults
+            teams={eventData.teams}
+            nonprofitMap={nonprofitMap}
+            eventId={event_id}
+            eventTitle={eventTitle}
+            githubOrg={eventData.github_org}
+            peerVoteEnabled={!!eventData.constraints?.peer_vote_enabled}
+          />
+        </div>
 
-        <Box sx={{ mt: 6, textAlign: "center" }}>
-          <Link
-            component={NextLink}
-            href={`/hack/${event_id}`}
-            underline="hover"
-          >
-            ← Back to {eventTitle}
-          </Link>
-        </Box>
-      </Container>
+        <div style={{ marginTop: 32, minHeight: 320 }}>
+          <HackathonFunnel funnel={funnel} hasResults={hasResults} />
+        </div>
+
+        <LinkRow
+          style={{ marginTop: 40 }}
+          links={[
+            { href: `/hack/${event_id}`, label: `Back to ${eventTitle}` },
+            {
+              href: "/hack/results",
+              label: "All-time funnel across every hackathon",
+            },
+          ]}
+        />
+      </RefinedPage>
     </>
   );
 };
@@ -201,16 +189,10 @@ export async function getStaticProps({ params }) {
     ]);
     const eventData = eventRes.ok ? await eventRes.json() : null;
     const funnel = funnelRes.ok ? await funnelRes.json() : null;
-    return {
-      props: { eventData, funnel },
-      revalidate: 300,
-    };
+    return { props: { eventData, funnel }, revalidate: 300 };
   } catch (error) {
     console.error("Error fetching results page data:", error);
-    return {
-      props: { eventData: null, funnel: null },
-      revalidate: 60,
-    };
+    return { props: { eventData: null, funnel: null }, revalidate: 60 };
   }
 }
 
