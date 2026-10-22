@@ -2,7 +2,7 @@
 import { Typography, Box } from "@mui/material";
 import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: "14px" };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const CareerTransitionContent = () => (
   <>
@@ -12,7 +12,7 @@ const CareerTransitionContent = () => (
       by providing real development experience through nonprofit projects.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Why Nonprofit Projects Are Perfect for Career Changers
     </Typography>
 
@@ -47,7 +47,7 @@ const CareerTransitionContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Leveraging Your Previous Experience
     </Typography>
 
@@ -72,7 +72,7 @@ const CareerTransitionContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Getting Started
     </Typography>
 
@@ -104,7 +104,7 @@ const CareerTransitionContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Building Your Portfolio
     </Typography>
 

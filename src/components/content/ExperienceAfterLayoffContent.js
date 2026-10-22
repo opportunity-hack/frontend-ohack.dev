@@ -2,7 +2,7 @@
 import { Typography, Box } from "@mui/material";
 import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: "14px" };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const ExperienceAfterLayoffContent = () => (
   <>
@@ -12,7 +12,7 @@ const ExperienceAfterLayoffContent = () => (
       projects, you can make a positive impact while building your portfolio.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Why Nonprofit Projects Are Ideal After a Layoff
     </Typography>
 
@@ -48,7 +48,7 @@ const ExperienceAfterLayoffContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       How to Get Started
     </Typography>
 

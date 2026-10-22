@@ -1,8 +1,8 @@
 // components/content/RemoteWorkContent.js
-import { Typography, Box } from '@mui/material';
-import { LinkStyled } from '../../styles/nonprofit/styles';
+import { Typography, Box } from "@mui/material";
+import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: '14px' };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const RemoteWorkContent = () => (
   <>
@@ -13,7 +13,7 @@ const RemoteWorkContent = () => (
       capabilities.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Essential Remote Work Skills You'll Gain
     </Typography>
 
@@ -47,7 +47,7 @@ const RemoteWorkContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Proven Remote Work Experience
     </Typography>
 
@@ -72,7 +72,7 @@ const RemoteWorkContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Get Started with Remote Work
     </Typography>
 

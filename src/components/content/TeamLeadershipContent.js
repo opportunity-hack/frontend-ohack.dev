@@ -2,7 +2,7 @@
 import { Typography, Box } from "@mui/material";
 import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: "14px" };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const TeamLeadershipContent = () => (
   <>
@@ -12,7 +12,7 @@ const TeamLeadershipContent = () => (
       managing teams, mentoring developers, and delivering impactful solutions.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Leadership Skills You'll Develop
     </Typography>
 
@@ -43,7 +43,7 @@ const TeamLeadershipContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Leadership Opportunities
     </Typography>
 
@@ -67,7 +67,7 @@ const TeamLeadershipContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Building Your Leadership Portfolio
     </Typography>
 
@@ -89,7 +89,7 @@ const TeamLeadershipContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Start Leading Today
     </Typography>
 

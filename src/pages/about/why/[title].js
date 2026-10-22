@@ -4,83 +4,138 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
-import { Typography, Box, Skeleton, Chip, Stack } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { whyPages } from "../../../data/why-content";
 import {
   generateOpenGraphData,
   generateStructuredData,
 } from "../../../data/why-pages";
+import { serializeJsonLd } from "../../../lib/jsonLd";
 import {
-  TitleContainer,
-  LayoutContainer,
-  ProjectsContainer,
-  MoreNewsStyle,
-  LinkStyled,
-} from "../../../styles/nonprofit/styles";
+  RefinedPage,
+  BackLink,
+  Prose,
+} from "../../../components/design/RefinedPage";
+import { Eyebrow } from "../../../components/design/refined";
 
 const LoginOrRegister = dynamic(
   () => import("../../../components/LoginOrRegister/LoginOrRegister2"),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={100} />,
-  }
+  { ssr: false, loading: () => <div style={{ minHeight: 120 }} /> },
 );
 
 const OptimizedImage = memo(({ src, alt }) => (
-  <Box sx={{ position: "relative", width: "100%", maxWidth: 300, height: 300 }}>
+  <div
+    className="ohx-card"
+    style={{
+      position: "relative",
+      width: "100%",
+      maxWidth: 300,
+      aspectRatio: "1 / 1",
+      overflow: "hidden",
+      flexShrink: 0,
+    }}
+  >
     <Image
       src={src}
       alt={alt}
       fill
       style={{ objectFit: "cover" }}
       priority
-      placeholder="blur"
-      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRg..."
       sizes="(max-width: 768px) 100vw, 300px"
     />
-  </Box>
+  </div>
 ));
-
 OptimizedImage.displayName = "OptimizedImage";
 
 const LoadingState = () => (
-  <Box sx={{ p: 3 }}>
-    <Skeleton variant="rectangular" height={300} sx={{ mb: 2 }} />
-    <Skeleton variant="text" height={60} sx={{ mb: 1 }} />
-    <Skeleton variant="text" height={20} count={3} />
-  </Box>
+  <RefinedPage>
+    <div
+      aria-busy="true"
+      style={{ display: "flex", gap: 32, flexWrap: "wrap" }}
+    >
+      <div className="ohx-card" style={{ width: 300, height: 300 }} />
+      <div style={{ flex: "1 1 320px" }}>
+        <div
+          style={{
+            height: 40,
+            width: "70%",
+            background: "var(--surface-2)",
+            borderRadius: 4,
+          }}
+        />
+        <div
+          style={{
+            height: 16,
+            width: "90%",
+            background: "var(--surface-2)",
+            borderRadius: 4,
+            marginTop: 16,
+          }}
+        />
+        <div
+          style={{
+            height: 16,
+            width: "80%",
+            background: "var(--surface-2)",
+            borderRadius: 4,
+            marginTop: 8,
+          }}
+        />
+      </div>
+    </div>
+  </RefinedPage>
 );
 
 const RelatedLinks = ({ links }) => (
-  <Box sx={{ mt: 4 }}>
-    <Typography variant="h6" gutterBottom>
-      Related Topics
-    </Typography>
-    <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+  <section style={{ marginTop: 40 }} aria-labelledby="related-heading">
+    <Eyebrow>Related topics</Eyebrow>
+    <h2
+      id="related-heading"
+      className="ohx-display"
+      style={{ fontSize: 22, marginTop: 8 }}
+    >
+      Keep reading
+    </h2>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
       {links.map(({ slug, title }) => (
-        <Link key={slug} href={`/about/why/${slug}`} passHref prefetch={false}>
-          <Chip label={title} clickable sx={{ my: 0.5 }} />
+        <Link
+          key={slug}
+          href={`/about/why/${slug}`}
+          prefetch={false}
+          className="ohx-btn ohx-btn--ghost"
+        >
+          {title}
         </Link>
       ))}
-    </Stack>
-  </Box>
+    </div>
+  </section>
 );
 
 const Highlights = ({ items }) => (
-  <Box sx={{ mt: 4, mb: 4 }}>
-    <Typography variant="h6" gutterBottom>
-      Key Highlights
-    </Typography>
-    <Stack spacing={1}>
-      {items.map((highlight, index) => (
-        <Typography key={index} variant="body1" component="li">
+  <div
+    className="ohx-card"
+    style={{
+      padding: "18px 22px",
+      background: "var(--surface-2)",
+      marginTop: 28,
+    }}
+  >
+    <p className="ohx-eyebrow">Key highlights</p>
+    <ul
+      style={{
+        margin: "10px 0 0",
+        paddingLeft: 20,
+        fontSize: 15.5,
+        lineHeight: 1.6,
+      }}
+    >
+      {items.map((highlight) => (
+        <li key={highlight} style={{ marginBottom: 4 }}>
           {highlight}
-        </Typography>
+        </li>
       ))}
-    </Stack>
-  </Box>
+    </ul>
+  </div>
 );
 
 const WhyPage = () => {
@@ -110,62 +165,65 @@ const WhyPage = () => {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(pageData.structuredData),
+            __html: serializeJsonLd(pageData.structuredData),
           }}
         />
-        <link rel="canonical" href={`https://www.ohack.dev/about/why/${title}`} />
+        <link
+          rel="canonical"
+          href={`https://www.ohack.dev/about/why/${title}`}
+        />
       </Head>
 
-      <LayoutContainer key="why" container>
-        <TitleContainer container>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignItems: "center",
-              gap: 4,
-              mb: 4,
-            }}
-          >
-            <OptimizedImage src={pageData.image} alt={pageData.title} />
-            <Box>
-              <Typography variant="h2" component="h1" gutterBottom>
-                {pageData.title}
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                color="text.secondary"
-                gutterBottom
+      <RefinedPage>
+        <BackLink href="/about/why">Why Opportunity Hack</BackLink>
+        <header
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 32,
+            marginTop: 18,
+          }}
+        >
+          <OptimizedImage src={pageData.image} alt={pageData.title} />
+          <div style={{ flex: "1 1 320px", minWidth: 0 }}>
+            <Eyebrow>Why Opportunity Hack</Eyebrow>
+            <h1 className="ohx-display" style={{ marginTop: 8 }}>
+              {pageData.title}
+            </h1>
+            {pageData.subtitle && (
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontSize: 18,
+                  color: "var(--ink)",
+                  fontWeight: 500,
+                }}
               >
                 {pageData.subtitle}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
+              </p>
+            )}
+            {pageData.description && (
+              <p className="ohx-lead" style={{ marginTop: 10 }}>
                 {pageData.description}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            )}
+          </div>
+        </header>
 
-          <Link href="/about/why" prefetch={false} passHref>
-            <MoreNewsStyle>
-              <ArrowBackIcon />
-              Back to why
-            </MoreNewsStyle>
-          </Link>
-        </TitleContainer>
+        {highlights && <Highlights items={highlights} />}
 
-        <ProjectsContainer>
-          {highlights && <Highlights items={highlights} />}
-          {Content && <Content />}
-          {relatedLinks && <RelatedLinks links={relatedLinks} />}
+        <Prose style={{ marginTop: 36 }}>{Content && <Content />}</Prose>
 
-          <Box sx={{ mt: 6 }}>
-            <LoginOrRegister
-              introText="Ready to start building your portfolio?"
-              previousPage={`/about/why/${title}`}
-            />
-          </Box>
-        </ProjectsContainer>
-      </LayoutContainer>
+        {relatedLinks && <RelatedLinks links={relatedLinks} />}
+
+        <div style={{ marginTop: 48, maxWidth: 720 }}>
+          <LoginOrRegister
+            introText="Ready to start building your portfolio?"
+            previousPage={`/about/why/${title}`}
+          />
+        </div>
+      </RefinedPage>
     </>
   );
 };
@@ -174,11 +232,7 @@ export async function getStaticPaths() {
   const paths = Object.keys(whyPages).map((slug) => ({
     params: { title: slug },
   }));
-
-  return {
-    paths,
-    fallback: true,
-  };
+  return { paths, fallback: true };
 }
 
 export async function getStaticProps({ params = {} } = {}) {
@@ -192,13 +246,12 @@ export async function getStaticProps({ params = {} } = {}) {
   }
 
   return {
-    props: {      
+    props: {
       title: pageData.title,
-      openGraphData: openGraphData,
-      structuredData
+      openGraphData,
+      structuredData,
     },
   };
-  
 }
 
 export default WhyPage;

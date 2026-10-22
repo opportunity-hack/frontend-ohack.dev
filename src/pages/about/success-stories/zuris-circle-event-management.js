@@ -1,175 +1,77 @@
-import React from 'react';
-import { useEffect  } from 'react';
-import Head from 'next/head';
-import { Typography, Container, Paper, Grid, List, ListItem, ListItemIcon, ListItemText, Button, Link as MuiLink } from '@mui/material';
-import { styled } from '@mui/system';
-import PeopleIcon from '@mui/icons-material/People';
-import GroupIcon from '@mui/icons-material/Group';
-import BusinessIcon from '@mui/icons-material/Business';
-import CodeIcon from '@mui/icons-material/Code';
-import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import BuildIcon from '@mui/icons-material/Build';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkIcon from '@mui/icons-material/Link';
-import Link from 'next/link';
-import { trackEvent, initFacebookPixel, pageview } from '../../../lib/ga';
+import React from "react";
+import SuccessStoryLayout from "../../../components/SuccessStories/SuccessStoryLayout";
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  marginBottom: theme.spacing(4),
-}));
-
+const story = {
+  slug: "zuris-circle-event-management",
+  nonprofit: "Zuri's Circle",
+  years: "2019",
+  headline:
+    "Zuri's Circle: transforming event management and community engagement",
+  lead: "A Peoria nonprofit serving families, the elderly and the homeless got a digital sign-in, automated follow-ups and machine-learning sentiment analysis of event feedback — all built in one hackathon.",
+  meta: {
+    title:
+      "Zuri's Circle: Revolutionizing Event Management | Opportunity Hack Success Story",
+    ogTitle: "Zuri's Circle: Transforming Event Management | Opportunity Hack",
+    description:
+      "Discover how Opportunity Hack volunteers developed an innovative event management and feedback analysis system for Zuri's Circle, enhancing community engagement.",
+    ogDescription:
+      "See how tech volunteers created an automated event registration and feedback analysis system for Zuri's Circle, revolutionizing their community engagement.",
+    keywords:
+      "Opportunity Hack, Zuri's Circle, event management, nonprofit technology, hackathon success story",
+    image: "https://cdn.ohack.dev/nonprofit_images/Zuris_Circle_2019.webp",
+  },
+  facts: [
+    { label: "Nonprofit", value: "Zuri's Circle" },
+    {
+      label: "Tech volunteers",
+      value: "Trevor Moore, Jordan Riley, and Carter Rice (2019)",
+    },
+    {
+      label: "Sponsors",
+      value:
+        "PayPal, GoDaddy, Repay, MDI Group, Splunk, Galvanize, InfusionSoft",
+    },
+    {
+      label: "Technologies",
+      value:
+        "ASP.NET Core 3.0, ML.NET, MongoDB, React, Redux, Material UI, Chart.js, Azure, Heroku",
+    },
+  ],
+  challenge: {
+    intro:
+      "Zuri's Circle, a Peoria-based nonprofit helping families, the elderly, and the homeless, faced challenges in their event management:",
+    items: [
+      "Inefficient manual email collection at events",
+      "Difficulty in timely follow-ups with participants",
+      "Lack of systematic feedback analysis for event improvement",
+    ],
+  },
+  solution: {
+    intro:
+      'The Opportunity Hack team developed "Zuri\'s Dashboard," a comprehensive event management system:',
+    items: [
+      "Digital sign-in system for accurate participant data collection",
+      "Automated email communication for event follow-ups",
+      "Machine learning-powered sentiment analysis for feedback evaluation",
+    ],
+  },
+  resources: [
+    {
+      label: "GitHub repository",
+      href: "https://github.com/opportunity-hack/event-registration",
+      note: "Explore the project's code and development history",
+    },
+    {
+      label: "DevPost project (2019)",
+      href: "https://devpost.com/software/zuri-s-dashboard",
+      note: "View the project submission and details",
+    },
+  ],
+  impact: {
+    text: "Zuri's Dashboard significantly improved Zuri's Circle's ability to engage with their community, streamline event management, and gain valuable insights from participant feedback. This technology allows the organization to focus more on their mission of providing relief to families, the elderly, and the homeless.",
+  },
+};
 
 export default function ZurisCircleSuccessStory() {
-    useEffect(() => {
-        initFacebookPixel();
-        pageview();        
-    }, []);
-
-
-  return (
-    <>
-      <Head>
-        <title>Zuri's Circle: Revolutionizing Event Management | Opportunity Hack Success Story</title>
-        <meta name="description" content="Discover how Opportunity Hack volunteers developed an innovative event management and feedback analysis system for Zuri's Circle, enhancing community engagement." />
-        <meta name="keywords" content="Opportunity Hack, Zuri's Circle, event management, nonprofit technology, hackathon success story" />
-        <meta property="og:title" content="Zuri's Circle: Transforming Event Management | Opportunity Hack" />
-        <meta property="og:description" content="See how tech volunteers created an automated event registration and feedback analysis system for Zuri's Circle, revolutionizing their community engagement." />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://www.ohack.dev/success-stories/zuris-circle-event-management" />
-        <meta property="og:image" content="https://cdn.ohack.dev/nonprofit_images/Zuris_Circle_2019.webp" />
-      </Head>
-
-      <Container maxWidth="lg">
-        <Typography mt={10} variant="h2" align="center" gutterBottom>
-          Zuri's Circle: Transforming Event Management and Community Engagement
-        </Typography>
-
-        <StyledPaper>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h2" gutterBottom>
-                Project Overview
-              </Typography>
-              <Typography paragraph>
-                <PeopleIcon /> <strong>Nonprofit:</strong> Zuri's Circle
-              </Typography>
-              <Typography paragraph>
-                <GroupIcon /> <strong>Tech Volunteers:</strong> Trevor Moore, Jordan Riley, and Carter Rice (2019)
-              </Typography>
-              <Typography paragraph>
-                <BusinessIcon /> <strong>Sponsor:</strong> PayPal, GoDaddy, Repay, MDI Group, Splunk, Galvanize, InfusionSoft
-              </Typography>
-              <Typography paragraph>
-                <CodeIcon /> <strong>Technologies Used:</strong> ASP.NET Core 3.0, ML.NET, MongoDB, React, Redux, Material UI, Chart.js, Azure, Heroku
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h2" gutterBottom>
-                The Challenge
-              </Typography>
-              <Typography paragraph>
-                Zuri's Circle, a Peoria-based nonprofit helping families, the elderly, and the homeless, faced challenges in their event management:
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemIcon><CheckCircleOutlineIcon /></ListItemIcon>
-                  <ListItemText primary="Inefficient manual email collection at events" />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon><CheckCircleOutlineIcon /></ListItemIcon>
-                  <ListItemText primary="Difficulty in timely follow-ups with participants" />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon><CheckCircleOutlineIcon /></ListItemIcon>
-                  <ListItemText primary="Lack of systematic feedback analysis for event improvement" />
-                </ListItem>
-              </List>
-            </Grid>
-          </Grid>
-        </StyledPaper>
-
-        <StyledPaper>
-          <Typography variant="h2" gutterBottom>
-            The Solution
-          </Typography>
-          <Typography paragraph>
-            The Opportunity Hack team developed "Zuri's Dashboard," a comprehensive event management system:
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon><BuildIcon /></ListItemIcon>
-              <ListItemText primary="Digital sign-in system for accurate participant data collection" />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon><BuildIcon /></ListItemIcon>
-              <ListItemText primary="Automated email communication for event follow-ups" />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon><BuildIcon /></ListItemIcon>
-              <ListItemText primary="Machine learning-powered sentiment analysis for feedback evaluation" />
-            </ListItem>
-          </List>
-          <Typography variant="h3" gutterBottom>
-            Project Resources
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon><GitHubIcon /></ListItemIcon>
-              <ListItemText 
-                primary={
-                  <MuiLink href="https://github.com/opportunity-hack/event-registration" target="_blank" rel="noopener noreferrer">
-                    GitHub Repository
-                  </MuiLink>
-                }
-                secondary="Explore the project's code and development history"
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon><LinkIcon /></ListItemIcon>
-              <ListItemText 
-                primary={
-                  <MuiLink href="https://devpost.com/software/zuri-s-dashboard" target="_blank" rel="noopener noreferrer">
-                    DevPost Project (2019)
-                  </MuiLink>
-                }
-                secondary="View the project submission and details"
-              />
-            </ListItem>
-          </List>
-          <Typography variant="h3" gutterBottom>
-            Impact Highlight
-          </Typography>
-          <Typography paragraph>
-            Zuri's Dashboard significantly improved Zuri's Circle's ability to engage with their community, streamline event management, and gain valuable insights from participant feedback. This technology allows the organization to focus more on their mission of providing relief to families, the elderly, and the homeless.
-          </Typography>
-        </StyledPaper>
-
-        <Grid container spacing={4} justifyContent="center" marginTop={4} marginBottom={4}>
-          <Grid>
-            <Link href="/nonprofits/apply" passHref>
-              <Button variant="contained" color="primary" size="large">
-                Nonprofits: Submit Your Challenge
-              </Button>
-            </Link>
-          </Grid>
-          <Grid>
-            <Link href="/hack" passHref>
-              <Button variant="contained" color="secondary" size="large">
-                Tech Volunteers: Apply Your Skills
-              </Button>
-            </Link>
-          </Grid>
-          <Grid>
-            <Link href="/sponsor" passHref>
-              <Button variant="contained" color="info" size="large">
-                Sponsors: Empower Innovation
-              </Button>
-            </Link>
-          </Grid>
-        </Grid>
-      </Container>
-    </>
-  );
+  return <SuccessStoryLayout story={story} />;
 }

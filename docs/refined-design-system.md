@@ -67,6 +67,12 @@ Never reintroduce the old rainbow of status chips.
   single replacement for all the old colored MUI chips.
 - Sponsor logos: wrap a logo row in `.ohx-sponsors` → logos render grayscale at
   low opacity, regain color on hover (classic restrained treatment).
+- Prose: `.ohx-prose` for long-form content (legal pages, essays, case studies) —
+  Fraunces `h2`/`h3`, 70ch measure, accent list markers, navy underlined links.
+- Page shell: `src/components/design/RefinedPage.js` exports `RefinedPage`
+  (RefinedRoot + `.ohx-wrap` section with navbar clearance), `PageMasthead`
+  (eyebrow → the one `<h1>` → lead), `BackLink`, `Prose`, `CtaBand` (navy band,
+  one primary + one ghost) and `LinkRow` for simple content pages.
 - Motion: `.rise` = one staggered fade-up on load; set per-element
   `style={{ animationDelay: 'Nms' }}`. Honors `prefers-reduced-motion`.
 
@@ -118,6 +124,7 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
 ## Rollout status
 - [x] `/` (homepage)
 - [x] `/projects`
+- [x] Oct 2026 batch via `RefinedPage`: `/404`, `/contact`, `/feedback`, `/about/why` (+ `[title]`), `/about/privacy-policy`, `/hack/liability-waiver`, `/hack/photo-release`, `/praise/[id]`, `/hack/[event_id]/results`, `/hack/results`, the four `/about/success-stories/<slug>` case studies (`SuccessStoryLayout`)
 - [x] Global NavBar
 - [x] `/nonprofits` — `NonProfitList` rewritten; new calm card
       `NonProfitListTileRefined` (the original `NonProfitListTile` is still used

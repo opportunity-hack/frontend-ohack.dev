@@ -1,8 +1,8 @@
 // components/content/SeniorDeveloperContent.jsx
-import { Typography, Box } from '@mui/material';
-import { LinkStyled } from '../../styles/nonprofit/styles';
+import { Typography, Box } from "@mui/material";
+import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: '14px' };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const SeniorDeveloperContent = () => (
   <>
@@ -13,7 +13,7 @@ const SeniorDeveloperContent = () => (
       nonprofits achieve their missions through technology.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Make High-Impact Technical Decisions
     </Typography>
 
@@ -44,7 +44,7 @@ const SeniorDeveloperContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Mentor Rising Developers
     </Typography>
 
@@ -75,7 +75,7 @@ const SeniorDeveloperContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Leadership Growth Opportunities
     </Typography>
 
@@ -106,7 +106,7 @@ const SeniorDeveloperContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Start Making an Impact
     </Typography>
 
