@@ -140,6 +140,16 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `peer_vote_cta_click` | `PeerVote/PeerVoteCTA.js` | `{ event_label: "event" \| "dashboard", event_id }` | Which surface drove the voter to the page (event page vs team dashboard card). |
 | `peer_vote_submitted` | `PeerVote/PeerVotePage.js` | `{ value: <number of picks>, event_id, page: "hackers_choice_vote" }` | Ballot accepted (`POST …/peer-vote/ballot`). Re-votes fire again. No tallies are ever exposed to the client. |
 
+### Judging (Oct 2026)
+
+Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `judge_dash_start` | `pages/judge/index.js` | `{ event_label: <event_id>, page: "judge_dashboard" }` | "Open judging" on a hackathon card (pre-existing event, kept). |
+| `judge_inline_adjust_open` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Judge pressed "Adjust scores" on an already-scored team card (editor opened; nothing saved yet). |
+| `judge_inline_adjust_saved` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Inline "Save changes" succeeded (`POST /api/judge/score` re-submit). Ratio to `_open` = how often judges actually change their mind after a demo. |
+
 ### Admin (`event_category: "admin"`)
 
 | Event Name | Source | Parameters | Notes |
@@ -147,8 +157,9 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `admin_deadline_reminder_sent` | `admin/hackathon-edit/sections/DeadlinesSection.js` | `{ event_category: "admin", event_label: <event_id>, value: <hours_before 24\|6\|1> }` | Manual "Send reminder now" (the hourly cron path is server-side and untracked). |
 | `admin_peer_vote_void_ballot` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | A ballot was voided. |
 | `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
+| `admin_judging_lock` / `admin_judging_unlock` | `admin/judging/JudgeProgressPanel.js` | `{ event_category: "admin", event_label: "round1" \| "round2", event_id }` | Scoring for a round locked/unlocked from the Round 1 / Round 2 admin tabs (`POST /api/judge/admin/locks/<event>/<round>`). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
-| `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
+| `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
 ## Business Intelligence Applications
 

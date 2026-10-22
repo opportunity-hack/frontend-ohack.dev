@@ -1,1511 +1,1075 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Button,
-  Slider,
   Alert,
+  Button,
   CircularProgress,
-  Paper,
-  Chip,
-  Divider,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  IconButton,
-  Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Link,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  FormControlLabel,
-  Switch,
-  Collapse,
-  TextField,
-  Skeleton,
+  DialogContent,
+  DialogTitle,
+  Snackbar,
 } from "@mui/material";
-import {
-  ArrowBack as BackIcon,
-  GitHub as GitHubIcon,
-  Launch as DevPostIcon,
-  VideoLibrary as VideoIcon,
-  Save as SaveIcon,
-  Send as SubmitIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
-  Person as PersonIcon,
-  Code as CodeIcon,
-  Security as SecurityIcon,
-  Assessment as AssessmentIcon,
-  Description as DocumentationIcon,
-  AutoFixHigh as PolishIcon,
-  Public as WebIcon,
-  Timer as TimerIcon,
-  HelpOutline as HelpIcon,
-  RecordVoiceOver as VoiceIcon,
-  Screenshot as ScreenshotIcon,
-  Group as GroupIcon,
-} from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
-import { useSnackbar } from "notistack";
-import judgeApi from "../../../../lib/judgeApi";
+import judgeApi, { isRoundLocked } from "../../../../lib/judgeApi";
+import { slackChannelUrl } from "../../../../lib/slackLinks";
+import { RefinedRoot, Eyebrow } from "../../../../components/design/refined";
+import {
+  judgeTheme,
+  judgeSectionStyle,
+  quietTotalStyle,
+  JUDGE_COLORS,
+} from "../../../../components/Judge/judgeTheme";
+import ScoreScale from "../../../../components/Judge/ScoreScale";
+import {
+  JUDGING_CRITERIA,
+  SCORE_DESCRIPTIONS,
+  MAX_TOTAL,
+  FEEDBACK_MIN_CHARS,
+  calculateTotal,
+  categoryTotal,
+  defaultScores,
+  feedbackCharCount,
+  feedbackCharsRemaining,
+  feedbackText,
+  hasAllCoreScores,
+  isFeedbackValid,
+  normalizeScores,
+  roundLabel,
+  specialCategoriesForRound,
+} from "../../../../components/Judge/judgingCriteria";
 
 const VideoDisplay = dynamic(
   () => import("../../../../components/VideoDisplay/VideoDisplay"),
-  {
-    ssr: false,
-  },
+  { ssr: false },
 );
 
-// Judging criteria from /about/judges
-const JUDGING_CRITERIA = [
-  {
-    category: "scope",
-    name: "Scope of Solution",
-    maxPoints: 10,
-    icon: <AssessmentIcon />,
-    color: "primary",
-    subCriteria: [
-      {
-        name: "Impact on Community",
-        description:
-          "How many people and nonprofits are impacted by this solution?",
-        key: "scopeImpact",
-        examples: [
-          "How many other nonprofits could potentially use this solution?",
-          "Does this address a widespread problem affecting multiple organizations?",
-          "With some small changes, could this solution be scaled to help other nonprofits with similar challenges?",
-        ],
-      },
-      {
-        name: "Complexity of Problem Solved",
-        description:
-          "How hard was this to do versus what is already out there?",
-        key: "scopeComplexity",
-        examples: [
-          "Is this solving a problem that hasn't been addressed by existing solutions?",
-          "How technically challenging is the implementation compared to alternatives?",
-          "Does this require innovative approaches or novel integration of technologies?",
-        ],
-      },
-    ],
-    tip: "Consider both breadth and depth of impact. Evaluate community impact and problem complexity.",
-  },
-  {
-    category: "documentation",
-    name: "Documentation",
-    maxPoints: 10,
-    icon: <DocumentationIcon />,
-    color: "info",
-    subCriteria: [
-      {
-        name: "Code and UX Documentation",
-        description: "Clear how to use the solution",
-        key: "documentationCode",
-        examples: [
-          "Is there a clear DevPost project and Github README with setup and usage instructions?",
-          "Are the user interfaces intuitive and self-explanatory?",
-          "Is the code well-commented and structured for maintainability?",
-        ],
-      },
-      {
-        name: "Ease of Understanding",
-        description: "Straightforward design",
-        key: "documentationEase",
-        examples: [
-          "Can a new user understand how to use the solution without extensive training?",
-          "Is the user experience logical and follows common design patterns?",
-          "Are error messages helpful and actionable?",
-        ],
-      },
-    ],
-    tip: "Assess documentation quality and clarity. Consider project sustainability.",
-  },
-  {
-    category: "polish",
-    name: "Polish",
-    maxPoints: 10,
-    icon: <PolishIcon />,
-    color: "success",
-    subCriteria: [
-      {
-        name: "Work Remaining",
-        description: "Minimal work remaining for MVP",
-        key: "polishWorkRemaining",
-        examples: [
-          "How much additional development is needed before the nonprofit could use this?",
-          "Are the core features complete and functional?",
-          "What percentage of the planned functionality has been implemented?",
-        ],
-      },
-      {
-        name: "Can Use Today",
-        description: "Deployed in the cloud, able to be shipped now",
-        key: "polishCanUseToday",
-        examples: [
-          "Is the solution hosted and accessible via a public URL (and not localhost)?",
-          "Can the nonprofit start using this immediately without additional setup?",
-          "Are all major bugs resolved and the solution stable for production use?",
-        ],
-      },
-    ],
-    tip: "Evaluate overall refinement and readiness for real-world use.",
-  },
-  {
-    category: "security",
-    name: "Security",
-    maxPoints: 10,
-    icon: <SecurityIcon />,
-    color: "error",
-    subCriteria: [
-      {
-        name: "Data Protection",
-        description: "Hard to gain access to data because of security controls",
-        key: "securityData",
-        examples: [
-          "Is sensitive data properly encrypted in transit and at rest (e.g. using HTTPS)?",
-          "Are there appropriate authentication mechanisms in place?",
-          "Is input validation implemented to prevent security vulnerabilities?",
-        ],
-      },
-      {
-        name: "Role-based Security",
-        description: "Admin versus public access (where applicable)",
-        key: "securityRole",
-        examples: [
-          "Are there different permission levels for different types of users?",
-          "Can administrators control who has access to what data?",
-          "Is there proper authorization checking for sensitive operations?",
-        ],
-      },
-    ],
-    tip: "Assess data protection and role-based security implementation.",
-  },
-];
+const AUTOSAVE_MS = 2000;
 
-// Special Category Prizes (configured separately, not part of main judging)
-const SPECIAL_CATEGORIES = [
-  {
-    category: "accessibility",
-    name: "Accessibility",
-    maxPoints: 5,
-    icon: <PersonIcon />,
-    color: "info",
-    description:
-      "Accessibility is important when building software. Consider the four W3C usability principles: perceivable, operable, understandable, robust.",
-    subCriteria: [
-      {
-        name: "Accessibility Implementation",
-        description:
-          "How well does the solution implement accessibility principles?",
-        key: "accessibility",
-        examples: [
-          "Is the content perceivable? (Can users see/hear content regardless of disabilities?)",
-          "Is it operable? (Can users navigate with keyboard, screen readers, etc.?)",
-          "Is it understandable? (Is the UI intuitive and error messages clear?)",
-          "Is it robust? (Does it work across different browsers and assistive technologies?)",
-          "What is the Lighthouse Accessibility score? (95+ is excellent)",
-        ],
-      },
-    ],
-    tip: "Special category prizes recognize excellence in specific areas beyond main judging criteria.",
-    reference: "https://www.w3.org/WAI/fundamentals/accessibility-principles/",
-  },
-];
-
-const SCORE_DESCRIPTIONS = {
-  1: "Poor - Significantly below expectations",
-  2: "Fair - Below expectations",
-  3: "Good - Meets expectations",
-  4: "Very Good - Exceeds expectations",
-  5: "Excellent - Significantly exceeds expectations",
+const formatWhen = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("en-US", {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 };
 
-const TeamScoringPage = withRequiredAuthInfo(({ userClass }) => {
+const cardStyle = { padding: "20px 22px" };
+const sectionLabel = { fontSize: 13, fontWeight: 600, margin: 0 };
+const muted = {
+  color: "var(--muted)",
+  fontSize: 13.5,
+  margin: 0,
+  lineHeight: 1.5,
+};
+
+// Module-scope (SectionBlock remount lesson): a criterion row with the
+// segmented 1–5 control, the meaning of the chosen value, and a disclosure of
+// the guiding questions.
+const CriterionRow = ({ sub, value, onChange, disabled }) => (
+  <div style={{ padding: "16px 0", borderTop: "1px solid var(--line)" }}>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: "10px 20px",
+      }}
+    >
+      <div style={{ minWidth: 0, flex: "1 1 260px" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 15.5,
+            fontWeight: 600,
+            lineHeight: 1.3,
+          }}
+        >
+          {sub.name}
+        </p>
+        <p style={{ ...muted, marginTop: 2 }}>{sub.description}</p>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: 6,
+        }}
+      >
+        <ScoreScale
+          label={sub.name}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+        />
+        <span
+          style={{ fontSize: 12, color: "var(--muted)" }}
+          aria-live="polite"
+        >
+          {value ? SCORE_DESCRIPTIONS[value] : "Pick a score"}
+        </span>
+      </div>
+    </div>
+    {sub.examples?.length > 0 && (
+      <details style={{ marginTop: 8 }}>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontSize: 13,
+            color: "var(--brand)",
+            fontWeight: 600,
+          }}
+        >
+          Guiding questions
+        </summary>
+        <ul
+          style={{
+            margin: "8px 0 0",
+            paddingLeft: 18,
+            fontSize: 13.5,
+            color: "var(--muted)",
+            lineHeight: 1.55,
+          }}
+        >
+          {sub.examples.map((ex) => (
+            <li key={ex}>{ex}</li>
+          ))}
+        </ul>
+      </details>
+    )}
+  </div>
+);
+
+const CategoryCard = ({ criterion, scores, onChange, disabled, note }) => (
+  <section
+    className="ohx-card"
+    style={cardStyle}
+    aria-labelledby={`cat-${criterion.category}`}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        gap: 12,
+      }}
+    >
+      <h2
+        id={`cat-${criterion.category}`}
+        className="ohx-display"
+        style={{ fontSize: 20 }}
+      >
+        {criterion.name}
+      </h2>
+      <span style={{ fontSize: 12.5, color: "var(--muted)" }}>
+        {categoryTotal(criterion, scores)} of {criterion.maxPoints}
+      </span>
+    </div>
+    {note && <p style={{ ...muted, marginTop: 6 }}>{note}</p>}
+    {criterion.tip && !note && (
+      <p style={{ ...muted, marginTop: 6 }}>{criterion.tip}</p>
+    )}
+    <div style={{ marginTop: 10 }}>
+      {criterion.subCriteria.map((sub) => (
+        <CriterionRow
+          key={sub.key}
+          sub={sub}
+          value={scores[sub.key]}
+          onChange={(v) => onChange(sub.key, v)}
+          disabled={disabled}
+        />
+      ))}
+    </div>
+  </section>
+);
+
+const TeamScoringPage = withRequiredAuthInfo(() => {
   const { accessToken, user } = useAuthInfo();
-  const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
   const { event_id, team_id } = router.query;
-  const round = router.query.round || "round1";
+  const round = router.query.round === "round2" ? "round2" : "round1";
+  const isRound2 = round === "round2";
+  const backHref = `/judge/${encodeURIComponent(String(event_id || ""))}?tab=${round}`;
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [errorMessage, setErrorMessage] = useState("");
   const [teamData, setTeamData] = useState(null);
   const [scores, setScores] = useState({});
-  const [autoSave, setAutoSave] = useState(true);
-  const [submitDialog, setSubmitDialog] = useState(false);
-  const [lastSaved, setLastSaved] = useState(null);
-  const [feedback, setFeedback] = useState({});
-  const [expandedExamples, setExpandedExamples] = useState({});
+  const [feedback, setFeedback] = useState("");
+  const [submittedAt, setSubmittedAt] = useState(null);
+  const [locked, setLocked] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [draftState, setDraftState] = useState({ status: "idle", at: null }); // idle|saving|saved|error
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const setFeedbackGeneral = (value) => {
-    setFeedback((prev) => ({ ...prev, general: value }));
+  const tokenRef = useRef(accessToken);
+  const userIdRef = useRef(user?.userId);
+  tokenRef.current = accessToken;
+  userIdRef.current = user?.userId;
+  const hydratedRef = useRef(false);
+
+  const load = useCallback(async () => {
+    if (!event_id || !team_id || !tokenRef.current || !userIdRef.current)
+      return;
+    hydratedRef.current = false;
+    setStatus("loading");
+    setDirty(false);
+    setDraftState({ status: "idle", at: null });
+    try {
+      const [teamResponse, scoresResponse, locksResponse] = await Promise.all([
+        judgeApi.getTeamDetails(team_id, tokenRef.current),
+        judgeApi.getJudgeScores(userIdRef.current, event_id, tokenRef.current),
+        judgeApi
+          .getRoundLocks(event_id, tokenRef.current)
+          .catch(() => ({ locks: null })),
+      ]);
+      if (!teamResponse?.team) throw new Error("This team could not be found.");
+      setTeamData(teamResponse.team);
+      setLocked(Boolean(locksResponse?.locks?.[round]?.locked));
+
+      const existing = (scoresResponse?.scores || []).find(
+        (s) => s.team_id === team_id && s.round === round,
+      );
+      if (existing) {
+        setScores({
+          ...defaultScores(round),
+          ...normalizeScores(existing.scores, round),
+        });
+        setFeedback(feedbackText(existing.feedback));
+        setSubmittedAt(existing.submitted_at || null);
+      } else {
+        setSubmittedAt(null);
+        let restored = false;
+        try {
+          const draftResponse = await judgeApi.getDraft(
+            userIdRef.current,
+            team_id,
+            event_id,
+            round,
+            tokenRef.current,
+          );
+          if (draftResponse?.draft?.scores) {
+            const draftScores = normalizeScores(
+              draftResponse.draft.scores,
+              round,
+            );
+            setScores({ ...defaultScores(round), ...draftScores });
+            setFeedback(feedbackText(draftResponse.draft.feedback));
+            restored = true;
+            setToast({
+              severity: "info",
+              message: "Your saved draft was restored.",
+            });
+          }
+        } catch (draftError) {
+          // A failed draft read is not fatal; we just start from defaults.
+        }
+        if (!restored) {
+          setScores(defaultScores(round));
+          setFeedback("");
+        }
+      }
+      setStatus("ready");
+      // Let the state above settle before autosave is allowed to notice changes.
+      setTimeout(() => {
+        hydratedRef.current = true;
+      }, 0);
+    } catch (err) {
+      setErrorMessage(err?.message || "Couldn't load this team");
+      setStatus("error");
+    }
+  }, [event_id, team_id, round]);
+
+  const hasToken = Boolean(accessToken);
+  const hasUser = Boolean(user?.userId);
+  useEffect(() => {
+    if (router.isReady && hasToken && hasUser) load();
+  }, [router.isReady, hasToken, hasUser, load]);
+
+  const setScore = (key, value) => {
+    setScores((prev) => ({ ...prev, [key]: value }));
+    if (hydratedRef.current) setDirty(true);
+  };
+  const onFeedbackChange = (e) => {
+    setFeedback(e.target.value);
+    if (hydratedRef.current) setDirty(true);
   };
 
-  // Initialize default scores
-  const initializeScores = useCallback(() => {
-    const defaultScores = {};
-    JUDGING_CRITERIA.forEach((criterion) => {
-      criterion.subCriteria.forEach((subCriterion) => {
-        defaultScores[subCriterion.key] = 3; // Default to "Good"
-      });
-    });
-    // Add Special Category scores only for Round 1
-    if (round === "round1") {
-      SPECIAL_CATEGORIES.forEach((criterion) => {
-        criterion.subCriteria.forEach((subCriterion) => {
-          defaultScores[subCriterion.key] = 3; // Default to "Good"
-        });
-      });
-    }
-    return defaultScores;
-  }, [round]);
-
-  // Fetch team data and existing scores
+  // Draft autosave: only for scores that have NOT been submitted yet, only
+  // after the judge actually changed something, never while the round is
+  // locked. (Previously every page load wrote a draft — including for already
+  // submitted scores, whose drafts were then never shown again.)
   useEffect(() => {
-    if (!team_id || !event_id) return;
-
-    const fetchData = async () => {
+    if (status !== "ready" || !dirty || submittedAt || locked) return undefined;
+    const timer = setTimeout(async () => {
+      setDraftState((s) => ({ ...s, status: "saving" }));
       try {
-        setLoading(true);
-        const [teamResponse, scoresResponse] = await Promise.all([
-          judgeApi.getTeamDetails(team_id, accessToken),
-          judgeApi.getJudgeScores(user.userId, event_id, accessToken),
-        ]);
-        setTeamData(teamResponse.team);
-
-
-        // Find existing submitted score for this team
-        const existingScore = scoresResponse.scores?.find(
-          (score) => score.team_id === team_id && score.round === round,
-        );
-
-        if (existingScore) {
-          // Use submitted score if it exists
-          setScores(existingScore.scores);
-          setFeedback(existingScore.feedback || {});
-        } else {
-          // If no submitted score, check for draft
-          try {
-            const draftResponse = await judgeApi.getDraft(
-              user.userId,
-              team_id,
-              event_id,
-              round,
-              accessToken,
-            );
-            if (
-              draftResponse &&
-              draftResponse.draft &&
-              draftResponse.draft.scores
-            ) {
-              // Remove the 'total' key from draft scores to avoid interference
-              const { total, ...draftScores } = draftResponse.draft.scores;
-              setScores(draftScores);
-              setFeedback(draftResponse.draft.feedback || {});
-              enqueueSnackbar("Draft scores loaded", { variant: "info" });
-            } else {
-              setScores(initializeScores());
-              setFeedback({});
-            }
-          } catch (draftError) {
-            setScores(initializeScores());
-            setFeedback({});
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        enqueueSnackbar("Failed to load team data", { variant: "error" });
-        setScores(initializeScores());
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [team_id, event_id, round, user.userId, accessToken, enqueueSnackbar]);
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (!autoSave || loading || Object.keys(scores).length === 0) return;
-
-    const saveTimer = setTimeout(async () => {
-      try {
-        setSaving(true);
         await judgeApi.saveDraft(
-          user.userId,
+          userIdRef.current,
           team_id,
           event_id,
           scores,
           round,
-          accessToken,
-          feedback,
+          tokenRef.current,
+          { general: feedback },
         );
-        setLastSaved(new Date());
-      } catch (error) {
-        console.error("Auto-save failed:", error);
-      } finally {
-        setSaving(false);
+        setDraftState({ status: "saved", at: new Date() });
+      } catch (err) {
+        if (isRoundLocked(err)) setLocked(true);
+        setDraftState((s) => ({ ...s, status: "error" }));
       }
-    }, 2000); // Auto-save after 2 seconds of inactivity
-
-    return () => clearTimeout(saveTimer);
+    }, AUTOSAVE_MS);
+    return () => clearTimeout(timer);
   }, [
     scores,
     feedback,
-    autoSave,
-    loading,
-    user.userId,
+    dirty,
+    status,
+    submittedAt,
+    locked,
     team_id,
     event_id,
     round,
-    accessToken,
   ]);
 
-  const handleScoreChange = (key, value) => {
-    setScores((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const calculateTotal = () => {
-
-    // Get all special category keys to exclude from main total
-    const specialCategoryKeys = SPECIAL_CATEGORIES.flatMap((category) =>
-      category.subCriteria.map((sub) => sub.key),
-    );
-
-    // Filter out 'total' key and special category keys to avoid counting them in main score
-    const total_score = Object.entries(scores)
-      .filter(([key]) => key !== "total" && !specialCategoryKeys.includes(key))
-      .reduce((sum, [, score]) => sum + (score || 0), 0);
-
-    return total_score;
-  };
-
-  const validateFeedback = () => {
-    const feedbackText = feedback.general?.replace(/[#*`\-\n\r\s]/g, "").trim();
-    return feedbackText && feedbackText.length >= 20;
-  };
-
-  const getFeedbackCharCount = () => {
-    const feedbackText =
-      feedback.general?.replace(/[#*`\-\n\r\s]/g, "").trim() || "";
-    return feedbackText.length;
-  };
-
-  const getRemainingChars = () => {
-    const current = getFeedbackCharCount();
-    return Math.max(0, 20 - current);
-  };
+  const total = useMemo(() => calculateTotal(scores), [scores]);
+  const specials = specialCategoriesForRound(round);
+  const feedbackOk = isFeedbackValid(feedback);
+  const complete = hasAllCoreScores(scores);
+  const canSubmit =
+    status === "ready" && !locked && feedbackOk && complete && !submitting;
 
   const handleSubmit = async () => {
-    if (!validateFeedback()) {
-      enqueueSnackbar(
-        "Please provide meaningful feedback (at least 10 characters) to help the team improve.",
-        { variant: "warning" },
-      );
-      return;
-    }
-
+    if (!canSubmit) return;
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const totalScore = calculateTotal();
-      const scoreData = { ...scores, total: totalScore };
-
       await judgeApi.submitScore(
-        user.userId,
+        userIdRef.current,
         team_id,
         event_id,
-        scoreData,
+        { ...scores, total },
         round,
-        accessToken,
-        feedback,
+        tokenRef.current,
+        { general: feedback },
       );
-
-      enqueueSnackbar("Score and feedback submitted successfully!", {
-        variant: "success",
+      setConfirmOpen(false);
+      setSubmittedAt(new Date().toISOString());
+      setDirty(false);
+      setToast({
+        severity: "success",
+        message: "Score and feedback submitted.",
       });
-      setSubmitDialog(false);
-
-      // Go back to hackathon page, preserving the round tab
-      const tabParam = round === "round2" ? "round2" : "round1";
-      router.push(`/judge/${event_id}?tab=${tabParam}`);
-    } catch (error) {
-      console.error("Error submitting score:", error);
-      enqueueSnackbar("Failed to submit score. Please try again.", {
-        variant: "error",
-      });
+      router.push(backHref);
+    } catch (err) {
+      setConfirmOpen(false);
+      if (isRoundLocked(err)) {
+        setLocked(true);
+        setToast({
+          severity: "warning",
+          message: `${roundLabel(round)} scoring was just closed by the organizers — your score was not changed.`,
+        });
+      } else {
+        setToast({
+          severity: "error",
+          message:
+            err?.message || "Couldn't submit your score. Please try again.",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const toggleExamples = (key) => {
-    setExpandedExamples((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  const videoUrl = !isRound2
+    ? teamData?.demo_video_url || teamData?.video_url
+    : null;
+  const pageTitle = teamData?.name ? `Judging ${teamData.name}` : "Judging";
 
-  const renderSlider = (criterion) => (
-    <Box key={criterion.key} sx={{ mb: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 1,
-        }}
-      >
-        <Typography variant="subtitle1" gutterBottom>
-          {criterion.name}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Button
-            size="small"
-            startIcon={<HelpIcon />}
-            onClick={() => toggleExamples(criterion.key)}
-            sx={{ minWidth: "auto", px: 1 }}
-          >
-            Examples
-          </Button>
-          <Chip
-            label={`${scores[criterion.key] || 3}/5`}
-            size="small"
-            color="primary"
-          />
-        </Box>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {criterion.description}
-      </Typography>
-
-      <Collapse in={expandedExamples[criterion.key]}>
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            bgcolor: "grey.50",
-            borderRadius: 1,
-            border: "1px solid",
-            borderColor: "grey.200",
-          }}
-        >
-          <Typography variant="subtitle2" gutterBottom color="primary">
-            Consider these questions when scoring:
-          </Typography>
-          <List dense>
-            {(criterion.examples || []).map((example, index) => (
-              <ListItem key={index} sx={{ pl: 0 }}>
-                <ListItemText
-                  primary={`• ${example}`}
-                  primaryTypographyProps={{ variant: "body2" }}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-      </Collapse>
-
-      <Slider
-        value={scores[criterion.key] || 3}
-        onChange={(_, value) => handleScoreChange(criterion.key, value)}
-        step={1}
-        marks
-        min={1}
-        max={5}
-        valueLabelDisplay="auto"
-        valueLabelFormat={(value) => SCORE_DESCRIPTIONS[value]}
-        sx={{ mb: 1 }}
-      />
-      <Typography variant="caption" color="text.secondary">
-        {SCORE_DESCRIPTIONS[scores[criterion.key] || 3]}
-      </Typography>
-    </Box>
-  );
-
-  if (loading) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12, mb: 4 }}>
-          {/* Header Skeleton */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-            <Skeleton
-              variant="circular"
-              width={40}
-              height={40}
-              sx={{ mr: 2 }}
-            />
-            <div style={{ flex: 1 }}>
-              <Skeleton variant="text" width="60%" height={40} sx={{ mb: 1 }} />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Skeleton variant="rounded" width={80} height={24} />
-                <Skeleton variant="text" width={120} height={20} />
-              </Box>
-            </div>
-          </Box>
-
-          <Grid container spacing={3}>
-            {/* Team Information Panel Skeleton */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Paper elevation={2} sx={{ p: 3 }}>
-                <Skeleton
-                  variant="text"
-                  width="70%"
-                  height={32}
-                  sx={{ mb: 2 }}
-                />
-
-                {/* Problem Statement Skeleton */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton
-                    variant="text"
-                    width="80%"
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton
-                    variant="text"
-                    width="90%"
-                    height={28}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton variant="text" width="100%" />
-                  <Skeleton variant="text" width="75%" />
-                </Box>
-
-                <Divider sx={{ mb: 3 }} />
-
-                {/* Team Members Skeleton */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton
-                    variant="text"
-                    width="50%"
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  {[1, 2, 3].map((i) => (
-                    <Box
-                      key={i}
-                      sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                    >
-                      <Skeleton variant="text" width="60%" />
-                    </Box>
-                  ))}
-                </Box>
-
-                <Divider sx={{ mb: 3 }} />
-
-                {/* Project Links Skeleton */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton
-                    variant="text"
-                    width="40%"
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton
-                        key={i}
-                        variant="rounded"
-                        width="100%"
-                        height={36}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-
-                {/* Slack Channel Skeleton */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton
-                    variant="text"
-                    width="40%"
-                    height={24}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton
-                    variant="rounded"
-                    width="100%"
-                    height={48}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton variant="text" width="70%" height={16} />
-                </Box>
-
-                {/* Score Summary Skeleton */}
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: "grey.100",
-                    borderRadius: 1,
-                    textAlign: "center",
-                  }}
-                >
-                  <Skeleton
-                    variant="text"
-                    width="60%"
-                    height={48}
-                    sx={{ mx: "auto", mb: 1 }}
-                  />
-                  <Skeleton
-                    variant="text"
-                    width="40%"
-                    height={20}
-                    sx={{ mx: "auto" }}
-                  />
-                </Box>
-
-                {/* Auto-save Toggle Skeleton */}
-                <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
-                  <Skeleton
-                    variant="rounded"
-                    width={38}
-                    height={22}
-                    sx={{ mr: 1 }}
-                  />
-                  <Skeleton variant="text" width="30%" />
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Scoring Panel Skeleton */}
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <Skeleton variant="text" width="40%" height={40} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="80%" height={20} sx={{ mb: 3 }} />
-
-              {/* Judging Criteria Accordions Skeleton */}
-              {[1, 2, 3, 4].map((i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    mb: 2,
-                    border: "1px solid",
-                    borderColor: "grey.300",
-                    borderRadius: 1,
-                  }}
-                >
-                  <Box sx={{ p: 2, display: "flex", alignItems: "center" }}>
-                    <Skeleton
-                      variant="circular"
-                      width={24}
-                      height={24}
-                      sx={{ mr: 2 }}
-                    />
-                    <Skeleton
-                      variant="text"
-                      width="60%"
-                      height={24}
-                      sx={{ flexGrow: 1 }}
-                    />
-                    <Skeleton
-                      variant="rounded"
-                      width={40}
-                      height={24}
-                      sx={{ ml: 1 }}
-                    />
-                    <Skeleton
-                      variant="circular"
-                      width={20}
-                      height={20}
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-                </Box>
-              ))}
-
-              {/* Feedback Section Skeleton */}
-              <Card sx={{ mt: 4, mb: 3 }}>
-                <CardContent>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <Skeleton
-                      variant="circular"
-                      width={24}
-                      height={24}
-                      sx={{ mr: 1 }}
-                    />
-                    <Skeleton variant="text" width="30%" height={32} />
-                  </Box>
-                  <Skeleton
-                    variant="text"
-                    width="90%"
-                    height={20}
-                    sx={{ mb: 2 }}
-                  />
-
-                  <Box
-                    sx={{ mb: 2, p: 2, bgcolor: "grey.50", borderRadius: 1 }}
-                  >
-                    <Skeleton variant="text" width="100%" />
-                    <Skeleton variant="text" width="80%" />
-                  </Box>
-
-                  <Skeleton
-                    variant="rounded"
-                    width="100%"
-                    height={150}
-                    sx={{ mb: 1 }}
-                  />
-                  <Skeleton variant="text" width="70%" height={16} />
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons Skeleton */}
-              <Box sx={{ mt: 4 }}>
-                <Box
-                  sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}
-                >
-                  <Skeleton variant="rounded" width={80} height={36} />
-                  <Skeleton variant="rounded" width={180} height={36} />
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Container>
-    );
-  }
-
-  if (!teamData) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12 }}>
-          <Alert severity="error">
-            Failed to load team information. Please refresh the page or go back.
-          </Alert>
-        </Box>
-      </Container>
-    );
-  }
-
-  const totalScore = calculateTotal();
-  const isRound2 = round === "round2";
+  const statusLine = (() => {
+    if (locked) return "Scoring closed — read only";
+    if (submittedAt)
+      return dirty
+        ? "Edited — press Update score to save"
+        : `Submitted ${formatWhen(submittedAt) || ""}`.trim();
+    if (draftState.status === "saving") return "Saving draft…";
+    if (draftState.status === "saved")
+      return `Draft saved ${draftState.at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    if (draftState.status === "error")
+      return "Draft not saved — check your connection";
+    return "Not submitted yet";
+  })();
 
   return (
     <>
       <Head>
-        <title>{`Judging ${teamData.name} - Opportunity Hack`}</title>
+        <title>{`${pageTitle} - Opportunity Hack`}</title>
+        <meta name="robots" content="noindex, nofollow" />
         <meta
           name="description"
-          content={`Score ${teamData.name} for ${event_id} hackathon judging`}
+          content="Score a hackathon team against the Opportunity Hack judging criteria."
         />
       </Head>
 
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12, mb: 4 }}>
-          {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-            <IconButton
-              onClick={() =>
-                router.push(
-                  `/judge/${event_id}?tab=${round === "round2" ? "round2" : "round1"}`,
-                )
-              }
-              sx={{ mr: 2 }}
-            >
-              <BackIcon />
-            </IconButton>
-            <div>
-              <Typography
-                variant="h4"
-                component="h1"
-                gutterBottom
-                sx={{ mb: 1 }}
+      <ThemeProvider theme={judgeTheme}>
+        <RefinedRoot>
+          <section className="ohx-wrap" style={judgeSectionStyle}>
+            <Link href={backHref} className="ohx-link" style={{ fontSize: 13 }}>
+              ← {roundLabel(round)} teams
+            </Link>
+
+            {status === "loading" && (
+              <div
+                aria-busy="true"
+                aria-label="Loading team"
+                style={{ marginTop: 18 }}
               >
-                Judging: {teamData.name}
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Chip
-                  label={isRound2 ? "Round 2" : "Round 1"}
-                  color={isRound2 ? "secondary" : "primary"}
-                  icon={isRound2 ? <VideoIcon /> : <VideoIcon />}
+                <div
+                  style={{
+                    height: 10,
+                    width: 120,
+                    background: "var(--surface-2)",
+                    borderRadius: 4,
+                  }}
                 />
-                {saving && (
-                  <Chip
-                    label="Saving..."
-                    size="small"
-                    icon={<TimerIcon />}
-                    variant="outlined"
-                  />
-                )}
-                {lastSaved && (
-                  <Typography variant="caption" color="text.secondary">
-                    Last saved: {lastSaved.toLocaleTimeString()}
-                  </Typography>
-                )}
-              </Box>
-            </div>
-          </Box>
-
-          <Grid container spacing={3}>
-            {/* Team Information Panel */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Paper elevation={2} sx={{ p: 3, position: "sticky", top: 20 }}>
-                <Typography variant="h6" gutterBottom>
-                  Team Information
-                </Typography>
-
-                {/* Problem Statement */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" color="primary" gutterBottom>
-                    {teamData.problem_statement.nonprofit}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {teamData.problem_statement.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {teamData.problem_statement.description}
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ mb: 3 }} />
-
-                {/* Team Members */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    sx={{ display: "flex", alignItems: "center" }}
-                  >
-                    <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                    Team Members
-                  </Typography>
-                  <List dense>
-                    {teamData.members.map((member, index) => (
-                      <ListItem key={index} disablePadding>
-                        <ListItemText
-                          primary={member.name}
-                          secondary={member.role}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-
-                <Divider sx={{ mb: 3 }} />
-
-                {/* Project Links */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Project Links
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
-                    You'll be evaluating the DevPost project, video, and GitHub
-                    repository against the judging criteria below.
-                  </Typography>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    {teamData.github_url && (
-                      <Button
-                        startIcon={<GitHubIcon />}
-                        variant="outlined"
-                        size="small"
-                        href={teamData.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        GitHub Repository
-                      </Button>
-                    )}
-                    {teamData.devpost_url && (
-                      <Button
-                        startIcon={<DevPostIcon />}
-                        variant="outlined"
-                        size="small"
-                        href={teamData.devpost_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        DevPost Project
-                      </Button>
-                    )}
-                    {teamData.demo_url && (
-                      <Button
-                        startIcon={<WebIcon />}
-                        variant="outlined"
-                        size="small"
-                        href={teamData.demo_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Live Demo
-                      </Button>
-                    )}
-                    {(teamData.demo_video_url || teamData.video_url) &&
-                      !isRound2 && (
-                        <Button
-                          startIcon={<VideoIcon />}
-                          variant="contained"
-                          size="small"
-                          href={teamData.demo_video_url || teamData.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Watch Pitch Video
-                        </Button>
-                      )}
-                  </Box>
-                </Box>
-
-                {/* Demo video embed — judges previously had no way to watch
-                    the team's demo without leaving the page. Round 2 keeps
-                    the pre-existing behavior of not surfacing the pitch
-                    video (see the "Watch Pitch Video" button above), so this
-                    is gated the same way — no judge-visible process change,
-                    and no duplicate button/link to the same URL. */}
-                {(teamData.demo_video_url || teamData.video_url) &&
-                  !isRound2 && (
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Demo Video
-                      </Typography>
-                      <VideoDisplay
-                        url={teamData.demo_video_url || teamData.video_url}
-                        title=""
-                      />
-                    </Box>
-                  )}
-
-                {/* Slack Channel */}
-                {teamData.slack_channel && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Slack Channel
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      size="large"
-                      fullWidth
-                      href={`https://opportunity-hack.slack.com/app_redirect?channel=${teamData.slack_channel.replace("#", "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ mb: 1 }}
-                    >
-                      Join {teamData.slack_channel}
-                    </Button>
-                    <Alert severity="info" sx={{ mt: 1 }}>
-                      <Typography
-                        variant="subtitle2"
-                        gutterBottom
-                        sx={{ fontWeight: 600, fontSize: "1.1rem", mb: 1 }}
-                      >
-                        💬 Slack Communication Guidelines
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ mb: 1.5, fontSize: "1rem" }}
-                      >
-                        Use Slack to ask clarifying questions about the team's
-                        solution:
-                      </Typography>
-                      <List dense sx={{ ml: -1 }}>
-                        <ListItem disablePadding>
-                          <ListItemIcon sx={{ minWidth: 32 }}>
-                            <GroupIcon fontSize="small" color="action" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Use @here or @channel to notify all team members"
-                            primaryTypographyProps={{
-                              variant: "body2",
-                              style: { fontSize: "0.95rem" },
-                            }}
-                          />
-                        </ListItem>
-                        <ListItem disablePadding>
-                          <ListItemIcon sx={{ minWidth: 32 }}>
-                            <VoiceIcon fontSize="small" color="action" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Record video/audio clips for complex questions"
-                            primaryTypographyProps={{
-                              variant: "body2",
-                              style: { fontSize: "0.95rem" },
-                            }}
-                          />
-                        </ListItem>
-                        <ListItem disablePadding>
-                          <ListItemIcon sx={{ minWidth: 32 }}>
-                            <ScreenshotIcon fontSize="small" color="action" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Screenshot specific areas you need clarification on"
-                            primaryTypographyProps={{
-                              variant: "body2",
-                              style: { fontSize: "0.95rem" },
-                            }}
-                          />
-                        </ListItem>
-                      </List>
-                      <Box
-                        sx={{
-                          mt: 1.5,
-                          pt: 1,
-                          borderTop: "1px solid",
-                          borderColor: "divider",
-                        }}
-                      >
-                        <Link
-                          href="https://slack.com/help/articles/4406235165587-Create-audio-and-video-clips-in-Slack"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            fontSize: "0.95rem",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            textDecoration: "none",
-                            "&:hover": {
-                              textDecoration: "underline",
-                            },
-                          }}
-                        >
-                          📹 Learn how to create audio and video clips in Slack
-                        </Link>
-                      </Box>
-                    </Alert>
-                  </Box>
-                )}
-
-                {/* Score Summary */}
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor:
-                      totalScore >= 32
-                        ? "success.light"
-                        : totalScore >= 24
-                          ? "warning.light"
-                          : "error.light",
-                    borderRadius: 1,
-                    textAlign: "center",
+                <div
+                  style={{
+                    height: 40,
+                    width: "55%",
+                    background: "var(--surface-2)",
+                    borderRadius: 4,
+                    marginTop: 14,
+                  }}
+                />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+                    gap: 20,
+                    marginTop: 28,
                   }}
                 >
-                  <Typography variant="h4" component="div" gutterBottom>
-                    {totalScore}/40
-                  </Typography>
-                  <Typography variant="body2">Current Total Score</Typography>
-                </Box>
+                  <div className="ohx-card" style={{ minHeight: 360 }} />
+                  <div className="ohx-card" style={{ minHeight: 360 }} />
+                </div>
+              </div>
+            )}
 
-                {/* Special Category Score Summary - Only for Round 1 */}
-                {round === "round1" && SPECIAL_CATEGORIES.length > 0 && (
-                  <Box
-                    sx={{
-                      mt: 2,
-                      p: 2,
-                      bgcolor: "warning.light",
-                      borderRadius: 1,
-                      textAlign: "center",
-                      border: "1px solid",
-                      borderColor: "warning.main",
+            {status === "error" && (
+              <div
+                className="ohx-card"
+                role="alert"
+                style={{ marginTop: 24, padding: 24 }}
+              >
+                <p style={{ margin: 0, fontWeight: 600 }}>
+                  We couldn't load this team.
+                </p>
+                <p
+                  style={{
+                    margin: "6px 0 14px",
+                    fontSize: 14,
+                    color: "var(--muted)",
+                  }}
+                >
+                  {errorMessage}
+                </p>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--primary"
+                    onClick={() => load()}
+                  >
+                    Try again
+                  </button>
+                  <Link href={backHref} className="ohx-btn ohx-btn--ghost">
+                    Back to your teams
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {status === "ready" && teamData && (
+              <>
+                <header style={{ marginTop: 18 }}>
+                  <Eyebrow>
+                    {roundLabel(round)} scoring
+                    {teamData.problem_statement?.nonprofit
+                      ? ` · ${teamData.problem_statement.nonprofit}`
+                      : ""}
+                  </Eyebrow>
+                  <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                    {teamData.name}
+                  </h1>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      alignItems: "center",
+                      marginTop: 12,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="warning.dark"
-                      sx={{ fontWeight: 600, display: "block", mb: 1 }}
+                    <span
+                      className={`ohx-tag${!submittedAt && !locked ? " ohx-tag--accent" : ""}`}
                     >
-                      Special Category
-                    </Typography>
-                    {SPECIAL_CATEGORIES.map((category) =>
-                      category.subCriteria.map((sub) => (
-                        <Box key={sub.key}>
-                          <Typography
-                            variant="h6"
-                            component="div"
-                            color="warning.dark"
-                          >
-                            {scores[sub.key] || 0}/{category.maxPoints}
-                          </Typography>
-                          <Typography variant="caption" color="warning.dark">
-                            {category.name}
-                          </Typography>
-                        </Box>
-                      )),
+                      {statusLine}
+                    </span>
+                    {submittedAt && !locked && (
+                      <span className="ohx-tag">
+                        You can still change this score
+                      </span>
                     )}
-                    <Divider sx={{ my: 1 }} />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.65rem" }}
-                    >
-                      Not included in total score
-                    </Typography>
-                  </Box>
+                  </div>
+                </header>
+
+                {locked && (
+                  <div
+                    className="ohx-card"
+                    role="status"
+                    style={{
+                      marginTop: 20,
+                      padding: "14px 18px",
+                      background: "var(--surface-2)",
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: 14.5 }}>
+                      <strong>{roundLabel(round)} scoring is closed.</strong>{" "}
+                      The organizers have locked this round.
+                      {submittedAt
+                        ? " Your submitted score is shown below and can no longer be changed."
+                        : " Scores can no longer be submitted for this round."}
+                    </p>
+                  </div>
                 )}
 
-                {/* Auto-save Toggle */}
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={autoSave}
-                      onChange={(e) => setAutoSave(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Auto-save"
-                  sx={{ mt: 2 }}
-                />
-              </Paper>
-            </Grid>
-
-            {/* Scoring Panel */}
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <Typography variant="h5" gutterBottom>
-                Scoring Criteria
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Evaluate this team across the four key areas below. Each
-                criterion is scored from 1-5 points.
-              </Typography>
-
-              {JUDGING_CRITERIA.map((criterion) => (
-                <Accordion key={criterion.category} sx={{ mb: 2 }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                      }}
-                    >
-                      <Box sx={{ color: `${criterion.color}.main`, mr: 2 }}>
-                        {criterion.icon}
-                      </Box>
-                      <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        {criterion.name} ({criterion.maxPoints} points)
-                      </Typography>
-                      <Chip
-                        label={`${criterion.subCriteria.reduce((sum, sub) => sum + (scores[sub.key] || 0), 0)}/${criterion.maxPoints}`}
-                        size="small"
-                        color={criterion.color}
-                      />
-                      <Tooltip title={criterion.tip} arrow>
-                        <InfoIcon color="action" sx={{ ml: 1, fontSize: 20 }} />
-                      </Tooltip>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {criterion.subCriteria.map(renderSlider)}
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-
-              {/* Special Categories Section - Only for Round 1 */}
-              {round === "round1" && SPECIAL_CATEGORIES.length > 0 && (
-                <>
-                  <Divider sx={{ my: 4 }} />
-                  <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-                    Special Category Prizes
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 3 }}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+                    gap: 24,
+                    marginTop: 24,
+                    alignItems: "start",
+                  }}
+                >
+                  {/* ---- Team information (sticky on wide screens) ---- */}
+                  <aside
+                    style={{
+                      position: "sticky",
+                      top: 84,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 16,
+                    }}
                   >
-                    These special categories are judged separately and do not
-                    affect the main scoring. They recognize excellence in
-                    specific areas.
-                  </Typography>
-
-                  {SPECIAL_CATEGORIES.map((criterion) => (
-                    <Accordion
-                      key={criterion.category}
-                      sx={{
-                        mb: 2,
-                        borderLeft: "4px solid",
-                        borderColor: `${criterion.color}.main`,
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Box
-                          sx={{
+                    <div className="ohx-card" style={cardStyle}>
+                      {(teamData.problem_statement?.title ||
+                        teamData.problem_statement?.description) && (
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={sectionLabel}>Problem</p>
+                          {teamData.problem_statement.title && (
+                            <p
+                              style={{
+                                margin: "4px 0 0",
+                                fontSize: 15,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {teamData.problem_statement.title}
+                            </p>
+                          )}
+                          {teamData.problem_statement.description && (
+                            <p style={{ ...muted, marginTop: 4 }}>
+                              {teamData.problem_statement.description}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {teamData.description && (
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={sectionLabel}>About the project</p>
+                          <p style={{ ...muted, marginTop: 4 }}>
+                            {teamData.description}
+                          </p>
+                        </div>
+                      )}
+                      {teamData.members?.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={sectionLabel}>Team</p>
+                          <p style={{ ...muted, marginTop: 4 }}>
+                            {teamData.members
+                              .map((m) => m?.name)
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <p style={sectionLabel}>What you're evaluating</p>
+                        <p style={{ ...muted, marginTop: 4 }}>
+                          The demo video, the code on GitHub and the DevPost
+                          write-up, against the criteria on the right.
+                        </p>
+                        <div
+                          style={{
                             display: "flex",
-                            alignItems: "center",
-                            width: "100%",
+                            flexWrap: "wrap",
+                            gap: "8px 18px",
+                            marginTop: 10,
                           }}
                         >
-                          <Box sx={{ color: `${criterion.color}.main`, mr: 2 }}>
-                            {criterion.icon}
-                          </Box>
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Typography variant="h6">
-                              {criterion.name} ({criterion.maxPoints} points)
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
+                          {teamData.github_url && (
+                            <a
+                              className="ohx-link"
+                              href={teamData.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 14 }}
                             >
-                              Special Category Prize
-                            </Typography>
-                          </Box>
-                          <Chip
-                            label={`${criterion.subCriteria.reduce((sum, sub) => sum + (scores[sub.key] || 0), 0)}/${criterion.maxPoints}`}
-                            size="small"
-                            color={criterion.color}
-                          />
-                          <Tooltip title={criterion.tip} arrow>
-                            <InfoIcon
-                              color="action"
-                              sx={{ ml: 1, fontSize: 20 }}
-                            />
-                          </Tooltip>
-                        </Box>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {criterion.description && (
-                          <Alert severity="info" sx={{ mb: 2 }}>
-                            <Typography variant="body2">
-                              {criterion.description}
-                              {criterion.reference && (
-                                <>
-                                  {" "}
-                                  <Link
-                                    href={criterion.reference}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    Learn more
-                                  </Link>
-                                </>
-                              )}
-                            </Typography>
-                          </Alert>
-                        )}
-                        {criterion.subCriteria.map(renderSlider)}
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                </>
-              )}
+                              GitHub ↗
+                            </a>
+                          )}
+                          {teamData.devpost_url && (
+                            <a
+                              className="ohx-link"
+                              href={teamData.devpost_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 14 }}
+                            >
+                              DevPost ↗
+                            </a>
+                          )}
+                          {teamData.demo_url && (
+                            <a
+                              className="ohx-link"
+                              href={teamData.demo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 14 }}
+                            >
+                              Live demo ↗
+                            </a>
+                          )}
+                          {videoUrl && (
+                            <a
+                              className="ohx-link"
+                              href={videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 14 }}
+                            >
+                              Open video ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Feedback Section */}
-              <Card sx={{ mt: 4, mb: 3 }}>
-                <CardContent>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    sx={{ display: "flex", alignItems: "center" }}
-                  >
-                    <DocumentationIcon sx={{ mr: 1 }} />
-                    Team Feedback
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
-                    Provide constructive feedback to help this team improve
-                    their solution. Your feedback will be anonymized and shared
-                    with the team after judging is complete.
-                  </Typography>
+                    {videoUrl && (
+                      <div className="ohx-card" style={{ padding: 12 }}>
+                        <p style={{ ...sectionLabel, padding: "4px 8px 10px" }}>
+                          Demo video
+                        </p>
+                        <VideoDisplay url={videoUrl} title="" />
+                      </div>
+                    )}
 
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    <Typography variant="body2">
-                      <strong>Feedback Guidelines:</strong> Focus on specific
-                      strengths and areas for improvement. Be constructive and
-                      actionable. Consider technical implementation, user
-                      experience, and overall impact.
-                    </Typography>
-                  </Alert>
+                    {teamData.slack_channel && (
+                      <div className="ohx-card" style={cardStyle}>
+                        <p style={sectionLabel}>Questions for the team?</p>
+                        <p style={{ ...muted, marginTop: 4 }}>
+                          Ask in their Slack channel — that's where the team is.
+                        </p>
+                        <a
+                          className="ohx-btn ohx-btn--ghost"
+                          href={slackChannelUrl(teamData.slack_channel)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ marginTop: 12 }}
+                        >
+                          Open #
+                          {String(teamData.slack_channel).replace(/^#/, "")}
+                        </a>
+                        <details style={{ marginTop: 12 }}>
+                          <summary
+                            style={{
+                              cursor: "pointer",
+                              fontSize: 13,
+                              color: "var(--brand)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Tips for asking in Slack
+                          </summary>
+                          <ul
+                            style={{
+                              margin: "8px 0 0",
+                              paddingLeft: 18,
+                              fontSize: 13.5,
+                              color: "var(--muted)",
+                              lineHeight: 1.55,
+                            }}
+                          >
+                            <li>
+                              Use @here so every team member sees your question.
+                            </li>
+                            <li>
+                              For anything complex, record a short{" "}
+                              <a
+                                className="ohx-link"
+                                href="https://slack.com/help/articles/4406235165587-Create-audio-and-video-clips-in-Slack"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                audio or video clip
+                              </a>
+                              .
+                            </li>
+                            <li>
+                              Screenshot the specific screen you're asking
+                              about.
+                            </li>
+                          </ul>
+                        </details>
+                      </div>
+                    )}
 
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={6}
-                    value={feedback.general || ""}
-                    onChange={(e) => setFeedbackGeneral(e.target.value)}
-                    placeholder="Provide specific, constructive feedback to help this team improve their solution... Consider commenting on: Technical implementation and code quality, User experience and design, Impact and scalability, Areas for improvement, What they did well"
-                    variant="outlined"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        fontSize: "0.95rem",
-                        lineHeight: 1.5,
-                      },
+                    {/* Deliberately small and uncolored: no verdict readable over a shoulder. */}
+                    <p style={quietTotalStyle}>
+                      Total {total} of {MAX_TOTAL}
+                      {specials.map((c) =>
+                        c.subCriteria.map((s) => (
+                          <span key={s.key}>
+                            {" "}
+                            · {c.name} {scores[s.key] ?? "–"} of {c.maxPoints}{" "}
+                            (separate prize)
+                          </span>
+                        )),
+                      )}
+                    </p>
+                  </aside>
+
+                  {/* ---- Scoring ---- */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 16,
                     }}
-                  />
+                  >
+                    {submittedAt && !locked && (
+                      <div
+                        className="ohx-card"
+                        style={{
+                          padding: "12px 16px",
+                          background: "var(--surface-2)",
+                        }}
+                      >
+                        <p style={{ margin: 0, fontSize: 13.5 }}>
+                          You submitted this score
+                          {formatWhen(submittedAt)
+                            ? ` on ${formatWhen(submittedAt)}`
+                            : ""}
+                          . Changes are not saved until you press{" "}
+                          <strong>Update score</strong>.
+                        </p>
+                      </div>
+                    )}
 
-                  <Box
-                    sx={{
-                      mt: 1,
+                    {JUDGING_CRITERIA.map((criterion) => (
+                      <CategoryCard
+                        key={criterion.category}
+                        criterion={criterion}
+                        scores={scores}
+                        onChange={setScore}
+                        disabled={locked || submitting}
+                      />
+                    ))}
+
+                    {specials.map((criterion) => (
+                      <CategoryCard
+                        key={criterion.category}
+                        criterion={criterion}
+                        scores={scores}
+                        onChange={setScore}
+                        disabled={locked || submitting}
+                        note={`Special-category prize — judged separately and not part of the ${MAX_TOTAL}-point total. ${criterion.description}`}
+                      />
+                    ))}
+
+                    <section
+                      className="ohx-card"
+                      style={cardStyle}
+                      aria-labelledby="feedback-heading"
+                    >
+                      <h2
+                        id="feedback-heading"
+                        className="ohx-display"
+                        style={{ fontSize: 20 }}
+                      >
+                        Feedback for the team
+                      </h2>
+                      <p style={{ ...muted, marginTop: 6 }}>
+                        Shared with the team after judging, without your name.
+                        Name one thing they did well and one concrete thing that
+                        would make it better.
+                      </p>
+                      <label
+                        htmlFor="team-feedback"
+                        style={{
+                          position: "absolute",
+                          width: 1,
+                          height: 1,
+                          overflow: "hidden",
+                          clip: "rect(0 0 0 0)",
+                        }}
+                      >
+                        Feedback for the team
+                      </label>
+                      <textarea
+                        id="team-feedback"
+                        value={feedback}
+                        onChange={onFeedbackChange}
+                        disabled={locked || submitting}
+                        rows={6}
+                        placeholder="What works well, what's missing before the nonprofit could use it, and one suggestion for the next step…"
+                        style={{
+                          width: "100%",
+                          boxSizing: "border-box",
+                          marginTop: 12,
+                          fontFamily: "inherit",
+                          fontSize: 15,
+                          lineHeight: 1.55,
+                          padding: "12px 14px",
+                          border: "1px solid var(--line)",
+                          borderRadius: 6,
+                          background: "var(--surface)",
+                          color: "var(--ink)",
+                          resize: "vertical",
+                        }}
+                      />
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          fontSize: 12.5,
+                          color: feedbackOk ? "var(--muted)" : "var(--danger)",
+                        }}
+                        aria-live="polite"
+                      >
+                        {feedbackOk
+                          ? `${feedbackCharCount(feedback)} characters`
+                          : `${feedbackCharsRemaining(feedback)} more character${feedbackCharsRemaining(feedback) === 1 ? "" : "s"} needed (minimum ${FEEDBACK_MIN_CHARS})`}
+                      </p>
+                    </section>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        justifyContent: "flex-end",
+                        alignItems: "center",
+                        gap: 14,
+                        marginTop: 4,
+                      }}
+                    >
+                      {!locked && !feedbackOk && (
+                        <span
+                          style={{
+                            fontSize: 13,
+                            color: "var(--muted)",
+                            marginRight: "auto",
+                          }}
+                        >
+                          Add feedback to enable{" "}
+                          {submittedAt ? "Update" : "Submit"}.
+                        </span>
+                      )}
+                      <Link href={backHref} className="ohx-btn ohx-btn--ghost">
+                        {locked ? "Back to your teams" : "Cancel"}
+                      </Link>
+                      {!locked && (
+                        <button
+                          type="button"
+                          className="ohx-btn ohx-btn--primary"
+                          onClick={() => setConfirmOpen(true)}
+                          disabled={!canSubmit}
+                          aria-disabled={!canSubmit}
+                          style={
+                            !canSubmit
+                              ? { opacity: 0.5, cursor: "not-allowed" }
+                              : undefined
+                          }
+                        >
+                          {submittedAt
+                            ? "Update score"
+                            : "Submit score & feedback"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        </RefinedRoot>
+
+        {/* Confirm dialog renders through a Portal — plain MUI, literal colors. */}
+        <Dialog
+          open={confirmOpen}
+          onClose={() => !submitting && setConfirmOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            {submittedAt ? "Update your score" : "Submit your score"} for{" "}
+            {teamData?.name}?
+          </DialogTitle>
+          <DialogContent>
+            <p style={{ margin: 0, color: JUDGE_COLORS.muted, fontSize: 14.5 }}>
+              {submittedAt
+                ? "This replaces the score you submitted earlier. You can change it again until the round is locked."
+                : "You can still change this score later from your dashboard until the round is locked."}
+            </p>
+            <div
+              style={{
+                marginTop: 16,
+                borderTop: `1px solid ${JUDGE_COLORS.line}`,
+              }}
+            >
+              {JUDGING_CRITERIA.map((criterion) => (
+                <div
+                  key={criterion.category}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: `1px solid ${JUDGE_COLORS.line}`,
+                    fontSize: 14.5,
+                  }}
+                >
+                  <span>{criterion.name}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {categoryTotal(criterion, scores)} / {criterion.maxPoints}
+                  </span>
+                </div>
+              ))}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "10px 0",
+                  fontSize: 14.5,
+                  fontWeight: 600,
+                }}
+              >
+                <span>Total</span>
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {total} / {MAX_TOTAL}
+                </span>
+              </div>
+              {specials.map((c) =>
+                c.subCriteria.map((s) => (
+                  <div
+                    key={s.key}
+                    style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 1,
-                      flexWrap: "wrap",
+                      padding: "6px 0",
+                      fontSize: 13.5,
+                      color: JUDGE_COLORS.muted,
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary">
-                      Format your feedback with basic markdown: **bold**,
-                      *italic*, bullet points with •
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color={
-                        validateFeedback() ? "success.main" : "warning.main"
-                      }
-                      sx={{ fontWeight: 500, fontSize: "0.875rem" }}
-                    >
-                      {validateFeedback()
-                        ? `${getFeedbackCharCount()} ${getFeedbackCharCount() === 1 ? "character" : "characters"} - you did it!`
-                        : `${getFeedbackCharCount()}/20 ${getFeedbackCharCount() === 1 ? "character" : "characters"} (${getRemainingChars()} more needed)`}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <Box sx={{ mt: 4 }}>
-                {!validateFeedback() && (
-                  <Alert severity="warning" sx={{ mb: 2, fontSize: "1.0rem" }}>
-                    Please provide meaningful feedback to help the team improve
-                    before submitting your score.
-                    <br />
-                    {getRemainingChars()} more{" "}
-                    {getRemainingChars() === 1 ? "character" : "characters"}.
-                  </Alert>
-                )}
-                <Box
-                  sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}
-                >
-                  <Button
-                    variant="outlined"
-                    onClick={() =>
-                      router.push(
-                        `/judge/${event_id}?tab=${round === "round2" ? "round2" : "round1"}`,
-                      )
-                    }
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<SubmitIcon />}
-                    onClick={() => setSubmitDialog(true)}
-                    disabled={submitting || !validateFeedback()}
-                  >
-                    Submit Score & Feedback
-                  </Button>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Container>
-
-      {/* Submit Confirmation Dialog */}
-      <Dialog
-        open={submitDialog}
-        onClose={() => setSubmitDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Submit Score for {teamData.name}?</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            You are about to submit your final score and feedback for this team.
-            You can edit it later if needed.
-          </Alert>
-
-          <Typography variant="h6" gutterBottom>
-            Score Summary:
-          </Typography>
-
-          {JUDGING_CRITERIA.map((criterion) => (
-            <Box
-              key={criterion.category}
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+                    <span>{c.name} (separate prize)</span>
+                    <span>
+                      {scores[s.key] ?? "–"} / {c.maxPoints}
+                    </span>
+                  </div>
+                )),
+              )}
+            </div>
+            <p style={{ margin: "16px 0 6px", fontSize: 13, fontWeight: 600 }}>
+              Feedback
+            </p>
+            <div
+              style={{
+                maxHeight: 140,
+                overflow: "auto",
+                padding: "10px 12px",
+                background: JUDGE_COLORS.surface2,
+                border: `1px solid ${JUDGE_COLORS.line}`,
+                borderRadius: 6,
+                fontSize: 14,
+                whiteSpace: "pre-wrap",
+              }}
             >
-              <Typography variant="body2">{criterion.name}:</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {criterion.subCriteria.reduce(
-                  (sum, sub) => sum + (scores[sub.key] || 0),
-                  0,
-                )}
-                /{criterion.maxPoints}
-              </Typography>
-            </Box>
-          ))}
+              {feedback.trim() || "No feedback provided"}
+            </div>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={() => setConfirmOpen(false)}
+              disabled={submitting}
+              sx={{ color: JUDGE_COLORS.ink }}
+            >
+              Keep editing
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+              disabled={submitting}
+              startIcon={
+                submitting ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : null
+              }
+              sx={{
+                bgcolor: JUDGE_COLORS.brand,
+                "&:hover": { bgcolor: JUDGE_COLORS.brandInk },
+              }}
+            >
+              {submitting
+                ? "Submitting…"
+                : submittedAt
+                  ? "Update score"
+                  : "Submit score"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-          <Divider sx={{ my: 2 }} />
-
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Typography variant="h6">Total Score:</Typography>
-            <Typography variant="h6" color="primary">
-              {totalScore}/40
-            </Typography>
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Typography variant="h6" gutterBottom>
-            Feedback Summary:
-          </Typography>
-
-          <Box
-            sx={{
-              maxHeight: 120,
-              overflow: "auto",
-              p: 2,
-              bgcolor: "grey.50",
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "grey.200",
-            }}
+        <Snackbar
+          open={Boolean(toast)}
+          autoHideDuration={5000}
+          onClose={() => setToast(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setToast(null)}
+            severity={toast?.severity || "info"}
+            variant="filled"
+            sx={{ width: "100%" }}
           >
-            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-              {feedback.general
-                ? feedback.general.replace(/[#*`\-]/g, "").trim()
-                : "No feedback provided"}
-            </Typography>
-          </Box>
-
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 1, display: "block" }}
-          >
-            Your feedback will be anonymized and shared with the team to help
-            them improve.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSubmitDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={submitting}
-            startIcon={
-              submitting ? <CircularProgress size={16} /> : <SubmitIcon />
-            }
-          >
-            {submitting ? "Submitting..." : "Submit Score"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            {toast?.message}
+          </Alert>
+        </Snackbar>
+      </ThemeProvider>
     </>
   );
 });

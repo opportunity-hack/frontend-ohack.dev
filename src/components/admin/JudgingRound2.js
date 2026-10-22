@@ -59,6 +59,8 @@ import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
 import ExportCsvButton from './ExportCsvButton';
+import judgeApi, { isNotFound } from '../../lib/judgeApi';
+import JudgeProgressPanel from './judging/JudgeProgressPanel';
 
 // ---- CSV helpers for the Round 1 results table (module scope, no state) ----
 const criteriaLabel = (c) => c.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
@@ -124,9 +126,17 @@ const round1DetailColumns = (teamScores, nonprofitNames) => {
   ];
 };
 
-const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
+const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon, onSnack }) => {
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
+  // The app has no notistack provider, so enqueueSnackbar alone renders
+  // nothing — mirror every toast to the admin host page's snackbar.
+  const notify = useCallback((message, options = {}) => {
+    enqueueSnackbar(message, options);
+    if (typeof onSnack === 'function') onSnack(message, options.variant || 'info');
+  }, [enqueueSnackbar, onSnack]);
+  // Bumped after a save so the progress panel remounts and refetches.
+  const [progressRefreshKey, setProgressRefreshKey] = useState(0);
   
   const [loading, setLoading] = useState(false);
   const [judges, setJudges] = useState([]);
@@ -426,11 +436,11 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       
     } catch (error) {
       console.error('Error fetching Round 1 scores:', error);
-      enqueueSnackbar('Failed to fetch Round 1 scores', { variant: 'error' });
+      notify('Failed to fetch Round 1 scores', { variant: 'error' });
     } finally {
       setLoadingScores(false);
     }
-  }, [selectedHackathon, teams, accessToken, orgId, scoresCache, finalistTeams.length, enqueueSnackbar]);
+  }, [selectedHackathon, teams, accessToken, orgId, scoresCache, finalistTeams.length, notify]);
 
   // Fetch judges and teams for selected hackathon
   const fetchData = useCallback(async () => {
@@ -471,11 +481,11 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       
     } catch (error) {
       console.error('Error fetching data:', error);
-      enqueueSnackbar('Failed to fetch judging data', { variant: 'error' });
+      notify('Failed to fetch judging data', { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [selectedHackathon, selectedHackathonData, accessToken, orgId, fetchNonprofitNames, enqueueSnackbar]);
+  }, [selectedHackathon, selectedHackathonData, accessToken, orgId, fetchNonprofitNames, notify]);
 
   // Load existing Round 2 assignments
   const loadExistingRound2 = useCallback(async () => {
@@ -715,20 +725,20 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   // Copy team ID to clipboard
   const copyTeamId = (teamId, teamName) => {
     navigator.clipboard.writeText(teamId).then(() => {
-      enqueueSnackbar(`Copied team ID for ${teamName}`, { variant: 'success' });
+      notify(`Copied team ID for ${teamName}`, { variant: 'success' });
     }).catch((err) => {
       console.error('Failed to copy team ID:', err);
-      enqueueSnackbar('Failed to copy team ID', { variant: 'error' });
+      notify('Failed to copy team ID', { variant: 'error' });
     });
   };
 
   // Copy judge ID to clipboard
   const copyJudgeId = (judgeId, judgeName) => {
     navigator.clipboard.writeText(judgeId).then(() => {
-      enqueueSnackbar(`Copied judge ID for ${judgeName}`, { variant: 'success' });
+      notify(`Copied judge ID for ${judgeName}`, { variant: 'success' });
     }).catch((err) => {
       console.error('Failed to copy judge ID:', err);
-      enqueueSnackbar('Failed to copy judge ID', { variant: 'error' });
+      notify('Failed to copy judge ID', { variant: 'error' });
     });
   };
 
@@ -747,10 +757,10 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       .join('\n\n---\n\n');
 
     navigator.clipboard.writeText(feedbackText).then(() => {
-      enqueueSnackbar('Feedback copied to clipboard!', { variant: 'success' });
+      notify('Feedback copied to clipboard!', { variant: 'success' });
     }).catch((err) => {
       console.error('Failed to copy feedback:', err);
-      enqueueSnackbar('Failed to copy feedback', { variant: 'error' });
+      notify('Failed to copy feedback', { variant: 'error' });
     });
   };
 
@@ -762,7 +772,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       .slice(0, count)
       .map(ts => ts.team);
     setFinalistTeams(topTeams);
-    enqueueSnackbar(`Selected top ${topTeams.length} teams as finalists`, { variant: 'success' });
+    notify(`Selected top ${topTeams.length} teams as finalists`, { variant: 'success' });
   };
 
   // Calculate presentation schedule
@@ -790,7 +800,7 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   // Save Round 2 configuration to backend
   const saveRound2Configuration = async () => {
     if (!selectedHackathon || finalistTeams.length === 0) {
-      enqueueSnackbar('Please select finalist teams before saving', { variant: 'warning' });
+      notify('Please select finalist teams before saving', { variant: 'warning' });
       return;
     }
 
@@ -838,32 +848,52 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         panelId = panelResponse.data.panel_id || panelResponse.data.panel?.id;
       }
 
-      // Assign all judges to all finalist teams for Round 2
-      for (const judge of judges) {
-        for (const team of finalistTeams) {
-          const teamSchedule = schedule.find(s => s.team.id === team.id);
-          
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
-            {
-              judge_id: judge.user_id, // Use user_id consistently
-              event_id: selectedHackathon,
-              team_id: team.id,
-              round: 'round2',
-              panel_id: panelId,
-              room: sessionSettings.room || null,
-              demo_time: teamSchedule ? teamSchedule.startTime.toISOString() : null
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "X-Org-Id": orgId,
-                'Content-Type': 'application/json',
+      // Judges × finalists in ONE request (replace:true prunes a finalist or
+      // judge the admin removed since the last save). Falls back to the old
+      // per-pair loop only when the backend predates the bulk route.
+      const demoTimes = {};
+      schedule.forEach((slot) => { demoTimes[slot.team.id] = slot.startTime.toISOString(); });
+      const judgeIds = judges.map((j) => j.user_id).filter(Boolean);
+      const teamIds = finalistTeams.map((t) => t.id);
+      let summary = null;
+      try {
+        summary = await judgeApi.bulkAssign({
+          event_id: selectedHackathon,
+          round: 'round2',
+          panel_id: panelId,
+          judge_ids: judgeIds,
+          team_ids: teamIds,
+          room: sessionSettings.room || null,
+          demo_times: demoTimes,
+          replace: true,
+        }, accessToken, orgId);
+      } catch (err) {
+        if (!isNotFound(err)) throw err;
+        for (const judgeId of judgeIds) {
+          for (const team of finalistTeams) {
+            await axios.post(
+              `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
+              {
+                judge_id: judgeId,
+                event_id: selectedHackathon,
+                team_id: team.id,
+                round: 'round2',
+                panel_id: panelId,
+                room: sessionSettings.room || null,
+                demo_time: demoTimes[team.id] || null
               },
-            }
-          );
+              {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "X-Org-Id": orgId,
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
         }
       }
+      setProgressRefreshKey((k) => k + 1);
 
       // Update local state
       if (!existingPanel) {
@@ -880,10 +910,15 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         ]);
       }
 
-      enqueueSnackbar('Round 2 configuration saved successfully!', { variant: 'success' });
+      notify(
+        summary
+          ? `Round 2 saved — ${summary.total} judge/team pairs (${summary.created} new${summary.removed ? `, ${summary.removed} removed` : ''}).`
+          : 'Round 2 configuration saved successfully!',
+        { variant: 'success' }
+      );
     } catch (error) {
       console.error('Error saving Round 2 configuration:', error);
-      enqueueSnackbar('Failed to save Round 2 configuration', { variant: 'error' });
+      notify('Failed to save Round 2 configuration', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -1121,6 +1156,24 @@ const JudgingRound2 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Review Round 1 scores and select finalist teams for the final judging session where all judges evaluate the top teams.
           </Typography>
+
+          {/* Who has sent in Round 2 scores, who hasn't, and the round lock.
+              One backend call; polls while this tab is open. */}
+          <Accordion defaultExpanded sx={{ mb: 3 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6">Round 2 scoring progress &amp; lock</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <JudgeProgressPanel
+                key={progressRefreshKey}
+                eventId={selectedHackathon}
+                round="round2"
+                accessToken={accessToken}
+                orgId={orgId}
+                onSnack={onSnack}
+              />
+            </AccordionDetails>
+          </Accordion>
 
           {/* Round 1 Scores Overview */}
           <Accordion defaultExpanded sx={{ mb: 3 }}>

@@ -1,349 +1,417 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import Head from "next/head";
+import Link from "next/link";
+import { ThemeProvider } from "@mui/material/styles";
+import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
+import judgeApi from "../../lib/judgeApi";
+import { initFacebookPixel, trackEvent } from "../../lib/ga";
+import { RefinedRoot, Eyebrow } from "../../components/design/refined";
 import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Button,
-  LinearProgress,
-  Chip,
-  Alert,
-  CircularProgress,
-  Paper,
-  Divider
-} from '@mui/material';
-import {
-  Gavel as JudgeIcon,
-  Event as EventIcon,
-  Groups as TeamsIcon,
-  CheckCircle as CompletedIcon,
-  Schedule as PendingIcon,
-  EmojiEvents as TrophyIcon,
-  PlayCircleOutlineRounded,
-  VideoLibraryRounded
-} from '@mui/icons-material';
-import { useAuthInfo, withRequiredAuthInfo } from '@propelauth/react';
-import { useSnackbar } from 'notistack';
-import judgeApi from '../../lib/judgeApi';
-import { initFacebookPixel, trackEvent } from '../../lib/ga';
+  judgeTheme,
+  judgeSectionStyle,
+} from "../../components/Judge/judgeTheme";
 
-const JudgeDashboard = withRequiredAuthInfo(({ userClass }) => {
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const pct = (completed, total) =>
+  total > 0 ? Math.round((completed / total) * 100) : 0;
+
+// Module scope — a thin navy progress rail (no colored chips).
+const RoundProgress = ({ label, completed, total }) => (
+  <div>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 13.5,
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      <span
+        style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}
+      >
+        {total === 0 ? "No teams yet" : `${completed} of ${total} scored`}
+      </span>
+    </div>
+    <div
+      role="progressbar"
+      aria-label={`${label} progress`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct(completed, total)}
+      style={{
+        height: 6,
+        background: "var(--surface-2)",
+        borderRadius: 3,
+        marginTop: 6,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: `${pct(completed, total)}%`,
+          height: "100%",
+          background: "var(--brand)",
+          transition: "width .3s ease",
+        }}
+      />
+    </div>
+  </div>
+);
+
+const HackathonCard = ({ hackathon, onOpen }) => {
+  const r1 = hackathon.judging_status?.round1 || { completed: 0, total: 0 };
+  const r2 = hackathon.judging_status?.round2 || { completed: 0, total: 0 };
+  const allDone =
+    r1.total + r2.total > 0 &&
+    r1.completed >= r1.total &&
+    r2.completed >= r2.total;
+  return (
+    <article
+      className="ohx-card"
+      style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          alignItems: "center",
+        }}
+      >
+        <span className={`ohx-tag${allDone ? "" : " ohx-tag--accent"}`}>
+          {allDone ? "Judging complete" : "In progress"}
+        </span>
+        {(hackathon.start_date || hackathon.end_date) && (
+          <span className="ohx-tag">
+            {formatDate(hackathon.start_date)}
+            {hackathon.end_date ? ` – ${formatDate(hackathon.end_date)}` : ""}
+          </span>
+        )}
+      </div>
+      <h2 className="ohx-display" style={{ fontSize: 24, lineHeight: 1.15 }}>
+        {hackathon.title || hackathon.event_id}
+      </h2>
+      <RoundProgress
+        label="Round 1 · find the top teams"
+        completed={r1.completed}
+        total={r1.total}
+      />
+      <RoundProgress
+        label="Round 2 · rank the finalists"
+        completed={r2.completed}
+        total={r2.total}
+      />
+      <div style={{ marginTop: 4 }}>
+        <Link
+          href={`/judge/${encodeURIComponent(hackathon.event_id)}`}
+          className="ohx-btn ohx-btn--primary"
+          onClick={() => onOpen(hackathon)}
+        >
+          {allDone ? "Review your scores" : "Open judging"}
+        </Link>
+      </div>
+    </article>
+  );
+};
+
+const JudgeDashboard = withRequiredAuthInfo(() => {
   const { accessToken, user } = useAuthInfo();
-  const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
-  
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("loading");
+  const [errorMessage, setErrorMessage] = useState("");
   const [assignments, setAssignments] = useState([]);
 
-  useEffect(() => { initFacebookPixel(); }, []);
+  const tokenRef = useRef(accessToken);
+  const userIdRef = useRef(user?.userId);
+  tokenRef.current = accessToken;
+  userIdRef.current = user?.userId;
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        setLoading(true);
-        const data = await judgeApi.getJudgeAssignments(user.userId, accessToken);
-        setAssignments(data.hackathons || []);
-      } catch (error) {
-        console.error('Error fetching assignments:', error);
-        enqueueSnackbar('Failed to load judging assignments', { variant: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
+    initFacebookPixel();
+  }, []);
 
-    fetchAssignments();
-  }, [user.userId, accessToken, enqueueSnackbar]);
+  const load = useCallback(async () => {
+    if (!tokenRef.current || !userIdRef.current) return;
+    setStatus("loading");
+    try {
+      const data = await judgeApi.getJudgeAssignments(
+        userIdRef.current,
+        tokenRef.current,
+      );
+      setAssignments(data?.hackathons || []);
+      setStatus("ready");
+    } catch (err) {
+      setErrorMessage(err?.message || "Couldn't load your judging assignments");
+      setStatus("error");
+    }
+  }, []);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  const hasToken = Boolean(accessToken);
+  const hasUser = Boolean(user?.userId);
+  useEffect(() => {
+    if (hasToken && hasUser) load();
+  }, [hasToken, hasUser, load]);
+
+  const onOpen = (hackathon) => {
+    trackEvent({
+      action: "judge_dash_start",
+      params: { event_label: hackathon.event_id, page: "judge_dashboard" },
     });
   };
-
-  const calculateProgress = (completed, total) => {
-    if (total === 0) return 0;
-    return Math.round((completed / total) * 100);
-  };
-
-  const getProgressColor = (progress) => {
-    if (progress === 100) return 'success';
-    if (progress >= 50) return 'primary';
-    return 'primary';
-  };
-
-  if (loading) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
 
   return (
     <>
       <Head>
-        <title>Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack</title>
-        <meta name="description" content="Access your judge assignments and evaluate innovative nonprofit technology solutions. Complete dashboard tutorial available to guide you through Round 1 and Round 2 judging." />
-        <meta name="keywords" content="judge dashboard, hackathon judging, nonprofit technology evaluation, scoring criteria, judge tutorial" />
-        <meta property="og:title" content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack" />
-        <meta property="og:description" content="Access your judge assignments and evaluate innovative nonprofit technology solutions. Complete dashboard tutorial available to guide you through Round 1 and Round 2 judging." />
+        <title>
+          Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack
+        </title>
+        <meta
+          name="description"
+          content="Access your judge assignments and evaluate innovative nonprofit technology solutions. Complete dashboard tutorial available to guide you through Round 1 and Round 2 judging."
+        />
+        <meta name="robots" content="noindex, follow" />
+        <meta
+          property="og:title"
+          content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack"
+        />
+        <meta
+          property="og:description"
+          content="Access your judge assignments and evaluate innovative nonprofit technology solutions."
+        />
         <meta property="og:url" content="https://www.ohack.dev/judge" />
-        <meta property="og:image" content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg" />
+        <meta
+          property="og:image"
+          content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
+        />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack" />
-        <meta name="twitter:description" content="Access your judge assignments and evaluate innovative nonprofit technology solutions. Complete dashboard tutorial available to guide you through Round 1 and Round 2 judging." />
-        <meta name="twitter:image" content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg" />
+        <meta
+          name="twitter:title"
+          content="Judge Dashboard - Evaluate Hackathon Projects | Opportunity Hack"
+        />
+        <meta
+          name="twitter:image"
+          content="https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
+        />
       </Head>
 
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12, mb: 4 }}>
-          {/* Header */}
-          <Paper elevation={2} sx={{ p: 4, mb: 4, bgcolor: 'primary.light', color: 'white' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <JudgeIcon sx={{ fontSize: 48, mr: 2 }} />
-              <div>
-                <Typography variant="h3" component="h1" gutterBottom sx={{ color: 'white', mb: 1 }}>
-                  Welcome, Judge {user.firstName}!
-                </Typography>
-                <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)' }}>
-                  Your Hackathon Judging Assignments
-                </Typography>
-              </div>
-            </Box>
-          </Paper>
+      <ThemeProvider theme={judgeTheme}>
+        <RefinedRoot>
+          <section className="ohx-wrap" style={judgeSectionStyle}>
+            <header>
+              <Eyebrow>Judge dashboard</Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                Welcome{user?.firstName ? `, ${user.firstName}` : ""}.{" "}
+                <span className="ohx-italic">Your judging assignments.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ marginTop: 12, maxWidth: "58ch" }}
+              >
+                Each hackathon you're judging is listed below with your progress
+                in both rounds. Open one to score your assigned teams.
+              </p>
+            </header>
 
-          {/* Assignments */}
-          {assignments.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 4 }}>
-              <Typography variant="h6" gutterBottom>No Current Judging Assignments</Typography>
-              <Typography variant="body1">
-                You don't have any active judging assignments at the moment. 
-                Check back later or contact the hackathon organizers if you believe this is an error.
-              </Typography>
-            </Alert>
-          ) : (
-            <Grid container spacing={3}>
-              {assignments.map((hackathon) => {
-                const round1Progress = calculateProgress(
-                  hackathon.judging_status.round1.completed,
-                  hackathon.judging_status.round1.total
-                );
-                const round2Progress = calculateProgress(
-                  hackathon.judging_status.round2.completed,
-                  hackathon.judging_status.round2.total
-                );
-                
-                return (
-                  <Grid size={{ xs: 12, md: 6 }} key={hackathon.event_id}>
-                    <Card sx={{ height: '100%', position: 'relative' }}>
-                      <CardContent sx={{ p: 3 }}>
-                        {/* Hackathon Header */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <EventIcon color="primary" sx={{ mr: 1 }} />
-                          <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 0 }}>
-                            {hackathon.title}
-                          </Typography>
-                        </Box>
-                        
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                          {formatDate(hackathon.start_date)} - {formatDate(hackathon.end_date)}
-                        </Typography>
+            <div style={{ marginTop: 28, minHeight: 200 }}>
+              {status === "loading" && (
+                <div
+                  aria-busy="true"
+                  aria-label="Loading assignments"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(min(100%, 360px), 1fr))",
+                    gap: 20,
+                  }}
+                >
+                  <div className="ohx-card" style={{ minHeight: 260 }} />
+                  <div className="ohx-card" style={{ minHeight: 260 }} />
+                </div>
+              )}
 
-                        <Divider sx={{ mb: 3 }} />
+              {status === "error" && (
+                <div className="ohx-card" role="alert" style={{ padding: 24 }}>
+                  <p style={{ margin: 0, fontWeight: 600 }}>
+                    We couldn't load your assignments.
+                  </p>
+                  <p
+                    style={{
+                      margin: "6px 0 14px",
+                      fontSize: 14,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    {errorMessage}
+                  </p>
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--primary"
+                    onClick={() => load()}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
 
-                        {/* Round 1 Progress */}
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center' }}>
-                              <TeamsIcon sx={{ mr: 1, fontSize: 20 }} />
-                              Round 1 - Find the top teams
-                            </Typography>
-                            <Chip 
-                              label={`${hackathon.judging_status.round1.completed}/${hackathon.judging_status.round1.total}`}
-                              size="small"
-                              color={round1Progress === 100 ? 'success' : 'default'}
-                            />
-                          </Box>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={round1Progress} 
-                            color={getProgressColor(round1Progress)}
-                            sx={{ height: 8, borderRadius: 4, mb: 1 }}
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            {round1Progress}% complete
-                          </Typography>
-                        </Box>
+              {status === "ready" && assignments.length === 0 && (
+                <div className="ohx-card" style={{ padding: 24 }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 16 }}>
+                    No judging assignments yet
+                  </p>
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      fontSize: 14.5,
+                      color: "var(--muted)",
+                      maxWidth: "60ch",
+                    }}
+                  >
+                    Organizers assign judges to teams shortly before judging
+                    starts. If you've been approved as a judge and expected an
+                    event here, ask in the judges channel on Slack.
+                  </p>
+                </div>
+              )}
 
-                        {/* Round 2 Progress */}
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center' }}>
-                              <TrophyIcon sx={{ mr: 1, fontSize: 20 }} />
-                              Round 2 - Rank the top team
-                            </Typography>
-                            <Chip 
-                              label={`${hackathon.judging_status.round2.completed}/${hackathon.judging_status.round2.total}`}
-                              size="small"
-                              color={round2Progress === 100 ? 'success' : 'default'}
-                            />
-                          </Box>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={round2Progress} 
-                            color={getProgressColor(round2Progress)}
-                            sx={{ height: 8, borderRadius: 4, mb: 1 }}
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            {round2Progress}% complete
-                          </Typography>
-                        </Box>
+              {status === "ready" && assignments.length > 0 && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(min(100%, 360px), 1fr))",
+                    gap: 20,
+                  }}
+                >
+                  {assignments.map((h) => (
+                    <HackathonCard
+                      key={h.event_id}
+                      hackathon={h}
+                      onOpen={onOpen}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
-                        {/* Action Button */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box>
-                            {round1Progress === 100 && round2Progress === 100 ? (
-                              <Chip 
-                                icon={<CompletedIcon />} 
-                                label="Judging Complete" 
-                                color="success" 
-                                variant="outlined"
-                              />
-                            ) : (
-                              <Chip 
-                                icon={<PendingIcon />} 
-                                label="In Progress" 
-                                color="primary" 
-                                variant="outlined"
-                              />
-                            )}
-                          </Box>
-                          <Button
-                            variant="contained"
-                            onClick={() => {
-                              trackEvent({ action: 'judge_dash_start', params: { event_label: hackathon.event_id, page: 'judge_dashboard' } });
-                              router.push(`/judge/${hackathon.event_id}`);
-                            }}
-                            startIcon={<JudgeIcon />}
-                          >
-                            Start Judging
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          )}
-
-          {/* Video Tutorial CTA Section */}
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3, 
-              mt: 4, 
-              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-              color: 'white',
-              textAlign: 'center'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-              <VideoLibraryRounded sx={{ fontSize: 40, mr: 2 }} />
-              <Typography variant="h5" component="h3">
-                New to Our Judge Dashboard?
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                mb: 3, 
-                fontSize: '16px',
-                opacity: 0.9,
-                maxWidth: '600px',
-                mx: 'auto'
+            <div
+              className="ohx-card"
+              style={{
+                marginTop: 40,
+                padding: "26px 28px",
+                background: "var(--brand)",
+                color: "#fff",
+                borderColor: "var(--brand)",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 18,
               }}
             >
-              Watch our complete tutorial to master the judging process! See exactly how to navigate the dashboard, evaluate projects in both rounds, and provide meaningful feedback to teams.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                size="large"
-                sx={{ 
-                  bgcolor: 'white', 
-                  color: 'primary.main',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  px: 4,
-                  py: 1.5,
-                  '&:hover': { 
-                    bgcolor: 'rgba(255,255,255,0.9)',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                  },
-                  transition: 'all 0.3s ease'
-                }}
-                href="/judge/overview"
-                startIcon={<PlayCircleOutlineRounded />}
-              >
-                Watch Dashboard Tutorial
-              </Button>
-            </Box>
-          </Paper>
+              <div style={{ maxWidth: "56ch" }}>
+                <p
+                  className="ohx-eyebrow"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                >
+                  New to the judge dashboard?
+                </p>
+                <h2
+                  className="ohx-display"
+                  style={{ fontSize: 24, marginTop: 8, color: "#fff" }}
+                >
+                  A five-minute tutorial covers both rounds.
+                </h2>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 14.5,
+                    color: "rgba(255,255,255,0.85)",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  See how to navigate the dashboard, evaluate projects in Round
+                  1 and Round 2, and write feedback teams can act on.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <Link
+                  href="/judge/overview"
+                  className="ohx-btn"
+                  style={{ background: "#fff", color: "var(--brand)" }}
+                >
+                  Watch the tutorial
+                </Link>
+                <Link
+                  href="/about/judges#judging-criteria"
+                  className="ohx-btn ohx-btn--ghost"
+                  style={{
+                    color: "#fff",
+                    borderColor: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  Scoring criteria
+                </Link>
+              </div>
+            </div>
 
-          {/* Help Section */}
-          <Paper elevation={1} sx={{ p: 3, mt: 4, bgcolor: 'grey.50' }}>
-            <Typography variant="h6" gutterBottom>
-              Quick Reference: Judging Process
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              As a judge, you'll evaluate teams in two rounds (in most hackathons):
-            </Typography>
-            <Box component="ul" sx={{ pl: 3, mb: 2 }}>
-              <li>
-                <Typography variant="body2">
-                  <strong>Round 1:</strong> Review 4-minute team pitch videos (from DevPost) and project on GitHub - evaluate based on our scoring criteria
-                </Typography>
-              </li>
-              <li>
-                <Typography variant="body2">
-                  <strong>Round 2:</strong> Review responses to Round 1 questions, and re-evaluate projects based on new information, then submit final scores. In-person: Live demos with finalist teams, including Q&A sessions
-                </Typography>
-              </li>
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Each project is scored across four categories: Scope, Documentation, Polish, and Security.               
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                href="/judge/overview"
-                startIcon={<VideoLibraryRounded />}
+            <section
+              style={{ marginTop: 36, maxWidth: "70ch" }}
+              aria-labelledby="quick-ref"
+            >
+              <Eyebrow>Quick reference</Eyebrow>
+              <h2
+                id="quick-ref"
+                className="ohx-display"
+                style={{ fontSize: 22, marginTop: 8 }}
               >
-                Dashboard Tutorial
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                href="/about/judges#judging-criteria"
+                How judging works
+              </h2>
+              <ol
+                style={{
+                  margin: "12px 0 0",
+                  paddingLeft: 20,
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  color: "var(--ink)",
+                }}
               >
-                Scoring Criteria
-              </Button>
-            </Box>
-          </Paper>
-        </Box>
-      </Container>
+                <li>
+                  <strong>Round 1 — find the top teams.</strong> Watch each
+                  team's demo video and look through their GitHub repository,
+                  then score the four criteria.
+                </li>
+                <li>
+                  <strong>Round 2 — rank the finalists.</strong> Finalists demo
+                  live and answer questions; you score them again with fresh
+                  information.
+                </li>
+              </ol>
+              <p
+                style={{
+                  margin: "12px 0 0",
+                  fontSize: 14.5,
+                  color: "var(--muted)",
+                }}
+              >
+                Every project is scored on Scope, Documentation, Polish and
+                Security, 1–5 per criterion, 40 points in total. Accessibility
+                is a separate special-category prize.
+              </p>
+            </section>
+          </section>
+        </RefinedRoot>
+      </ThemeProvider>
     </>
   );
 });
