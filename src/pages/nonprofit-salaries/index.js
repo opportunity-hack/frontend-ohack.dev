@@ -279,9 +279,10 @@ const NonprofitSalaries = () => {
                 Look up pay at organizations like yours
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
-                The individual records below are the highest-paid people in the dataset, shown so you can
-                sanity-check the benchmarks against real filings. The charts above are built from everyone
-                counted, not just this list.
+                The individual records below are the highest-paid people nationally, plus the highest-paid
+                person at each of the 30 best-paying organizations under $1M in revenue, so smaller
+                nonprofits are represented too. They are shown so you can sanity-check the benchmarks
+                against real filings. The charts above are built from everyone counted, not just this list.
               </Typography>
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 12, md: 4 }}>
