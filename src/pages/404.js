@@ -1,57 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { Typography, Button, Box, Container } from '@mui/material';
-import { styled } from '@mui/system';
-import Head from 'next/head';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { LayoutContainer, TitleContainer } from '../styles/nonprofit/styles';
-import * as ga from '../lib/ga';
-
-const StyledContainer = styled(Container)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: '70vh',
-  textAlign: 'center',
-}));
-
-const ImageContainer = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(4),
-  width: '100%',
-  maxWidth: '400px',
-  height: 'auto',
-}));
+import React, { useEffect, useState } from "react";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import * as ga from "../lib/ga";
+import {
+  RefinedPage,
+  PageMasthead,
+  LinkRow,
+} from "../components/design/RefinedPage";
 
 const sleepingImages = [
-  'https://cdn.ohack.dev/ohack.dev/404/sleeping1.webp',
-  'https://cdn.ohack.dev/ohack.dev/404/sleeping2.webp',
-  'https://cdn.ohack.dev/ohack.dev/404/sleeping3.webp'
+  "https://cdn.ohack.dev/ohack.dev/404/sleeping1.webp",
+  "https://cdn.ohack.dev/ohack.dev/404/sleeping2.webp",
+  "https://cdn.ohack.dev/ohack.dev/404/sleeping3.webp",
 ];
 
 const Custom404 = () => {
-  const [randomImage, setRandomImage] = useState('');
+  const [randomImage, setRandomImage] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * sleepingImages.length);
-    setRandomImage(sleepingImages[randomIndex]);
-
+    setRandomImage(
+      sleepingImages[Math.floor(Math.random() * sleepingImages.length)],
+    );
     // Track the 404 error
-    ga.event({
-      action: "404_error",
-      params : {
-        page_path: router.asPath
-      }
-    });
+    ga.event({ action: "404_error", params: { page_path: router.asPath } });
   }, [router.asPath]);
 
   const pageTitle = `404 - Page Not Found | ${router.asPath} | Opportunity Hack`;
   const pageDescription = `The page ${router.asPath} could not be found. Explore other opportunities to hack for social good with Opportunity Hack.`;
 
   return (
-    <LayoutContainer>
+    <>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -59,58 +40,63 @@ const Custom404 = () => {
         <meta property="og:description" content={pageDescription} />
         <meta name="robots" content="noindex,follow" />
       </Head>
-      <TitleContainer>
-        <Typography variant="h1" component="h1" gutterBottom>
-          404
-        </Typography>
-        <Typography variant="h4" component="h2" gutterBottom>
-          Oops! Page Not Found
-        </Typography>
-      </TitleContainer>
-      <StyledContainer>
-        <ImageContainer>
-          {randomImage && (
-            <Image
-              src={randomImage}
-              alt="Sleeping character"
-              width={400}
-              height={300}
-              layout="responsive"
+      <RefinedPage>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+            gap: 32,
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <PageMasthead
+              eyebrow="404 · Page not found"
+              title="This page is taking"
+              italic="a little nap."
+              lead="It may have moved, or the link may be out of date. Everything we're actually working on is one click away."
+              style={{ marginTop: 0 }}
             />
-          )}
-        </ImageContainer>
-        <Typography variant="body1" paragraph>
-          It looks like this page is taking a little nap. But don't worry, there are still plenty of opportunities to hack for social good while we wake it up!
-        </Typography>
-        <Box mt={4} display="flex" flexDirection="column" alignItems="center">
-          <Link href="/" passHref>
-            <Button variant="contained" color="primary" size="large">
-              Go to Homepage
-            </Button>
-          </Link>
-          <Box mt={2}>
-            <Link href="/nonprofits" passHref>
-              <Button variant="outlined" color="primary">
-                Browse Nonprofit Projects
-              </Button>
-            </Link>
-          </Box>
-          <Box mt={2}>
-            <Link href="/about" passHref>
-              <Button variant="outlined" color="primary">
-                Learn About Opportunity Hack
-              </Button>
-            </Link>
-          </Box>
-        </Box>
-        <Box mt={4}>
-          <Typography variant="body1" color="textSecondary">
-            If you believe this is an error, please{' '}
-            <Link href="/contact?type=technical">let us know</Link>.
-          </Typography>
-        </Box>
-      </StyledContainer>
-    </LayoutContainer>
+            <LinkRow
+              style={{ marginTop: 26 }}
+              primary={{ href: "/", label: "Go to the homepage" }}
+              links={[
+                { href: "/nonprofits", label: "Browse nonprofit projects" },
+                { href: "/about", label: "About Opportunity Hack" },
+              ]}
+            />
+            <p style={{ marginTop: 28, fontSize: 14, color: "var(--muted)" }}>
+              Think this is our mistake?{" "}
+              <Link href="/contact?type=technical" className="ohx-link">
+                Let us know
+              </Link>
+              .
+            </p>
+          </div>
+          {/* Reserved 4:3 box so the random image never shifts the layout. */}
+          <div
+            className="ohx-card"
+            style={{
+              aspectRatio: "4 / 3",
+              overflow: "hidden",
+              background: "var(--surface-2)",
+              position: "relative",
+            }}
+          >
+            {randomImage && (
+              <Image
+                src={randomImage}
+                alt="A sleeping character"
+                width={400}
+                height={300}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
+          </div>
+        </div>
+      </RefinedPage>
+    </>
   );
 };
 

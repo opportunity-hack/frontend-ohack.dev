@@ -2,7 +2,7 @@
 import { Typography, Box } from "@mui/material";
 import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: "14px" };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const BootcampContent = () => (
   <>
@@ -13,7 +13,7 @@ const BootcampContent = () => (
       practical application through meaningful nonprofit projects.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Why Nonprofit Projects Are Perfect for Bootcamp Grads
     </Typography>
 
@@ -48,7 +48,7 @@ const BootcampContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Getting Started
     </Typography>
 
@@ -80,7 +80,7 @@ const BootcampContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Success Tips
     </Typography>
 

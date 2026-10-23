@@ -5,7 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Box } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
-import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../../components/design/refined";
+import {
+  RefinedRoot,
+  Eyebrow,
+  Arrow,
+} from "../../../components/design/refined";
 
 const successStories = [
   {
@@ -224,7 +228,6 @@ const trackPresentationClick = (title) => {
 export default function SuccessStories() {
   const router = useRouter();
 
-
   useEffect(() => {
     initFacebookPixel();
   }, []);
@@ -245,77 +248,269 @@ export default function SuccessStories() {
   return (
     <>
       <Head>
-        <title>Opportunity Hack Success Stories: Tech Innovation for Social Good</title>
-        <meta name="description" content="Discover how Opportunity Hack connects nonprofits with skilled tech volunteers to create innovative solutions. Read success stories of AI, blockchain, and IoT applications in various social causes." />
-        <meta name="keywords" content="Opportunity Hack, nonprofit technology, hackathon success stories, tech for good, AI for animal rescue, social impact tech" />
-        <meta property="og:title" content="Opportunity Hack: Transforming Nonprofits through Technology" />
-        <meta property="og:description" content="See how developers, designers, and tech companies are making a real-world impact through Opportunity Hack. Join us in using technology for social good." />
+        <title>
+          Opportunity Hack Success Stories: Tech Innovation for Social Good
+        </title>
+        <meta
+          name="description"
+          content="Discover how Opportunity Hack connects nonprofits with skilled tech volunteers to create innovative solutions. Read success stories of AI, blockchain, and IoT applications in various social causes."
+        />
+        <meta
+          name="keywords"
+          content="Opportunity Hack, nonprofit technology, hackathon success stories, tech for good, AI for animal rescue, social impact tech"
+        />
+        <meta
+          property="og:title"
+          content="Opportunity Hack: Transforming Nonprofits through Technology"
+        />
+        <meta
+          property="og:description"
+          content="See how developers, designers, and tech companies are making a real-world impact through Opportunity Hack. Join us in using technology for social good."
+        />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.ohack.dev/about/success-stories" />
-        <meta property="og:image" content="https://www.ohack.dev/images/opportunity-hack-success-banner.jpg" />
-        <RefinedFonts />
+        <meta
+          property="og:url"
+          content="https://www.ohack.dev/about/success-stories"
+        />
+        <meta
+          property="og:image"
+          content="https://cdn.ohack.dev/ohack.dev/2024_hackathon_4.webp"
+        />
       </Head>
 
       <RefinedRoot>
         {/* HERO */}
-        <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}>
-          <Eyebrow><span className="rise" style={{ display: "inline-block" }}>Success stories</span></Eyebrow>
-          <h1 className="ohx-display rise" style={{ marginTop: 18, maxWidth: "16ch", animationDelay: "60ms" }}>
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(104px, 13vh, 156px)",
+            paddingBottom: "clamp(28px, 5vh, 48px)",
+          }}
+        >
+          <Eyebrow>
+            <span className="rise" style={{ display: "inline-block" }}>
+              Success stories
+            </span>
+          </Eyebrow>
+          <h1
+            className="ohx-display rise"
+            style={{ marginTop: 18, maxWidth: "16ch", animationDelay: "60ms" }}
+          >
             Real impact, <span className="ohx-italic">shipped.</span>
           </h1>
-          <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}>
-            How skilled tech volunteers and nonprofits team up at Opportunity Hack to build solutions that
-            keep working long after the hackathon ends.
+          <p
+            className="ohx-lead rise"
+            style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "60ch" }}
+          >
+            How skilled tech volunteers and nonprofits team up at Opportunity
+            Hack to build solutions that keep working long after the hackathon
+            ends.
           </p>
         </section>
 
         {/* STORIES */}
-        <section className="ohx-wrap" style={{ paddingBottom: "clamp(48px, 8vh, 88px)" }}>
-          <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
+        <section
+          className="ohx-wrap"
+          style={{ paddingBottom: "clamp(48px, 8vh, 88px)" }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gap: 24,
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
+            }}
+          >
             {successStories.map((story, index) => (
-              <article key={index} id={story.key} className="ohx-card rise" style={{ display: "flex", flexDirection: "column", overflow: "hidden", scrollMarginTop: 90, animationDelay: `${Math.min(index, 6) * 70}ms` }}>
-                <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--surface-2)" }}>
-                  <Image src={story.image} alt={story.title} fill sizes="(max-width: 700px) 100vw, 420px" style={{ objectFit: "cover" }} />
+              <article
+                key={index}
+                id={story.key}
+                className="ohx-card rise"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  scrollMarginTop: 90,
+                  animationDelay: `${Math.min(index, 6) * 70}ms`,
+                }}
+              >
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    aspectRatio: "16 / 9",
+                    background: "var(--surface-2)",
+                  }}
+                >
+                  <Image
+                    src={story.image}
+                    alt={story.title}
+                    fill
+                    sizes="(max-width: 700px) 100vw, 420px"
+                    style={{ objectFit: "cover" }}
+                  />
                 </div>
-                <div style={{ padding: "24px 24px 22px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  <span className="ohx-tag" style={{ alignSelf: "flex-start" }}>{story.nonprofit}</span>
-                  <h2 className="ohx-display" style={{ fontSize: "1.3rem", marginTop: 12 }}>{story.title}</h2>
+                <div
+                  style={{
+                    padding: "24px 24px 22px",
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                  }}
+                >
+                  <span className="ohx-tag" style={{ alignSelf: "flex-start" }}>
+                    {story.nonprofit}
+                  </span>
+                  <h2
+                    className="ohx-display"
+                    style={{ fontSize: "1.3rem", marginTop: 12 }}
+                  >
+                    {story.title}
+                  </h2>
 
                   <dl style={{ margin: "14px 0 0", display: "grid", gap: 6 }}>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <dt className="ohx-eyebrow" style={{ fontSize: "0.6rem", minWidth: 76, paddingTop: 2 }}>Volunteers</dt>
-                      <dd className="ohx-muted" style={{ margin: 0, fontSize: "0.88rem" }}>{story.hacker}</dd>
+                      <dt
+                        className="ohx-eyebrow"
+                        style={{
+                          fontSize: "0.6rem",
+                          minWidth: 76,
+                          paddingTop: 2,
+                        }}
+                      >
+                        Volunteers
+                      </dt>
+                      <dd
+                        className="ohx-muted"
+                        style={{ margin: 0, fontSize: "0.88rem" }}
+                      >
+                        {story.hacker}
+                      </dd>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <dt className="ohx-eyebrow" style={{ fontSize: "0.6rem", minWidth: 76, paddingTop: 2 }}>Sponsors</dt>
-                      <dd className="ohx-faint" style={{ margin: 0, fontSize: "0.82rem" }}>{story.sponsor}</dd>
+                      <dt
+                        className="ohx-eyebrow"
+                        style={{
+                          fontSize: "0.6rem",
+                          minWidth: 76,
+                          paddingTop: 2,
+                        }}
+                      >
+                        Sponsors
+                      </dt>
+                      <dd
+                        className="ohx-faint"
+                        style={{ margin: 0, fontSize: "0.82rem" }}
+                      >
+                        {story.sponsor}
+                      </dd>
                     </div>
                   </dl>
 
-                  <p className="ohx-muted" style={{ margin: "16px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>{story.summary}</p>
+                  <p
+                    className="ohx-muted"
+                    style={{
+                      margin: "16px 0 0",
+                      fontSize: "0.95rem",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {story.summary}
+                  </p>
 
-                  <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--surface-2)", borderRadius: 8, borderLeft: "3px solid var(--accent)" }}>
-                    <span className="ohx-eyebrow" style={{ fontSize: "0.6rem" }}>Impact</span>
-                    <p className="ohx-muted" style={{ margin: "6px 0 0", fontSize: "0.9rem", lineHeight: 1.5 }}>{story.impact}</p>
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: "14px 16px",
+                      background: "var(--surface-2)",
+                      borderRadius: 8,
+                      borderLeft: "3px solid var(--accent)",
+                    }}
+                  >
+                    <span
+                      className="ohx-eyebrow"
+                      style={{ fontSize: "0.6rem" }}
+                    >
+                      Impact
+                    </span>
+                    <p
+                      className="ohx-muted"
+                      style={{
+                        margin: "6px 0 0",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {story.impact}
+                    </p>
                   </div>
 
-                  <p className="ohx-display ohx-italic" style={{ margin: "18px 0 0", fontSize: "1.02rem", lineHeight: 1.45 }}>&ldquo;{story.testimonial}&rdquo;</p>
+                  <p
+                    className="ohx-display ohx-italic"
+                    style={{
+                      margin: "18px 0 0",
+                      fontSize: "1.02rem",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    &ldquo;{story.testimonial}&rdquo;
+                  </p>
 
                   {story.learnings?.length > 0 && (
-                    <ul style={{ listStyle: "none", padding: 0, margin: "18px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        padding: 0,
+                        margin: "18px 0 0",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                      }}
+                    >
                       {story.learnings.slice(0, 3).map((l, i) => (
-                        <li key={i} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
-                          <span style={{ color: "var(--accent)", fontWeight: 700 }}>—</span>
-                          <span className="ohx-muted" style={{ fontSize: "0.88rem", lineHeight: 1.45 }}>{l}</span>
+                        <li
+                          key={i}
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "baseline",
+                          }}
+                        >
+                          <span
+                            style={{ color: "var(--accent)", fontWeight: 700 }}
+                          >
+                            —
+                          </span>
+                          <span
+                            className="ohx-muted"
+                            style={{ fontSize: "0.88rem", lineHeight: 1.45 }}
+                          >
+                            {l}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   )}
 
                   {story.presentations?.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        marginTop: 16,
+                      }}
+                    >
                       {story.presentations.map((p, i) => (
-                        <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="ohx-tag" style={{ textDecoration: "none" }} onClick={() => trackPresentationClick(p.title)}>
+                        <a
+                          key={i}
+                          href={p.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ohx-tag"
+                          style={{ textDecoration: "none" }}
+                          onClick={() => trackPresentationClick(p.title)}
+                        >
                           {p.type === "pdf" ? "PDF" : "Slides"} · {p.title}
                         </a>
                       ))}
@@ -323,7 +518,12 @@ export default function SuccessStories() {
                   )}
 
                   <div style={{ marginTop: "auto", paddingTop: 18 }}>
-                    <Link href={story.caseStudyLink} className="ohx-link" style={{ fontSize: "0.9rem" }} onClick={() => trackButtonClick(story.title)}>
+                    <Link
+                      href={story.caseStudyLink}
+                      className="ohx-link"
+                      style={{ fontSize: "0.9rem" }}
+                      onClick={() => trackButtonClick(story.title)}
+                    >
                       Read the full case study <Arrow />
                     </Link>
                   </div>
@@ -334,39 +534,117 @@ export default function SuccessStories() {
         </section>
 
         {/* VIDEO */}
-        <section style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
-          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
-            <div className="ohx-narrow" style={{ marginInline: "auto", textAlign: "center", marginBottom: 28 }}>
+        <section
+          style={{
+            background: "var(--surface-2)",
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          <div
+            className="ohx-wrap"
+            style={{
+              paddingTop: "clamp(48px, 7vh, 80px)",
+              paddingBottom: "clamp(48px, 7vh, 80px)",
+            }}
+          >
+            <div
+              className="ohx-narrow"
+              style={{
+                marginInline: "auto",
+                textAlign: "center",
+                marginBottom: 28,
+              }}
+            >
               <Eyebrow>Join the movement</Eyebrow>
-              <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>See it in two minutes</h2>
-              <p className="ohx-muted" style={{ margin: 0 }}>How Opportunity Hack supports nonprofits through technology.</p>
+              <h2
+                className="ohx-display"
+                style={{ marginTop: 8, marginBottom: 12 }}
+              >
+                See it in two minutes
+              </h2>
+              <p className="ohx-muted" style={{ margin: 0 }}>
+                How Opportunity Hack supports nonprofits through technology.
+              </p>
             </div>
-            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", maxWidth: 820, margin: "0 auto", borderRadius: 10, border: "1px solid var(--line)" }}>
+            <div
+              style={{
+                position: "relative",
+                paddingBottom: "56.25%",
+                height: 0,
+                overflow: "hidden",
+                maxWidth: 820,
+                margin: "0 auto",
+                borderRadius: 10,
+                border: "1px solid var(--line)",
+              }}
+            >
               <iframe
                 src="https://www.youtube.com/embed/_hpam2meMWY?si=XQfQ74uF21gwwWUM"
                 title="Opportunity Hack: Transforming Nonprofits Through Technology"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 loading="lazy"
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                }}
               />
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 8vh, 88px)", paddingBottom: "clamp(56px, 9vh, 104px)", textAlign: "center" }}>
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(48px, 8vh, 88px)",
+            paddingBottom: "clamp(56px, 9vh, 104px)",
+            textAlign: "center",
+          }}
+        >
           <Eyebrow>Ready to transform your nonprofit?</Eyebrow>
-          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>Bring us your challenge</h2>
-          <p className="ohx-muted" style={{ margin: "0 auto 28px", maxWidth: "56ch" }}>
-            Join hundreds of nonprofits that have benefited from free tech solutions — submit your challenge and our volunteers will help.
+          <h2
+            className="ohx-display"
+            style={{ marginTop: 8, marginBottom: 12 }}
+          >
+            Bring us your challenge
+          </h2>
+          <p
+            className="ohx-muted"
+            style={{ margin: "0 auto 28px", maxWidth: "56ch" }}
+          >
+            Join hundreds of nonprofits that have benefited from free tech
+            solutions — submit your challenge and our volunteers will help.
           </p>
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/nonprofits/apply" className="ohx-btn ohx-btn--primary">Submit your challenge <Arrow /></Link>
-            <Link href="/about/hackers" className="ohx-btn ohx-btn--ghost">Volunteer your skills</Link>
-            <Link href="/sponsor" className="ohx-btn ohx-btn--ghost">Sponsor innovation</Link>
+          <div
+            style={{
+              display: "flex",
+              gap: 14,
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link href="/nonprofits/apply" className="ohx-btn ohx-btn--primary">
+              Submit your challenge <Arrow />
+            </Link>
+            <Link href="/about/hackers" className="ohx-btn ohx-btn--ghost">
+              Volunteer your skills
+            </Link>
+            <Link href="/sponsor" className="ohx-btn ohx-btn--ghost">
+              Sponsor innovation
+            </Link>
           </div>
-          <p className="ohx-faint" style={{ marginTop: 18, fontSize: "0.85rem" }}>Applications reviewed regularly · Free for qualifying nonprofits</p>
+          <p
+            className="ohx-faint"
+            style={{ marginTop: 18, fontSize: "0.85rem" }}
+          >
+            Applications reviewed regularly · Free for qualifying nonprofits
+          </p>
         </section>
       </RefinedRoot>
     </>

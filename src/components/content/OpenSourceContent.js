@@ -1,8 +1,8 @@
 // components/content/OpenSourceContent.jsx
-import { Typography, Box } from '@mui/material';
-import { LinkStyled } from '../../styles/nonprofit/styles';
+import { Typography, Box } from "@mui/material";
+import { LinkStyled } from "../../styles/nonprofit/styles";
 
-const style = { fontSize: '14px' };
+const style = {}; // sizing comes from the page (.ohx-prose)
 
 const OpenSourceContent = () => (
   <>
@@ -12,7 +12,7 @@ const OpenSourceContent = () => (
       your skills and make a tangible difference in communities.
     </Typography>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Why Our Open Source Projects Stand Out
     </Typography>
 
@@ -43,7 +43,7 @@ const OpenSourceContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Build Your GitHub Portfolio
     </Typography>
 
@@ -74,7 +74,7 @@ const OpenSourceContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Current Tech Stack Opportunities
     </Typography>
 
@@ -101,7 +101,7 @@ const OpenSourceContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Start Contributing Today
     </Typography>
 
@@ -135,7 +135,7 @@ const OpenSourceContent = () => (
       </li>
     </Box>
 
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       Featured Project Needs
     </Typography>
 

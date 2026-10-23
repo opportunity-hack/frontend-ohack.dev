@@ -1,634 +1,630 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Button,
-  Tabs,
-  Tab,
-  Chip,
   Alert,
-  CircularProgress,
-  Paper,
-  Avatar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
-  Tooltip,
-  Badge,
-  Divider,
+  Snackbar,
+  Tab,
+  Tabs,
 } from "@mui/material";
-import {
-  Gavel as JudgeIcon,
-  VideoLibrary as VideoIcon,
-  LiveTv as LiveIcon,
-  GitHub as GitHubIcon,
-  Launch as DevPostIcon,
-  CheckCircle as CompletedIcon,
-  Schedule as PendingIcon,
-  Groups as TeamIcon,
-  ArrowBack as BackIcon,
-  Person as PersonIcon,
-} from "@mui/icons-material";
+import { ThemeProvider } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
-import { useSnackbar } from "notistack";
-import judgeApi from "../../lib/judgeApi";
+import judgeApi, { isRoundLocked } from "../../lib/judgeApi";
+import { RefinedRoot, Eyebrow, Stat } from "../../components/design/refined";
+import {
+  judgeTheme,
+  judgeSectionStyle,
+} from "../../components/Judge/judgeTheme";
+import JudgeTeamCard from "../../components/Judge/JudgeTeamCard";
+import {
+  calculateTotal,
+  normalizeScores,
+  roundLabel,
+  MAX_TOTAL,
+} from "../../components/Judge/judgingCriteria";
+import { trackEvent } from "../../lib/ga";
 
-const HackathonJudgePage = withRequiredAuthInfo(({ userClass }) => {
+const VideoDisplay = dynamic(
+  () => import("../../components/VideoDisplay/VideoDisplay"),
+  { ssr: false },
+);
+
+const ROUNDS = ["round1", "round2"];
+const scoreKey = (teamId, round) => `${teamId}_${round}`;
+const REFOCUS_THROTTLE_MS = 15000;
+
+const ROUND_COPY = {
+  round1: {
+    title: "Round 1",
+    blurb:
+      "Watch each team's demo video and look through their code, then score every criterion from 1 to 5.",
+  },
+  round2: {
+    title: "Round 2",
+    blurb:
+      "Finalist live demos. Score each team right after its presentation — you can adjust any score from here until the round is locked.",
+  },
+};
+
+// Skeleton that reserves the card grid's space while the first fetch runs.
+const CardSkeleton = () => (
+  <div
+    className="ohx-card"
+    aria-hidden="true"
+    style={{ padding: 20, minHeight: 236 }}
+  >
+    <div
+      style={{
+        height: 10,
+        width: "28%",
+        background: "var(--surface-2)",
+        borderRadius: 4,
+      }}
+    />
+    <div
+      style={{
+        height: 22,
+        width: "70%",
+        background: "var(--surface-2)",
+        borderRadius: 4,
+        marginTop: 14,
+      }}
+    />
+    <div
+      style={{
+        height: 12,
+        width: "50%",
+        background: "var(--surface-2)",
+        borderRadius: 4,
+        marginTop: 12,
+      }}
+    />
+    <div
+      style={{
+        height: 12,
+        width: "85%",
+        background: "var(--surface-2)",
+        borderRadius: 4,
+        marginTop: 10,
+      }}
+    />
+    <div
+      style={{
+        height: 36,
+        width: 140,
+        background: "var(--surface-2)",
+        borderRadius: 4,
+        marginTop: 28,
+      }}
+    />
+  </div>
+);
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
+  gap: 20,
+  marginTop: 20,
+  alignItems: "start",
+};
+
+const HackathonJudgePage = withRequiredAuthInfo(() => {
   const { accessToken, user } = useAuthInfo();
-  const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
   const { event_id } = router.query;
 
-  const [loading, setLoading] = useState(true);
-  const [teamsData, setTeamsData] = useState(null);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [errorMessage, setErrorMessage] = useState("");
+  const [data, setData] = useState(null); // { round1_teams, round2_teams, event, locks }
+  const [scoresByKey, setScoresByKey] = useState({});
   const [activeTab, setActiveTab] = useState(0);
+  const [adjustingKey, setAdjustingKey] = useState(null);
+  const [savingKey, setSavingKey] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [toast, setToast] = useState(null);
 
-  // Initialize tab from URL parameter only once when event_id is available
+  // Token/user read through refs so PropelAuth's token rotation on tab
+  // refocus never re-triggers the load effect (and never wipes an open
+  // inline editor).
+  const tokenRef = useRef(accessToken);
+  const userIdRef = useRef(user?.userId);
+  tokenRef.current = accessToken;
+  userIdRef.current = user?.userId;
+  const adjustingRef = useRef(null);
+  adjustingRef.current = adjustingKey;
+  const lastRefocusRef = useRef(0);
+
+  // Tab from the URL, once the router is ready.
   useEffect(() => {
-    if (!event_id || !router.isReady) return;
+    if (!router.isReady) return;
+    const tab = router.query.tab;
+    if (tab === "round2") setActiveTab(1);
+    else if (tab === "round1") setActiveTab(0);
+  }, [router.isReady, router.query.tab]);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get("tab");
-    if (tabParam === "round2") {
-      setActiveTab(1);
-    } else if (tabParam === "round1") {
-      setActiveTab(0);
-    }
-    // Remove the URL parameter dependency that was causing re-renders
-  }, [event_id, router.isReady]);
-
-  useEffect(() => {
-    if (!event_id || !router.isReady) return;
-
-    const fetchTeams = async () => {
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!event_id || !tokenRef.current || !userIdRef.current) return;
+      if (!silent) setStatus("loading");
       try {
-        setLoading(true);
-        const data = await judgeApi.getJudgeTeams(
-          user.userId,
-          event_id,
-          accessToken,
-        );
-        setTeamsData(data);
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-        enqueueSnackbar("Failed to load team assignments", {
-          variant: "error",
+        const [teams, scores] = await Promise.all([
+          judgeApi.getJudgeTeams(userIdRef.current, event_id, tokenRef.current),
+          judgeApi.getJudgeScores(
+            userIdRef.current,
+            event_id,
+            tokenRef.current,
+          ),
+        ]);
+        const map = {};
+        (scores?.scores || []).forEach((s) => {
+          if (!s?.team_id || !s?.round) return;
+          map[scoreKey(s.team_id, s.round)] = {
+            scores: normalizeScores(s.scores, s.round),
+            feedback: s.feedback,
+            submitted_at: s.submitted_at,
+          };
         });
-      } finally {
-        setLoading(false);
+        setScoresByKey(map);
+        setData({
+          round1_teams: teams?.round1_teams || [],
+          round2_teams: teams?.round2_teams || [],
+          event: teams?.event || null,
+          locks: teams?.locks || null,
+        });
+        setStatus("ready");
+      } catch (err) {
+        if (silent) return; // keep what we have
+        setErrorMessage(err?.message || "Couldn't load your assignments");
+        setStatus("error");
       }
+    },
+    [event_id],
+  );
+
+  const hasToken = Boolean(accessToken);
+  const hasUser = Boolean(user?.userId);
+  useEffect(() => {
+    if (router.isReady && hasToken && hasUser) load();
+  }, [router.isReady, hasToken, hasUser, load]);
+
+  // Pick up lock changes / new assignments when the judge comes back to the
+  // tab — but never while an inline editor is open.
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      if (adjustingRef.current) return;
+      const now = Date.now();
+      if (now - lastRefocusRef.current < REFOCUS_THROTTLE_MS) return;
+      lastRefocusRef.current = now;
+      load({ silent: true });
     };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [load]);
 
-    fetchTeams();
-  }, [event_id, user.userId, accessToken, enqueueSnackbar, router.isReady]);
-
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = (_e, newValue) => {
     setActiveTab(newValue);
-
-    // Update URL parameter to persist tab selection
-    const tabParam = newValue === 1 ? "round2" : "round1";
-
-    // Use router.asPath to get the actual path with interpolated values
-    const currentPath = router.asPath.split("?")[0]; // Remove existing query params
-    router.replace(`${currentPath}?tab=${tabParam}`, undefined, {
+    setAdjustingKey(null);
+    setSaveError(null);
+    const currentPath = router.asPath.split("?")[0];
+    router.replace(`${currentPath}?tab=${ROUNDS[newValue]}`, undefined, {
       shallow: true,
     });
   };
 
-  const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  const openAdjust = (team, round) => {
+    const key = scoreKey(team.id, round);
+    setSaveError(null);
+    setAdjustingKey(key);
+    trackEvent({
+      action: "judge_inline_adjust_open",
+      params: { event_id, round, page: "judge_event" },
     });
   };
 
-  const TeamCard = ({ team, round, showDemoTime = false }) => (
-    <Grid size={{ xs: 12, md: 6 }} key={`${round}_${team.id}`}>
-      <Card
-        sx={{
-          height: "100%",
-          border: team.judged ? "2px solid" : "1px solid",
-          borderColor: team.judged ? "success.main" : "divider",
-          position: "relative",
-        }}
-      >
-        {team.judged && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              zIndex: 1,
-            }}
-          >
-            <Chip
-              icon={<CompletedIcon />}
-              label="Scored"
-              color="success"
-              size="small"
-            />
-          </Box>
-        )}
+  const closeAdjust = () => {
+    setAdjustingKey(null);
+    setSaveError(null);
+  };
 
-        <CardContent sx={{ p: 3 }}>
-          {/* Team Header */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <TeamIcon color="primary" sx={{ mr: 1 }} />
-            <Typography
-              variant="h6"
-              component="h3"
-              gutterBottom
-              sx={{ mb: 0, flexGrow: 1 }}
-            >
-              {team.name}{" "}
-              {team.slack_channel && (
-                <Tooltip title="Open Slack channel" arrow>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<TeamIcon />}
-                    onClick={() =>
-                      window.open(
-                        `https://opportunity-hack.slack.com/app_redirect?channel=${team.slack_channel}`,
-                        "_blank",
-                      )
-                    }
-                    sx={{
-                      ml: 1,
-                      textTransform: "none",
-                      minWidth: "auto",
-                      fontSize: "0.75rem",
-                      height: "24px",
-                    }}
-                  >
-                    #{team.slack_channel}
-                  </Button>
-                </Tooltip>
-              )}
-            </Typography>
-          </Box>
+  const saveAdjust = async (team, round, draftScores, feedbackString) => {
+    const key = scoreKey(team.id, round);
+    const total = calculateTotal(draftScores);
+    const payload = { ...draftScores, total };
+    const feedback = { general: feedbackString };
+    setSavingKey(key);
+    setSaveError(null);
+    try {
+      await judgeApi.submitScore(
+        userIdRef.current,
+        team.id,
+        event_id,
+        payload,
+        round,
+        tokenRef.current,
+        feedback,
+      );
+      const submittedAt = new Date().toISOString();
+      setScoresByKey((prev) => ({
+        ...prev,
+        [key]: {
+          scores: normalizeScores(payload, round),
+          feedback,
+          submitted_at: submittedAt,
+        },
+      }));
+      setData((prev) => {
+        if (!prev) return prev;
+        const listKey = `${round}_teams`;
+        return {
+          ...prev,
+          [listKey]: prev[listKey].map((t) =>
+            t.id === team.id
+              ? {
+                  ...t,
+                  judged: true,
+                  score: total,
+                  specialCategoryScores:
+                    round === "round1"
+                      ? {
+                          ...(t.specialCategoryScores || {}),
+                          accessibility: draftScores.accessibility ?? null,
+                        }
+                      : t.specialCategoryScores,
+                }
+              : t,
+          ),
+        };
+      });
+      if (adjustingRef.current === key) setAdjustingKey(null);
+      // No numbers in the toast — it's a big filled bar anyone nearby can read.
+      setToast({
+        severity: "success",
+        message: `Saved your changes for ${team.name}.`,
+      });
+      trackEvent({
+        action: "judge_inline_adjust_saved",
+        params: { event_id, round, page: "judge_event" },
+      });
+    } catch (err) {
+      if (isRoundLocked(err)) {
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                locks: {
+                  ...(prev.locks || {}),
+                  [round]: { ...(prev.locks?.[round] || {}), locked: true },
+                },
+              }
+            : prev,
+        );
+        if (adjustingRef.current === key) setAdjustingKey(null);
+        setToast({
+          severity: "warning",
+          message: `${roundLabel(round)} scoring was just closed by the organizers — your change wasn't saved.`,
+        });
+      } else {
+        const message =
+          err?.message || "Couldn't save your changes. Please try again.";
+        if (adjustingRef.current === key) {
+          setSaveError(message);
+        } else {
+          // Defensive: the editor can't normally close mid-save (buttons are
+          // disabled), but a failure must never be silent.
+          setToast({
+            severity: "error",
+            message: `Couldn't save your changes for ${team.name}: ${message}`,
+          });
+        }
+      }
+    } finally {
+      setSavingKey(null);
+    }
+  };
 
-          {/* Problem Statement */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" color="primary" gutterBottom>
-              <Button
-                component="a"
-                href={`/nonprofit/${team.problem_statement.nonprofit_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="text"
-                size="small"
-                sx={{
-                  textTransform: "none",
-                  p: 0,
-                  minWidth: "auto",
-                  fontWeight: "inherit",
-                  fontSize: "inherit",
-                  color: "primary.main",
-                  textDecoration: "underline",
-                  "&:hover": {
-                    textDecoration: "none",
-                  },
-                }}
-              >
-                {team.problem_statement.nonprofit}
-              </Button>
-            </Typography>
-          </Box>
+  const title =
+    data?.event?.title ||
+    (typeof event_id === "string" ? event_id.replace(/[_-]/g, " ") : "");
 
-          {/* Demo Time for Round 2 */}
-          {showDemoTime && team.demo_time && (
-            <Box sx={{ mb: 2 }}>
-              <Chip
-                icon={<LiveIcon />}
-                label={`Demo: ${formatDateTime(team.demo_time)}`}
-                variant="outlined"
-                color="primary"
-                size="small"
-              />
-              {team.room && (
-                <Chip
-                  label={team.room}
-                  variant="outlined"
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
-              )}
-            </Box>
-          )}
+  const counts = useMemo(() => {
+    const r1 = data?.round1_teams || [];
+    const r2 = data?.round2_teams || [];
+    const done = (teams, round) =>
+      teams.filter((t) => t.judged || scoresByKey[scoreKey(t.id, round)])
+        .length;
+    return {
+      r1: r1.length,
+      r2: r2.length,
+      r1Done: done(r1, "round1"),
+      r2Done: done(r2, "round2"),
+    };
+  }, [data, scoresByKey]);
 
-          {/* Team Members */}
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant="subtitle2"
-              gutterBottom
-              sx={{ display: "flex", alignItems: "center" }}
-            >
-              <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              Team Members ({team.members.length})
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {team.members.map((member, index) => (
-                <Tooltip key={index} title={member.role} arrow>
-                  <Chip label={member.name} size="small" variant="outlined" />
-                </Tooltip>
-              ))}
-            </Box>
-          </Box>
-
-          <Divider sx={{ mb: 2 }} />
-
-          {/* Links and Actions */}
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant="subtitle2"
-              gutterBottom
-              sx={{ color: "text.secondary", fontSize: "0.75rem" }}
-            >
-              PROJECT LINKS
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {team.github_url && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<GitHubIcon />}
-                  onClick={() => window.open(team.github_url, "_blank")}
-                  sx={{
-                    justifyContent: "flex-start",
-                    textTransform: "none",
-                    color: "text.primary",
-                    borderColor: "divider",
-                  }}
-                >
-                  GitHub Repository
-                </Button>
-              )}
-              {team.devpost_url && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<DevPostIcon />}
-                  onClick={() => window.open(team.devpost_url, "_blank")}
-                  sx={{
-                    justifyContent: "flex-start",
-                    textTransform: "none",
-                    color: "text.primary",
-                    borderColor: "divider",
-                  }}
-                >
-                  DevPost Submission
-                </Button>
-              )}
-              {round === "round1" &&
-                (team.demo_video_url || team.video_url) && (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<VideoIcon />}
-                    onClick={() =>
-                      window.open(
-                        team.demo_video_url || team.video_url,
-                        "_blank",
-                      )
-                    }
-                    sx={{
-                      justifyContent: "flex-start",
-                      textTransform: "none",
-                      color: "primary.main",
-                      borderColor: "primary.main",
-                    }}
-                  >
-                    Watch Pitch Video
-                  </Button>
-                )}
-            </Box>
-          </Box>
-
-          {/* Score Display */}
-          {team.judged && team.score && (
-            <Box sx={{ mb: 2 }}>
-              <Box
-                sx={{ p: 2, bgcolor: "success.light", borderRadius: 1, mb: 1 }}
-              >
-                <Typography variant="body2" color="success.dark">
-                  <strong>Your Score: {team.score}/40</strong>
-                </Typography>
-              </Box>
-              {round === "round1" &&
-                team.specialCategoryScores &&
-                Object.keys(team.specialCategoryScores).length > 0 && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      bgcolor: Object.values(team.specialCategoryScores).some(
-                        (score) => score === null,
-                      )
-                        ? "grey.100"
-                        : "warning.light",
-                      borderRadius: 1,
-                      border: "1px solid",
-                      borderColor: Object.values(
-                        team.specialCategoryScores,
-                      ).some((score) => score === null)
-                        ? "grey.400"
-                        : "warning.main",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      color={
-                        Object.values(team.specialCategoryScores).some(
-                          (score) => score === null,
-                        )
-                          ? "text.secondary"
-                          : "warning.dark"
-                      }
-                      sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
-                    >
-                      Special Category
-                    </Typography>
-                    {Object.entries(team.specialCategoryScores).map(
-                      ([category, score]) => (
-                        <Box
-                          key={category}
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography
-                            variant="body2"
-                            color={
-                              score === null ? "text.secondary" : "warning.dark"
-                            }
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {category.charAt(0).toUpperCase() +
-                              category.slice(1)}
-                            :
-                          </Typography>
-                          {score === null ? (
-                            <Chip
-                              label="Not scored yet"
-                              size="small"
-                              variant="outlined"
-                              color="default"
-                              sx={{ height: 20, fontSize: "0.7rem" }}
-                            />
-                          ) : (
-                            <Typography
-                              variant="body2"
-                              color="warning.dark"
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {score}/5
-                            </Typography>
-                          )}
-                        </Box>
-                      ),
-                    )}
-                  </Box>
-                )}
-            </Box>
-          )}
-
-          {/* Action Button */}
-          <Button
-            variant={team.judged ? "outlined" : "contained"}
-            fullWidth
-            startIcon={<JudgeIcon />}
-            onClick={() =>
-              router.push(`/judge/${event_id}/team/${team.id}?round=${round}`)
-            }
-          >
-            {team.judged ? "Review Score" : "Score Team"}
-          </Button>
-        </CardContent>
-      </Card>
-    </Grid>
-  );
-
-  if (loading) {
+  const renderRound = (round) => {
+    const teams = data?.[`${round}_teams`] || [];
+    const locked = Boolean(data?.locks?.[round]?.locked);
+    const done = round === "round1" ? counts.r1Done : counts.r2Done;
+    const copy = ROUND_COPY[round];
     return (
-      <Container maxWidth="lg">
-        <Box
-          sx={{
+      <section aria-labelledby={`${round}-heading`} style={{ marginTop: 28 }}>
+        <div
+          style={{
             display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "50vh",
+            flexWrap: "wrap",
+            alignItems: "baseline",
+            gap: 12,
           }}
         >
-          <CircularProgress />
-        </Box>
-      </Container>
+          <h2
+            id={`${round}-heading`}
+            className="ohx-display"
+            style={{ fontSize: 24 }}
+          >
+            {copy.title}
+            <span style={{ color: "var(--muted)", fontWeight: 400 }}>
+              {" "}
+              · {done} of {teams.length} scored
+            </span>
+          </h2>
+          {locked && <span className="ohx-tag">Scoring closed</span>}
+          {round === "round2" && !locked && (
+            <span className="ohx-tag">Live demos</span>
+          )}
+        </div>
+        <p className="ohx-lead" style={{ marginTop: 8, maxWidth: "60ch" }}>
+          {copy.blurb}
+        </p>
+
+        {locked && (
+          <div
+            className="ohx-card"
+            role="status"
+            style={{
+              marginTop: 16,
+              padding: "14px 18px",
+              background: "var(--surface-2)",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 14 }}>
+              <strong>{copy.title} scoring is closed.</strong> The organizers
+              have locked this round, so scores can no longer be changed. You
+              can still open any team to review what you submitted.
+            </p>
+          </div>
+        )}
+
+        {teams.length === 0 ? (
+          <div className="ohx-card" style={{ marginTop: 20, padding: 24 }}>
+            <p style={{ margin: 0, fontSize: 15 }}>
+              You have no teams assigned for {copy.title} yet.
+            </p>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontSize: 13.5,
+                color: "var(--muted)",
+              }}
+            >
+              Organizers assign teams shortly before judging starts. If you
+              expected teams here, ask in the judges channel on Slack.
+            </p>
+          </div>
+        ) : (
+          <div style={gridStyle}>
+            {teams.map((team) => {
+              const key = scoreKey(team.id, round);
+              return (
+                <JudgeTeamCard
+                  key={key}
+                  team={team}
+                  round={round}
+                  eventId={event_id}
+                  scoreEntry={scoresByKey[key] || null}
+                  locked={locked}
+                  isAdjusting={adjustingKey === key}
+                  onOpenAdjust={() => openAdjust(team, round)}
+                  onCloseAdjust={closeAdjust}
+                  onSaveAdjust={(draft, fb) =>
+                    saveAdjust(team, round, draft, fb)
+                  }
+                  saving={savingKey === key}
+                  anySaving={Boolean(savingKey)}
+                  saveError={adjustingKey === key ? saveError : null}
+                  onWatchVideo={(url, name) => setVideo({ url, title: name })}
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
     );
-  }
-
-  if (!teamsData) {
-    return (
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12 }}>
-          <Alert severity="error">
-            Failed to load team assignments. Please refresh the page or contact
-            support.
-          </Alert>
-        </Box>
-      </Container>
-    );
-  }
-
-  const round1Teams = teamsData.round1_teams || [];
-  const round2Teams = teamsData.round2_teams || [];
-  const round1Completed = round1Teams.filter((team) => team.judged).length;
-  const round2Completed = round2Teams.filter((team) => team.judged).length;
-
-  console.log("Round 1 Teams:", round1Teams);
-  console.log("Round 2 Teams:", round2Teams);
+  };
 
   return (
     <>
       <Head>
-        <title>{`Judging ${event_id} - Opportunity Hack`}</title>
+        <title>{`Judging ${title || ""} - Opportunity Hack`}</title>
+        <meta name="robots" content="noindex, nofollow" />
         <meta
           name="description"
-          content="Judge hackathon teams and evaluate their innovative solutions"
+          content="Score your assigned hackathon teams against the Opportunity Hack judging criteria."
         />
       </Head>
 
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 12, mb: 4 }}>
-          {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-            <IconButton onClick={() => router.push("/judge")} sx={{ mr: 2 }}>
-              <BackIcon />
-            </IconButton>
-            <div>
-              <Typography
-                variant="h4"
-                component="h1"
-                gutterBottom
-                sx={{ mb: 1 }}
+      <ThemeProvider theme={judgeTheme}>
+        <RefinedRoot>
+          <section className="ohx-wrap" style={judgeSectionStyle}>
+            <Link href="/judge" className="ohx-link" style={{ fontSize: 13 }}>
+              ← All judging assignments
+            </Link>
+
+            <header style={{ marginTop: 18 }}>
+              <Eyebrow>Judging</Eyebrow>
+              <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                {title || "Hackathon"}
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ marginTop: 12, maxWidth: "58ch" }}
               >
-                Judging {event_id.replace("_", " ").toUpperCase()}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Review and score the assigned teams for each judging round
-              </Typography>
+                Score each assigned team against the four criteria. You can
+                adjust a score from this page any time before the round is
+                locked — nothing changes until you press Save.
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "16px 40px",
+                  marginTop: 22,
+                  paddingTop: 18,
+                  borderTop: "1px solid var(--line)",
+                  minHeight: 54,
+                }}
+              >
+                <Stat
+                  value={status === "ready" ? counts.r1 : "–"}
+                  label="Round 1 teams"
+                />
+                <Stat
+                  value={status === "ready" ? counts.r2 : "–"}
+                  label="Round 2 teams"
+                />
+                <Stat
+                  value={
+                    status === "ready" ? counts.r1Done + counts.r2Done : "–"
+                  }
+                  label="Scored"
+                />
+              </div>
+            </header>
+
+            <div
+              style={{ borderBottom: "1px solid var(--line)", marginTop: 24 }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                aria-label="Judging rounds"
+              >
+                <Tab
+                  id="tab-round1"
+                  aria-controls={activeTab === 0 ? "judging-panel" : undefined}
+                  label={`Round 1${status === "ready" ? ` (${counts.r1Done}/${counts.r1})` : ""}`}
+                />
+                <Tab
+                  id="tab-round2"
+                  aria-controls={activeTab === 1 ? "judging-panel" : undefined}
+                  label={`Round 2${status === "ready" ? ` (${counts.r2Done}/${counts.r2})` : ""}`}
+                />
+              </Tabs>
             </div>
-          </Box>
 
-          {/* Summary Stats */}
-          <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h3" color="primary">
-                    {round1Teams.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Round 1 Teams
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h3" color="secondary">
-                    {round2Teams.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Round 2 Teams
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h3" color="success.main">
-                    {round1Completed + round2Completed}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Teams Scored
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Paper>
+            {status === "loading" && (
+              <div
+                style={gridStyle}
+                aria-busy="true"
+                aria-label="Loading your teams"
+              >
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+              </div>
+            )}
 
-          {/* Round Tabs */}
-          <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-            <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tab
-                label={
-                  <Badge
-                    badgeContent={round1Teams.length - round1Completed}
-                    color="error"
-                    invisible={round1Completed === round1Teams.length}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <VideoIcon sx={{ mr: 1 }} />
-                      Round 1
-                    </Box>
-                  </Badge>
-                }
-              />
-              <Tab
-                label={
-                  <Badge
-                    badgeContent={round2Teams.length - round2Completed}
-                    color="error"
-                    invisible={round2Completed === round2Teams.length}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <LiveIcon sx={{ mr: 1 }} />
-                      Round 2
-                    </Box>
-                  </Badge>
-                }
-              />
-            </Tabs>
-          </Box>
+            {status === "error" && (
+              <div
+                className="ohx-card"
+                role="alert"
+                style={{ marginTop: 24, padding: 24 }}
+              >
+                <p style={{ margin: 0, fontWeight: 600 }}>
+                  We couldn't load your assignments.
+                </p>
+                <p
+                  style={{
+                    margin: "6px 0 14px",
+                    fontSize: 14,
+                    color: "var(--muted)",
+                  }}
+                >
+                  {errorMessage}
+                </p>
+                <button
+                  type="button"
+                  className="ohx-btn ohx-btn--primary"
+                  onClick={() => load()}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
 
-          {/* Round 1 Teams */}
-          {activeTab === 0 && (
-            <Box>
-              {round1Teams.length === 0 ? (
-                <Alert severity="info">
-                  You have no teams assigned for Round 1 judging.
-                </Alert>
-              ) : (
-                <>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 3,
-                    }}
-                  >
-                    <Typography variant="h5">
-                      Round 1 Teams ({round1Completed}/{round1Teams.length}{" "}
-                      completed)
-                    </Typography>
-                  </Box>
-                  <Grid container spacing={3}>
-                    {round1Teams.map((team) => (
-                      <TeamCard key={team.id} team={team} round="round1" />
-                    ))}
-                  </Grid>
-                </>
-              )}
-            </Box>
-          )}
+            {status === "ready" && (
+              <div
+                id="judging-panel"
+                role="tabpanel"
+                aria-labelledby={`tab-${ROUNDS[activeTab]}`}
+              >
+                {renderRound(ROUNDS[activeTab])}
+              </div>
+            )}
+          </section>
+        </RefinedRoot>
 
-          {/* Round 2 Teams */}
-          {activeTab === 1 && (
-            <Box>
-              {round2Teams.length === 0 ? (
-                <Alert severity="info">
-                  You have no teams assigned for Round 2 judging.
-                </Alert>
-              ) : (
-                <>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 3,
-                    }}
-                  >
-                    <Typography variant="h5">
-                      Round 2 Finalist Teams ({round2Completed}/
-                      {round2Teams.length} completed)
-                    </Typography>
-                    <Chip
-                      label="Live Demos"
-                      icon={<LiveIcon />}
-                      color="secondary"
-                      variant="outlined"
-                    />
-                  </Box>
-                  <Grid container spacing={3}>
-                    {round2Teams.map((team) => (
-                      <TeamCard
-                        key={team.id}
-                        team={team}
-                        round="round2"
-                        showDemoTime={true}
-                      />
-                    ))}
-                  </Grid>
-                </>
-              )}
-            </Box>
-          )}
-        </Box>
-      </Container>
+        <Dialog
+          open={Boolean(video)}
+          onClose={() => setVideo(null)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ pr: 6 }}>
+            {video?.title ? `Demo — ${video.title}` : "Demo video"}
+            <IconButton
+              aria-label="Close"
+              onClick={() => setVideo(null)}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            {video?.url && <VideoDisplay url={video.url} title="" />}
+          </DialogContent>
+        </Dialog>
+
+        <Snackbar
+          open={Boolean(toast)}
+          autoHideDuration={5000}
+          onClose={() => setToast(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setToast(null)}
+            severity={toast?.severity || "info"}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {toast?.message}
+          </Alert>
+        </Snackbar>
+      </ThemeProvider>
     </>
   );
 });

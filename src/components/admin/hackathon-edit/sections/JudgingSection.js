@@ -65,8 +65,13 @@ const JudgingSection = ({ admin, accessToken, orgId, onSnack }) => {
     );
   }
 
+  // onSnack: the admin host page's snackbar. There is no notistack provider
+  // in the app, so the tabs' own enqueueSnackbar calls render nothing —
+  // every user-facing toast must go through this.
   const shared = {
     orgId,
+    accessToken,
+    onSnack,
     hackathons,
     selectedHackathon: eventId,
     setSelectedHackathon: noopSetSelected,

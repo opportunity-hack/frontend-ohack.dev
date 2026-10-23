@@ -209,6 +209,74 @@ export const RefinedRoot = styled("main")(({ theme }) => ({
     borderColor: "#f3d3c7",
   },
 
+  // --- Long-form prose (legal pages, articles, "why" essays) ---
+  // One class instead of per-page Typography sx: Fraunces headings, calm
+  // measure, accent list markers, navy links. px on purpose (see CLAUDE.md).
+  "& .ohx-prose": { maxWidth: "70ch", fontSize: "17px", lineHeight: 1.65 },
+  "& .ohx-prose h2": {
+    fontFamily: "var(--display)",
+    fontWeight: 500,
+    fontSize: "clamp(22px, 3vw, 28px)",
+    lineHeight: 1.15,
+    letterSpacing: "-0.01em",
+    margin: "40px 0 12px",
+  },
+  "& .ohx-prose h3": {
+    fontFamily: "var(--display)",
+    fontWeight: 500,
+    fontSize: "20px",
+    lineHeight: 1.2,
+    margin: "28px 0 8px",
+  },
+  "& .ohx-prose h2:first-child, & .ohx-prose h3:first-child": { marginTop: 0 },
+  "& .ohx-prose p": { margin: "0 0 16px" },
+  "& .ohx-prose ul, & .ohx-prose ol": { paddingLeft: 22, margin: "0 0 16px" },
+  "& .ohx-prose li": { marginBottom: 6 },
+  "& .ohx-prose li::marker": { color: "var(--accent)" },
+  "& .ohx-prose a": {
+    color: "var(--brand)",
+    fontWeight: 600,
+    textDecoration: "underline",
+    textDecorationColor: "#d5cdbd",
+    textUnderlineOffset: 3,
+  },
+  "& .ohx-prose a:hover": { textDecorationColor: "var(--accent)" },
+  "& .ohx-prose strong": { fontWeight: 600 },
+  // MUI Typography bodies (the /about/why articles) inherit the same scale.
+  "& .ohx-prose .MuiTypography-h4, & .ohx-prose .MuiTypography-h5": {
+    fontFamily: "var(--display)",
+    fontWeight: 500,
+    fontSize: "clamp(22px, 3vw, 28px)",
+    lineHeight: 1.15,
+    letterSpacing: "-0.01em",
+    color: "var(--ink)",
+    margin: "40px 0 12px",
+  },
+  "& .ohx-prose .MuiTypography-h6": {
+    fontFamily: "var(--display)",
+    fontWeight: 500,
+    fontSize: "20px",
+    lineHeight: 1.2,
+    color: "var(--ink)",
+    margin: "28px 0 8px",
+  },
+  "& .ohx-prose .MuiTypography-body1, & .ohx-prose .MuiTypography-body2": {
+    fontSize: "17px",
+    lineHeight: 1.65,
+    color: "var(--ink)",
+  },
+  "& .ohx-prose .MuiTypography-paragraph": { marginBottom: 16 },
+  "& .ohx-prose .MuiListItem-root .MuiTypography-paragraph": {
+    marginBottom: 0,
+  },
+  "& .ohx-prose .MuiSvgIcon-colorPrimary": { color: "var(--brand)" },
+  "& .ohx-prose blockquote": {
+    margin: "0 0 16px",
+    padding: "4px 0 4px 18px",
+    borderLeft: "2px solid var(--accent)",
+    color: "var(--muted)",
+  },
+
   // --- Sponsor logos: desaturated until hovered (classic restrained move) ---
   "& .ohx-sponsors img": {
     filter: "grayscale(1)",

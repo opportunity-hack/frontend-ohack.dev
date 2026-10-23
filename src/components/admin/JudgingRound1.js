@@ -48,6 +48,8 @@ import { useAuthInfo } from '@propelauth/react';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
 import ExportCsvButton from './ExportCsvButton';
+import judgeApi, { isNotFound } from '../../lib/judgeApi';
+import JudgeProgressPanel from './judging/JudgeProgressPanel';
 
 const judgeDisplayName = (j) => j?.name || [j?.firstName, j?.lastName].filter(Boolean).join(' ');
 
@@ -68,9 +70,52 @@ const panelCsvColumns = (nonprofitNames) => [
   },
 ];
 
-const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon }) => {
+const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackathon, onSnack }) => {
   const { accessToken } = useAuthInfo();
   const { enqueueSnackbar } = useSnackbar();
+  // The app has no notistack provider, so enqueueSnackbar alone renders
+  // nothing — mirror every toast to the admin host page's snackbar.
+  const notify = useCallback((message, options = {}) => {
+    enqueueSnackbar(message, options);
+    if (typeof onSnack === 'function') onSnack(message, options.variant || 'info');
+  }, [enqueueSnackbar, onSnack]);
+  // Bumped after any assignment change so the progress panel refetches.
+  const [progressRefreshKey, setProgressRefreshKey] = useState(0);
+
+  // Create every (judge × team) pair for a panel in ONE request. `replace`
+  // makes the panel's Round 1 pairs EQUAL the cross product (prunes removed
+  // judges/teams). Falls back to the per-pair loop only when the backend
+  // predates the bulk route. Scores are never touched.
+  const createAssignments = useCallback(async ({ panelId, judgeIds, teamIds, room, replace = false }) => {
+    const cleanJudges = (judgeIds || []).filter(Boolean);
+    const cleanTeams = (teamIds || []).filter(Boolean);
+    try {
+      const result = await judgeApi.bulkAssign({
+        event_id: selectedHackathon,
+        round: 'round1',
+        panel_id: panelId,
+        judge_ids: cleanJudges,
+        team_ids: cleanTeams,
+        room: room || null,
+        replace,
+      }, accessToken, orgId);
+      setProgressRefreshKey((k) => k + 1);
+      return result;
+    } catch (err) {
+      if (!isNotFound(err)) throw err;
+    }
+    for (const judgeId of cleanJudges) {
+      for (const teamId of cleanTeams) {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
+          { judge_id: judgeId, event_id: selectedHackathon, team_id: teamId, round: 'round1', panel_id: panelId, room: room || null },
+          { headers: { Authorization: `Bearer ${accessToken}`, "X-Org-Id": orgId, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    setProgressRefreshKey((k) => k + 1);
+    return { created: cleanJudges.length * cleanTeams.length, kept: 0, removed: 0, total: cleanJudges.length * cleanTeams.length };
+  }, [selectedHackathon, accessToken, orgId]);
   
   const [loading, setLoading] = useState(false);
   const [judges, setJudges] = useState([]);
@@ -279,13 +324,13 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       
     } catch (error) {
       console.error('Error fetching data:', error);
-      enqueueSnackbar('Failed to fetch judging data', { variant: 'error' });
+      notify('Failed to fetch judging data', { variant: 'error' });
       setLoadingJudges(false);
       setLoadingTeams(false);
     } finally {
       setLoading(false);
     }
-  }, [selectedHackathon, accessToken, orgId, selectedHackathonData, enqueueSnackbar, fetchNonprofitNames]);
+  }, [selectedHackathon, accessToken, orgId, selectedHackathonData, notify, fetchNonprofitNames]);
 
   // Only fetch data when hackathon changes, not when internal state changes
   useEffect(() => {
@@ -328,10 +373,10 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       );
       
       setJudgeGroups(judgeGroups.filter(group => group.id !== groupId));
-      enqueueSnackbar('Panel deleted successfully', { variant: 'success' });
+      notify('Panel deleted successfully', { variant: 'success' });
     } catch (error) {
       console.error('Error deleting panel:', error);
-      enqueueSnackbar('Failed to delete panel', { variant: 'error' });
+      notify('Failed to delete panel', { variant: 'error' });
     }
   };
 
@@ -388,38 +433,19 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         ));
       } catch (error) {
         console.error('Error creating panel:', error);
-        enqueueSnackbar('Failed to create panel', { variant: 'error' });
+        notify('Failed to create panel', { variant: 'error' });
         return;
       }
     }
 
-    // Create assignments for all teams in the panel
+    // Create assignments for all teams in the panel (one request)
     if (group.teams.length > 0) {
       try {
-        for (const team of group.teams) {
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
-            {
-              judge_id: judge.user_id,
-              event_id: selectedHackathon,
-              team_id: team.id,
-              round: 'round1',
-              panel_id: panelId,
-              room: group.room || null
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "X-Org-Id": orgId,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-        }
-        enqueueSnackbar('Judge assigned successfully', { variant: 'success' });
+        await createAssignments({ panelId, judgeIds: [judge.user_id], teamIds: group.teams.map((t) => t.id), room: group.room });
+        notify('Judge assigned successfully', { variant: 'success' });
       } catch (error) {
         console.error('Error creating judge assignments:', error);
-        enqueueSnackbar('Failed to assign judge', { variant: 'error' });
+        notify('Failed to assign judge', { variant: 'error' });
         return;
       }
     }
@@ -456,10 +482,10 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             }
           );
         }
-        enqueueSnackbar('Judge removed successfully', { variant: 'success' });
+        notify('Judge removed successfully', { variant: 'success' });
       } catch (error) {
         console.error('Error removing judge assignments:', error);
-        enqueueSnackbar('Failed to remove judge', { variant: 'error' });
+        notify('Failed to remove judge', { variant: 'error' });
         return;
       }
     }
@@ -492,43 +518,18 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       try {
         // Check if group has judges
         if (group.judges.length === 0) {
-          enqueueSnackbar('Cannot assign team - no judges in this panel', { variant: 'warning' });
+          notify('Cannot assign team - no judges in this panel', { variant: 'warning' });
           return;
         }
         
-        // Create assignments for each judge in the panel
-        for (const judge of group.judges) {
-          const judgeId = judge.user_id || judge.id || judge.judge_id;
-          
-          if (!judgeId) {
-            console.error('No valid judge ID found for judge:', judge);
-            continue;
-          }
-          
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
-            {
-              judge_id: judgeId,
-              event_id: selectedHackathon,
-              team_id: teamId,
-              round: 'round1',
-              panel_id: group.panel_id,
-              room: group.room || null
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "X-Org-Id": orgId,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-        }
-        enqueueSnackbar('Team assigned successfully', { variant: 'success' });
+        // Create assignments for each judge in the panel (one request)
+        const judgeIds = group.judges.map((j) => j.user_id || j.id || j.judge_id).filter(Boolean);
+        await createAssignments({ panelId: group.panel_id, judgeIds, teamIds: [teamId], room: group.room });
+        notify('Team assigned successfully', { variant: 'success' });
       } catch (error) {
         console.error('Error creating team assignments:', error);
         console.error('Error details:', error.response?.data);
-        enqueueSnackbar('Failed to assign team', { variant: 'error' });
+        notify('Failed to assign team', { variant: 'error' });
         return;
       }
     }
@@ -565,10 +566,10 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
             }
           );
         }
-        enqueueSnackbar('Team removed successfully', { variant: 'success' });
+        notify('Team removed successfully', { variant: 'success' });
       } catch (error) {
         console.error('Error removing team assignments:', error);
-        enqueueSnackbar('Failed to remove team', { variant: 'error' });
+        notify('Failed to remove team', { variant: 'error' });
         return;
       }
     }
@@ -711,11 +712,12 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   // Save judge panel assignments to backend
   const saveJudgeAssignments = async () => {
     if (!selectedHackathon || judgeGroups.length === 0) {
-      enqueueSnackbar('No assignments to save', { variant: 'warning' });
+      notify('No assignments to save', { variant: 'warning' });
       return;
     }
 
     setSaving(true);
+    const skipped = [];
     try {
       // First, create/update panels (without judge data)
       for (const group of judgeGroups) {
@@ -769,39 +771,37 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         ));
         }
 
-          // Create judge assignments for this panel
-          for (const judge of group.judges) {
-            for (const team of group.teams) {
-              await axios.post(
-                `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/judge/assignments`,
-                {
-                  judge_id: judge.user_id, // Use user_id consistently
-                  event_id: selectedHackathon,
-                  team_id: team.id,
-                  round: 'round1',
-                  panel_id: panelId,
-                  room: group.room || null
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "X-Org-Id": orgId,
-                    'Content-Type': 'application/json',
-                  },
-                }
-              );
-            }
+          // A panel with no judges or no teams has nothing to assign — and a
+          // replace with an empty set would wipe it, so skip it on purpose.
+          if (group.judges.length === 0 || group.teams.length === 0) {
+            skipped.push(group.name);
+            continue;
           }
+
+          // Judges × teams for this panel in ONE request; replace:true makes
+          // the backend's set match what's on screen (removed pairs pruned).
+          await createAssignments({
+            panelId,
+            judgeIds: group.judges.map((j) => j.user_id || j.id || j.judge_id),
+            teamIds: group.teams.map((t) => t.id),
+            room: group.room,
+            replace: true,
+          });
         } catch (error) {
           console.error(`Error saving panel ${group.name}:`, error);
           throw error;
         }
       }
 
-      enqueueSnackbar('Judge assignments saved successfully!', { variant: 'success' });
+      notify(
+        skipped.length
+          ? `Judge assignments saved. Skipped ${skipped.join(', ')} (needs at least one judge and one team).`
+          : 'Judge assignments saved successfully!',
+        { variant: skipped.length ? 'warning' : 'success' }
+      );
     } catch (error) {
       console.error('Error saving judge assignments:', error);
-      enqueueSnackbar('Failed to save judge assignments', { variant: 'error' });
+      notify('Failed to save judge assignments', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -832,9 +832,13 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
         // Exclude panels with a null panel_id
         const validPanels = panels.filter(panel => panel.panel_name && panel.panel_id);
         
-        // Step 2: For each panel, load assignments and judge details
-        for (const panel of validPanels) {
-          const assignments = await fetchPanelAssignments(panel.id);
+        // Step 2: load every panel's assignments in parallel, then resolve
+        // judges from the already-loaded judge list (one network call per
+        // judge only when a judge isn't in it any more).
+        const assignmentsByPanel = await Promise.all(validPanels.map((panel) => fetchPanelAssignments(panel.id)));
+        for (let i = 0; i < validPanels.length; i += 1) {
+          const panel = validPanels[i];
+          const assignments = assignmentsByPanel[i] || [];
           
           // Group assignments by judge and team
           const judgeMap = new Map();
@@ -843,7 +847,8 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
           for (const assignment of assignments) {
             // Collect unique judges
             if (!judgeMap.has(assignment.judge_id)) {
-              const judgeDetails = await fetchJudgeDetails(assignment.judge_id);
+              const known = judges.find((j) => j.user_id === assignment.judge_id);
+              const judgeDetails = known ? { ...known } : await fetchJudgeDetails(assignment.judge_id);
               if (judgeDetails) {
                 // Ensure the judge has user_id field for consistency
                 if (!judgeDetails.user_id) {
@@ -885,7 +890,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     } finally {
       setLoadingPanels(false);
     }
-  }, [selectedHackathon, accessToken, orgId, fetchPanelAssignments, fetchJudgeDetails, teams]);
+  }, [selectedHackathon, accessToken, orgId, fetchPanelAssignments, fetchJudgeDetails, teams, judges]);
 
   // Load existing assignments after initial data is loaded
   useEffect(() => {
@@ -1167,6 +1172,23 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               )}
             </CardContent>
           </Card>
+
+          {/* Who has sent in Round 1 scores, who hasn't, and the round lock. */}
+          <Accordion defaultExpanded sx={{ mb: 4 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6">Round 1 scoring progress &amp; lock</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <JudgeProgressPanel
+                refreshSignal={progressRefreshKey}
+                eventId={selectedHackathon}
+                round="round1"
+                accessToken={accessToken}
+                orgId={orgId}
+                onSnack={onSnack}
+              />
+            </AccordionDetails>
+          </Accordion>
 
           {/* Judge Groups */}
           <Typography variant="h5" gutterBottom>
