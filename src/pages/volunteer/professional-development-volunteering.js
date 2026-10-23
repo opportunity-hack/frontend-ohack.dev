@@ -1,736 +1,859 @@
-import React from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Button, 
-  Chip,
-  LinearProgress,
-  Avatar,
-  useTheme,
-  useMediaQuery,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
-} from '@mui/material';
-import { 
-  TrendingUp as TrendingUpIcon,
-  Psychology as PsychologyIcon,
+import React from "react";
+import Head from "next/head";
+import Link from "next/link";
+import Image from "next/image";
+import {
   Group as GroupIcon,
   Campaign as CampaignIcon,
   Analytics as AnalyticsIcon,
-  Engineering as EngineeringIcon,
-  Security as SecurityIcon,
   Cloud as CloudIcon,
-  CheckCircle as CheckCircleIcon,
   EmojiEvents as TrophyIcon,
   Business as BusinessIcon,
-  School as SchoolIcon
-} from '@mui/icons-material';
+  School as SchoolIcon,
+} from "@mui/icons-material";
+import { RefinedRoot, Eyebrow, Arrow } from "../../components/design/refined";
+
+// Canonical host is www.ohack.dev (the old page pointed at
+// www.opportunityhack.org, which isn't where this page lives).
+const CANONICAL =
+  "https://www.ohack.dev/volunteer/professional-development-volunteering";
+const HERO_PHOTO =
+  "https://cdn.ohack.dev/hackathons/2025_fall/photos/1781122606757_IMG_9788.JPG";
+
+const SOFT_SKILLS = [
+  {
+    skill: "Analytical Thinking",
+    salaryBoost: "15-20%",
+    description:
+      "Problem decomposition, data interpretation, evidence-based decision making",
+    demandRank: "#1 Most Critical Skill",
+    icon: <AnalyticsIcon fontSize="inherit" />,
+  },
+  {
+    skill: "Leadership & Project Management",
+    salaryBoost: "112%",
+    description: "Team coordination, resource management, strategic planning",
+    demandRank: "PMP: $122K median vs $93K",
+    icon: <GroupIcon fontSize="inherit" />,
+  },
+  {
+    skill: "Communication & Emotional Intelligence",
+    salaryBoost: "$1,300/EQ point",
+    description:
+      "Technical writing, stakeholder management, cross-functional collaboration",
+    demandRank: "90% of top performers have high EQ",
+    icon: <CampaignIcon fontSize="inherit" />,
+  },
+  {
+    skill: "Technology Integration",
+    salaryBoost: "17.7%",
+    description:
+      "AI workflow design, cloud platform knowledge, digital transformation",
+    demandRank: "DevOps: $120K-$200K salaries",
+    icon: <CloudIcon fontSize="inherit" />,
+  },
+];
+
+const VOLUNTEER_SKILLS = [
+  {
+    category: "Project Management",
+    skills: [
+      "Agile methodology",
+      "Resource planning",
+      "Timeline management",
+      "Risk assessment",
+    ],
+    realWorldValue:
+      "PMP certification equivalent experience worth $30,000+ salary increase",
+  },
+  {
+    category: "Technical Leadership",
+    skills: [
+      "Architecture decisions",
+      "Code reviews",
+      "Mentoring developers",
+      "Technology selection",
+    ],
+    realWorldValue:
+      "Senior developer pathway with $25,000+ annual advancement potential",
+  },
+  {
+    category: "Business Analysis",
+    skills: [
+      "Requirements gathering",
+      "Stakeholder management",
+      "Process optimization",
+      "ROI analysis",
+    ],
+    realWorldValue:
+      "Business analyst roles starting at $75,000-$95,000 annually",
+  },
+  {
+    category: "Communication & Training",
+    skills: [
+      "Technical documentation",
+      "User training",
+      "Presentation skills",
+      "Cross-team collaboration",
+    ],
+    realWorldValue:
+      "Technical writing roles at $91,670 median, up to $130,000+ specialized",
+  },
+];
+
+const CAREER_STATS = [
+  {
+    label: "Salary Premium",
+    value: "20-50%",
+    subtext: "For combined technical + soft skills",
+  },
+  {
+    label: "Career Advancement",
+    value: "2-4x faster",
+    subtext: "Compared to technical-only professionals",
+  },
+  {
+    label: "EQ Salary Impact",
+    value: "$29,000",
+    subtext: "Higher annual earnings for high-EQ professionals",
+  },
+  {
+    label: "Top Performer Rate",
+    value: "90%",
+    subtext: "Have high emotional intelligence",
+  },
+];
+
+const CERTIFICATION_ROI = [
+  {
+    certification: "AWS Solutions Architect",
+    cost: "$150-$400",
+    salaryIncrease: "$15,000-$30,000",
+    paybackTime: "1-3 months",
+    avgSalary: "$155,597",
+  },
+  {
+    certification: "Project Management (PMP)",
+    cost: "$2,555-$3,305",
+    salaryIncrease: "22% increase",
+    paybackTime: "6 months",
+    avgSalary: "$122,000",
+  },
+  {
+    certification: "Cybersecurity (CISSP)",
+    cost: "$749-$1,200",
+    salaryIncrease: "$25,000-$35,000",
+    paybackTime: "2-4 months",
+    avgSalary: "$168,060",
+  },
+];
+
+const WHY_OHACK = [
+  {
+    icon: <BusinessIcon fontSize="inherit" />,
+    title: "Real Business Impact",
+    body: "Lead projects with measurable outcomes for real nonprofits. Build a portfolio of business impact that demonstrates ROI to employers.",
+  },
+  {
+    icon: <SchoolIcon fontSize="inherit" />,
+    title: "Expert Mentorship",
+    body: "Work with senior professionals from top companies. Get career guidance, skill feedback, and professional references.",
+  },
+  {
+    icon: <TrophyIcon fontSize="inherit" />,
+    title: "Accelerated Learning",
+    body: "Compress years of learning into intensive weekend experiences. Apply skills immediately in a high-pressure, collaborative environment.",
+  },
+];
+
+const SUCCESS_METRICS = [
+  {
+    value: "94%",
+    label: "Career Advancement",
+    body: "Of volunteers report faster promotion or job opportunities within 12 months",
+  },
+  {
+    value: "$18K",
+    label: "Average Salary Increase",
+    body: "Annual compensation improvement within 18 months of volunteering",
+  },
+  {
+    value: "87%",
+    label: "Leadership Roles",
+    body: "Move into team lead or management positions within 2 years",
+  },
+];
+
+const SUCCESS_STORIES = [
+  {
+    name: "Alex, Project Manager",
+    quote:
+      "Led 4 hackathon projects as volunteer PM. Earned PMP certification and promoted to Senior PM within 8 months.",
+    path: "Non-profit → Tech company PM",
+  },
+  {
+    name: "Maria, Business Analyst",
+    quote:
+      "Mentored teams in requirements gathering. Transitioned from customer service to BA role at Fortune 500 company.",
+    path: "Customer service → Business Analyst",
+  },
+  {
+    name: "David, Team Lead",
+    quote:
+      "Coordinated cross-functional teams in 6 hackathons. Promoted to Engineering Team Lead with 8 direct reports.",
+    path: "Developer → Engineering Team Lead",
+  },
+];
+
+const card = {
+  background: "var(--surface)",
+  border: "1px solid var(--line)",
+  borderRadius: 10,
+  padding: "26px 24px",
+};
+
+const iconWrap = {
+  fontSize: 26,
+  color: "var(--brand)",
+  display: "inline-flex",
+  marginBottom: 14,
+};
+
+const bandStyle = {
+  background: "var(--surface-2)",
+  borderTop: "1px solid var(--line)",
+  borderBottom: "1px solid var(--line)",
+};
+
+const sectionPad = {
+  paddingTop: "clamp(48px, 8vh, 88px)",
+  paddingBottom: "clamp(48px, 8vh, 88px)",
+};
 
 const ProfessionalDevelopmentVolunteering = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const softSkills = [
-    {
-      skill: "Analytical Thinking",
-      salaryBoost: "15-20%",
-      description: "Problem decomposition, data interpretation, evidence-based decision making",
-      demandRank: "#1 Most Critical Skill",
-      color: "#667eea",
-      icon: <AnalyticsIcon />
-    },
-    {
-      skill: "Leadership & Project Management",
-      salaryBoost: "112%",
-      description: "Team coordination, resource management, strategic planning",
-      demandRank: "PMP: $122K median vs $93K",
-      color: "#f093fb",
-      icon: <GroupIcon />
-    },
-    {
-      skill: "Communication & Emotional Intelligence",
-      salaryBoost: "$1,300/EQ point",
-      description: "Technical writing, stakeholder management, cross-functional collaboration",
-      demandRank: "90% of top performers have high EQ",
-      color: "#4facfe",
-      icon: <CampaignIcon />
-    },
-    {
-      skill: "Technology Integration",
-      salaryBoost: "17.7%",
-      description: "AI workflow design, cloud platform knowledge, digital transformation",
-      demandRank: "DevOps: $120K-$200K salaries",
-      color: "#38a169",
-      icon: <CloudIcon />
-    }
-  ];
-
-  const volunteerSkills = [
-    {
-      category: "Project Management",
-      skills: ["Agile methodology", "Resource planning", "Timeline management", "Risk assessment"],
-      realWorldValue: "PMP certification equivalent experience worth $30,000+ salary increase"
-    },
-    {
-      category: "Technical Leadership",
-      skills: ["Architecture decisions", "Code reviews", "Mentoring developers", "Technology selection"],
-      realWorldValue: "Senior developer pathway with $25,000+ annual advancement potential"
-    },
-    {
-      category: "Business Analysis",
-      skills: ["Requirements gathering", "Stakeholder management", "Process optimization", "ROI analysis"],
-      realWorldValue: "Business analyst roles starting at $75,000-$95,000 annually"
-    },
-    {
-      category: "Communication & Training",
-      skills: ["Technical documentation", "User training", "Presentation skills", "Cross-team collaboration"],
-      realWorldValue: "Technical writing roles at $91,670 median, up to $130,000+ specialized"
-    }
-  ];
-
-  const careerStats = [
-    { label: "Salary Premium", value: "20-50%", subtext: "For combined technical + soft skills" },
-    { label: "Career Advancement", value: "2-4x faster", subtext: "Compared to technical-only professionals" },
-    { label: "EQ Salary Impact", value: "$29,000", subtext: "Higher annual earnings for high-EQ professionals" },
-    { label: "Top Performer Rate", value: "90%", subtext: "Have high emotional intelligence" }
-  ];
-
-  const certificationROI = [
-    {
-      certification: "AWS Solutions Architect",
-      cost: "$150-$400",
-      salaryIncrease: "$15,000-$30,000",
-      paybackTime: "1-3 months",
-      avgSalary: "$155,597"
-    },
-    {
-      certification: "Project Management (PMP)",
-      cost: "$2,555-$3,305",
-      salaryIncrease: "22% increase",
-      paybackTime: "6 months",
-      avgSalary: "$122,000"
-    },
-    {
-      certification: "Cybersecurity (CISSP)",
-      cost: "$749-$1,200",
-      salaryIncrease: "$25,000-$35,000",
-      paybackTime: "2-4 months",
-      avgSalary: "$168,060"
-    }
-  ];
-
   return (
     <>
       <Head>
-        <title>Professional Development Volunteering 2025 - Build Career Skills | Opportunity Hack</title>
-        <meta 
-          name="description" 
-          content="Accelerate your career with volunteer experience that builds essential soft skills. Gain leadership, project management, and communication skills employers value most." 
+        <title>
+          Professional Development Volunteering 2026 - Build Career Skills |
+          Opportunity Hack
+        </title>
+        <meta
+          name="description"
+          content="Accelerate your career with volunteer experience that builds essential soft skills. Gain leadership, project management, and communication skills employers value most."
         />
-        <meta name="keywords" content="professional development volunteering, soft skills development, leadership volunteer opportunities, career advancement volunteering, volunteer experience resume" />
-        <meta property="og:title" content="Professional Development Volunteering - Build Career-Accelerating Skills" />
-        <meta property="og:description" content="Develop high-value soft skills through meaningful volunteer work. Leadership, project management, and communication experience that employers reward with 20-50% salary premiums." />
+        <meta
+          name="keywords"
+          content="professional development volunteering, soft skills development, leadership volunteer opportunities, career advancement volunteering, volunteer experience resume"
+        />
+        <meta name="robots" content="index, follow" />
+        <meta
+          property="og:title"
+          content="Professional Development Volunteering - Build Career-Accelerating Skills"
+        />
+        <meta
+          property="og:description"
+          content="Develop high-value soft skills through meaningful volunteer work. Leadership, project management, and communication experience that employers reward with 20-50% salary premiums."
+        />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://www.opportunityhack.org/volunteer/professional-development-volunteering" />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:image" content={HERO_PHOTO} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Professional Development Volunteering 2025" />
-        <meta name="twitter:description" content="Build career-accelerating soft skills through volunteer experience. Leadership and project management opportunities with measurable ROI." />
-        <link rel="canonical" href="https://www.opportunityhack.org/volunteer/professional-development-volunteering" />
+        <meta
+          name="twitter:title"
+          content="Professional Development Volunteering 2026"
+        />
+        <meta
+          name="twitter:description"
+          content="Build career-accelerating soft skills through volunteer experience. Leadership and project management opportunities with measurable ROI."
+        />
+        <meta name="twitter:image" content={HERO_PHOTO} />
+        <link rel="canonical" href={CANONICAL} />
       </Head>
 
-      <Box 
-        sx={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          minHeight: '100vh',
-          color: 'white',
-          mt: 10
-        }}
-      >
-        {/* Hero Section */}
-        <Container maxWidth="lg">
-          <Box sx={{ py: { xs: 4, md: 8 }, textAlign: 'center' }}>
-            <Typography 
-              variant={isMobile ? "h3" : "h1"} 
-              sx={{ 
-                fontWeight: 800, 
-                mb: 2,
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-              }}
-            >
-              Professional Development Volunteering 2025
-            </Typography>
-            <Typography 
-              variant={isMobile ? "h6" : "h5"} 
-              sx={{ 
-                mb: 4, 
-                opacity: 0.9,
-                maxWidth: 700,
-                mx: 'auto'
-              }}
-            >
-              Build Career-Accelerating Soft Skills That Employers Reward with 20-50% Salary Premiums
-            </Typography>
-            
-            {/* Hero Stats */}
-            <Grid container spacing={2} sx={{ mt: 4, mb: 6 }}>
-              {careerStats.map((stat, index) => (
-                <Grid size={{ xs: 6, md: 3 }} key={index}>
-                  <Card 
-                    sx={{ 
-                      background: 'rgba(255,255,255,0.15)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      textAlign: 'center',
-                      py: 2
-                    }}
-                  >
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: 'white' }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'white', opacity: 0.9 }}>
-                      {stat.label}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'white', opacity: 0.7 }}>
-                      {stat.subtext}
-                    </Typography>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Container>
-
-        {/* Most Valuable Soft Skills */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          <Card 
-            sx={{ 
-              borderRadius: '20px',
-              p: { xs: 3, md: 5 },
-              mb: 4,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+      <RefinedRoot>
+        {/* ---------------- HERO ---------------- */}
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(104px, 13vh, 156px)",
+            paddingBottom: "clamp(28px, 5vh, 48px)",
+          }}
+        >
+          <Eyebrow>
+            <span className="rise" style={{ display: "inline-block" }}>
+              Volunteer · professional development
+            </span>
+          </Eyebrow>
+          <h1
+            className="ohx-display rise"
+            style={{ marginTop: 18, maxWidth: "18ch", animationDelay: "60ms" }}
+          >
+            Professional development volunteering that{" "}
+            <span className="ohx-italic">employers reward.</span>
+          </h1>
+          <p
+            className="ohx-lead rise"
+            style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "62ch" }}
+          >
+            Build career-accelerating soft skills that employers reward with
+            20-50% salary premiums. Lead real projects for real nonprofits and
+            come away with leadership, project management, and communication
+            experience you can point to.
+          </p>
+          <div
+            className="rise"
+            style={{
+              marginTop: 30,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+              animationDelay: "230ms",
             }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                color: '#2d3748',
-                fontWeight: 700,
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '80px',
-                  height: '4px',
-                  background: 'linear-gradient(90deg, #667eea, #764ba2)',
-                  borderRadius: '2px'
-                }
-              }}
+            <Link href="/hack" className="ohx-btn ohx-btn--primary">
+              Volunteer at the next event <Arrow />
+            </Link>
+            <Link
+              href="/about/hackers/software-engineering-career-path"
+              className="ohx-btn ohx-btn--ghost"
             >
-              🎯 Most Valuable Soft Skills for 2025
-            </Typography>
+              AI-proof career skills
+            </Link>
+          </div>
 
-            <Grid container spacing={3}>
-              {softSkills.map((skill, index) => (
-                <Grid size={{ xs: 12, md: 6 }} key={index}>
-                  <Card 
-                    sx={{ 
-                      height: '100%',
-                      background: 'linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)',
-                      borderLeft: `5px solid ${skill.color}`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <Avatar sx={{ backgroundColor: skill.color, mr: 2 }}>
-                          {skill.icon}
-                        </Avatar>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#2d3748' }}>
-                          {skill.skill}
-                        </Typography>
-                      </Box>
-                      <Typography variant="h5" sx={{ color: '#38a169', fontWeight: 600, mb: 1 }}>
-                        {skill.salaryBoost} salary boost
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#4a5568', mb: 2 }}>
-                        {skill.description}
-                      </Typography>
-                      <Chip 
-                        label={skill.demandRank}
-                        sx={{ 
-                          backgroundColor: skill.color,
-                          color: 'white',
-                          fontWeight: 500
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Card>
-        </Container>
-
-        {/* Skills You'll Develop Through Volunteering */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          <Card 
-            sx={{ 
-              borderRadius: '20px',
-              p: { xs: 3, md: 5 },
-              mb: 4,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+          <hr
+            className="ohx-rule rise"
+            style={{ marginTop: 52, animationDelay: "300ms" }}
+          />
+          <div
+            className="rise"
+            style={{
+              marginTop: 28,
+              display: "grid",
+              gap: "24px clamp(28px, 6vw, 64px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              animationDelay: "360ms",
             }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                color: '#2d3748',
-                fontWeight: 700
+            {CAREER_STATS.map((stat) => (
+              <div
+                key={stat.label}
+                style={{ display: "flex", flexDirection: "column", gap: 4 }}
+              >
+                <span
+                  className="ohx-display"
+                  style={{
+                    fontSize: "clamp(18px,2.4vw,25px)",
+                    fontWeight: 500,
+                    lineHeight: 1,
+                  }}
+                >
+                  {stat.value}
+                </span>
+                <span
+                  className="ohx-eyebrow"
+                  style={{ letterSpacing: "0.14em", fontSize: "8px" }}
+                >
+                  {stat.label}
+                </span>
+                <span
+                  className="ohx-faint"
+                  style={{ fontSize: "0.82rem", lineHeight: 1.4 }}
+                >
+                  {stat.subtext}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------------- HERO PHOTO ---------------- */}
+        <section
+          className="ohx-wrap"
+          style={{ paddingBottom: "clamp(32px, 6vh, 56px)" }}
+        >
+          <figure
+            className="rise"
+            style={{ margin: 0, animationDelay: "420ms" }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: 10,
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+                background: "var(--surface-2)",
               }}
             >
-              💼 Skills You'll Develop Through Opportunity Hack
-            </Typography>
+              <Image
+                src={HERO_PHOTO}
+                alt="Volunteers collaborating in teams at an Opportunity Hack hackathon"
+                fill
+                priority
+                sizes="(max-width: 1120px) 100vw, 1120px"
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <figcaption
+              className="ohx-faint"
+              style={{ marginTop: 10, fontSize: "0.82rem" }}
+            >
+              Opportunity Hack · Fall 2025 · Arizona State University. Teams
+              scope, build, and ship for a nonprofit in one weekend.
+            </figcaption>
+          </figure>
+        </section>
 
-            <Grid container spacing={3}>
-              {volunteerSkills.map((category, index) => (
-                <Grid size={{ xs: 12, md: 6 }} key={index}>
-                  <Card 
-                    sx={{ 
-                      height: '100%',
-                      p: 3,
-                      background: 'linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)',
-                      border: '1px solid #e2e8f0'
+        {/* ---------------- MOST VALUABLE SOFT SKILLS ---------------- */}
+        <section style={bandStyle}>
+          <div className="ohx-wrap" style={sectionPad}>
+            <Eyebrow>Most valuable soft skills for 2026</Eyebrow>
+            <h2
+              className="ohx-display"
+              style={{ marginTop: 8, marginBottom: 10 }}
+            >
+              The skills that move your salary
+            </h2>
+            <p
+              className="ohx-muted"
+              style={{ marginTop: 0, marginBottom: 32, maxWidth: "64ch" }}
+            >
+              Technical skills get you in the door. These four are what
+              employers pay a premium for once you&apos;re in.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gap: 20,
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              }}
+            >
+              {SOFT_SKILLS.map((s) => (
+                <div key={s.skill} style={card}>
+                  <span style={iconWrap}>{s.icon}</span>
+                  <h3
+                    className="ohx-display"
+                    style={{ fontSize: "1.2rem", margin: "0 0 6px" }}
+                  >
+                    {s.skill}
+                  </h3>
+                  <p
+                    className="ohx-display"
+                    style={{
+                      margin: "0 0 10px",
+                      fontSize: "1.3rem",
+                      color: "var(--brand)",
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2d3748' }}>
-                      {category.category}
-                    </Typography>
-                    <List dense>
-                      {category.skills.map((skill, idx) => (
-                        <ListItem key={idx} sx={{ py: 0.5 }}>
-                          <ListItemIcon sx={{ minWidth: 30 }}>
-                            <CheckCircleIcon sx={{ fontSize: 20, color: '#38a169' }} />
-                          </ListItemIcon>
-                          <ListItemText primary={skill} />
-                        </ListItem>
-                      ))}
-                    </List>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="body2" sx={{ color: '#2d3748', fontWeight: 600 }}>
-                      💰 Real-World Value:
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#4a5568' }}>
-                      {category.realWorldValue}
-                    </Typography>
-                  </Card>
-                </Grid>
+                    {s.salaryBoost}{" "}
+                    <span
+                      className="ohx-faint"
+                      style={{
+                        fontFamily: "var(--body)",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      salary boost
+                    </span>
+                  </p>
+                  <p
+                    className="ohx-muted"
+                    style={{
+                      margin: "0 0 14px",
+                      fontSize: "0.95rem",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {s.description}
+                  </p>
+                  <span className="ohx-tag">{s.demandRank}</span>
+                </div>
               ))}
-            </Grid>
-          </Card>
-        </Container>
+            </div>
+          </div>
+        </section>
 
-        {/* Certification ROI Section */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          <Card
-            sx={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%)',
-              borderRadius: '20px',
-              p: { xs: 3, md: 5 },
-              mb: 4,
-              color: 'white'
+        {/* ---------------- SKILLS YOU'LL DEVELOP ---------------- */}
+        <section className="ohx-wrap" style={sectionPad}>
+          <Eyebrow>Skills you&apos;ll develop through Opportunity Hack</Eyebrow>
+          <h2
+            className="ohx-display"
+            style={{ marginTop: 8, marginBottom: 10 }}
+          >
+            What a weekend of volunteering actually teaches
+          </h2>
+          <p
+            className="ohx-muted"
+            style={{ marginTop: 0, marginBottom: 32, maxWidth: "64ch" }}
+          >
+            Every hackathon team runs like a small product team, so you practice
+            the whole job, not just the coding.
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gap: 20,
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                fontWeight: 700
+            {VOLUNTEER_SKILLS.map((group) => (
+              <div key={group.category} style={card}>
+                <h3
+                  className="ohx-display"
+                  style={{ fontSize: "1.2rem", margin: "0 0 12px" }}
+                >
+                  {group.category}
+                </h3>
+                <ul
+                  style={{
+                    margin: 0,
+                    padding: 0,
+                    listStyle: "none",
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
+                  {group.skills.map((skill) => (
+                    <li
+                      key={skill}
+                      style={{
+                        display: "flex",
+                        gap: 10,
+                        alignItems: "baseline",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{ color: "var(--accent)", fontWeight: 700 }}
+                      >
+                        ·
+                      </span>
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+                <hr className="ohx-rule" style={{ margin: "16px 0 12px" }} />
+                <span className="ohx-eyebrow">Real-world value</span>
+                <p
+                  className="ohx-muted"
+                  style={{
+                    margin: "6px 0 0",
+                    fontSize: "0.92rem",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {group.realWorldValue}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------------- CERTIFICATION ROI ---------------- */}
+        <section style={bandStyle}>
+          <div className="ohx-wrap" style={sectionPad}>
+            <Eyebrow>Strategic certification ROI</Eyebrow>
+            <h2
+              className="ohx-display"
+              style={{ marginTop: 8, marginBottom: 10 }}
+            >
+              Pair volunteer experience with a certification
+            </h2>
+            <p
+              className="ohx-muted"
+              style={{ marginTop: 0, marginBottom: 32, maxWidth: "64ch" }}
+            >
+              Combine volunteer experience with strategic certifications for
+              maximum career impact.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gap: 20,
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               }}
             >
-              📈 Strategic Certification ROI
-            </Typography>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                opacity: 0.9
-              }}
-            >
-              Combine volunteer experience with strategic certifications for maximum career impact
-            </Typography>
-            
-            <Grid container spacing={3}>
-              {certificationROI.map((cert, index) => (
-                <Grid size={{ xs: 12, md: 4 }} key={index}>
-                  <Card
-                    sx={{
-                      background: 'rgba(255,255,255,0.15)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      borderRadius: '15px',
-                      p: 3,
-                      height: '100%'
+              {CERTIFICATION_ROI.map((cert) => (
+                <div key={cert.certification} style={card}>
+                  <h3
+                    className="ohx-display"
+                    style={{ fontSize: "1.2rem", margin: "0 0 14px" }}
+                  >
+                    {cert.certification}
+                  </h3>
+                  <dl
+                    style={{
+                      margin: 0,
+                      display: "grid",
+                      gridTemplateColumns: "auto 1fr",
+                      gap: "6px 14px",
+                      fontSize: "0.92rem",
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                      {cert.certification}
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Investment: <strong>{cert.cost}</strong>
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Salary Increase: <strong>{cert.salaryIncrease}</strong>
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Payback: <strong>{cert.paybackTime}</strong>
-                      </Typography>
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                      {cert.avgSalary.toLocaleString()} avg salary
-                    </Typography>
-                  </Card>
-                </Grid>
+                    <dt className="ohx-faint">Investment</dt>
+                    <dd style={{ margin: 0, fontWeight: 600 }}>{cert.cost}</dd>
+                    <dt className="ohx-faint">Salary increase</dt>
+                    <dd style={{ margin: 0, fontWeight: 600 }}>
+                      {cert.salaryIncrease}
+                    </dd>
+                    <dt className="ohx-faint">Payback</dt>
+                    <dd style={{ margin: 0, fontWeight: 600 }}>
+                      {cert.paybackTime}
+                    </dd>
+                  </dl>
+                  <hr className="ohx-rule" style={{ margin: "16px 0 12px" }} />
+                  <p
+                    className="ohx-display"
+                    style={{
+                      margin: 0,
+                      fontSize: "1.5rem",
+                      color: "var(--brand)",
+                    }}
+                  >
+                    {cert.avgSalary}{" "}
+                    <span
+                      className="ohx-faint"
+                      style={{
+                        fontFamily: "var(--body)",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      avg salary
+                    </span>
+                  </p>
+                </div>
               ))}
-            </Grid>
-          </Card>
-        </Container>
+            </div>
+          </div>
+        </section>
 
-        {/* Why Opportunity Hack */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          <Card 
-            sx={{ 
-              borderRadius: '20px',
-              p: { xs: 3, md: 5 },
-              mb: 4,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        {/* ---------------- WHY OPPORTUNITY HACK ---------------- */}
+        <section className="ohx-wrap" style={sectionPad}>
+          <Eyebrow>Why Opportunity Hack accelerates your career</Eyebrow>
+          <h2
+            className="ohx-display"
+            style={{ marginTop: 8, marginBottom: 32 }}
+          >
+            Real stakes, senior mentors, compressed time
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gap: 20,
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             }}
           >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                color: '#2d3748',
-                fontWeight: 700
-              }}
-            >
-              🚀 Why Opportunity Hack Accelerates Your Career
-            </Typography>
+            {WHY_OHACK.map((w) => (
+              <div key={w.title} style={card}>
+                <span style={iconWrap}>{w.icon}</span>
+                <h3
+                  className="ohx-display"
+                  style={{ fontSize: "1.2rem", margin: "0 0 8px" }}
+                >
+                  {w.title}
+                </h3>
+                <p
+                  className="ohx-muted"
+                  style={{ margin: 0, fontSize: "0.95rem", lineHeight: 1.55 }}
+                >
+                  {w.body}
+                </p>
+              </div>
+            ))}
+          </div>
 
-            <Grid container spacing={4}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Avatar 
-                    sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      mx: 'auto', 
-                      mb: 2,
-                      backgroundColor: '#667eea'
-                    }}
-                  >
-                    <BusinessIcon sx={{ fontSize: 40 }} />
-                  </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: '#2d3748' }}>
-                    Real Business Impact
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#4a5568' }}>
-                    Lead projects with measurable outcomes for real nonprofits. 
-                    Build portfolio of business impact that demonstrates ROI to employers.
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Avatar 
-                    sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      mx: 'auto', 
-                      mb: 2,
-                      backgroundColor: '#f093fb'
-                    }}
-                  >
-                    <SchoolIcon sx={{ fontSize: 40 }} />
-                  </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: '#2d3748' }}>
-                    Expert Mentorship
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#4a5568' }}>
-                    Work with senior professionals from top companies. 
-                    Get career guidance, skill feedback, and professional references.
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Avatar 
-                    sx={{ 
-                      width: 80, 
-                      height: 80, 
-                      mx: 'auto', 
-                      mb: 2,
-                      backgroundColor: '#4facfe'
-                    }}
-                  >
-                    <TrophyIcon sx={{ fontSize: 40 }} />
-                  </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: '#2d3748' }}>
-                    Accelerated Learning
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#4a5568' }}>
-                    Compress years of learning into intensive weekend experiences. 
-                    Apply skills immediately in high-pressure, collaborative environment.
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            {/* Success Metrics */}
-            <Box sx={{ mt: 6 }}>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  textAlign: 'center', 
-                  mb: 4, 
-                  color: '#2d3748',
-                  fontWeight: 700
+          <h3
+            className="ohx-display"
+            style={{ fontSize: "1.3rem", marginTop: 44, marginBottom: 16 }}
+          >
+            Volunteer success metrics
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gap: 16,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            }}
+          >
+            {SUCCESS_METRICS.map((m) => (
+              <div
+                key={m.label}
+                style={{
+                  ...card,
+                  background: "var(--surface-2)",
+                  padding: "22px 22px",
                 }}
               >
-                📊 Volunteer Success Metrics
-              </Typography>
-              
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ p: 3, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
-                      94%
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                      Career Advancement
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Of volunteers report faster promotion or job opportunities within 12 months
-                    </Typography>
-                  </Card>
-                </Grid>
+                <p
+                  className="ohx-display"
+                  style={{
+                    margin: 0,
+                    fontSize: "2rem",
+                    lineHeight: 1,
+                    color: "var(--brand)",
+                  }}
+                >
+                  {m.value}
+                </p>
+                <p
+                  style={{
+                    margin: "10px 0 4px",
+                    fontWeight: 600,
+                    fontSize: "0.95rem",
+                  }}
+                >
+                  {m.label}
+                </p>
+                <p
+                  className="ohx-muted"
+                  style={{ margin: 0, fontSize: "0.88rem", lineHeight: 1.5 }}
+                >
+                  {m.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f093fb, #f5576c)', color: 'white', textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
-                      $18K
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                      Average Salary Increase
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Annual compensation improvement within 18 months of volunteering
-                    </Typography>
-                  </Card>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ p: 3, background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: 'white', textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
-                      87%
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                      Leadership Roles
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      Move into team lead or management positions within 2 years
-                    </Typography>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
-          </Card>
-        </Container>
-
-        {/* Success Stories */}
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-          <Card 
-            sx={{ 
-              borderRadius: '20px',
-              p: { xs: 3, md: 5 },
-              mb: 4,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                textAlign: 'center', 
-                mb: 4, 
-                color: '#2d3748',
-                fontWeight: 700
+        {/* ---------------- SUCCESS STORIES ---------------- */}
+        <section style={bandStyle}>
+          <div className="ohx-wrap" style={sectionPad}>
+            <Eyebrow>Volunteer success stories</Eyebrow>
+            <h2
+              className="ohx-display"
+              style={{ marginTop: 8, marginBottom: 32 }}
+            >
+              Where volunteering took them
+            </h2>
+            <div
+              style={{
+                display: "grid",
+                gap: 20,
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
               }}
             >
-              🌟 Volunteer Success Stories
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Card sx={{ p: 3, background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                    Alex, Project Manager
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
-                    "Led 4 hackathon projects as volunteer PM. Earned PMP certification and promoted to Senior PM within 8 months."
-                  </Typography>                  
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    Non-profit → Tech company PM
-                  </Typography>
-                </Card>
-              </Grid>
+              {SUCCESS_STORIES.map((s) => (
+                <figure key={s.name} style={{ ...card, margin: 0 }}>
+                  <blockquote
+                    style={{
+                      margin: 0,
+                      padding: "2px 0 2px 16px",
+                      borderLeft: "2px solid var(--accent)",
+                      fontSize: "0.98rem",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    &ldquo;{s.quote}&rdquo;
+                  </blockquote>
+                  <figcaption style={{ marginTop: 16 }}>
+                    <span
+                      className="ohx-display"
+                      style={{ display: "block", fontSize: "1.05rem" }}
+                    >
+                      {s.name}
+                    </span>
+                    <span
+                      className="ohx-tag"
+                      style={{ marginTop: 8, display: "inline-flex" }}
+                    >
+                      {s.path}
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Card sx={{ p: 3, background: 'linear-gradient(135deg, #f093fb, #f5576c)', color: 'white' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                    Maria, Business Analyst
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
-                    "Mentored teams in requirements gathering. Transitioned from customer service to BA role at Fortune 500 company."
-                  </Typography>                  
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    Customer service → Business Analyst
-                  </Typography>
-                </Card>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Card sx={{ p: 3, background: 'linear-gradient(135deg, #4facfe, #00f2fe)', color: 'white' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                    David, Team Lead
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
-                    "Coordinated cross-functional teams in 6 hackathons. Promoted to Engineering Team Lead with 8 direct reports."
-                  </Typography>                  
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                    Developer → Engineering Team Lead
-                  </Typography>
-                </Card>
-              </Grid>
-            </Grid>
-          </Card>
-        </Container>
-
-        {/* CTA Section */}
-        <Container maxWidth="lg" sx={{ pb: 8 }}>
-          <Box 
-            sx={{ 
-              textAlign: 'center',
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              p: { xs: 4, md: 6 },
-              border: '1px solid rgba(255,255,255,0.2)'
+        {/* ---------------- FINAL CTA ---------------- */}
+        <section className="ohx-wrap" style={sectionPad}>
+          <div
+            className="ohx-card"
+            style={{
+              padding: "clamp(28px, 5vw, 48px)",
+              background: "var(--brand)",
+              borderColor: "var(--brand)",
+              color: "#fff",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 24,
             }}
           >
-            <Typography variant="h3" sx={{ fontWeight: 800, mb: 2 }}>
-              Ready to Accelerate Your Career?
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, maxWidth: 700, mx: 'auto' }}>
-              Join professionals who are building career-defining skills through meaningful volunteer work. 
-              Develop leadership, project management, and communication abilities that employers reward.
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/hackathon" passHref>
-                <Button 
-                  variant="contained" 
-                  size="large"
-                  sx={{ 
-                    backgroundColor: 'white',
-                    color: '#667eea',
-                    fontWeight: 700,
-                    px: 4,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    '&:hover': {
-                      backgroundColor: '#f7fafc',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
-                    }
+            <div style={{ maxWidth: "58ch" }}>
+              <p
+                className="ohx-eyebrow"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+              >
+                Ready to accelerate your career?
+              </p>
+              <h2
+                className="ohx-display"
+                style={{ marginTop: 8, color: "#fff" }}
+              >
+                Build the skills employers reward
+              </h2>
+              <p
+                style={{
+                  margin: "12px 0 0",
+                  fontSize: "0.98rem",
+                  lineHeight: 1.6,
+                  color: "rgba(255,255,255,0.85)",
+                }}
+              >
+                Join professionals who are building career-defining skills
+                through meaningful volunteer work. Develop leadership, project
+                management, and communication abilities that employers reward.
+              </p>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                alignItems: "flex-start",
+              }}
+            >
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <Link
+                  href="/hack"
+                  className="ohx-btn"
+                  style={{ background: "#fff", color: "var(--brand)" }}
+                >
+                  Volunteer at the next event <Arrow />
+                </Link>
+                <Link
+                  href="/about/hackers/software-engineering-career-path"
+                  className="ohx-btn ohx-btn--ghost"
+                  style={{
+                    color: "#fff",
+                    borderColor: "rgba(255,255,255,0.5)",
                   }}
                 >
-                  Volunteer at Next Event
-                </Button>
+                  AI-proof career skills
+                </Link>
+              </div>
+              <Link
+                href="/about"
+                className="ohx-link"
+                style={{
+                  color: "#fff",
+                  fontSize: "0.92rem",
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8))",
+                }}
+              >
+                Learn more about us <Arrow />
               </Link>
-              
-              <Link href="/about/hackers/software-engineering-career-path" passHref>
-                <Button 
-                  variant="outlined" 
-                  size="large"
-                  sx={{ 
-                    borderColor: 'white',
-                    color: 'white',
-                    fontWeight: 700,
-                    px: 4,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderColor: 'white',
-                      transform: 'translateY(-2px)'
-                    }
-                  }}
-                >
-                  AI-Proof Career Skills
-                </Button>
-              </Link>
-
-              <Link href="/about" passHref>
-                <Button 
-                  variant="outlined" 
-                  size="large"
-                  sx={{ 
-                    borderColor: 'white',
-                    color: 'white',
-                    fontWeight: 700,
-                    px: 4,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderColor: 'white',
-                      transform: 'translateY(-2px)'
-                    }
-                  }}
-                >
-                  Learn More About Us
-                </Button>
-              </Link>
-            </Box>
-                        
-          </Box>
-        </Container>
-      </Box>
+            </div>
+          </div>
+        </section>
+      </RefinedRoot>
     </>
   );
 };

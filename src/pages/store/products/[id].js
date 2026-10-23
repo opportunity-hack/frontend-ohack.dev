@@ -1,45 +1,122 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import {
-  Container,
-  Typography,
-  Grid,
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Breadcrumbs,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stack,
-  Alert,
-  Snackbar,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
 import {
   useShoppingCart,
   MAX_CART_ITEM_QUANTITY,
 } from "../../../context/ShoppingCartContext";
 import { trackEvent, initFacebookPixel } from "../../../lib/ga";
+import { serializeJsonLd } from "../../../lib/jsonLd";
+import { RefinedRoot, Eyebrow } from "../../../components/design/refined";
+import {
+  pageSectionStyle,
+  BackLink,
+} from "../../../components/design/RefinedPage";
 import FloatingCartButton from "../../../components/Store/FloatingCartButton";
 import products from "../../../data/store-products.json";
+
+const STATUS_HIDE_MS = 3000;
+
+const selectStyle = {
+  width: "100%",
+  font: "inherit",
+  fontSize: 15,
+  color: "var(--ink)",
+  background: "var(--surface)",
+  border: "1px solid var(--line)",
+  borderRadius: 6,
+  padding: "10px 12px",
+  cursor: "pointer",
+  accentColor: "var(--brand)",
+};
+
+const stepBtnStyle = {
+  width: 38,
+  height: 38,
+  padding: 0,
+  justifyContent: "center",
+  fontSize: 18,
+  lineHeight: 1,
+};
+
+// Reserved square media box. The catalog's /images/store/*.png paths may be
+// missing, so a failed load falls back to a quiet Fraunces initial.
+const ProductHeroImage = ({ src, name }) => {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(src) && !failed;
+  return (
+    <div
+      className="ohx-card"
+      style={{
+        aspectRatio: "1 / 1",
+        background: "var(--surface-2)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
+      {showImage ? (
+        <img
+          src={src}
+          alt={name}
+          width={600}
+          height={600}
+          decoding="async"
+          onError={() => setFailed(true)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            padding: 32,
+            boxSizing: "border-box",
+          }}
+        />
+      ) : (
+        <span
+          className="ohx-display"
+          aria-hidden="true"
+          style={{ fontSize: 96, color: "var(--brand)", opacity: 0.5 }}
+        >
+          {(name || "?").charAt(0)}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const NotFound = () => (
+  <RefinedRoot>
+    <section className="ohx-wrap ohx-narrow" style={pageSectionStyle}>
+      <BackLink href="/store">Back to the store</BackLink>
+      <header style={{ marginTop: 18 }}>
+        <Eyebrow>Opportunity Hack store</Eyebrow>
+        <h1 className="ohx-display" style={{ marginTop: 8 }}>
+          Product not found
+        </h1>
+        <p className="ohx-lead" style={{ marginTop: 14 }}>
+          That item may have sold out or moved. Everything we carry is back in
+          the store.
+        </p>
+      </header>
+      <Link
+        href="/store"
+        className="ohx-btn ohx-btn--primary"
+        style={{ marginTop: 26 }}
+      >
+        Browse the store
+      </Link>
+    </section>
+  </RefinedRoot>
+);
 
 export default function ProductDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   const { addItem } = useShoppingCart();
 
-  const product = useMemo(
-    () => products.find((p) => p.id === id),
-    [id]
-  );
+  const product = useMemo(() => products.find((p) => p.id === id), [id]);
 
   const [selectedVariations, setSelectedVariations] = useState({});
   const [quantity, setQuantity] = useState(1);
@@ -62,27 +139,24 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
+  // Inline "Added to cart" status (replaces the MUI Snackbar Portal); same
+  // 3s auto-hide as before.
+  useEffect(() => {
+    if (!snackOpen) return undefined;
+    const t = setTimeout(() => setSnackOpen(false), STATUS_HIDE_MS);
+    return () => clearTimeout(t);
+  }, [snackOpen]);
+
   if (!id) return null;
 
   if (!product) {
-    return (
-      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
-        <Typography variant="h5">Product not found</Typography>
-        <Link href="/store" passHref legacyBehavior>
-          <Button startIcon={<ArrowBackIcon />} sx={{ mt: 2 }}>
-            Back to Store
-          </Button>
-        </Link>
-      </Container>
-    );
+    return <NotFound />;
   }
 
   const hasVariations =
     product.variations && Object.keys(product.variations).length > 0;
   const allVariationsSelected = hasVariations
-    ? Object.keys(product.variations).every(
-        (key) => selectedVariations[key]
-      )
+    ? Object.keys(product.variations).every((key) => selectedVariations[key])
     : true;
 
   const handleVariationChange = (variationName, value) => {
@@ -123,7 +197,9 @@ export default function ProductDetailPage() {
         quantity,
         value: product.price * quantity,
         currency: "USD",
-        ...(hasVariations ? { variations: JSON.stringify(selectedVariations) } : {}),
+        ...(hasVariations
+          ? { variations: JSON.stringify(selectedVariations) }
+          : {}),
       },
     });
   };
@@ -184,6 +260,8 @@ export default function ProductDetailPage() {
     ],
   };
 
+  const lineTotal = (product.price * quantity).toFixed(2);
+
   return (
     <>
       <Head>
@@ -229,179 +307,234 @@ export default function ProductDetailPage() {
         {/* Structured Data */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(breadcrumbSchema),
+          }}
         />
       </Head>
 
-      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
-        <Breadcrumbs sx={{ mb: 3 }}>
-          <Link href="/store" passHref legacyBehavior>
-            <Typography
-              component="a"
-              color="inherit"
-              sx={{
-                textDecoration: "none",
-                "&:hover": { textDecoration: "underline" },
-                cursor: "pointer",
-              }}
-            >
-              Store
-            </Typography>
-          </Link>
-          <Typography color="text.primary">{product.name}</Typography>
-        </Breadcrumbs>
+      <RefinedRoot>
+        <section className="ohx-wrap" style={pageSectionStyle}>
+          <BackLink href="/store">Back to the store</BackLink>
 
-        <Grid container spacing={4}>
-          {/* Product Image */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                backgroundColor: "grey.100",
-                borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 350,
-                p: 4,
-              }}
-            >
-              {product.image ? (
-                <Box
-                  component="img"
-                  src={product.image}
-                  alt={product.name}
-                  sx={{
-                    maxHeight: 350,
-                    maxWidth: "100%",
-                    objectFit: "contain",
+          <div
+            style={{
+              marginTop: 24,
+              display: "grid",
+              gap: "32px 48px",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+              alignItems: "start",
+            }}
+          >
+            <ProductHeroImage src={product.image} name={product.name} />
+
+            <div>
+              <header>
+                <Eyebrow>
+                  {product.category || "Opportunity Hack store"}
+                </Eyebrow>
+                <h1
+                  className="ohx-display"
+                  style={{
+                    marginTop: 8,
+                    fontSize: "clamp(28px, 4vw, 44px)",
+                    maxWidth: "18ch",
                   }}
-                />
-              ) : (
-                <ShoppingCartIcon sx={{ fontSize: 120, color: "grey.300" }} />
-              )}
-            </Box>
-          </Grid>
-
-          {/* Product Details */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Stack spacing={2}>
-              <Typography variant="h4" component="h1" fontWeight="bold">
-                {product.name}
-              </Typography>
-
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+                >
+                  {product.name}
+                </h1>
+                <p
+                  className="ohx-display"
+                  style={{
+                    margin: "12px 0 0",
+                    fontSize: 26,
+                    lineHeight: 1,
+                    color: "var(--brand)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
                   ${product.price.toFixed(2)}
-                </Typography>
-                {product.category && (
-                  <Chip
-                    label={product.category}
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
-              </Box>
+                </p>
+              </header>
 
-              <Typography variant="body1" color="text.secondary">
-                {product.description}
-              </Typography>
+              <div className="ohx-prose" style={{ marginTop: 20 }}>
+                <p>{product.description}</p>
+              </div>
 
-              {/* Variations */}
-              {hasVariations &&
-                Object.entries(product.variations).map(
-                  ([variationName, options]) => (
-                    <FormControl key={variationName} fullWidth size="small">
-                      <InputLabel>{variationName}</InputLabel>
-                      <Select
-                        value={selectedVariations[variationName] || ""}
-                        label={variationName}
-                        onChange={(e) =>
-                          handleVariationChange(variationName, e.target.value)
-                        }
-                      >
-                        {options.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  )
-                )}
-
-              {/* Quantity */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Typography variant="body1">Quantity:</Typography>
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    setQuantity((q) => Math.max(1, q - 1))
-                  }
+              {hasVariations && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    display: "grid",
+                    gap: 16,
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+                  }}
                 >
-                  <RemoveIcon />
-                </IconButton>
-                <Typography sx={{ minWidth: 24, textAlign: "center" }}>
-                  {quantity}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    setQuantity((q) => Math.min(MAX_CART_ITEM_QUANTITY, q + 1))
-                  }
-                  disabled={quantity >= MAX_CART_ITEM_QUANTITY}
-                >
-                  <AddIcon />
-                </IconButton>
-              </Box>
+                  {Object.entries(product.variations).map(
+                    ([variationName, options]) => {
+                      const selectId = `variation-${variationName
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")}`;
+                      return (
+                        <label
+                          key={variationName}
+                          htmlFor={selectId}
+                          style={{ display: "block" }}
+                        >
+                          <span
+                            className="ohx-eyebrow"
+                            style={{ display: "block", marginBottom: 6 }}
+                          >
+                            {variationName}
+                          </span>
+                          <select
+                            id={selectId}
+                            value={selectedVariations[variationName] || ""}
+                            onChange={(e) =>
+                              handleVariationChange(
+                                variationName,
+                                e.target.value,
+                              )
+                            }
+                            style={selectStyle}
+                          >
+                            <option value="" disabled>
+                              Choose {variationName.toLowerCase()}
+                            </option>
+                            {options.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    },
+                  )}
+                </div>
+              )}
 
-              {/* Add to Cart */}
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<ShoppingCartIcon />}
+              <div
+                style={{
+                  marginTop: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span className="ohx-eyebrow" id="product-quantity-label">
+                  Quantity
+                </span>
+                <div
+                  role="group"
+                  aria-labelledby="product-quantity-label"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--ghost"
+                    style={stepBtnStyle}
+                    aria-label="Decrease quantity"
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <span
+                    aria-live="polite"
+                    style={{
+                      minWidth: 30,
+                      textAlign: "center",
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--ghost"
+                    style={stepBtnStyle}
+                    aria-label="Increase quantity"
+                    onClick={() =>
+                      setQuantity((q) =>
+                        Math.min(MAX_CART_ITEM_QUANTITY, q + 1),
+                      )
+                    }
+                    disabled={quantity >= MAX_CART_ITEM_QUANTITY}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="ohx-btn ohx-btn--primary"
                 onClick={handleAddToCart}
                 disabled={!allVariationsSelected}
-                sx={{ mt: 2 }}
+                style={{
+                  marginTop: 22,
+                  fontSize: 14,
+                  opacity: allVariationsSelected ? 1 : 0.55,
+                  cursor: allVariationsSelected ? "pointer" : "not-allowed",
+                }}
               >
-                Add to Cart — ${(product.price * quantity).toFixed(2)}
-              </Button>
+                Add to cart — ${lineTotal}
+              </button>
 
               {hasVariations && !allVariationsSelected && (
-                <Typography variant="body2" color="text.secondary">
+                <p
+                  className="ohx-muted"
+                  style={{ margin: "10px 0 0", fontSize: 14 }}
+                >
                   Please select all options before adding to cart.
-                </Typography>
+                </p>
               )}
-            </Stack>
-          </Grid>
-        </Grid>
-      </Container>
 
-      <Snackbar
-        open={snackOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackOpen(false)}
-          severity="success"
-          variant="filled"
-        >
-          Added to cart!{" "}
-          <Link href="/store/cart" passHref legacyBehavior>
-            <Typography
-              component="a"
-              sx={{ color: "inherit", fontWeight: "bold" }}
-            >
-              View Cart
-            </Typography>
-          </Link>
-        </Alert>
-      </Snackbar>
+              {/* Reserved slot so the status strip never shifts the layout. */}
+              <div style={{ minHeight: 56, marginTop: 16 }} aria-live="polite">
+                {snackOpen && (
+                  <div
+                    role="status"
+                    className="ohx-card"
+                    style={{
+                      padding: "12px 16px",
+                      borderColor: "var(--success)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 16,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span style={{ fontSize: 15, color: "var(--success)" }}>
+                      Added to cart.
+                    </span>
+                    <Link href="/store/cart" className="ohx-link">
+                      View cart{" "}
+                      <span className="ohx-arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      </RefinedRoot>
 
       <FloatingCartButton />
     </>
