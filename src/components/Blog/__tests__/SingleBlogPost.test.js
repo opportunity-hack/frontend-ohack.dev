@@ -221,9 +221,10 @@ describe('SingleBlogPost Component', () => {
     // Arrange & Act
     render(<SingleBlogPage blog_id="test-123" />);
     
-    // Assert - check for Skeleton which indicates loading state
-    // Either look for mui-skeleton testid or check for multiple skeleton elements
-    expect(screen.getAllByTestId('mui-skeleton').length).toBeGreaterThan(0);
+    // Assert - the refined skeleton is a role="progressbar" block that
+    // reserves the article's footprint (no MUI Skeleton anymore)
+    expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Loading blog post')).toBeInTheDocument();
   });
 
   test('renders content directly with initialData', () => {

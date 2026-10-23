@@ -125,6 +125,12 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
 - [x] `/` (homepage)
 - [x] `/projects`
 - [x] Oct 2026 batch via `RefinedPage`: `/404`, `/contact`, `/feedback`, `/about/why` (+ `[title]`), `/about/privacy-policy`, `/hack/liability-waiver`, `/hack/photo-release`, `/praise/[id]`, `/hack/[event_id]/results`, `/hack/results`, the four `/about/success-stories/<slug>` case studies (`SuccessStoryLayout`)
+- [x] Batch 3 (Oct 2026) — SEO pillar pages `/coding-for-nonprofits`, `/hackathon-for-social-good`, `/hackathon-judging-criteria`, `/hackathon-judge-opportunities`, `/volunteer/professional-development-volunteering`, `/about/hackers/software-engineering-career-path`, `/about/locations/asu-tempe-arizona` (recruit-tech-talent pattern: hero + Stat row, alternating bands, data-array cards, native `<details>` FAQ single-sourced into FAQPage JSON-LD, navy band, primary+ghost+link closers; `getStaticProps` output unchanged)
+- [x] Batch 3 — video tutorials `/about/judges/overview`, `/about/mentors/overview`, `/judge/overview` share one `VideoGuidePage` template (masthead + 16:9 `.ohx-card` video + ghost Share w/ inline status, `--surface-2` highlight band, navy CTA band, resource tiles; hover copy-link section anchors kept)
+- [x] Batch 3 — `/about/hearts` + `/community-champions` (both SSR now; hearts = editorial hero + tier ladder from `heartTiers.js` + `HEART_CATEGORIES` cards + `<details>` scoring guide + `CtaBand`; champions = framed hero photo, native search + toggle-tag tier filter, hairline `<table>`/grid with tier-dot tags — no avatar wall, no tier backgrounds — plus skeleton/error/empty states)
+- [x] Batch 3 — `/blog/[blog_id]` (`RefinedPage as="article"`, `PageMasthead` h1, `Prose` markdown w/ demoted headings, one tag strip, related-posts card, `CtaBand`) and `/cert` + `/cert/[cert_id]` (masthead, framed 1:1 certificate, `Stat` tiles, one primary Download + soft share links)
+- [x] Batch 3 — `/hack/[event_id]/media` + `/agenda` (`Shell` + `TeamBreadcrumbs`; media: carousel in a hairline card w/ navy controls + reserved 16:9, `.ohx-card--hover` coverage tiles, reserved Instagram embeds; agenda: shared `HackathonHeader` masthead + day-grouped hairline timeline in the event tz, sticky info/QR aside, print-only QR strip)
+- [x] Batch 3 — `/store`, `/store/cart`, `/store/success`, `/store/products/[id]` (masthead + `--surface-2` browse band w/ native search + `aria-pressed` category tags, `ProductCard` grid w/ reserved 4:3 image box + `onError` initial fallback; cart = hairline rows + sticky order-summary card w/ ONE primary Checkout; product page = two-column masthead, native `<select>` variations, − / + stepper, inline `role="status"` confirmation; `FloatingCartButton` navy w/ var-fallbacks)
 - [x] Global NavBar
 - [x] `/nonprofits` — `NonProfitList` rewritten; new calm card
       `NonProfitListTileRefined` (the original `NonProfitListTile` is still used
@@ -304,9 +310,7 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       (explicit-save bar; `saveDisabled` on validation errors) and the Hackers'
       Choice results table is the 4th Judging subtab — both plain MUI (admin surfaces
       aren't refined).
-- [ ] (later) remaining pages — application forms, `/about/why`, `/about/hearts`,
-      `/contact`, etc. Deeper passes wanted on the own `/profile` editor (logged-in)
-      and the `/hack/[event_id]` event page (see the dedicated plan below).
+- [ ] (later) `/signup2`, `/unsubscribe`, `/census`; `src/components/Profile/Sections/HeartsExplainer.jsx` (pink MUI Paper) is the last loud piece on the hearts surfaces.
 
 ## `/hack/[event_id]` — masthead-led refined pass (done, phase 1)
 The event page (`src/pages/hack/[event_id].js`) now:

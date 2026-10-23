@@ -1,521 +1,669 @@
-import React, { useEffect, useState, useCallback, memo } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import {
-  Typography,
-  Box,
-  Container,
-  Paper,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-  Alert,
-  IconButton,
-  Tooltip,
-  Snackbar
-} from "@mui/material";
+  RefinedRoot,
+  Eyebrow,
+  Arrow,
+} from "../../../components/design/refined";
+import {
+  BackLink,
+  pageSectionStyle,
+} from "../../../components/design/RefinedPage";
 
 import {
-  PlayCircleOutlineRounded,
-  GavelRounded,
   AssessmentRounded,
-  GroupsRounded,
-  EventRounded,
-  ArrowBackRounded,
-  ShareRounded,
-  LinkRounded,
-  HelpOutlineRounded,
+  CheckRounded,
   DashboardRounded,
-  SettingsRounded
+  GavelRounded,
+  GroupsRounded,
+  HelpOutlineRounded,
+  LinkRounded,
+  SettingsRounded,
+  ShareRounded,
 } from "@mui/icons-material";
 
-const trackOnClickButtonClickWithGoogleAndFacebook = (buttonName) => {
-  trackEvent("click_judges_overview", buttonName);
+// ---------------------------------------------------------------------------
+// VideoGuidePage — the shared "video tutorial" template used by
+// /about/judges/overview, /about/mentors/overview and /judge/overview.
+// Each route keeps its own default export + getStaticProps (SEO/OG/JSON-LD are
+// per-route) and only supplies a config object. Everything here is
+// module-scope so a copy-link state change never remounts the iframe.
+// ---------------------------------------------------------------------------
+
+const SCROLL_OFFSET = 96;
+
+const sectionPad = {
+  paddingTop: "clamp(40px, 6vh, 64px)",
+  paddingBottom: "clamp(40px, 6vh, 64px)",
 };
 
-const SectionHeader = memo(({ variant = "h3", component = "h2", children, sectionId, sx = {}, onCopyLink }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, ...sx }}>
-    <Typography
-      variant={variant}
-      component={component}
-      id={sectionId}
-      sx={{ mr: 1 }}
+const cardGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: 20,
+};
+
+const visuallyHidden = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0,0,0,0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+const isExternal = (href) => /^https?:\/\//i.test(href);
+
+// Renders a Next Link for internal hrefs and a plain anchor for external ones.
+const SmartLink = ({ href, className, style, onClick, children, ...rest }) =>
+  isExternal(href) ? (
+    <a
+      href={href}
+      className={className}
+      style={style}
+      onClick={onClick}
+      target="_blank"
+      rel="noopener noreferrer"
+      {...rest}
     >
       {children}
-    </Typography>
-    <Tooltip title="Copy link to this section" arrow>
-      <IconButton
-        onClick={() => onCopyLink(sectionId)}
-        sx={{ 
-          opacity: 0.6,
-          '&:hover': { opacity: 1 },
-          color: 'text.secondary'
-        }}
-        size="small"
-        aria-label={`Copy link to ${children} section`}
-      >
-        <LinkRounded fontSize="small" />
-      </IconButton>
-    </Tooltip>
-  </Box>
-));
-
-SectionHeader.displayName = 'SectionHeader';
-
-const VideoHighlightCard = memo(({ icon: Icon, title, description, chipLabel, chipColor }) => (
-  <Grid size={{ xs: 12, md: 4 }}>
-    <Card sx={{ 
-      height: "100%", 
-      display: 'flex',
-      flexDirection: 'column',
-      p: 2 
-    }}>
-      <CardContent sx={{ 
-        flexGrow: 1,
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <Icon color={chipColor} sx={{ fontSize: 40, mb: 2 }} />
-        <Typography variant="h6" component="h3" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="body2" sx={{ flexGrow: 1, mb: 2 }}>
-          {description}
-        </Typography>
-        <Box sx={{ mt: 'auto' }}>
-          <Chip 
-            label={chipLabel} 
-            color={chipColor} 
-            variant="outlined" 
-            size="small"
-          />
-        </Box>
-      </CardContent>
-    </Card>
-  </Grid>
-));
-
-VideoHighlightCard.displayName = 'VideoHighlightCard';
-
-const ResourceButton = memo(({ href, icon: Icon, label, onClick, trackingLabel }) => (
-  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-    <Button
-      variant="outlined"
-      fullWidth
+    </a>
+  ) : (
+    <Link
       href={href}
-      sx={{ 
-        py: 2, 
-        px: 1,
-        height: '100px', // Fixed height for consistency
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: 1
-      }}
-      onClick={() => {
-        if (onClick) onClick();
-        trackOnClickButtonClickWithGoogleAndFacebook(trackingLabel);
-      }}
-      aria-label={`Go to ${label}`}
+      className={className}
+      style={style}
+      onClick={onClick}
+      {...rest}
     >
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        gap: 1
-      }}>
-        {Icon ? <Icon sx={{ fontSize: 24 }} /> : <Typography variant="h6">❓</Typography>}
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            fontSize: '0.875rem',
-            lineHeight: 1.2,
-            fontWeight: 500
-          }}
-        >
-          {label}
-        </Typography>
-      </Box>
-    </Button>
-  </Grid>
-));
+      {children}
+    </Link>
+  );
 
-ResourceButton.displayName = 'ResourceButton';
+// Section heading with a hover-reveal copy-link anchor (team-page pattern).
+const SectionHeading = ({ id, eyebrow, title, lead, copiedId, onCopyLink }) => (
+  <div style={{ marginBottom: 24 }}>
+    {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+    <div
+      className="ohx-anchor-row"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginTop: eyebrow ? 6 : 0,
+      }}
+    >
+      <h2 className="ohx-display" style={{ margin: 0 }}>
+        {title}
+      </h2>
+      <a
+        href={`#${id}`}
+        onClick={(e) => onCopyLink(e, id)}
+        className="ohx-anchor"
+        aria-label={`Copy link to ${title}`}
+        title="Copy link to this section"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          textDecoration: "none",
+          color: copiedId === id ? "var(--brand)" : "var(--faint)",
+          transition: "color .2s ease",
+        }}
+      >
+        {copiedId === id ? (
+          <CheckRounded sx={{ fontSize: 18 }} />
+        ) : (
+          <LinkRounded sx={{ fontSize: 18 }} />
+        )}
+      </a>
+    </div>
+    {lead && (
+      <p
+        className="ohx-muted"
+        style={{ margin: "10px 0 0", maxWidth: "62ch", lineHeight: 1.6 }}
+      >
+        {lead}
+      </p>
+    )}
+  </div>
+);
 
-const JudgingOverview = () => {
-  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
+export const VideoGuidePage = ({ config }) => {
+  const {
+    gaAction,
+    back,
+    eyebrow,
+    title,
+    italic,
+    lead,
+    video,
+    share,
+    primaryCta,
+    highlights,
+    highlightsTitle,
+    cta,
+    resources,
+    resourcesTitle,
+    quickReference,
+  } = config;
+
+  const [copiedId, setCopiedId] = useState(null);
+  const [shareStatus, setShareStatus] = useState("");
 
   useEffect(() => {
     initFacebookPixel();
   }, []);
 
-  const handleSnackbarClose = useCallback(() => {
-    setSnackbar({ open: false, message: '' });
-  }, []);
+  const track = useCallback(
+    (button) => trackEvent({ action: gaAction, params: { button } }),
+    [gaAction],
+  );
 
-  const copyLinkToSection = useCallback((sectionId) => {
-    const url = `${window.location.origin}${window.location.pathname}${sectionId ? `#${sectionId}` : ''}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setSnackbar({ open: true, message: 'Link copied to clipboard!' });
-      trackOnClickButtonClickWithGoogleAndFacebook(`copy_link_${sectionId || 'page'}`);
-    }).catch(() => {
-      setSnackbar({ open: true, message: 'Failed to copy link' });
-    });
+  const copyLink = useCallback(
+    (id) => {
+      if (typeof window === "undefined") return Promise.resolve(false);
+      const url = `${window.location.origin}${window.location.pathname}${
+        id ? `#${id}` : ""
+      }`;
+      if (!navigator.clipboard) return Promise.resolve(false);
+      return navigator.clipboard
+        .writeText(url)
+        .then(() => {
+          track(`copy_link_${id || "page"}`);
+          return true;
+        })
+        .catch(() => false);
+    },
+    [track],
+  );
+
+  const onCopySectionLink = useCallback(
+    (e, id) => {
+      e.preventDefault();
+      window.history.replaceState(null, "", `#${id}`);
+      copyLink(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1600);
+    },
+    [copyLink],
+  );
+
+  const flashShareStatus = useCallback((message) => {
+    setShareStatus(message);
+    setTimeout(() => setShareStatus(""), 2400);
   }, []);
 
   const shareVideo = useCallback(async () => {
-    const shareData = {
-      title: 'How Judging Works at Opportunity Hack',
-      text: 'Learn how judging works at Opportunity Hack - evaluating tech solutions that change lives!',
-      url: window.location.href,
-    };
-
+    const shareData = { ...share, url: window.location.href };
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-        trackOnClickButtonClickWithGoogleAndFacebook('native_share');
+        track("native_share");
+        return;
       } catch (err) {
-        copyLinkToSection('');
+        // fall through to clipboard
       }
-    } else {
-      copyLinkToSection('');
     }
-  }, [copyLinkToSection]);
+    const ok = await copyLink("");
+    flashShareStatus(ok ? "Link copied to clipboard" : "Couldn't copy link");
+  }, [share, track, copyLink, flashShareStatus]);
 
-  const videoHighlights = [
+  return (
+    <RefinedRoot>
+      <style>{`
+        .ohx-anchor { opacity: 1; }
+        @media (min-width: 900px) {
+          .ohx-anchor { opacity: 0; }
+          .ohx-anchor-row:hover .ohx-anchor,
+          .ohx-anchor:focus-visible { opacity: 1; }
+        }
+      `}</style>
+
+      {/* Masthead */}
+      <section
+        className="ohx-wrap"
+        style={{ ...pageSectionStyle, paddingBottom: "clamp(24px, 4vh, 40px)" }}
+      >
+        <BackLink href={back.href}>{back.label}</BackLink>
+        <header style={{ marginTop: 18 }}>
+          <Eyebrow>{eyebrow}</Eyebrow>
+          <h1
+            className="ohx-display rise"
+            style={{ marginTop: 8, maxWidth: "20ch", animationDelay: "60ms" }}
+          >
+            {title} <span className="ohx-italic">{italic}</span>
+          </h1>
+          <p
+            className="ohx-lead rise"
+            style={{ marginTop: 18, maxWidth: "62ch", animationDelay: "150ms" }}
+          >
+            {lead}
+          </p>
+        </header>
+      </section>
+
+      {/* Video */}
+      <section
+        className="ohx-wrap rise"
+        aria-labelledby="guide-video"
+        style={{
+          paddingBottom: "clamp(32px, 5vh, 56px)",
+          animationDelay: "240ms",
+        }}
+      >
+        <h2 id="guide-video" style={visuallyHidden}>
+          {video.title}
+        </h2>
+        <div
+          className="ohx-card"
+          style={{
+            overflow: "hidden",
+            maxWidth: 920,
+            background: "var(--ink)",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              paddingBottom: "56.25%",
+              height: 0,
+            }}
+          >
+            <iframe
+              src={`https://www.youtube.com/embed/${video.id}?rel=0&modestbranding=1&enablejsapi=1`}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                border: 0,
+              }}
+            />
+          </div>
+        </div>
+
+        <p className="ohx-faint" style={{ margin: "12px 0 0", fontSize: 13 }}>
+          {video.meta}
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 12,
+            marginTop: 20,
+          }}
+        >
+          <SmartLink
+            href={primaryCta.href}
+            className="ohx-btn ohx-btn--primary"
+            onClick={() => track(primaryCta.track)}
+          >
+            {primaryCta.label} <Arrow />
+          </SmartLink>
+          <button
+            type="button"
+            className="ohx-btn ohx-btn--ghost"
+            onClick={shareVideo}
+          >
+            <ShareRounded sx={{ fontSize: 16 }} /> {share.buttonLabel}
+          </button>
+          <span
+            role="status"
+            aria-live="polite"
+            className="ohx-faint"
+            style={{ fontSize: 13, minHeight: 18 }}
+          >
+            {shareStatus}
+          </span>
+        </div>
+      </section>
+
+      {/* Highlights */}
+      <section
+        id="video-highlights"
+        aria-labelledby="video-highlights-title"
+        style={{
+          background: "var(--surface-2)",
+          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+          scrollMarginTop: SCROLL_OFFSET,
+        }}
+      >
+        <div className="ohx-wrap" style={sectionPad}>
+          <SectionHeading
+            id="video-highlights"
+            eyebrow="In the video"
+            title={highlightsTitle}
+            copiedId={copiedId}
+            onCopyLink={onCopySectionLink}
+          />
+          <div style={cardGrid}>
+            {highlights.map(({ icon: Icon, title: t, description, tag }, i) => (
+              <article
+                key={t}
+                className="ohx-card rise"
+                style={{
+                  padding: 24,
+                  background: "var(--surface)",
+                  display: "flex",
+                  flexDirection: "column",
+                  animationDelay: `${i * 70}ms`,
+                }}
+              >
+                <Icon sx={{ fontSize: 28, color: "var(--accent)" }} />
+                <h3
+                  className="ohx-display"
+                  style={{ fontSize: "1.15rem", margin: "14px 0 8px" }}
+                >
+                  {t}
+                </h3>
+                <p
+                  className="ohx-muted"
+                  style={{
+                    margin: 0,
+                    fontSize: "0.95rem",
+                    lineHeight: 1.55,
+                    flexGrow: 1,
+                  }}
+                >
+                  {description}
+                </p>
+                <span
+                  className="ohx-tag"
+                  style={{ marginTop: 16, alignSelf: "flex-start" }}
+                >
+                  {tag}
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quick reference (optional) */}
+      {quickReference && (
+        <section
+          id="quick-reference"
+          className="ohx-wrap"
+          aria-labelledby="quick-reference-title"
+          style={{
+            ...sectionPad,
+            paddingBottom: 0,
+            scrollMarginTop: SCROLL_OFFSET,
+          }}
+        >
+          <SectionHeading
+            id="quick-reference"
+            eyebrow="Quick reference"
+            title={quickReference.title}
+            copiedId={copiedId}
+            onCopyLink={onCopySectionLink}
+          />
+          <div style={cardGrid}>
+            {quickReference.items.map((item) => (
+              <div
+                key={item.title}
+                className="ohx-card"
+                style={{ padding: 24 }}
+              >
+                <span
+                  className={
+                    item.accent ? "ohx-tag ohx-tag--accent" : "ohx-tag"
+                  }
+                >
+                  {item.tag}
+                </span>
+                <h3
+                  className="ohx-display"
+                  style={{ fontSize: "1.15rem", margin: "12px 0 8px" }}
+                >
+                  {item.title}
+                </h3>
+                <p
+                  className="ohx-muted"
+                  style={{ margin: 0, fontSize: "0.95rem", lineHeight: 1.55 }}
+                >
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* CTA band */}
+      <section className="ohx-wrap" style={sectionPad}>
+        <div
+          className="ohx-card"
+          style={{
+            padding: "28px 30px",
+            background: "var(--brand)",
+            borderColor: "var(--brand)",
+            color: "#fff",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 20,
+          }}
+        >
+          <div style={{ maxWidth: "56ch" }}>
+            <p
+              className="ohx-eyebrow"
+              style={{ color: "rgba(255,255,255,0.7)" }}
+            >
+              {cta.eyebrow}
+            </p>
+            <h2
+              className="ohx-display"
+              style={{ fontSize: 24, marginTop: 8, color: "#fff" }}
+            >
+              {cta.title}
+            </h2>
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontSize: 14.5,
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 1.55,
+              }}
+            >
+              {cta.body}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <SmartLink
+              href={cta.primary.href}
+              className="ohx-btn"
+              style={{ background: "#fff", color: "var(--brand)" }}
+              onClick={() => track(cta.primary.track)}
+            >
+              {cta.primary.label}
+            </SmartLink>
+            <SmartLink
+              href={cta.secondary.href}
+              className="ohx-btn ohx-btn--ghost"
+              style={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}
+              onClick={() => track(cta.secondary.track)}
+            >
+              {cta.secondary.label}
+            </SmartLink>
+          </div>
+        </div>
+      </section>
+
+      {/* Resources */}
+      <section
+        id="additional-resources"
+        className="ohx-wrap"
+        aria-labelledby="additional-resources-title"
+        style={{
+          paddingTop: 0,
+          paddingBottom: "clamp(56px, 9vh, 104px)",
+          scrollMarginTop: SCROLL_OFFSET,
+        }}
+      >
+        <SectionHeading
+          id="additional-resources"
+          eyebrow="Keep going"
+          title={resourcesTitle}
+          copiedId={copiedId}
+          onCopyLink={onCopySectionLink}
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {resources.map(({ href, icon: Icon, label, track: t }) => (
+            <SmartLink
+              key={href + label}
+              href={href}
+              className="ohx-card ohx-card--hover"
+              onClick={() => track(t)}
+              aria-label={`Go to ${label}`}
+              style={{
+                padding: "18px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                textDecoration: "none",
+                color: "var(--ink)",
+                fontWeight: 600,
+                fontSize: 15,
+              }}
+            >
+              <Icon
+                sx={{ fontSize: 22, color: "var(--brand)", flexShrink: 0 }}
+              />
+              <span style={{ flexGrow: 1 }}>{label}</span>
+              <span className="ohx-faint" aria-hidden="true">
+                {isExternal(href) ? "↗" : "→"}
+              </span>
+            </SmartLink>
+          ))}
+        </div>
+      </section>
+    </RefinedRoot>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// /about/judges/overview — "How judging works" video guide
+// ---------------------------------------------------------------------------
+
+const JUDGING_GUIDE = {
+  gaAction: "click_judges_overview",
+  back: { href: "/about/judges", label: "Back to the judge guide" },
+  eyebrow: "Video guide · 5 minutes",
+  title: "How judging works at",
+  italic: "Opportunity Hack.",
+  lead: "Watch this guide to understand our complete judging process, from the evaluation criteria to the live demo sessions that identify the most impactful nonprofit technology solutions.",
+  video: {
+    id: "L702RpJpjGM",
+    title:
+      "How Judging Works at Opportunity Hack - Complete 5 Minute Overview Video",
+    meta: "Published September 8th 2025 · Duration: 5 minutes · Watch in full for the complete process",
+  },
+  share: {
+    buttonLabel: "Share this video",
+    title: "How Judging Works at Opportunity Hack",
+    text: "Learn how judging works at Opportunity Hack - evaluating tech solutions that change lives!",
+  },
+  primaryCta: {
+    href: "/about/judges#upcoming-events",
+    label: "Apply to judge",
+    track: "apply_after_video",
+  },
+  highlightsTitle: "What you'll learn",
+  highlights: [
     {
       icon: AssessmentRounded,
-      title: "Scoring System Deep Dive",
-      description: "Understand the 4-category, 40-point scoring system that evaluates scope, documentation, polish, and security of nonprofit tech solutions.",
-      chipLabel: "Detailed Walkthrough",
-      chipColor: "primary"
+      title: "Scoring system deep dive",
+      description:
+        "Understand the 4-category, 40-point scoring system that evaluates scope, documentation, polish, and security of nonprofit tech solutions.",
+      tag: "Detailed walkthrough",
     },
     {
       icon: GavelRounded,
-      title: "Two-Stage Process",
-      description: "Learn how Stage 1 video evaluations lead to Stage 2 live demos, and how judges collaborate to identify the most impactful solutions.",
-      chipLabel: "Process Breakdown",
-      chipColor: "secondary"
+      title: "Two-stage process",
+      description:
+        "Learn how Stage 1 video evaluations lead to Stage 2 live demos, and how judges collaborate to identify the most impactful solutions.",
+      tag: "Process breakdown",
     },
     {
       icon: GroupsRounded,
-      title: "Raw Details",
-      description: "This isn't abstract, learn how we run the judging for the hackathon in a concrete way with real examples and practical insights.",
-      chipLabel: "Practical Guide",
-      chipColor: "success"
-    }
-  ];
-
-  const resources = [
+      title: "Raw details",
+      description:
+        "This isn't abstract: learn how we run the judging for the hackathon in a concrete way, with real examples and practical insights.",
+      tag: "Practical guide",
+    },
+  ],
+  cta: {
+    eyebrow: "Next step",
+    title: "Ready to become a judge?",
+    body: "Now that you understand the process, apply to judge at our upcoming hackathons and help identify technology solutions that transform nonprofit organizations worldwide.",
+    primary: {
+      href: "/about/judges#upcoming-events",
+      label: "Find events to judge",
+      track: "find_events_cta",
+    },
+    secondary: {
+      href: "/about/judges#judging-criteria",
+      label: "Practice scoring",
+      track: "practice_scoring_cta",
+    },
+  },
+  resourcesTitle: "Additional resources for judges",
+  resources: [
     {
       href: "/about/judges#judging-criteria",
       icon: AssessmentRounded,
-      label: "Scoring Criteria Guide",
-      trackingLabel: "criteria_guide"
+      label: "Scoring criteria guide",
+      track: "criteria_guide",
     },
     {
       href: "/about/judges#judge-faq",
       icon: HelpOutlineRounded,
       label: "Judge FAQ",
-      trackingLabel: "judge_faq"
+      track: "judge_faq",
     },
     {
       href: "/judge",
       icon: DashboardRounded,
-      label: "Judge Dashboard",
-      trackingLabel: "judge_dashboard"
+      label: "Judge dashboard",
+      track: "judge_dashboard",
     },
     {
       href: "/about/process",
       icon: SettingsRounded,
-      label: "OHack Process",
-      trackingLabel: "ohack_process"
-    }
-  ];
-
-  return (
-    <Container maxWidth="lg">
-      <Box sx={{ padding: { xs: "1rem", sm: "2rem" }, fontSize: "1em" }}>
-        {/* Back Navigation */}
-        <Box sx={{ mb: 2 }}>
-          <Link href="/about/judges" passHref>
-            <Button
-              startIcon={<ArrowBackRounded />}
-              sx={{ color: 'text.secondary', textTransform: 'none' }}
-              aria-label="Back to Judge Guide"
-            >
-              Back to Judge Guide
-            </Button>
-          </Link>
-        </Box>
-
-        {/* Header - Video-focused */}
-        <Typography
-          variant="h1"
-          component="h1"
-          sx={{
-            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem", lg: "3.5rem" },
-            mb: 2,
-            mt: 4,
-            fontWeight: 700,
-            lineHeight: 1.2,
-            textAlign: 'center'
-          }}
-        >
-          How Judging Works at Opportunity Hack - Video Guide
-        </Typography>
-
-        <Typography
-          variant="h2"
-          component="h2"
-          sx={{
-            fontSize: { xs: "1.25rem", sm: "1.5rem" },
-            mb: 2,
-            color: "text.secondary",
-            fontWeight: 300,
-            textAlign: 'center'
-          }}
-        >
-          Complete 5-Minute Video Overview
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{
-            fontSize: { xs: "16px", sm: "18px" },
-            mb: 2,
-            maxWidth: "800px",
-            lineHeight: 1.7,
-            textAlign: 'center',
-            mx: 'auto'
-          }}
-        >
-          Watch this comprehensive video guide to understand our complete judging process from evaluation criteria to live demo sessions that identify the most impactful nonprofit technology solutions.
-        </Typography>
-
-        {/* Main Video Section - Primary Content */}
-        <Paper
-          elevation={4}
-          sx={{
-            p: { xs: 3, sm: 4 },
-            mb: 4,
-            textAlign: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            mt: 2
-          }}
-          component="main"
-          aria-labelledby="judging-video"
-          role="main"
-        >
-          <Box sx={{ mb: 4 }}>
-            <PlayCircleOutlineRounded sx={{ fontSize: { xs: 48, sm: 64 }, mb: 2, opacity: 0.9 }} />
-            <Typography
-              variant="h3"
-              component="h2"
-              id="judging-video"
-              sx={{ color: 'white', mb: 2, fontSize: { xs: '1.5rem', sm: '2rem' } }}
-            >
-              🎥 Watch: How Judging Works at Opportunity Hack
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2, fontSize: '18px' }}>
-              5-minute comprehensive guide | From scoring criteria to live demos
-            </Typography>
-          </Box>
-
-          <Box sx={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '900px',
-            margin: '0 auto',
-            paddingBottom: '50.6%', // 16:9 aspect ratio for larger video
-            height: 0,
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 48px rgba(0,0,0,0.4)',
-            border: '3px solid rgba(255,255,255,0.3)'
-          }}>
-            <iframe
-              src="https://www.youtube.com/embed/L702RpJpjGM?rel=0&modestbranding=1&enablejsapi=1"
-              title="How Judging Works at Opportunity Hack - Complete 5 Minute Overview Video"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              itemProp="video"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%'
-              }}
-            />
-          </Box>
-
-          <Box sx={{ mt: 3, mb: 2 }}>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 1 }}>
-              📅 Published: September 8th 2025 • ⏱️ Duration: 5 minutes • 👀 Watch in full for complete process
-            </Typography>
-          </Box>
-
-          <Box sx={{ 
-            mt: 3, 
-            display: 'flex', 
-            gap: 2, 
-            justifyContent: 'center', 
-            flexWrap: 'wrap',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: 'center'
-          }}>
-            <Button
-              variant="contained"
-              sx={{ 
-                bgcolor: 'white', 
-                color: 'primary.main',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' },
-                minWidth: { xs: '200px', sm: 'auto' }
-              }}
-              href="/about/judges#upcoming-events"
-              onClick={() => trackOnClickButtonClickWithGoogleAndFacebook('apply_after_video')}
-            >
-              Apply to Judge Now
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{ 
-                borderColor: 'white', 
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                minWidth: { xs: '200px', sm: 'auto' }
-              }}
-              onClick={shareVideo}
-              startIcon={<ShareRounded />}
-            >
-              Share This Video
-            </Button>
-          </Box>
-        </Paper>
-
-        {/* Video Highlights */}
-        <Box component="section" sx={{ mb: 5 }} aria-labelledby="video-highlights">
-          <SectionHeader 
-            variant="h3" 
-            component="h2" 
-            sectionId="video-highlights"
-            onCopyLink={copyLinkToSection}
-          >
-            What You'll Learn
-          </SectionHeader>
-          
-          <Grid container spacing={3}>
-            {videoHighlights.map((highlight, index) => (
-              <VideoHighlightCard
-                key={index}
-                icon={highlight.icon}
-                title={highlight.title}
-                description={highlight.description}
-                chipLabel={highlight.chipLabel}
-                chipColor={highlight.chipColor}
-              />
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Ready to Judge CTA */}
-        <Alert 
-          severity="success" 
-          sx={{ 
-            mb: 5, 
-            p: 3,
-            '& .MuiAlert-message': { width: '100%' }
-          }}
-          component="section"
-          aria-labelledby="ready-to-judge"
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Typography variant="h6" component="h3" gutterBottom id="ready-to-judge">
-                Ready to Become a Judge?
-              </Typography>
-              <Typography variant="body1">
-                Now that you understand the process, apply to judge at our upcoming hackathons and help identify technology solutions that transform nonprofit organizations worldwide.
-              </Typography>
-            </Box>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1, 
-              flexWrap: 'wrap',
-              flexDirection: { xs: 'column', sm: 'row' },
-              minWidth: { xs: '100%', md: 'auto' }
-            }}>
-              <Button
-                variant="contained"
-                color="primary"
-                href="/about/judges#upcoming-events"
-                startIcon={<EventRounded />}
-                onClick={() => trackOnClickButtonClickWithGoogleAndFacebook('find_events_cta')}
-                sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
-              >
-                Find Events to Judge
-              </Button>
-              <Button
-                variant="outlined"
-                href="/about/judges#judging-criteria"
-                onClick={() => trackOnClickButtonClickWithGoogleAndFacebook('practice_scoring_cta')}
-                sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
-              >
-                Practice Scoring
-              </Button>
-            </Box>
-          </Box>
-        </Alert>
-
-        {/* Additional Resources */}
-        <Box component="section" sx={{ mb: 5 }} aria-labelledby="additional-resources">
-          <SectionHeader 
-            variant="h3" 
-            component="h2" 
-            sectionId="additional-resources"
-            onCopyLink={copyLinkToSection}
-          >
-            Additional Resources for Judges
-          </SectionHeader>
-          
-          <Grid container spacing={2}>
-            {resources.map((resource, index) => (
-              <ResourceButton
-                key={index}
-                href={resource.href}
-                icon={resource.icon}
-                label={resource.label}
-                trackingLabel={resource.trackingLabel}
-              />
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Toast Notification */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={handleSnackbarClose}
-          message={snackbar.message}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        />
-      </Box>
-    </Container>
-  );
+      label: "OHack process",
+      track: "ohack_process",
+    },
+  ],
 };
+
+const JudgingOverview = () => <VideoGuidePage config={JUDGING_GUIDE} />;
 
 export default JudgingOverview;
 
 export const getStaticProps = async () => {
   const title = "How Judging Works at Opportunity Hack - 10 Minute Video Guide";
-  const description = "Watch this comprehensive 5-minute video guide explaining how judging works at Opportunity Hack. Learn our scoring system, two-stage evaluation process, and see real judge experiences evaluating nonprofit technology solutions.";
+  const description =
+    "Watch this comprehensive 5-minute video guide explaining how judging works at Opportunity Hack. Learn our scoring system, two-stage evaluation process, and see real judge experiences evaluating nonprofit technology solutions.";
 
   return {
     props: {
@@ -524,33 +672,33 @@ export const getStaticProps = async () => {
       openGraphData: [
         {
           name: "title",
-          property: "title", 
+          property: "title",
           content: title,
-          key: "title"
+          key: "title",
         },
         {
           name: "og:title",
           property: "og:title",
           content: title,
-          key: "ogtitle"
+          key: "ogtitle",
         },
         {
           name: "author",
           property: "author",
           content: "Opportunity Hack",
-          key: "author"
+          key: "author",
         },
         {
-          name: "og:description", 
+          name: "og:description",
           property: "og:description",
           content: description,
-          key: "ogdescription"
+          key: "ogdescription",
         },
         {
           name: "image",
           property: "og:image",
           content: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
-          key: "ognameimage"
+          key: "ognameimage",
         },
         {
           property: "og:image:width",
@@ -558,7 +706,7 @@ export const getStaticProps = async () => {
           key: "ogimagewidth",
         },
         {
-          property: "og:image:height", 
+          property: "og:image:height",
           content: "630",
           key: "ogimageheight",
         },
@@ -566,98 +714,98 @@ export const getStaticProps = async () => {
           name: "url",
           property: "url",
           content: "https://www.ohack.dev/about/judges/overview",
-          key: "url"
+          key: "url",
         },
         {
           name: "og:url",
-          property: "og:url", 
+          property: "og:url",
           content: "https://www.ohack.dev/about/judges/overview",
-          key: "ogurl"
+          key: "ogurl",
         },
         {
           name: "og:video",
           property: "og:video",
           content: "https://www.youtube.com/watch?v=L702RpJpjGM",
-          key: "ogvideo"
+          key: "ogvideo",
         },
         {
           name: "og:video:url",
           property: "og:video:url",
-          content: "https://www.youtube.com/watch?v=L702RpJpjGM", 
-          key: "ogvideourl"
+          content: "https://www.youtube.com/watch?v=L702RpJpjGM",
+          key: "ogvideourl",
         },
         {
           name: "og:video:secure_url",
           property: "og:video:secure_url",
           content: "https://www.youtube.com/watch?v=L702RpJpjGM",
-          key: "ogvideosecureurl"
+          key: "ogvideosecureurl",
         },
         {
           name: "og:video:type",
           property: "og:video:type",
           content: "text/html",
-          key: "ogvideotype"
+          key: "ogvideotype",
         },
         {
           name: "og:video:width",
-          property: "og:video:width", 
+          property: "og:video:width",
           content: "1280",
-          key: "ogvideowidth"
+          key: "ogvideowidth",
         },
         {
           name: "og:video:height",
           property: "og:video:height",
-          content: "720", 
-          key: "ogvideoheight"
+          content: "720",
+          key: "ogvideoheight",
         },
         {
           name: "twitter:card",
           property: "twitter:card",
           content: "player",
-          key: "twittercard"
+          key: "twittercard",
         },
         {
           name: "twitter:site",
           property: "twitter:site",
           content: "@opportunityhack",
-          key: "twittersite" 
+          key: "twittersite",
         },
         {
           name: "twitter:title",
           property: "twitter:title",
           content: title,
-          key: "twittertitle"
+          key: "twittertitle",
         },
         {
           name: "twitter:description",
-          property: "twitter:description", 
+          property: "twitter:description",
           content: description,
-          key: "twitterdesc"
+          key: "twitterdesc",
         },
         {
           name: "twitter:image",
           property: "twitter:image",
           content: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
-          key: "twitterimage"
+          key: "twitterimage",
         },
         {
           name: "twitter:player",
           property: "twitter:player",
           content: "https://www.youtube.com/embed/L702RpJpjGM",
-          key: "twitterplayer"
+          key: "twitterplayer",
         },
         {
-          name: "twitter:player:width", 
+          name: "twitter:player:width",
           property: "twitter:player:width",
           content: "1280",
-          key: "twitterplayerwidth"
+          key: "twitterplayerwidth",
         },
         {
           name: "twitter:player:height",
           property: "twitter:player:height",
           content: "720",
-          key: "twitterplayerheight"
-        }
+          key: "twitterplayerheight",
+        },
       ],
       structuredData: {
         "@context": "https://schema.org",
@@ -665,116 +813,126 @@ export const getStaticProps = async () => {
           {
             "@type": "Organization",
             "@id": "https://www.ohack.dev/#organization",
-            "name": "Opportunity Hack",
-            "url": "https://www.ohack.dev",
-            "logo": {
+            name: "Opportunity Hack",
+            url: "https://www.ohack.dev",
+            logo: {
               "@type": "ImageObject",
-              "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
+              url: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
             },
-            "sameAs": [
+            sameAs: [
               "https://twitter.com/opportunityhack",
-              "https://github.com/opportunity-hack"
-            ]
+              "https://github.com/opportunity-hack",
+            ],
           },
           {
             "@type": "VideoObject",
             "@id": "https://www.ohack.dev/about/judges/overview#main-video",
-            "name": title,
-            "description": description,
-            "thumbnailUrl": [
+            name: title,
+            description: description,
+            thumbnailUrl: [
               "https://i.ytimg.com/vi/L702RpJpjGM/maxresdefault.jpg",
-              "https://i.ytimg.com/vi/L702RpJpjGM/hqdefault.jpg"
+              "https://i.ytimg.com/vi/L702RpJpjGM/hqdefault.jpg",
             ],
-            "uploadDate": "2025-09-08T00:00:00.000Z",
-            "publishDate": "2025-09-08T00:00:00.000Z",
-            "contentUrl": "https://www.youtube.com/watch?v=L702RpJpjGM",
-            "embedUrl": "https://www.youtube.com/embed/L702RpJpjGM?rel=0&modestbranding=1&enablejsapi=1",
-            "playerType": "HTML5 Flash",
-            "duration": "PT10M30S",
-            "videoQuality": "hd720",
-            "inLanguage": "en-US",
-            "isFamilyFriendly": true,            
-            "keywords": ["judging", "hackathon", "scoring", "nonprofit", "technology", "evaluation", "opportunity hack"],
-            "interactionStatistic": {
+            uploadDate: "2025-09-08T00:00:00.000Z",
+            publishDate: "2025-09-08T00:00:00.000Z",
+            contentUrl: "https://www.youtube.com/watch?v=L702RpJpjGM",
+            embedUrl:
+              "https://www.youtube.com/embed/L702RpJpjGM?rel=0&modestbranding=1&enablejsapi=1",
+            playerType: "HTML5 Flash",
+            duration: "PT10M30S",
+            videoQuality: "hd720",
+            inLanguage: "en-US",
+            isFamilyFriendly: true,
+            keywords: [
+              "judging",
+              "hackathon",
+              "scoring",
+              "nonprofit",
+              "technology",
+              "evaluation",
+              "opportunity hack",
+            ],
+            interactionStatistic: {
               "@type": "InteractionCounter",
-              "interactionType": { "@type": "WatchAction" },
-              "userInteractionCount": 1000
+              interactionType: { "@type": "WatchAction" },
+              userInteractionCount: 1000,
             },
-            "publisher": {
+            publisher: {
               "@type": "Organization",
-              "name": "Opportunity Hack",
-              "url": "https://www.ohack.dev",
-              "logo": {
+              name: "Opportunity Hack",
+              url: "https://www.ohack.dev",
+              logo: {
                 "@type": "ImageObject",
-                "url": "https://cdn.ohack.dev/ohack.dev/judge_1.jpg"
-              }
+                url: "https://cdn.ohack.dev/ohack.dev/judge_1.jpg",
+              },
             },
-            "creator": {
+            creator: {
               "@type": "Organization",
-              "name": "Opportunity Hack",
-              "url": "https://www.ohack.dev"
-            }
+              name: "Opportunity Hack",
+              url: "https://www.ohack.dev",
+            },
           },
           {
             "@type": "WebPage",
             "@id": "https://www.ohack.dev/about/judges/overview#webpage",
-            "url": "https://www.ohack.dev/about/judges/overview",
-            "name": title,
-            "description": description,
-            "primaryImageOfPage": {
+            url: "https://www.ohack.dev/about/judges/overview",
+            name: title,
+            description: description,
+            primaryImageOfPage: {
               "@type": "ImageObject",
-              "url": "https://i.ytimg.com/vi/L702RpJpjGM/maxresdefault.jpg"
+              url: "https://i.ytimg.com/vi/L702RpJpjGM/maxresdefault.jpg",
             },
-            "isPartOf": {
+            isPartOf: {
               "@type": "WebSite",
-              "@id": "https://www.ohack.dev/#website"
+              "@id": "https://www.ohack.dev/#website",
             },
-            "mainEntity": {
+            mainEntity: {
               "@type": "VideoObject",
-              "@id": "https://www.ohack.dev/about/judges/overview#main-video"
+              "@id": "https://www.ohack.dev/about/judges/overview#main-video",
             },
-            "mainContentOfPage": {
+            mainContentOfPage: {
               "@type": "VideoObject",
-              "@id": "https://www.ohack.dev/about/judges/overview#main-video"
+              "@id": "https://www.ohack.dev/about/judges/overview#main-video",
             },
-            "specialty": "Video Guide",
-            "about": {
+            specialty: "Video Guide",
+            about: {
               "@type": "Thing",
-              "name": "Hackathon Judging Process",
-              "description": "Video explanation of how judging works at Opportunity Hack"
-            }
+              name: "Hackathon Judging Process",
+              description:
+                "Video explanation of how judging works at Opportunity Hack",
+            },
           },
           {
             "@type": "BreadcrumbList",
-            "itemListElement": [
+            itemListElement: [
               {
                 "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://www.ohack.dev"
+                position: 1,
+                name: "Home",
+                item: "https://www.ohack.dev",
               },
               {
                 "@type": "ListItem",
-                "position": 2, 
-                "name": "About",
-                "item": "https://www.ohack.dev/about"
+                position: 2,
+                name: "About",
+                item: "https://www.ohack.dev/about",
               },
               {
                 "@type": "ListItem",
-                "position": 3,
-                "name": "Judges", 
-                "item": "https://www.ohack.dev/about/judges"
+                position: 3,
+                name: "Judges",
+                item: "https://www.ohack.dev/about/judges",
               },
               {
                 "@type": "ListItem",
-                "position": 4,
-                "name": "Overview",
-                "item": "https://www.ohack.dev/about/judges/overview"
-              }
-            ]
-          }
-        ]
-      }
+                position: 4,
+                name: "Overview",
+                item: "https://www.ohack.dev/about/judges/overview",
+              },
+            ],
+          },
+        ],
+      },
     },
   };
 };
