@@ -21,7 +21,7 @@ import reportData from '../../data/nonprofit_grants_report.json';
 // salary_methodology = { source, universe, filters, organizations_used,
 //                        people_counted, generated_at }
 
-const BAND_ORDER = ['Under $1M', '$1M - $10M', '$10M+'];
+const BAND_ORDER = ['Under $350K', 'Under $1M', '$1M - $10M', '$10M+'];
 
 const formatMoney = (value) =>
   new Intl.NumberFormat('en-US', {
@@ -36,11 +36,16 @@ const formatDate = (isoDate) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-const revenueBandOf = (revenue) => {
-  if (revenue == null) return 'Unknown';
-  if (revenue < 1_000_000) return 'Under $1M';
-  if (revenue < 10_000_000) return '$1M - $10M';
-  return '$10M+';
+// The two small-size bands are cumulative cuts, not slices: an organization
+// under $350K belongs to both "Under $350K" and "Under $1M", matching how
+// the crawler builds the benchmark rows.
+const sampleInBand = (revenue, band) => {
+  if (revenue == null) return false;
+  if (band === 'Under $350K') return revenue < 350_000;
+  if (band === 'Under $1M') return revenue < 1_000_000;
+  if (band === '$1M - $10M') return revenue >= 1_000_000 && revenue < 10_000_000;
+  if (band === '$10M+') return revenue >= 10_000_000;
+  return false;
 };
 
 const niceCeil = (value) => Math.max(50000, Math.ceil(value / 50000) * 50000);
@@ -76,6 +81,7 @@ const NonprofitSalaries = () => {
   );
 
   const edAll = allSizes.find((b) => b.role.startsWith('Executive Director'));
+  const edTiny = benchmarks.find((b) => b.role === edAll?.role && b.revenue_band === 'Under $350K');
   const edSmall = benchmarks.find((b) => b.role === edAll?.role && b.revenue_band === 'Under $1M');
   const edMid = benchmarks.find((b) => b.role === edAll?.role && b.revenue_band === '$1M - $10M');
   const sizePremium = edSmall && edMid
@@ -91,7 +97,7 @@ const NonprofitSalaries = () => {
     return [...samples]
       .sort((a, b) => b.comp_total - a.comp_total)
       .filter((s) => roleFilter === 'All roles' || s.role === roleFilter)
-      .filter((s) => bandFilter === 'All sizes' || revenueBandOf(s.revenue) === bandFilter)
+      .filter((s) => bandFilter === 'All sizes' || sampleInBand(s.revenue, bandFilter))
       .filter((s) => stateFilter === 'All states' || s.state === stateFilter)
       .filter((s) => term === ''
         || s.org_name?.toLowerCase().includes(term)
@@ -209,6 +215,15 @@ const NonprofitSalaries = () => {
                     at organizations under $1M.
                   </Typography>
                 )}
+                {edTiny && (
+                  <Typography paragraph>
+                    At the smallest organizations, those under $350K in revenue, executive directors
+                    earn a median <strong>{formatMoney(edTiny.median)}</strong> (n={edTiny.count}),
+                    with the middle half between {formatMoney(edTiny.p25)} and{' '}
+                    {formatMoney(edTiny.p75)}. That is the pay market most grassroots nonprofits
+                    actually hire in.
+                  </Typography>
+                )}
                 {topSample && (
                   <Typography paragraph>
                     The highest-paid person in the sample is a {topSample.title.toLowerCase()} at{' '}
@@ -280,9 +295,11 @@ const NonprofitSalaries = () => {
               </Typography>
               <Typography variant="body1" color="textSecondary" paragraph sx={{ maxWidth: '800px' }}>
                 The individual records below are the highest-paid people nationally, plus the highest-paid
-                person at each of the 30 best-paying organizations under $1M in revenue, so smaller
-                nonprofits are represented too. They are shown so you can sanity-check the benchmarks
-                against real filings. The charts above are built from everyone counted, not just this list.
+                person at each of the best-paying small organizations - a dedicated set from
+                organizations under $350K in revenue, and more from organizations under $1M - so
+                smaller nonprofits are represented too. They are shown so you can sanity-check the
+                benchmarks against real filings. The charts above are built from everyone counted,
+                not just this list.
               </Typography>
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 12, md: 4 }}>
