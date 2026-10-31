@@ -4,15 +4,18 @@ import DashboardSection from "./DashboardSection";
 import MentorAvailabilityToggle from "./MentorAvailabilityToggle";
 import { SCORE_DOT_COLORS } from "../Teams/TeamMentorSummaryCard";
 import {
-  MENTOR_COVERAGE_ITEMS,
   JUDGING_CRITERIA,
   SCORE_META,
-  coverageItemCovered,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
   latestRatingsByMentor,
   blendedRating,
   ratingBlendSummary,
   relativeTime,
 } from "../Teams/mentorCoverage";
+import CoverageMeter from "../Teams/CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 import { MENTORS_TITLE } from "./copy";
 
 /**
@@ -24,11 +27,18 @@ import { MENTORS_TITLE } from "./copy";
 export default function MentorSupportCard({
   team,
   eventId,
+  event,
   accessToken,
   onTeamUpdated,
   onNotify,
 }) {
   const checklist = team?.mentor_checklist || {};
+  // Sign-offs over 5h old drop out of the headline (frozen at event end).
+  const coverageNow = useCoverageNow({
+    endDate: event?.end_date,
+    timezone: event?.timezone,
+  });
+  const coverage = coverageSummary(checklist, { now: coverageNow });
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
   const notes = (
     Array.isArray(team?.mentor_notes) ? [...team.mentor_notes] : []
@@ -53,33 +63,64 @@ export default function MentorSupportCard({
         onNotify={onNotify}
       />
 
-      <Box sx={{ fontWeight: 600, mb: 1 }}>What mentors check with you</Box>
+      <Box sx={{ fontWeight: 600, mb: 0.5 }}>What mentors check with you</Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 1,
+          color: "var(--muted)",
+          fontSize: "0.85rem",
+        }}
+        title={coverageDetail(coverage)}
+      >
+        <CoverageMeter summary={coverage} size="md" />
+        <span>
+          {coverageLabel(coverage)}
+          {coverage.signoffs > 0 && !coverage.complete
+            ? ` · each item wants ${coverage.target}`
+            : ""}
+        </span>
+      </Box>
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
-        {MENTOR_COVERAGE_ITEMS.map((item) => {
-          const done = coverageItemCovered(checklist[item.slug]);
-          return (
-            <li
-              key={item.slug}
+        {coverage.items.map((item) => (
+          <li
+            key={item.slug}
+            style={{
+              display: "flex",
+              gap: 8,
+              padding: "4px 0",
+              fontSize: "0.92rem",
+            }}
+          >
+            <span
               style={{
-                display: "flex",
-                gap: 8,
-                padding: "4px 0",
-                fontSize: "0.92rem",
+                minWidth: 28,
+                fontVariantNumeric: "tabular-nums",
+                color: item.covered
+                  ? "var(--success, #2F6E50)"
+                  : item.count > 0
+                    ? "var(--brand, #1B3A6B)"
+                    : "var(--faint)",
               }}
+              aria-label={`${item.count} of ${item.target} mentors`}
             >
-              <span
-                style={{
-                  color: done ? "var(--success, #2F6E50)" : "var(--faint)",
-                }}
-              >
-                {done ? "✓" : "○"}
-              </span>
-              <span style={{ color: done ? "var(--muted)" : "var(--ink)" }}>
-                {item.label}
-              </span>
-            </li>
-          );
-        })}
+              {item.covered ? "✓" : `${item.count}/${item.target}`}
+            </span>
+            <span
+              style={{ color: item.covered ? "var(--muted)" : "var(--ink)" }}
+            >
+              {item.label}
+              {item.stale > 0 && !item.covered && (
+                <span style={{ color: "var(--faint)" }}>
+                  {" "}
+                  · {item.stale} stale
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
       </Box>
 
       <Box sx={{ fontWeight: 600, mb: 1 }}>Judging readiness</Box>

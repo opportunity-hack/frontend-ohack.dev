@@ -26,7 +26,6 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  LinearProgress,
   Link,
   List,
   ListItem,
@@ -63,14 +62,17 @@ import {
   ChatBubbleOutline as NoteIcon,
   Gavel as GavelIcon,
   OpenInNew as OpenInNewIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 
 import {
-  MENTOR_COVERAGE_ITEMS,
-  MENTOR_COVERAGE_TOTAL,
   COVERAGE_TARGET_MENTORS,
   coverageChecks,
-  coverageDoneCount,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
+  COVERAGE_FRESH_RULE_COPY,
+  MENTOR_COVERAGE_FRESH_HOURS,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -86,6 +88,8 @@ import {
   applyOptimisticCoverage,
   applyOptimisticRatings,
 } from "./mentorCoverage";
+import CoverageMeter from "./CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 import { parseLocalDate } from "../../lib/dateUtils";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
@@ -269,6 +273,21 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
 // how much it counts in today's blend (`share`, 0..1) or — for a rating the
 // same mentor later replaced — that it no longer counts. Module scope — see
 // ResolvedFlagRow.
+// One line of a coverage item's audit trail: "Checked · Priya R. · 6h ago".
+function CoverageHistoryRow({ entry, myPropelId }) {
+  const who = entry.propel_id === myPropelId ? "You" : entry.name || "A mentor";
+  return (
+    <Typography
+      variant="caption"
+      component="li"
+      sx={{ display: "block", color: "text.secondary", py: 0.25 }}
+    >
+      {entry.action === "cleared" ? "Cleared" : "Checked"} · {who}
+      {entry.at ? ` · ${relativeTime(entry.at)}` : ""}
+    </Typography>
+  );
+}
+
 function RatingHistoryRow({ entry, share, myPropelId }) {
   const meta = SCORE_META[entry.score];
   const counts = typeof share === "number";
@@ -426,6 +445,10 @@ export default function MentorTeamPanel({
   // Per-item in-flight markers + optimistic overlays (see mentorCoverage.js
   // applyOptimistic*). `busy` stays for the dialog/notes flows only.
   const [pendingCoverage, setPendingCoverage] = useState(() => new Set());
+  // Per-item "History" disclosures (Set of item slugs).
+  const [coverageHistoryOpen, setCoverageHistoryOpen] = useState(
+    () => new Set(),
+  );
   const [optimisticCoverage, setOptimisticCoverage] = useState({});
   const [pendingCriteria, setPendingCriteria] = useState(() => new Set());
   const [optimisticRatings, setOptimisticRatings] = useState({});
@@ -506,7 +529,18 @@ export default function MentorTeamPanel({
     () => splitMentorFlags(team?.mentor_flags),
     [team?.mentor_flags],
   );
-  const doneCount = coverageDoneCount(checklist);
+  // Whole-checklist progress: share of all 18 possible sign-offs + how many
+  // mentors contributed (the old X/6 only moved once an item had all 3).
+  // Sign-offs over MENTOR_COVERAGE_FRESH_HOURS old are stale and drop out;
+  // the clock is null until mounted and frozen at the end of the event.
+  const coverageNow = useCoverageNow({
+    endDate: event?.end_date,
+    timezone: event?.timezone,
+  });
+  const coverage = useMemo(
+    () => coverageSummary(checklist, { now: coverageNow }),
+    [checklist, coverageNow],
+  );
   const ratingsByMentor = useMemo(
     () =>
       applyOptimisticRatings(
@@ -580,7 +614,8 @@ export default function MentorTeamPanel({
   // -- handlers
   // `done` here means "add MY check" (true) or "clear MY check" (false) — the
   // backend only ever touches the calling mentor's own check on the item.
-  const toggleCoverage = async (slug, done) => {
+  // `reconfirm` = my existing (stale) check gets a fresh timestamp.
+  const toggleCoverage = async (slug, done, { reconfirm = false } = {}) => {
     // Flip locally first; the server copy replaces the overlay on success and
     // the overlay is simply dropped (reverting the row) on failure.
     setOptimisticCoverage((o) => ({ ...o, [slug]: done }));
@@ -591,7 +626,13 @@ export default function MentorTeamPanel({
         done,
       });
       updateTeamFromResponse(data);
-      showSnack(done ? "Your check added" : "Your check cleared");
+      showSnack(
+        reconfirm
+          ? "Your check is fresh again"
+          : done
+            ? "Your check added"
+            : "Your check cleared",
+      );
     } catch (e) {
       showSnack(e.message || "Couldn't update coverage", "error");
     } finally {
@@ -600,19 +641,25 @@ export default function MentorTeamPanel({
     }
   };
 
-  // Click adds your check if you haven't signed off; clicking your own check
-  // clears it. Items already at the mentor cap (and not yours) are locked.
+  // Click adds your check if you haven't signed off; clicking your own FRESH
+  // check clears it; clicking your own STALE check confirms it again (new
+  // timestamp). Items at the cap with 3 fresh checks from others are locked.
+  // `item` is a coverageSummary() item (checks carry `fresh`).
   const handleCoverageClick = (item) => {
-    const checks = coverageChecks(checklist[item.slug]);
-    const mine = checks.some((c) => c.propel_id === myPropelId);
-    if (mine) {
-      toggleCoverage(item.slug, false);
-    } else if (checks.length >= COVERAGE_TARGET_MENTORS) {
+    const mineCheck = item.checks.find((c) => c.propel_id === myPropelId);
+    if (mineCheck) {
+      toggleCoverage(item.slug, !mineCheck.fresh, {
+        reconfirm: !mineCheck.fresh,
+      });
+    } else if (item.covered) {
       // Fully covered by other mentors — nothing to do.
     } else {
       toggleCoverage(item.slug, true);
     }
   };
+
+  const toggleCoverageHistory = (slug) =>
+    setCoverageHistoryOpen((s) => withKey(s, slug, !s.has(slug)));
 
   const postNote = async () => {
     const body = noteDraft.trim();
@@ -780,18 +827,22 @@ export default function MentorTeamPanel({
           label="Team asked for heads-down time — check Slack before dropping in"
         />
       )}
-      <Chip
-        size="small"
-        color={
-          doneCount === MENTOR_COVERAGE_TOTAL
-            ? "success"
-            : doneCount > 0
-              ? "primary"
-              : "default"
-        }
-        label={`${doneCount} / ${MENTOR_COVERAGE_TOTAL} covered`}
-        sx={{ fontWeight: 700 }}
-      />
+      <Tooltip title={coverageDetail(coverage)}>
+        <Chip
+          size="small"
+          variant="outlined"
+          color={
+            coverage.complete
+              ? "success"
+              : coverage.signoffs > 0
+                ? "primary"
+                : "default"
+          }
+          icon={<CoverageMeter summary={coverage} size="sm" />}
+          label={coverageLabel(coverage)}
+          sx={{ fontWeight: 700, "& .MuiChip-icon": { ml: 1 } }}
+        />
+      </Tooltip>
       {openFlags.length > 0 && (
         <Chip
           size="small"
@@ -922,22 +973,13 @@ export default function MentorTeamPanel({
 
   const renderCoverage = () => (
     <Box>
-      <LinearProgress
-        variant="determinate"
-        value={(doneCount / MENTOR_COVERAGE_TOTAL) * 100}
-        sx={{
-          height: 8,
-          borderRadius: 4,
-          mb: 1,
-          backgroundColor: "rgba(0,0,0,0.06)",
-          "& .MuiLinearProgress-bar": {
-            background:
-              doneCount === MENTOR_COVERAGE_TOTAL
-                ? "linear-gradient(90deg, #ffd54f, #ff9800)"
-                : "linear-gradient(90deg, #1dd1a1, #48dbfb)",
-          },
-        }}
-      />
+      <CoverageMeter summary={coverage} size="lg" style={{ marginBottom: 6 }} />
+      <Typography
+        variant="caption"
+        sx={{ display: "block", mb: 0.5, color: "text.primary" }}
+      >
+        <strong>{coverageLabel(coverage)}</strong> — {coverageDetail(coverage)}
+      </Typography>
       <Typography
         variant="caption"
         color="text.secondary"
@@ -946,16 +988,17 @@ export default function MentorTeamPanel({
         Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different
         mentors — check the ones you&apos;ve personally covered. An item turns
         green once {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your
-        own check anytime.
+        own check anytime. {COVERAGE_FRESH_RULE_COPY}
       </Typography>
       <List disablePadding>
-        {MENTOR_COVERAGE_ITEMS.map((item, idx) => {
-          const checks = coverageChecks(checklist[item.slug]);
-          const count = checks.length;
-          const mine = checks.some((c) => c.propel_id === myPropelId);
-          const covered = count >= COVERAGE_TARGET_MENTORS;
+        {coverage.items.map((item, idx) => {
+          const { checks, count, stale, covered } = item;
+          const mineCheck = checks.find((c) => c.propel_id === myPropelId);
+          const mine = Boolean(mineCheck);
+          const mineStale = mine && !mineCheck.fresh;
           const lockedForMe = covered && !mine;
           const isPending = pendingCoverage.has(item.slug);
+          const historyOpen = coverageHistoryOpen.has(item.slug);
           // Rows a mentor can act on render as real buttons (focusable,
           // Enter/Space); locked and read-only rows stay plain list items.
           const interactive = canInteract && (mine || !covered);
@@ -964,19 +1007,33 @@ export default function MentorTeamPanel({
             <Chip
               size="small"
               variant={covered ? "filled" : "outlined"}
-              color={covered ? "success" : count > 0 ? "primary" : "default"}
+              color={
+                covered
+                  ? "success"
+                  : count > 0
+                    ? "primary"
+                    : stale > 0
+                      ? "warning"
+                      : "default"
+              }
               icon={isPending ? <CircularProgress size={12} /> : undefined}
               label={
                 covered
                   ? `${count}/${COVERAGE_TARGET_MENTORS} ✓`
-                  : `${count}/${COVERAGE_TARGET_MENTORS}`
+                  : `${count}/${COVERAGE_TARGET_MENTORS}${stale > 0 ? ` · ${stale} stale` : ""}`
               }
             />
           );
 
           const rowIcon = (
             <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
-              {mine ? (
+              {mineStale ? (
+                <Tooltip
+                  title={`Your check is over ${MENTOR_COVERAGE_FRESH_HOURS}h old — tap to confirm it again`}
+                >
+                  <RefreshIcon sx={{ color: "warning.main" }} />
+                </Tooltip>
+              ) : mine ? (
                 <Tooltip title="You checked this — tap to clear your check">
                   <CheckCircleIcon sx={{ color: "success.main" }} />
                 </Tooltip>
@@ -1010,7 +1067,7 @@ export default function MentorTeamPanel({
                   >
                     {item.blurb}
                   </Typography>
-                  {count > 0 && (
+                  {checks.length > 0 && (
                     <Typography
                       variant="caption"
                       component="span"
@@ -1027,7 +1084,7 @@ export default function MentorTeamPanel({
                               c.checked_at
                                 ? ` · ${relativeTime(c.checked_at)}`
                                 : ""
-                            }`,
+                            }${c.fresh ? "" : " · stale"}`,
                         )
                         .join("  ·  ")}
                     </Typography>
@@ -1044,6 +1101,21 @@ export default function MentorTeamPanel({
                       }}
                     >
                       + Add your check
+                    </Typography>
+                  )}
+                  {canInteract && mineStale && (
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      sx={{
+                        display: "block",
+                        mt: 0.25,
+                        color: "warning.dark",
+                        fontWeight: 600,
+                      }}
+                    >
+                      ↻ Confirm again — your check is over{" "}
+                      {MENTOR_COVERAGE_FRESH_HOURS}h old
                     </Typography>
                   )}
                 </Box>
@@ -1102,6 +1174,30 @@ export default function MentorTeamPanel({
                   </Box>
                 )}
               </ListItem>
+              {item.history.length > 0 && (
+                <Box component="li" sx={{ listStyle: "none", pl: 7, pr: 2 }}>
+                  <Button
+                    size="small"
+                    onClick={() => toggleCoverageHistory(item.slug)}
+                    aria-expanded={historyOpen}
+                    sx={{ textTransform: "none", px: 0.5, minWidth: 0 }}
+                  >
+                    {historyOpen ? "Hide history" : "History"} (
+                    {item.history.length})
+                  </Button>
+                  <Collapse in={historyOpen} unmountOnExit>
+                    <Box component="ul" sx={{ m: 0, pl: 1, pb: 1 }}>
+                      {item.history.map((entry, i) => (
+                        <CoverageHistoryRow
+                          key={`${entry.at || ""}-${i}`}
+                          entry={entry}
+                          myPropelId={myPropelId}
+                        />
+                      ))}
+                    </Box>
+                  </Collapse>
+                </Box>
+              )}
             </React.Fragment>
           );
         })}
@@ -1436,7 +1532,7 @@ export default function MentorTeamPanel({
     },
     {
       key: "coverage",
-      title: `Coverage (${doneCount}/${MENTOR_COVERAGE_TOTAL})`,
+      title: `Coverage (${coverage.percent}%)`,
       icon: <CheckCircleIcon fontSize="small" />,
       defaultExpanded: !isMobile || openFlags.length === 0,
       content: renderCoverage(),

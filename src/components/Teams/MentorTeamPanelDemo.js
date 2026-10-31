@@ -16,8 +16,13 @@ const DEMO_TEAM = {
   mentor_last_touched_at: minutesAgo(42),
   mentor_last_touched_by_name: "Sai M.",
   mentor_open_flag_count: 1,
-  // Per-mentor coverage: each item collects sign-off from up to 3 mentors.
-  // intro_made is fully covered (3/3); the rest show partial coverage.
+  // Per-mentor coverage: each item collects sign-off from up to 3 mentors,
+  // and a sign-off on a recurring item only counts for 5 hours. Seeded to
+  // show every case: intro_made (a once-item) is fully covered by 3 mentors
+  // regardless of age; scope_reviewed has one fresh + one stale check;
+  // architecture_discussed has only a stale check plus a history trail
+  // (checked → cleared → checked again) → "22% signed off · 3 mentors ·
+  // 2 stale" (4 of 18).
   mentor_checklist: {
     intro_made: {
       checks: {
@@ -29,13 +34,47 @@ const DEMO_TEAM = {
     scope_reviewed: {
       checks: {
         "demo-priya": { name: "Priya R.", checked_at: hoursAgo(18) },
-        "demo-greg": { name: "Greg V.", checked_at: hoursAgo(5) },
+        "demo-greg": { name: "Greg V.", checked_at: minutesAgo(40) },
       },
+      history: [
+        {
+          propel_id: "demo-priya",
+          name: "Priya R.",
+          at: hoursAgo(18),
+          action: "checked",
+        },
+        {
+          propel_id: "demo-greg",
+          name: "Greg V.",
+          at: minutesAgo(40),
+          action: "checked",
+        },
+      ],
     },
     architecture_discussed: {
       checks: {
         "demo-greg": { name: "Greg V.", checked_at: hoursAgo(6) },
       },
+      history: [
+        {
+          propel_id: "demo-sai",
+          name: "Sai M.",
+          at: hoursAgo(9),
+          action: "checked",
+        },
+        {
+          propel_id: "demo-sai",
+          name: "Sai M.",
+          at: hoursAgo(7),
+          action: "cleared",
+        },
+        {
+          propel_id: "demo-greg",
+          name: "Greg V.",
+          at: hoursAgo(6),
+          action: "checked",
+        },
+      ],
     },
   },
   mentor_flags: [
