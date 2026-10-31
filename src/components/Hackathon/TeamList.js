@@ -66,8 +66,9 @@ import { isHackathonExpired } from "../../lib/dateUtils";
 import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
 import VideoDisplay from "../VideoDisplay/VideoDisplay";
 import {
-  MENTOR_COVERAGE_TOTAL,
-  coverageDoneCount,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -76,6 +77,8 @@ import {
   ratingBlendSummary,
   relativeTime as mentorRelativeTime,
 } from "../Teams/mentorCoverage";
+import CoverageMeter from "../Teams/CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 import FlagIcon from "@mui/icons-material/Flag";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
@@ -179,9 +182,11 @@ const JudgingReadinessStrip = ({ team }) => {
  * /hack/<event_id>. Mirrors the per-team MentorTeamPanel's header pills but
  * stays small. Renders nothing if a team has no mentor activity yet.
  */
-const MentorSupportSummary = ({ team, eventId }) => {
+// `coverageNow` comes from ONE useCoverageNow() in TeamList (30+ cards —
+// one ticking clock is plenty); null until mounted = count every sign-off.
+const MentorSupportSummary = ({ team, eventId, coverageNow }) => {
   const checklist = team?.mentor_checklist || {};
-  const doneCount = coverageDoneCount(checklist);
+  const coverage = coverageSummary(checklist, { now: coverageNow });
   const openFlags = Number(team?.mentor_open_flag_count || 0);
   const lastTouchedAt = team?.mentor_last_touched_at;
   const lastTouchedBy = team?.mentor_last_touched_by_name;
@@ -192,7 +197,8 @@ const MentorSupportSummary = ({ team, eventId }) => {
   // Hide entirely if there's no mentor activity to report and the team
   // hasn't asked for heads-down time either.
   if (
-    !doneCount &&
+    !coverage.signoffs &&
+    !coverage.staleSignoffs &&
     !openFlags &&
     !lastTouchedAt &&
     !hasAnyRating &&
@@ -201,12 +207,11 @@ const MentorSupportSummary = ({ team, eventId }) => {
     return null;
   }
 
-  const coverageColor =
-    doneCount === MENTOR_COVERAGE_TOTAL
-      ? "success"
-      : doneCount > 0
-        ? "primary"
-        : "default";
+  const coverageColor = coverage.complete
+    ? "success"
+    : coverage.signoffs > 0
+      ? "primary"
+      : "default";
 
   return (
     <Box
@@ -260,9 +265,12 @@ const MentorSupportSummary = ({ team, eventId }) => {
       >
         <Chip
           size="small"
+          variant="outlined"
           color={coverageColor}
-          label={`${doneCount}/${MENTOR_COVERAGE_TOTAL} covered`}
-          sx={{ fontWeight: 600, height: 22 }}
+          icon={<CoverageMeter summary={coverage} size="sm" />}
+          label={coverageLabel(coverage)}
+          title={coverageDetail(coverage)}
+          sx={{ fontWeight: 600, height: 22, "& .MuiChip-icon": { ml: 0.75 } }}
         />
         {openFlags > 0 && (
           <Chip
@@ -1254,6 +1262,7 @@ const TeamCard = ({
   onPlayVideo,
   event_id,
   onVisible,
+  coverageNow,
 }) => {
   const hasGithubLinks = team?.github_links && team?.github_links.length > 0;
   const [githubData, setGithubData] = useState(null);
@@ -1480,7 +1489,11 @@ const TeamCard = ({
         )}
 
         {/* At-a-glance mentor support — renders nothing if no mentor activity yet */}
-        <MentorSupportSummary team={team} eventId={event_id} />
+        <MentorSupportSummary
+          team={team}
+          eventId={event_id}
+          coverageNow={coverageNow}
+        />
 
         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
           Slack Channel:{" "}
@@ -1774,6 +1787,8 @@ const TeamList = ({
   // null = unknown/loading, "approved" | "pending" | "none" once resolved.
   const [hackerStatus, setHackerStatus] = useState(null);
   const [nonprofitMap, setNonprofitMap] = useState({});
+  // Clock for mentor-coverage freshness (null during SSR/hydration).
+  const coverageNow = useCoverageNow({ endDate, timezone: eventTimezone });
   const [nonprofitsLoading, setNonprofitsLoading] = useState(false);
   const [videoDialog, setVideoDialog] = useState({
     open: false,
@@ -2266,6 +2281,7 @@ const TeamList = ({
                 onCopyGithubUsername={handleCopyGithubUsername}
                 onPlayVideo={handlePlayVideo}
                 event_id={event_id}
+                coverageNow={coverageNow}
                 onVisible={isLoggedIn ? fetchTeamProfiles : undefined}
               />
             </Grid>

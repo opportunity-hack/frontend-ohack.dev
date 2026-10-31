@@ -1,38 +1,46 @@
-// Shared constants for the mentor team panel. Slugs MUST stay in lockstep
-// with backend MENTOR_COVERAGE_ITEMS in api/mentors/mentors_service.py.
+// Shared constants for the mentor team panel. Slugs AND cadences MUST stay
+// in lockstep with backend MENTOR_COVERAGE_ITEMS in api/mentors/mentors_service.py.
+// `cadence`: "once" = doing it one time is enough for the whole event;
+// "recurring" = the sign-off goes stale after MENTOR_COVERAGE_FRESH_HOURS.
 
 export const MENTOR_COVERAGE_ITEMS = [
   {
     slug: "intro_made",
+    cadence: "once",
     label: "Mentor introductions made",
     blurb: "A mentor has connected with the team in their Slack channel.",
   },
   {
     slug: "scope_reviewed",
+    cadence: "recurring",
     label: "Project scope reviewed",
     blurb:
       "Scope is realistic for the hackathon window and ties to a real nonprofit need.",
   },
   {
     slug: "architecture_discussed",
+    cadence: "recurring",
     label: "Architecture & tech stack discussed",
     blurb:
       "Stack is sensible; nothing single-file or trivially shallow — addresses Polish and Scope in the judging rubric.",
   },
   {
     slug: "repo_health_checked",
+    cadence: "recurring",
     label: "GitHub repo reviewed",
     blurb:
       "Commits flowing, structure sensible, README starting to take shape — addresses Documentation.",
   },
   {
     slug: "criteria_walkthrough",
+    cadence: "once",
     label: "Judging criteria walkthrough",
     blurb:
       "Team has been shown the judging rubric (Scope, Documentation, Polish, Security, plus Accessibility) and knows what judges look for.",
   },
   {
     slug: "demo_devpost_reviewed",
+    cadence: "recurring",
     label: "Demo video + DevPost reviewed",
     blurb:
       "A mentor has reviewed at least a draft of the demo video and DevPost submission.",
@@ -46,6 +54,61 @@ export const MENTOR_COVERAGE_TOTAL = MENTOR_COVERAGE_ITEMS.length;
 // as "covered" once it reaches this many checks. Keep in lockstep with the
 // backend COVERAGE_TARGET_MENTORS in api/mentors/mentors_service.py.
 export const COVERAGE_TARGET_MENTORS = 3;
+
+// ---- freshness --------------------------------------------------------------
+// A sign-off is a snapshot: "a mentor checked this with the team". Over a
+// two-day hackathon a Saturday check says nothing about Sunday, so a check
+// only counts toward the headline while it is under MENTOR_COVERAGE_FRESH_HOURS
+// old (about one mentor shift — the same scale as the 4h rating half-life).
+// Older checks stay visible as "stale" (who, when) and the item asks for a
+// fresh look. Items with `cadence: "once"` (introductions, the criteria
+// walkthrough) never go stale: re-doing them every shift would just pester
+// the team. The backend applies the same rule to its 3-mentor cap, so a
+// stale check never blocks a fresh mentor from signing off.
+//
+// Freshness needs a clock, so `coverageSummary` takes `now` (epoch ms) from
+// the caller: `useCoverageNow()` supplies it after mount (null during SSR +
+// hydration, which means "count everything") and freezes it at the end of
+// the event so a finished hackathon keeps its final picture instead of
+// decaying to 0% a week later.
+export const MENTOR_COVERAGE_FRESH_HOURS = 5;
+export const MENTOR_COVERAGE_FRESH_MS =
+  MENTOR_COVERAGE_FRESH_HOURS * 60 * 60 * 1000;
+
+export const COVERAGE_FRESH_RULE_COPY = `A sign-off counts for ${MENTOR_COVERAGE_FRESH_HOURS} hours — after that it's stale and the item wants a fresh check. Introductions and the judging-criteria walkthrough only need doing once.`;
+
+export function coverageCadence(slug) {
+  return (
+    MENTOR_COVERAGE_ITEMS.find((it) => it.slug === slug)?.cadence || "recurring"
+  );
+}
+
+// true while a check still counts at `now`. No clock → everything counts.
+export function isCheckFresh(check, slug, now) {
+  if (now == null || coverageCadence(slug) === "once") return true;
+  const t = parseMentorTimestamp(check?.checked_at);
+  if (Number.isNaN(t)) return true; // legacy check with no timestamp
+  return now - t < MENTOR_COVERAGE_FRESH_MS;
+}
+
+// The append-only trail behind an item, newest first:
+//   [{ propel_id, name, at, action: "checked" | "cleared" }]
+// The backend appends one row per check / re-check / clear (Oct 2026);
+// older data has no `history` and renders none.
+export function coverageHistory(entry) {
+  if (!entry || typeof entry !== "object" || !Array.isArray(entry.history)) {
+    return [];
+  }
+  return entry.history
+    .filter((h) => h && typeof h === "object")
+    .map((h) => ({
+      propel_id: h.propel_id,
+      name: h.name,
+      at: h.at,
+      action: h.action === "cleared" ? "cleared" : "checked",
+    }))
+    .sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+}
 
 // Normalize a mentor_checklist[slug] entry into an array of per-mentor checks:
 //   [{ propel_id, name, checked_at }]  (oldest first)
@@ -86,6 +149,128 @@ export function coverageDoneCount(checklist) {
   return MENTOR_COVERAGE_ITEMS.reduce(
     (acc, it) => acc + (coverageItemCovered(c[it.slug]) ? 1 : 0),
     0,
+  );
+}
+
+// ---- whole-checklist progress ----------------------------------------------
+// "0/6 covered" only counted items that had every one of the 3 sign-offs, so
+// a team two mentors had walked through end to end still read as untouched
+// (every item sat at 2 of 3). The summary counts every individual sign-off
+// instead: 6 items × 3 mentors = 18 possible, the headline is the share of
+// those that are in, and how many distinct mentors contributed. "Fully
+// covered" (all 3 on an item) stays as the secondary number — it is still
+// what fires the backend's one-time Slack milestone.
+export const COVERAGE_POSSIBLE_SIGNOFFS =
+  MENTOR_COVERAGE_TOTAL * COVERAGE_TARGET_MENTORS;
+
+// `now` (epoch ms, from useCoverageNow) switches freshness on: only checks
+// under MENTOR_COVERAGE_FRESH_HOURS old count, the rest are reported as
+// `stale`. Without it (SSR, tests, hydration) every check counts.
+export function coverageSummary(checklist, { now = null } = {}) {
+  const c = checklist || {};
+  const mentors = new Map(); // propel_id -> name (first seen, fresh checks)
+  let staleSignoffs = 0;
+  let newestCheckMs = null;
+  const items = MENTOR_COVERAGE_ITEMS.map((it) => {
+    const checks = coverageChecks(c[it.slug]).map((ch) => ({
+      ...ch,
+      fresh: isCheckFresh(ch, it.slug, now),
+    }));
+    let fresh = 0;
+    let stale = 0;
+    for (const ch of checks) {
+      const t = parseMentorTimestamp(ch.checked_at);
+      if (!Number.isNaN(t) && (newestCheckMs == null || t > newestCheckMs)) {
+        newestCheckMs = t;
+      }
+      if (!ch.fresh) {
+        stale += 1;
+        continue;
+      }
+      fresh += 1;
+      if (!mentors.has(ch.propel_id)) mentors.set(ch.propel_id, ch.name);
+    }
+    staleSignoffs += stale;
+    // The backend refuses a 4th fresh check, so the cap only guards odd
+    // legacy data from pushing the percentage past 100.
+    const count = Math.min(fresh, COVERAGE_TARGET_MENTORS);
+    return {
+      slug: it.slug,
+      label: it.label,
+      cadence: it.cadence,
+      count,
+      stale,
+      target: COVERAGE_TARGET_MENTORS,
+      covered: count >= COVERAGE_TARGET_MENTORS,
+      checks,
+      history: coverageHistory(c[it.slug]),
+    };
+  });
+  const signoffs = items.reduce((sum, i) => sum + i.count, 0);
+  const possible = COVERAGE_POSSIBLE_SIGNOFFS;
+  const fullyCovered = items.filter((i) => i.covered).length;
+  return {
+    items,
+    signoffs,
+    staleSignoffs,
+    possible,
+    percent: possible ? Math.round((signoffs / possible) * 100) : 0,
+    fullyCovered,
+    started: items.filter((i) => i.count > 0).length,
+    totalItems: MENTOR_COVERAGE_TOTAL,
+    target: COVERAGE_TARGET_MENTORS,
+    mentorCount: mentors.size,
+    mentorNames: [...mentors.values()].filter(Boolean),
+    complete: fullyCovered === MENTOR_COVERAGE_TOTAL,
+    freshHours: MENTOR_COVERAGE_FRESH_HOURS,
+    now,
+    newestCheckAt: newestCheckMs,
+  };
+}
+
+function mentorsWord(n) {
+  return `${n} mentor${n === 1 ? "" : "s"}`;
+}
+
+// The headline every surface renders: "56% signed off · 2 mentors",
+// "Fully covered · 3 mentors", "No sign-offs yet". `compact` is the table
+// form ("56% · 2 mentors"). Stale (over-5h) sign-offs are counted out of
+// the share and named — "33% signed off · 1 mentor · 4 stale" — so a drop
+// from yesterday's 100% is never a mystery.
+export function coverageLabel(summary, { compact = false } = {}) {
+  const s = summary;
+  if (!s) return "";
+  const stale = s.staleSignoffs || 0;
+  if (s.signoffs === 0) {
+    if (stale === 0) return compact ? "0%" : "No sign-offs yet";
+    return compact
+      ? `0% · ${stale} stale`
+      : `No fresh sign-offs · ${stale} stale`;
+  }
+  const who = mentorsWord(s.mentorCount);
+  const suffix = stale > 0 ? ` · ${stale} stale` : "";
+  if (compact) return `${s.percent}% · ${who}${suffix}`;
+  if (s.complete) return `Fully covered · ${who}${suffix}`;
+  return `${s.percent}% signed off · ${who}${suffix}`;
+}
+
+// The sentence behind the headline (tooltip / caption) — what the
+// percentage is a share of, so "56%" is never a mystery number.
+export function coverageDetail(summary) {
+  const s = summary;
+  if (!s) return "";
+  const who =
+    s.mentorCount === 0 ? "no mentors yet" : mentorsWord(s.mentorCount);
+  const window = s.now != null ? ` in the last ${s.freshHours}h` : "";
+  const stale =
+    s.staleSignoffs > 0
+      ? ` · ${s.staleSignoffs} older sign-off${s.staleSignoffs === 1 ? "" : "s"} ` +
+        `over ${s.freshHours}h old need${s.staleSignoffs === 1 ? "s" : ""} a fresh check`
+      : "";
+  return (
+    `${s.signoffs} of ${s.possible} sign-offs${window} ` +
+    `(${s.totalItems} items × ${s.target} mentors each) from ${who}${stale} · ` +
+    `${s.fullyCovered} of ${s.totalItems} items fully covered`
   );
 }
 
@@ -380,21 +565,22 @@ export function applyOptimisticCoverage(
   if (!myPropelId || slugs.length === 0) return base;
   const out = { ...base };
   for (const slug of slugs) {
+    const prev = out[slug] && typeof out[slug] === "object" ? out[slug] : {};
     const checks = {};
-    for (const c of coverageChecks(out[slug])) {
+    for (const c of coverageChecks(prev)) {
       checks[c.propel_id] = { name: c.name, checked_at: c.checked_at };
     }
     if (overrides[slug]) {
-      if (!checks[myPropelId]) {
-        checks[myPropelId] = {
-          name: myName || "You",
-          checked_at: new Date().toISOString(),
-        };
-      }
+      // Adding — or re-confirming a stale check: either way mine is "now".
+      checks[myPropelId] = {
+        name: checks[myPropelId]?.name || myName || "You",
+        checked_at: new Date().toISOString(),
+      };
     } else {
       delete checks[myPropelId];
     }
-    out[slug] = { checks };
+    // Keep the audit trail (and any legacy keys): only `checks` changes here.
+    out[slug] = { ...prev, checks };
   }
   return out;
 }
