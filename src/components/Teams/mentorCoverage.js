@@ -85,7 +85,7 @@ export function coverageDoneCount(checklist) {
   const c = checklist || {};
   return MENTOR_COVERAGE_ITEMS.reduce(
     (acc, it) => acc + (coverageItemCovered(c[it.slug]) ? 1 : 0),
-    0
+    0,
   );
 }
 
@@ -129,9 +129,34 @@ export const SCORE_META = {
   red: { label: "At risk", emoji: "🔴", color: "error" },
 };
 
-// Rank: red is worst. Used to compute the "team consensus" rating
-// (worst among each mentor's most-recent rating per criterion).
-export const SCORE_RANK = { red: 0, yellow: 1, green: 2 };
+// Numeric value of each score for blending (red is worst).
+export const SCORE_VALUE = { red: 1, yellow: 2, green: 3 };
+
+// Recency weighting for the blend (#412): a rating counts half as much for
+// every RATING_HALF_LIFE_HOURS it is behind the newest rating on the same
+// criterion. 4h ≈ one mentor shift, so the previous shift's call still counts
+// but can't outvote the mentor who looked most recently.
+export const RATING_HALF_LIFE_HOURS = 4;
+export const RATING_HALF_LIFE_MS = RATING_HALF_LIFE_HOURS * 60 * 60 * 1000;
+
+// One sentence, reused by every surface that explains the rule.
+export const RATING_RULE_COPY = `Each mentor's latest rating counts, weighted toward the most recent — a rating counts half as much for every ${RATING_HALF_LIFE_HOURS} hours it trails the newest one — and the blend is rounded to the closest score.`;
+
+// Mentor timestamps (`rated_at`, `checked_at`, `created_at`,
+// `mentor_last_touched_at`, …) arrive as NAIVE ISO strings — the backend
+// stamps `datetime.now().isoformat()` on a UTC container, so there's no `Z`
+// and no offset. `new Date(naive)` parses those as browser-local time, which
+// put every "Xm ago" in Arizona 7h into the future ("just now" for most of a
+// shift). Treat an offset-less string as UTC; pass real offsets (and the
+// client's own `toISOString()` overlays) straight through. Returns epoch ms
+// or NaN.
+export function parseMentorTimestamp(iso) {
+  if (!iso) return NaN;
+  if (typeof iso !== "string") return new Date(iso).getTime();
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(iso);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  return new Date(hasOffset || dateOnly ? iso : `${iso}Z`).getTime();
+}
 
 export function latestRatingsByMentor(ratings) {
   // ratings is an append-only array. Returns a map of
@@ -139,7 +164,8 @@ export function latestRatingsByMentor(ratings) {
   const out = {};
   if (!Array.isArray(ratings)) return out;
   for (const r of ratings) {
-    if (!r?.criterion || !r?.rated_by_propel_id) continue;
+    if (!r?.criterion || !r?.rated_by_propel_id || !SCORE_META[r.score])
+      continue;
     const c = r.criterion;
     if (!out[c]) out[c] = {};
     const existing = out[c][r.rated_by_propel_id];
@@ -150,21 +176,144 @@ export function latestRatingsByMentor(ratings) {
   return out;
 }
 
-export function consensusForCriterion(latestForCriterion) {
-  // Worst (lowest rank) wins. Returns score string or null.
+// Newest-first history of every rating on one criterion (a sorted copy; the
+// stored array is append-only, oldest-first). Malformed entries are dropped.
+export function ratingHistory(ratings, criterion) {
+  if (!Array.isArray(ratings) || !criterion) return [];
+  return ratings
+    .filter(
+      (r) =>
+        r &&
+        r.criterion === criterion &&
+        r.rated_by_propel_id &&
+        SCORE_META[r.score],
+    )
+    .sort((a, b) => (b.rated_at || "").localeCompare(a.rated_at || ""));
+}
+
+// Round a blended value (1..3) to the closest score. An exact midpoint
+// rounds DOWN — a 50/50 split between "On track" and "Needs attention" is a
+// reason to look, not a pass.
+export function scoreFromValue(value) {
+  if (!Number.isFinite(value)) return null;
+  if (value > 2.5) return "green";
+  if (value > 1.5) return "yellow";
+  return "red";
+}
+
+// Weight of one rating relative to the newest rating on the criterion
+// (`anchorMs`): 1 for the newest, halving every RATING_HALF_LIFE_MS behind
+// it. Measured against the newest rating, NOT the clock, so the blend is a
+// pure function of the data — it doesn't drift between server render and
+// hydration, and two ratings from last week still compare sensibly.
+export function ratingWeight(entry, anchorMs) {
+  const t = parseMentorTimestamp(entry?.rated_at);
+  if (Number.isNaN(t) || !Number.isFinite(anchorMs)) return 1;
+  const behind = Math.max(0, anchorMs - t);
+  return Math.pow(0.5, behind / RATING_HALF_LIFE_MS);
+}
+
+// The CURRENT state of a criterion is a recency-weighted blend of each
+// mentor's latest rating, rounded to the closest score (#412). Neither
+// extreme worked: "worst wins" froze an "At risk" from a mentor who had gone
+// home, and "newest wins" threw away every other opinion. Here every mentor
+// still has a vote, the most recent vote counts the most, and a fresh
+// disagreement lands on "Needs attention" instead of silently picking a side.
+// Input is the per-mentor map from latestRatingsByMentor so the optimistic
+// overlay flows through: an in-flight entry is by definition the newest
+// action and anchors the blend at weight 1, whatever the two clocks say.
+// Returns null when nobody has rated, else
+//   { score, value, newest, contributions: [{ entry, weight, share }] }
+// with contributions newest-first and shares summing to 1.
+export function blendedRating(latestForCriterion) {
   if (!latestForCriterion) return null;
-  let worst = null;
-  for (const r of Object.values(latestForCriterion)) {
-    if (!worst || SCORE_RANK[r.score] < SCORE_RANK[worst]) {
-      worst = r.score;
+  const entries = Object.values(latestForCriterion).filter((r) =>
+    Boolean(SCORE_META[r?.score]),
+  );
+  if (entries.length === 0) return null;
+  const optimistic = entries.find((r) => r.optimistic) || null;
+  const times = entries.map((r) => parseMentorTimestamp(r.rated_at));
+  const anchorMs = optimistic
+    ? parseMentorTimestamp(optimistic.rated_at)
+    : Math.max(...times.filter((t) => !Number.isNaN(t)));
+  const weighted = entries.map((entry, i) => ({
+    entry,
+    weight: entry.optimistic ? 1 : ratingWeight(entry, anchorMs),
+    t: Number.isNaN(times[i]) ? -Infinity : times[i],
+  }));
+  weighted.sort((a, b) => {
+    if (a.entry.optimistic !== b.entry.optimistic) {
+      return a.entry.optimistic ? -1 : 1;
+    }
+    return b.t - a.t;
+  });
+  const total = weighted.reduce((sum, w) => sum + w.weight, 0);
+  const value =
+    weighted.reduce(
+      (sum, w) => sum + w.weight * SCORE_VALUE[w.entry.score],
+      0,
+    ) / total;
+  return {
+    score: scoreFromValue(value),
+    value,
+    newest: weighted[0].entry,
+    contributions: weighted.map(({ entry, weight }) => ({
+      entry,
+      weight,
+      share: weight / total,
+    })),
+  };
+}
+
+// Newest contributing rating across every criterion — the "latest Xm ago"
+// caption the compact dot strips show so the time element is never implicit.
+export function newestRating(ratingsByMentor) {
+  let newest = null;
+  for (const perMentor of Object.values(ratingsByMentor || {})) {
+    const cur = blendedRating(perMentor)?.newest;
+    if (cur && (!newest || (cur.rated_at || "") > (newest.rated_at || ""))) {
+      newest = cur;
     }
   }
-  return worst;
+  return newest;
+}
+
+// A newest rating older than this during a live event is worth a fresh
+// look — a team can change a lot in half a shift. Display hint only: it
+// never changes the blend.
+export const RATING_STALE_AFTER_MS = 6 * 60 * 60 * 1000;
+
+export function isRatingStale(entry, now = Date.now()) {
+  const t = parseMentorTimestamp(entry?.rated_at);
+  if (Number.isNaN(t)) return false;
+  return now - t > RATING_STALE_AFTER_MS;
+}
+
+// "45m ago · Jasmine T." / "45m ago · you" — the attribution every surface
+// renders beside a rating.
+export function ratingAttribution(entry, myPropelId) {
+  if (!entry) return "";
+  const when = relativeTime(entry.rated_at);
+  const who =
+    myPropelId && entry.rated_by_propel_id === myPropelId
+      ? "you"
+      : entry.rated_by_name || "a mentor";
+  return when ? `${when} · ${who}` : who;
+}
+
+// The one-line summary beside a blended score on the compact surfaces:
+// "45m ago · Jasmine T." for a single rating, "2 ratings, latest 45m ago ·
+// Jasmine T." when the score is a blend.
+export function ratingBlendSummary(blend, myPropelId) {
+  if (!blend) return "";
+  const latest = ratingAttribution(blend.newest, myPropelId);
+  const n = blend.contributions.length;
+  return n > 1 ? `${n} ratings, latest ${latest}` : latest;
 }
 
 export function relativeTime(iso) {
   if (!iso) return "";
-  const then = new Date(iso).getTime();
+  const then = parseMentorTimestamp(iso);
   if (Number.isNaN(then)) return "";
   const diffMs = Date.now() - then;
   if (diffMs < 0) return "just now";
@@ -175,7 +324,7 @@ export function relativeTime(iso) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.round(hrs / 24);
   if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
+  return new Date(then).toLocaleDateString();
 }
 
 // Split a team's append-only `mentor_flags` into the two lists the panel
@@ -199,8 +348,8 @@ export function splitMentorFlags(flags) {
 // team waited. Returns "" for missing/invalid input or a negative span.
 export function durationLabel(startIso, endIso) {
   if (!startIso || !endIso) return "";
-  const start = new Date(startIso).getTime();
-  const end = new Date(endIso).getTime();
+  const start = parseMentorTimestamp(startIso);
+  const end = parseMentorTimestamp(endIso);
   if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "";
   const totalMins = Math.round((end - start) / 60000);
   if (totalMins < 1) return "under a minute";
@@ -220,7 +369,12 @@ export function durationLabel(startIso, endIso) {
 // (or reverts) when the response lands. Neither helper mutates its input.
 
 // `overrides` is {[slug]: true|false} — add/clear MY check on that item.
-export function applyOptimisticCoverage(checklist, overrides, myPropelId, myName) {
+export function applyOptimisticCoverage(
+  checklist,
+  overrides,
+  myPropelId,
+  myName,
+) {
   const base = checklist || {};
   const slugs = Object.keys(overrides || {});
   if (!myPropelId || slugs.length === 0) return base;
