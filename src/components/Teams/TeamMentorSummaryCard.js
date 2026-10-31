@@ -7,9 +7,9 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  currentRating,
+  blendedRating,
   newestRating,
-  ratingAttribution,
+  ratingBlendSummary,
   relativeTime,
   splitMentorFlags,
 } from "./mentorCoverage";
@@ -43,8 +43,8 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   const hasAnyRating = Object.values(ratingsByMentor).some(
     (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
-  // Newest rating across the five criteria — shown beside the dots so the
-  // reader knows how fresh the picture is (#412).
+  // Newest counted rating across the five criteria — shown beside the dots
+  // so the reader knows how fresh the picture is (#412).
   const newest = newestRating(ratingsByMentor);
   const hasActivity =
     doneCount > 0 ||
@@ -148,11 +148,12 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
               </Box>
               <Box sx={{ display: "flex", gap: 0.4 }}>
                 {JUDGING_CRITERIA.map((c) => {
-                  // Current = newest rating on the criterion, any mentor.
-                  const current = currentRating(ratingsByMentor[c.slug]);
-                  const consensus = current ? current.score : null;
-                  const label = current
-                    ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
+                  // Current = recency-weighted blend of each mentor's
+                  // latest rating, rounded to the closest score (#412).
+                  const blend = blendedRating(ratingsByMentor[c.slug]);
+                  const consensus = blend ? blend.score : null;
+                  const label = blend
+                    ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingBlendSummary(blend)}`
                     : `${c.label}: not rated yet`;
                   return (
                     <Box

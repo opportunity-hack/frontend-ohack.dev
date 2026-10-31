@@ -89,17 +89,21 @@ const DEMO_TEAM = {
       body: "Walked them through judging criteria with concrete examples for Scope and Documentation. They have great impact potential — need to lean into nonprofit storytelling for the demo video.",
     },
   ],
-  // Ratings tell the #412 story: Documentation was yellow on Greg's shift and
-  // Jasmine rated it green 45m ago (newest wins, the old one is history);
-  // Security is still Greg's 8h-old red — nobody has looked since, so the
-  // panel asks for a fresh look instead of silently trusting it.
+  // Ratings tell the #412 story. Each criterion's state is a recency-weighted
+  // blend of every mentor's latest rating, rounded to the closest score:
+  // - Documentation: Greg's 8h-old yellow (which replaced his own 20h-old
+  //   red) vs Jasmine's green 45m ago → green, with both ratings shown.
+  // - Polish: Greg green 3h ago vs Sai red 2h ago — a fresh disagreement
+  //   blends to "Needs attention" instead of silently picking a side.
+  // - Security: Greg's 8h-old red stands alone — nobody has looked since,
+  //   so the panel asks for a fresh look instead of silently trusting it.
   mentor_ratings: [
     {
-      rated_at: hoursAgo(3),
+      rated_at: hoursAgo(20),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
-      criterion: "scope",
-      score: "green",
+      criterion: "documentation",
+      score: "red",
     },
     {
       rated_at: hoursAgo(8),
@@ -109,17 +113,31 @@ const DEMO_TEAM = {
       score: "yellow",
     },
     {
-      rated_at: hoursAgo(3),
-      rated_by_propel_id: "demo-greg",
-      rated_by_name: "Greg V.",
-      criterion: "polish",
-      score: "yellow",
-    },
-    {
       rated_at: hoursAgo(8),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
       criterion: "security",
+      score: "red",
+    },
+    {
+      rated_at: hoursAgo(3),
+      rated_by_propel_id: "demo-greg",
+      rated_by_name: "Greg V.",
+      criterion: "scope",
+      score: "green",
+    },
+    {
+      rated_at: hoursAgo(3),
+      rated_by_propel_id: "demo-greg",
+      rated_by_name: "Greg V.",
+      criterion: "polish",
+      score: "green",
+    },
+    {
+      rated_at: hoursAgo(2),
+      rated_by_propel_id: "demo-sai",
+      rated_by_name: "Sai M.",
+      criterion: "polish",
       score: "red",
     },
     {

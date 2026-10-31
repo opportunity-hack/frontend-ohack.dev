@@ -74,12 +74,12 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  currentRating,
-  previousRating,
+  blendedRating,
   ratingHistory,
-  ratingDirection,
   ratingAttribution,
+  ratingBlendSummary,
   isRatingStale,
+  RATING_RULE_COPY,
   relativeTime,
   splitMentorFlags,
   durationLabel,
@@ -266,10 +266,12 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
 }
 
 // One line of a criterion's rating history (newest first): score, when, who,
-// and the optional note. The current rating is bold; the rest are muted so
-// the trajectory reads at a glance. Module scope — see ResolvedFlagRow.
-function RatingHistoryRow({ entry, isCurrent, myPropelId }) {
+// how much it counts in today's blend (`share`, 0..1) or — for a rating the
+// same mentor later replaced — that it no longer counts. Module scope — see
+// ResolvedFlagRow.
+function RatingHistoryRow({ entry, share, myPropelId }) {
   const meta = SCORE_META[entry.score];
+  const counts = typeof share === "number";
   return (
     <Box
       component="li"
@@ -280,22 +282,46 @@ function RatingHistoryRow({ entry, isCurrent, myPropelId }) {
         alignItems: "baseline",
         flexWrap: "wrap",
         py: 0.5,
-        opacity: isCurrent ? 1 : 0.75,
+        opacity: counts ? 1 : 0.7,
       }}
     >
       <Typography
         variant="body2"
         component="span"
-        sx={{ fontWeight: isCurrent ? 700 : 500, whiteSpace: "nowrap" }}
+        sx={{ fontWeight: counts ? 700 : 500, whiteSpace: "nowrap" }}
       >
         {meta.emoji} {meta.label}
       </Typography>
       <Typography variant="caption" color="text.secondary" component="span">
         {ratingAttribution(entry, myPropelId)}
-        {isCurrent ? " · current" : ""}
+        {counts
+          ? ` · counts ${Math.round(share * 100)}%`
+          : " · replaced by their later rating"}
         {entry.note ? ` — ${entry.note}` : ""}
       </Typography>
     </Box>
+  );
+}
+
+// A rating that counts in a criterion's blend: score, who, when and its
+// weight. Rendered only when two or more mentors' ratings are blended — for
+// a single rating the main chip already says all of this.
+function RatingContributionChip({ contribution, myPropelId, saving }) {
+  const { entry, share } = contribution;
+  const meta = SCORE_META[entry.score];
+  const isMine = Boolean(myPropelId && entry.rated_by_propel_id === myPropelId);
+  const who = isMine ? "you" : entry.rated_by_name || "a mentor";
+  const when = saving ? "saving…" : relativeTime(entry.rated_at);
+  const pct = Math.round(share * 100);
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      icon={saving ? <CircularProgress size={12} /> : undefined}
+      title={`${meta.label} — counts ${pct}% of the blend`}
+      label={`${meta.emoji} ${who}${when ? ` · ${when}` : ""} · ${pct}%`}
+      sx={{ color: "text.secondary" }}
+    />
   );
 }
 
@@ -1096,8 +1122,7 @@ export default function MentorTeamPanel({
       >
         <GavelIcon fontSize="small" color="action" />
         <Typography variant="caption" color="text.secondary">
-          The newest rating is the team&apos;s current state — earlier ratings
-          stay in each criterion&apos;s history.
+          {RATING_RULE_COPY}
         </Typography>
         <Link
           href="https://www.ohack.dev/about/judges#judging-criteria"
@@ -1118,25 +1143,36 @@ export default function MentorTeamPanel({
         {JUDGING_CRITERIA.map((c) => {
           const byMentor = ratingsByMentor[c.slug] || {};
           const myLatest = myPropelId ? byMentor[myPropelId] : null;
-          // Current = newest rating on this criterion, whoever made it
-          // (#412). `history` is the server copy, newest first; while my
-          // own write is in flight `current` is the optimistic overlay and
-          // history[0] is the rating it is replacing.
-          const current = currentRating(byMentor);
+          // Current = recency-weighted blend of each mentor's latest rating
+          // on this criterion (#412). While my own write is in flight the
+          // optimistic overlay anchors the blend; `history` is the server
+          // copy, newest first, and only matters once a mentor has rated
+          // the same criterion more than once.
+          const blend = blendedRating(byMentor);
           const history = ratingHistory(team?.mentor_ratings, c.slug);
-          const previous = previousRating(history, current);
-          const direction = ratingDirection(previous, current);
-          const iAmCurrent = Boolean(
-            current && myPropelId && current.rated_by_propel_id === myPropelId,
+          const isBlend = Boolean(blend && blend.contributions.length > 1);
+          const shareByEntry = new Map(
+            (blend?.contributions || [])
+              .filter((x) => !x.entry.optimistic)
+              .map((x) => [
+                `${x.entry.rated_at || ""}|${x.entry.rated_by_propel_id}`,
+                x.share,
+              ]),
           );
-          const stale = Boolean(
-            current && !eventEnded && isRatingStale(current),
+          const hasSuperseded = Boolean(
+            blend && history.length > blend.contributions.length,
           );
           const isPending = pendingCriteria.has(c.slug);
+          const savingMine = Boolean(
+            isPending &&
+              blend &&
+              blend.newest.rated_by_propel_id === myPropelId,
+          );
+          const stale = Boolean(
+            blend && !eventEnded && isRatingStale(blend.newest),
+          );
           const historyOpen = expandedHistory.has(c.slug);
           const historyId = `rating-history-${c.slug}-${team?.id || "team"}`;
-          const trendGlyph =
-            direction === "up" ? "↑" : direction === "down" ? "↓" : "→";
           return (
             <Paper key={c.slug} variant="outlined" sx={{ p: 1.5 }}>
               <Box
@@ -1155,46 +1191,39 @@ export default function MentorTeamPanel({
                 >
                   {c.label}
                 </Typography>
-                {current ? (
+                {blend ? (
                   <Chip
                     size="small"
-                    color={SCORE_META[current.score].color}
+                    color={SCORE_META[blend.score].color}
                     icon={
-                      isPending && iAmCurrent ? (
+                      savingMine && !isBlend ? (
                         <CircularProgress size={12} color="inherit" />
                       ) : undefined
                     }
-                    label={`${SCORE_META[current.score].emoji} ${
-                      SCORE_META[current.score].label
+                    label={`${SCORE_META[blend.score].emoji} ${
+                      SCORE_META[blend.score].label
                     } · ${
-                      isPending && iAmCurrent
-                        ? "saving…"
-                        : ratingAttribution(current, myPropelId)
+                      isBlend
+                        ? `${blend.contributions.length} ratings`
+                        : savingMine
+                          ? "saving…"
+                          : ratingAttribution(blend.newest, myPropelId)
                     }`}
                   />
                 ) : (
                   <Chip size="small" variant="outlined" label="Not rated yet" />
                 )}
-                {previous && (
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    label={`${trendGlyph} was ${SCORE_META[previous.score].emoji} ${ratingAttribution(previous, myPropelId)}`}
-                    sx={{ color: "text.secondary" }}
-                  />
-                )}
-                {myLatest && !iAmCurrent && (
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    icon={
-                      isPending ? <CircularProgress size={12} /> : undefined
-                    }
-                    label={`You: ${SCORE_META[myLatest.score].emoji} ${
-                      isPending ? "saving…" : relativeTime(myLatest.rated_at)
-                    }`}
-                  />
-                )}
+                {isBlend &&
+                  blend.contributions.map((x) => (
+                    <RatingContributionChip
+                      key={`${x.entry.rated_at || ""}-${x.entry.rated_by_propel_id}`}
+                      contribution={x}
+                      myPropelId={myPropelId}
+                      saving={
+                        isPending && x.entry.rated_by_propel_id === myPropelId
+                      }
+                    />
+                  ))}
               </Box>
               <Typography
                 variant="caption"
@@ -1209,8 +1238,8 @@ export default function MentorTeamPanel({
                   role="status"
                   sx={{ display: "block", mb: 1, color: "warning.dark" }}
                 >
-                  Last rated {relativeTime(current.rated_at)} — worth a fresh
-                  look.
+                  Last rated {relativeTime(blend.newest.rated_at)} — worth a
+                  fresh look.
                 </Typography>
               )}
               {canInteract && (
@@ -1236,9 +1265,10 @@ export default function MentorTeamPanel({
                 </ButtonGroup>
               )}
               {/* Full trajectory, collapsed by default — the chips above
-                  already say "now" and "was"; this is for the mentor who
-                  wants to see how the team got here and who looked. */}
-              {history.length > 1 && (
+                  already show every rating that counts; this appears once a
+                  mentor has re-rated, so their earlier call is never
+                  hidden, just marked as replaced. */}
+              {hasSuperseded && (
                 <Box sx={{ mt: 1 }}>
                   <Button
                     size="small"
@@ -1273,12 +1303,8 @@ export default function MentorTeamPanel({
                         <RatingHistoryRow
                           key={`${r.rated_at || ""}-${r.rated_by_propel_id}-${idx}`}
                           entry={r}
-                          isCurrent={Boolean(
-                            current &&
-                              !current.optimistic &&
-                              r.rated_at === current.rated_at &&
-                              r.rated_by_propel_id ===
-                                current.rated_by_propel_id,
+                          share={shareByEntry.get(
+                            `${r.rated_at || ""}|${r.rated_by_propel_id}`,
                           )}
                           myPropelId={myPropelId}
                         />

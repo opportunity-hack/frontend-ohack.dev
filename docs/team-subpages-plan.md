@@ -122,7 +122,7 @@ Mirror the computation in `MentorSupportSummary` (`src/components/Hackathon/Team
   - `doneCount` over `MENTOR_COVERAGE_ITEMS` from `team.mentor_checklist` (import from `../Teams/mentorCoverage`).
   - `openFlags = Number(team.mentor_open_flag_count || 0)`.
   - `lastTouchedAt` / `lastTouchedBy` from `team.mentor_last_touched_at` / `…_by_name`.
-  - judging-readiness dots via `latestRatingsByMentor(team.mentor_ratings)` + `currentRating` (newest rating wins since #412) (optional; can reuse `JudgingReadinessStrip` logic, restyled).
+  - judging-readiness dots via `latestRatingsByMentor(team.mentor_ratings)` + `blendedRating` (recency-weighted blend since #412) (optional; can reuse `JudgingReadinessStrip` logic, restyled).
 - Layout: a `.ohx-card` with an eyebrow-style label "Mentor support", a row of quiet stat pills (`{doneCount}/{MENTOR_COVERAGE_TOTAL} covered`, `{openFlags} open flag(s)` only when > 0, `Last touch {relativeTime} · {name}`), and a primary affordance:
   - **`Open mentor support →`** → `NextLink href={/hack/${eventId}/team/${teamId}/mentor}` styled `.ohx-link`.
 - Empty state: if no mentor activity at all (`!doneCount && !openFlags && !lastTouchedAt && no ratings`), still render the card but with a single muted line: *"No mentor activity recorded yet."* + the same "Open mentor support →" link. (Unlike the event-list version which returns `null`, here we keep the card so the page layout/anchor is stable and the link is always reachable.)

@@ -9,8 +9,8 @@ import {
   SCORE_META,
   coverageItemCovered,
   latestRatingsByMentor,
-  currentRating,
-  ratingAttribution,
+  blendedRating,
+  ratingBlendSummary,
   relativeTime,
 } from "../Teams/mentorCoverage";
 import { MENTORS_TITLE } from "./copy";
@@ -85,9 +85,10 @@ export default function MentorSupportCard({
       <Box sx={{ fontWeight: 600, mb: 1 }}>Judging readiness</Box>
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
         {JUDGING_CRITERIA.map((c) => {
-          // Current = the newest rating on the criterion, any mentor (#412).
-          const current = currentRating(ratingsByMentor[c.slug]);
-          const consensus = current ? current.score : null;
+          // Current = recency-weighted blend of each mentor's latest
+          // rating, rounded to the closest score (#412).
+          const blend = blendedRating(ratingsByMentor[c.slug]);
+          const consensus = blend ? blend.score : null;
           return (
             <li
               key={c.slug}
@@ -114,8 +115,8 @@ export default function MentorSupportCard({
               />
               <strong>{c.label}:</strong>
               <span style={{ color: "var(--muted)" }}>
-                {current
-                  ? `${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
+                {blend
+                  ? `${SCORE_META[consensus].label} · ${ratingBlendSummary(blend)}`
                   : "Not rated yet"}{" "}
                 — {c.blurb}
               </span>

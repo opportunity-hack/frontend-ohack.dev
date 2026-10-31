@@ -120,8 +120,8 @@ export default function Mentors() {
                             site, or from the &ldquo;Mentor&rdquo; link beside each team on your mentor check-in page. Every
                             mentor sees the same shared panel: open concerns owned by a specific mentor so others don&apos;t
                             duplicate effort (plus the history of what&apos;s already been resolved), a 6-item coverage
-                            checklist with attribution, a 5-criterion judging-readiness rubric (the newest rating is the team&apos;s current
-                            state, with every earlier rating one click away), and a public notes feed. Live preview below.
+                            checklist with attribution, a 5-criterion judging-readiness rubric (each mentor&apos;s latest rating counts, weighted
+                            toward the most recent, and rounded to the closest score), and a public notes feed. Live preview below.
                         </p>
                         <Box><MentorTeamPanelDemo /></Box>
                     </div>

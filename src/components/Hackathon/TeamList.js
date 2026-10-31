@@ -71,9 +71,9 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  currentRating,
+  blendedRating,
   newestRating,
-  ratingAttribution,
+  ratingBlendSummary,
   relativeTime as mentorRelativeTime,
 } from "../Teams/mentorCoverage";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -97,9 +97,9 @@ const SCORE_DOT_COLORS = {
 
 /**
  * 5-dot judging-readiness strip. One dot per criterion, painted by the
- * criterion's CURRENT rating — the newest one, whichever mentor made it
- * (#412; older ratings are history, not consensus). Tooltips carry when and
- * who, and a trailing "latest Xm ago" says how fresh the whole picture is.
+ * criterion's CURRENT rating — a recency-weighted blend of each mentor's
+ * latest rating, rounded to the closest score (#412). Tooltips carry when
+ * and who, and a trailing "latest Xm ago" says how fresh the whole picture is.
  * Empty dots when nobody's rated. Renders nothing if no criterion has any
  * rating.
  */
@@ -131,13 +131,13 @@ const JudgingReadinessStrip = ({ team }) => {
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
         {JUDGING_CRITERIA.map((c) => {
-          const current = currentRating(ratingsByMentor[c.slug]);
-          const consensus = current ? current.score : null;
+          const blend = blendedRating(ratingsByMentor[c.slug]);
+          const consensus = blend ? blend.score : null;
           const dotColor = consensus
             ? SCORE_DOT_COLORS[consensus]
             : "transparent";
-          const label = current
-            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
+          const label = blend
+            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingBlendSummary(blend)}`
             : `${c.label}: not rated yet`;
           return (
             <Tooltip key={c.slug} title={label} placement="top" arrow>
