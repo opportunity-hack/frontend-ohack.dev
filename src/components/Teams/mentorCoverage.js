@@ -85,7 +85,7 @@ export function coverageDoneCount(checklist) {
   const c = checklist || {};
   return MENTOR_COVERAGE_ITEMS.reduce(
     (acc, it) => acc + (coverageItemCovered(c[it.slug]) ? 1 : 0),
-    0
+    0,
   );
 }
 
@@ -129,9 +129,24 @@ export const SCORE_META = {
   red: { label: "At risk", emoji: "🔴", color: "error" },
 };
 
-// Rank: red is worst. Used to compute the "team consensus" rating
-// (worst among each mentor's most-recent rating per criterion).
+// Rank: red is worst. Used for the trend arrow between two ratings.
 export const SCORE_RANK = { red: 0, yellow: 1, green: 2 };
+
+// Mentor timestamps (`rated_at`, `checked_at`, `created_at`,
+// `mentor_last_touched_at`, …) arrive as NAIVE ISO strings — the backend
+// stamps `datetime.now().isoformat()` on a UTC container, so there's no `Z`
+// and no offset. `new Date(naive)` parses those as browser-local time, which
+// put every "Xm ago" in Arizona 7h into the future ("just now" for most of a
+// shift). Treat an offset-less string as UTC; pass real offsets (and the
+// client's own `toISOString()` overlays) straight through. Returns epoch ms
+// or NaN.
+export function parseMentorTimestamp(iso) {
+  if (!iso) return NaN;
+  if (typeof iso !== "string") return new Date(iso).getTime();
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(iso);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  return new Date(hasOffset || dateOnly ? iso : `${iso}Z`).getTime();
+}
 
 export function latestRatingsByMentor(ratings) {
   // ratings is an append-only array. Returns a map of
@@ -139,7 +154,8 @@ export function latestRatingsByMentor(ratings) {
   const out = {};
   if (!Array.isArray(ratings)) return out;
   for (const r of ratings) {
-    if (!r?.criterion || !r?.rated_by_propel_id) continue;
+    if (!r?.criterion || !r?.rated_by_propel_id || !SCORE_META[r.score])
+      continue;
     const c = r.criterion;
     if (!out[c]) out[c] = {};
     const existing = out[c][r.rated_by_propel_id];
@@ -150,21 +166,98 @@ export function latestRatingsByMentor(ratings) {
   return out;
 }
 
-export function consensusForCriterion(latestForCriterion) {
-  // Worst (lowest rank) wins. Returns score string or null.
+// Newest-first history of every rating on one criterion (a sorted copy; the
+// stored array is append-only, oldest-first). Malformed entries are dropped.
+export function ratingHistory(ratings, criterion) {
+  if (!Array.isArray(ratings) || !criterion) return [];
+  return ratings
+    .filter(
+      (r) =>
+        r &&
+        r.criterion === criterion &&
+        r.rated_by_propel_id &&
+        SCORE_META[r.score],
+    )
+    .sort((a, b) => (b.rated_at || "").localeCompare(a.rated_at || ""));
+}
+
+// The CURRENT state of a criterion is its newest rating, whoever made it
+// (#412). Ratings are point-in-time observations: a mentor who rated
+// "At risk" and went home must not outrank the mentor who checked an hour
+// ago and saw the fix land. The old rule ("worst of each mentor's latest")
+// froze the first red forever. Older ratings stay visible as history, so a
+// disagreement between mentors is never hidden — just ordered in time.
+// Input is the per-mentor map from latestRatingsByMentor so the optimistic
+// overlay flows through; an in-flight optimistic entry always wins because
+// it is by definition the newest action, whatever the two clocks say.
+// Returns the rating ENTRY (score + attribution), or null.
+export function currentRating(latestForCriterion) {
   if (!latestForCriterion) return null;
-  let worst = null;
+  let newest = null;
   for (const r of Object.values(latestForCriterion)) {
-    if (!worst || SCORE_RANK[r.score] < SCORE_RANK[worst]) {
-      worst = r.score;
+    if (!SCORE_META[r?.score]) continue;
+    if (r.optimistic) return r;
+    if (!newest || (r.rated_at || "") > (newest.rated_at || "")) newest = r;
+  }
+  return newest;
+}
+
+// The rating the current one replaced: the newest history entry strictly
+// older than `current` (any mentor, including the same one). Null when the
+// current rating is the first one.
+export function previousRating(history, current) {
+  if (!current || !Array.isArray(history)) return null;
+  const cutoff = current.rated_at || "";
+  return history.find((r) => (r.rated_at || "") < cutoff) || null;
+}
+
+// "up" when `newer` is better than `older`, "down" when worse, "same" when
+// equal; null when either is missing.
+export function ratingDirection(older, newer) {
+  if (!SCORE_META[older?.score] || !SCORE_META[newer?.score]) return null;
+  const d = SCORE_RANK[newer.score] - SCORE_RANK[older.score];
+  return d > 0 ? "up" : d < 0 ? "down" : "same";
+}
+
+// Newest current rating across every criterion — the "latest Xm ago"
+// caption the compact dot strips show so the time element is never implicit.
+export function newestRating(ratingsByMentor) {
+  let newest = null;
+  for (const perMentor of Object.values(ratingsByMentor || {})) {
+    const cur = currentRating(perMentor);
+    if (cur && (!newest || (cur.rated_at || "") > (newest.rated_at || ""))) {
+      newest = cur;
     }
   }
-  return worst;
+  return newest;
+}
+
+// A rating older than this during a live event is worth a fresh look — a
+// team can change a lot in half a shift. Display hint only: it never changes
+// which rating counts as current.
+export const RATING_STALE_AFTER_MS = 6 * 60 * 60 * 1000;
+
+export function isRatingStale(entry, now = Date.now()) {
+  const t = parseMentorTimestamp(entry?.rated_at);
+  if (Number.isNaN(t)) return false;
+  return now - t > RATING_STALE_AFTER_MS;
+}
+
+// "45m ago · Jasmine T." / "45m ago · you" — the attribution every surface
+// renders beside a rating.
+export function ratingAttribution(entry, myPropelId) {
+  if (!entry) return "";
+  const when = relativeTime(entry.rated_at);
+  const who =
+    myPropelId && entry.rated_by_propel_id === myPropelId
+      ? "you"
+      : entry.rated_by_name || "a mentor";
+  return when ? `${when} · ${who}` : who;
 }
 
 export function relativeTime(iso) {
   if (!iso) return "";
-  const then = new Date(iso).getTime();
+  const then = parseMentorTimestamp(iso);
   if (Number.isNaN(then)) return "";
   const diffMs = Date.now() - then;
   if (diffMs < 0) return "just now";
@@ -175,7 +268,7 @@ export function relativeTime(iso) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.round(hrs / 24);
   if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
+  return new Date(then).toLocaleDateString();
 }
 
 // Split a team's append-only `mentor_flags` into the two lists the panel
@@ -199,8 +292,8 @@ export function splitMentorFlags(flags) {
 // team waited. Returns "" for missing/invalid input or a negative span.
 export function durationLabel(startIso, endIso) {
   if (!startIso || !endIso) return "";
-  const start = new Date(startIso).getTime();
-  const end = new Date(endIso).getTime();
+  const start = parseMentorTimestamp(startIso);
+  const end = parseMentorTimestamp(endIso);
   if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "";
   const totalMins = Math.round((end - start) / 60000);
   if (totalMins < 1) return "under a minute";
@@ -220,7 +313,12 @@ export function durationLabel(startIso, endIso) {
 // (or reverts) when the response lands. Neither helper mutates its input.
 
 // `overrides` is {[slug]: true|false} — add/clear MY check on that item.
-export function applyOptimisticCoverage(checklist, overrides, myPropelId, myName) {
+export function applyOptimisticCoverage(
+  checklist,
+  overrides,
+  myPropelId,
+  myName,
+) {
   const base = checklist || {};
   const slugs = Object.keys(overrides || {});
   if (!myPropelId || slugs.length === 0) return base;

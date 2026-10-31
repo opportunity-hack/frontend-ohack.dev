@@ -71,7 +71,9 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  consensusForCriterion,
+  currentRating,
+  newestRating,
+  ratingAttribution,
   relativeTime as mentorRelativeTime,
 } from "../Teams/mentorCoverage";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -94,9 +96,12 @@ const SCORE_DOT_COLORS = {
 };
 
 /**
- * 5-dot judging-readiness strip. One dot per criterion, painted by team
- * consensus (worst rating across mentors). Empty dots when nobody's rated.
- * Renders nothing if no criterion has any rating.
+ * 5-dot judging-readiness strip. One dot per criterion, painted by the
+ * criterion's CURRENT rating — the newest one, whichever mentor made it
+ * (#412; older ratings are history, not consensus). Tooltips carry when and
+ * who, and a trailing "latest Xm ago" says how fresh the whole picture is.
+ * Empty dots when nobody's rated. Renders nothing if no criterion has any
+ * rating.
  */
 const JudgingReadinessStrip = ({ team }) => {
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
@@ -104,6 +109,7 @@ const JudgingReadinessStrip = ({ team }) => {
     (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
   if (!hasAnyRating) return null;
+  const newest = newestRating(ratingsByMentor);
 
   return (
     <Box
@@ -125,12 +131,13 @@ const JudgingReadinessStrip = ({ team }) => {
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
         {JUDGING_CRITERIA.map((c) => {
-          const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+          const current = currentRating(ratingsByMentor[c.slug]);
+          const consensus = current ? current.score : null;
           const dotColor = consensus
             ? SCORE_DOT_COLORS[consensus]
             : "transparent";
-          const label = consensus
-            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
+          const label = current
+            ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
             : `${c.label}: not rated yet`;
           return (
             <Tooltip key={c.slug} title={label} placement="top" arrow>
@@ -158,6 +165,11 @@ const JudgingReadinessStrip = ({ team }) => {
           );
         })}
       </Box>
+      {newest && (
+        <Typography variant="caption" color="text.secondary">
+          latest {mentorRelativeTime(newest.rated_at)}
+        </Typography>
+      )}
     </Box>
   );
 };

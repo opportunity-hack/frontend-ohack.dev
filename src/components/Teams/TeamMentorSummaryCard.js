@@ -7,7 +7,9 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  consensusForCriterion,
+  currentRating,
+  newestRating,
+  ratingAttribution,
   relativeTime,
   splitMentorFlags,
 } from "./mentorCoverage";
@@ -41,6 +43,9 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   const hasAnyRating = Object.values(ratingsByMentor).some(
     (perMentor) => perMentor && Object.keys(perMentor).length > 0,
   );
+  // Newest rating across the five criteria — shown beside the dots so the
+  // reader knows how fresh the picture is (#412).
+  const newest = newestRating(ratingsByMentor);
   const hasActivity =
     doneCount > 0 ||
     openFlags > 0 ||
@@ -143,11 +148,11 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
               </Box>
               <Box sx={{ display: "flex", gap: 0.4 }}>
                 {JUDGING_CRITERIA.map((c) => {
-                  const consensus = consensusForCriterion(
-                    ratingsByMentor[c.slug],
-                  );
-                  const label = consensus
-                    ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`
+                  // Current = newest rating on the criterion, any mentor.
+                  const current = currentRating(ratingsByMentor[c.slug]);
+                  const consensus = current ? current.score : null;
+                  const label = current
+                    ? `${c.label}: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
                     : `${c.label}: not rated yet`;
                   return (
                     <Box
@@ -170,6 +175,11 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
                   );
                 })}
               </Box>
+              {newest && (
+                <Box sx={{ fontSize: "0.78rem", color: "var(--faint)" }}>
+                  latest {relativeTime(newest.rated_at)}
+                </Box>
+              )}
             </Box>
           )}
         </>

@@ -74,7 +74,12 @@ import {
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  consensusForCriterion,
+  currentRating,
+  previousRating,
+  ratingHistory,
+  ratingDirection,
+  ratingAttribution,
+  isRatingStale,
   relativeTime,
   splitMentorFlags,
   durationLabel,
@@ -260,6 +265,40 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
   );
 }
 
+// One line of a criterion's rating history (newest first): score, when, who,
+// and the optional note. The current rating is bold; the rest are muted so
+// the trajectory reads at a glance. Module scope — see ResolvedFlagRow.
+function RatingHistoryRow({ entry, isCurrent, myPropelId }) {
+  const meta = SCORE_META[entry.score];
+  return (
+    <Box
+      component="li"
+      sx={{
+        listStyle: "none",
+        display: "flex",
+        gap: 1,
+        alignItems: "baseline",
+        flexWrap: "wrap",
+        py: 0.5,
+        opacity: isCurrent ? 1 : 0.75,
+      }}
+    >
+      <Typography
+        variant="body2"
+        component="span"
+        sx={{ fontWeight: isCurrent ? 700 : 500, whiteSpace: "nowrap" }}
+      >
+        {meta.emoji} {meta.label}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" component="span">
+        {ratingAttribution(entry, myPropelId)}
+        {isCurrent ? " · current" : ""}
+        {entry.note ? ` — ${entry.note}` : ""}
+      </Typography>
+    </Box>
+  );
+}
+
 // A resolved flag in the history list: muted, read-only, and led by the
 // resolution note (the part the next mentor on shift actually needs), with
 // "open for …" so you can see how long the team waited. Module scope — a
@@ -364,6 +403,8 @@ export default function MentorTeamPanel({
   const [optimisticCoverage, setOptimisticCoverage] = useState({});
   const [pendingCriteria, setPendingCriteria] = useState(() => new Set());
   const [optimisticRatings, setOptimisticRatings] = useState({});
+  // Per-criterion "Show history" disclosures (Set of criterion slugs).
+  const [expandedHistory, setExpandedHistory] = useState(() => new Set());
   const [showResolved, setShowResolved] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -636,7 +677,7 @@ export default function MentorTeamPanel({
 
   const setRating = async (criterion, score, note) => {
     if (pendingCriteria.has(criterion)) return; // one in-flight write per row
-    // Paint the pressed button + consensus immediately (the round-trip is
+    // Paint the pressed button + current state immediately (the round-trip is
     // ~1-3s: mentor check, Firestore write, Slack audit, team re-read).
     setOptimisticRatings((o) => ({
       ...o,
@@ -1044,10 +1085,19 @@ export default function MentorTeamPanel({
 
   const renderRubric = () => (
     <Box>
-      <Box sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Box
+        sx={{
+          mb: 1.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          flexWrap: "wrap",
+        }}
+      >
         <GavelIcon fontSize="small" color="action" />
         <Typography variant="caption" color="text.secondary">
-          Worst rating wins for the consensus row — coach the lowest.
+          The newest rating is the team&apos;s current state — earlier ratings
+          stay in each criterion&apos;s history.
         </Typography>
         <Link
           href="https://www.ohack.dev/about/judges#judging-criteria"
@@ -1068,8 +1118,25 @@ export default function MentorTeamPanel({
         {JUDGING_CRITERIA.map((c) => {
           const byMentor = ratingsByMentor[c.slug] || {};
           const myLatest = myPropelId ? byMentor[myPropelId] : null;
-          const consensus = consensusForCriterion(byMentor);
+          // Current = newest rating on this criterion, whoever made it
+          // (#412). `history` is the server copy, newest first; while my
+          // own write is in flight `current` is the optimistic overlay and
+          // history[0] is the rating it is replacing.
+          const current = currentRating(byMentor);
+          const history = ratingHistory(team?.mentor_ratings, c.slug);
+          const previous = previousRating(history, current);
+          const direction = ratingDirection(previous, current);
+          const iAmCurrent = Boolean(
+            current && myPropelId && current.rated_by_propel_id === myPropelId,
+          );
+          const stale = Boolean(
+            current && !eventEnded && isRatingStale(current),
+          );
           const isPending = pendingCriteria.has(c.slug);
+          const historyOpen = expandedHistory.has(c.slug);
+          const historyId = `rating-history-${c.slug}-${team?.id || "team"}`;
+          const trendGlyph =
+            direction === "up" ? "↑" : direction === "down" ? "↓" : "→";
           return (
             <Paper key={c.slug} variant="outlined" sx={{ p: 1.5 }}>
               <Box
@@ -1088,14 +1155,35 @@ export default function MentorTeamPanel({
                 >
                   {c.label}
                 </Typography>
-                {consensus && (
+                {current ? (
                   <Chip
                     size="small"
-                    color={SCORE_META[consensus].color}
-                    label={`Consensus: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`}
+                    color={SCORE_META[current.score].color}
+                    icon={
+                      isPending && iAmCurrent ? (
+                        <CircularProgress size={12} color="inherit" />
+                      ) : undefined
+                    }
+                    label={`${SCORE_META[current.score].emoji} ${
+                      SCORE_META[current.score].label
+                    } · ${
+                      isPending && iAmCurrent
+                        ? "saving…"
+                        : ratingAttribution(current, myPropelId)
+                    }`}
+                  />
+                ) : (
+                  <Chip size="small" variant="outlined" label="Not rated yet" />
+                )}
+                {previous && (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`${trendGlyph} was ${SCORE_META[previous.score].emoji} ${ratingAttribution(previous, myPropelId)}`}
+                    sx={{ color: "text.secondary" }}
                   />
                 )}
-                {myLatest && (
+                {myLatest && !iAmCurrent && (
                   <Chip
                     size="small"
                     variant="outlined"
@@ -1115,6 +1203,16 @@ export default function MentorTeamPanel({
               >
                 {c.blurb}
               </Typography>
+              {stale && (
+                <Typography
+                  variant="caption"
+                  role="status"
+                  sx={{ display: "block", mb: 1, color: "warning.dark" }}
+                >
+                  Last rated {relativeTime(current.rated_at)} — worth a fresh
+                  look.
+                </Typography>
+              )}
               {canInteract && (
                 <ButtonGroup
                   size="small"
@@ -1136,6 +1234,58 @@ export default function MentorTeamPanel({
                     </Button>
                   ))}
                 </ButtonGroup>
+              )}
+              {/* Full trajectory, collapsed by default — the chips above
+                  already say "now" and "was"; this is for the mentor who
+                  wants to see how the team got here and who looked. */}
+              {history.length > 1 && (
+                <Box sx={{ mt: 1 }}>
+                  <Button
+                    size="small"
+                    color="inherit"
+                    startIcon={<HistoryIcon fontSize="small" />}
+                    endIcon={
+                      historyOpen ? (
+                        <ExpandLessIcon fontSize="small" />
+                      ) : (
+                        <ExpandMoreIcon fontSize="small" />
+                      )
+                    }
+                    onClick={() =>
+                      setExpandedHistory((set) =>
+                        withKey(set, c.slug, !historyOpen),
+                      )
+                    }
+                    aria-expanded={historyOpen}
+                    aria-controls={historyId}
+                    sx={{ color: "text.secondary", textTransform: "none" }}
+                  >
+                    {historyOpen ? "Hide" : "Show"} history ({history.length})
+                  </Button>
+                  <Collapse in={historyOpen} unmountOnExit>
+                    <Box
+                      component="ol"
+                      id={historyId}
+                      aria-label={`${c.label} rating history, newest first`}
+                      sx={{ m: 0, mt: 0.5, p: 0 }}
+                    >
+                      {history.map((r, idx) => (
+                        <RatingHistoryRow
+                          key={`${r.rated_at || ""}-${r.rated_by_propel_id}-${idx}`}
+                          entry={r}
+                          isCurrent={Boolean(
+                            current &&
+                              !current.optimistic &&
+                              r.rated_at === current.rated_at &&
+                              r.rated_by_propel_id ===
+                                current.rated_by_propel_id,
+                          )}
+                          myPropelId={myPropelId}
+                        />
+                      ))}
+                    </Box>
+                  </Collapse>
+                </Box>
               )}
             </Paper>
           );

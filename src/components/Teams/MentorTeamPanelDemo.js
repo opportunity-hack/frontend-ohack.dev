@@ -89,9 +89,13 @@ const DEMO_TEAM = {
       body: "Walked them through judging criteria with concrete examples for Scope and Documentation. They have great impact potential — need to lean into nonprofit storytelling for the demo video.",
     },
   ],
+  // Ratings tell the #412 story: Documentation was yellow on Greg's shift and
+  // Jasmine rated it green 45m ago (newest wins, the old one is history);
+  // Security is still Greg's 8h-old red — nobody has looked since, so the
+  // panel asks for a fresh look instead of silently trusting it.
   mentor_ratings: [
     {
-      rated_at: hoursAgo(8),
+      rated_at: hoursAgo(3),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
       criterion: "scope",
@@ -105,7 +109,7 @@ const DEMO_TEAM = {
       score: "yellow",
     },
     {
-      rated_at: hoursAgo(8),
+      rated_at: hoursAgo(3),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
       criterion: "polish",

@@ -9,7 +9,8 @@ import {
   SCORE_META,
   coverageItemCovered,
   latestRatingsByMentor,
-  consensusForCriterion,
+  currentRating,
+  ratingAttribution,
   relativeTime,
 } from "../Teams/mentorCoverage";
 import { MENTORS_TITLE } from "./copy";
@@ -84,7 +85,9 @@ export default function MentorSupportCard({
       <Box sx={{ fontWeight: 600, mb: 1 }}>Judging readiness</Box>
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
         {JUDGING_CRITERIA.map((c) => {
-          const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+          // Current = the newest rating on the criterion, any mentor (#412).
+          const current = currentRating(ratingsByMentor[c.slug]);
+          const consensus = current ? current.score : null;
           return (
             <li
               key={c.slug}
@@ -111,8 +114,10 @@ export default function MentorSupportCard({
               />
               <strong>{c.label}:</strong>
               <span style={{ color: "var(--muted)" }}>
-                {consensus ? SCORE_META[consensus].label : "Not rated yet"} —{" "}
-                {c.blurb}
+                {current
+                  ? `${SCORE_META[consensus].label} · ${ratingAttribution(current)}`
+                  : "Not rated yet"}{" "}
+                — {c.blurb}
               </span>
             </li>
           );
