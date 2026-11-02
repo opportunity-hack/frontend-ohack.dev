@@ -18,15 +18,21 @@ import {
 import { isWinningStatus, getWinningStatus } from "../../constants/teamStatus";
 import { statusLabel } from "../Teams/teamPageData";
 import {
-  MENTOR_COVERAGE_TOTAL,
-  coverageDoneCount,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
   relativeTime,
 } from "../Teams/mentorCoverage";
+import CoverageMeter from "../Teams/CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 
 // ---- derive one team's mentor-relevant signals from the raw team doc -------
-function deriveTeam(team, nonprofitMap) {
+function deriveTeam(team, nonprofitMap, coverageNow) {
   const checklist = team?.mentor_checklist || {};
-  const coverage = coverageDoneCount(checklist);
+  // Share of all 18 possible sign-offs + distinct mentors — not the old
+  // all-or-nothing "items with 3 of 3" count. Sign-offs over 5h old are
+  // stale and drop out of the share (`coverageNow` is null until mounted).
+  const coverage = coverageSummary(checklist, { now: coverageNow });
   const openFlags =
     team?.mentor_open_flag_count != null
       ? Number(team.mentor_open_flag_count)
@@ -37,7 +43,11 @@ function deriveTeam(team, nonprofitMap) {
   const isActive = team?.active === "True" || team?.active === true;
   const winning = isWinningStatus(team?.status);
   const members = Array.isArray(team?.users) ? team.users : [];
-  const needsAttention = openFlags > 0 || (isActive && !lastTouchedAt);
+  // A team whose every sign-off has gone stale needs a mentor as much as
+  // one nobody has touched yet.
+  const allStale = coverage.signoffs === 0 && coverage.staleSignoffs > 0;
+  const needsAttention =
+    openFlags > 0 || (isActive && (!lastTouchedAt || allStale));
 
   return {
     id: team?.id,
@@ -85,6 +95,7 @@ const SORTS = [
   { key: "name", label: "Team name" },
   { key: "members", label: "Most members" },
   { key: "touch", label: "Recently touched" },
+  { key: "coverage", label: "Least covered" },
 ];
 
 // ---- small shared bits -----------------------------------------------------
@@ -118,13 +129,19 @@ function StatusTag({ d }) {
 }
 
 function CoverageCell({ d }) {
-  const full = d.coverage === MENTOR_COVERAGE_TOTAL;
   return (
     <span
-      className={`ohx-tag${full ? " ohx-tag--accent" : ""}`}
-      title={`${d.coverage} of ${MENTOR_COVERAGE_TOTAL} coverage items fully covered (3 mentors each)`}
+      className={`ohx-tag${d.coverage.complete ? " ohx-tag--accent" : ""}`}
+      title={coverageDetail(d.coverage)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        whiteSpace: "nowrap",
+      }}
     >
-      {d.coverage}/{MENTOR_COVERAGE_TOTAL}
+      <CoverageMeter summary={d.coverage} size="sm" />
+      {coverageLabel(d.coverage, { compact: true })}
     </span>
   );
 }
@@ -276,8 +293,12 @@ export default function MentorTeamsTable({
   teams = [],
   eventId,
   nonprofits = [],
+  endDate,
+  timezone,
 }) {
   const theme = useTheme();
+  // Clock for coverage freshness — frozen at the end of the event.
+  const coverageNow = useCoverageNow({ endDate, timezone });
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -292,8 +313,11 @@ export default function MentorTeamsTable({
   }, [nonprofits]);
 
   const derived = useMemo(
-    () => teams.map((t) => deriveTeam(t, nonprofitMap)).filter((d) => d.id),
-    [teams, nonprofitMap],
+    () =>
+      teams
+        .map((t) => deriveTeam(t, nonprofitMap, coverageNow))
+        .filter((d) => d.id),
+    [teams, nonprofitMap, coverageNow],
   );
 
   const attentionCount = useMemo(
@@ -323,6 +347,11 @@ export default function MentorTeamsTable({
         return b.memberCount - a.memberCount || a.name.localeCompare(b.name);
       if (sortBy === "touch")
         return touchMs(b) - touchMs(a) || a.name.localeCompare(b.name);
+      if (sortBy === "coverage")
+        return (
+          a.coverage.signoffs - b.coverage.signoffs ||
+          a.name.localeCompare(b.name)
+        );
       // "attention": flags desc, then never/oldest touch first, then name
       if (b.openFlags !== a.openFlags) return b.openFlags - a.openFlags;
       if (a.needsAttention !== b.needsAttention)

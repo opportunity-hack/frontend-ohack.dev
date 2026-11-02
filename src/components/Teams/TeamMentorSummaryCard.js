@@ -2,8 +2,9 @@ import React from "react";
 import NextLink from "next/link";
 import { Box } from "@mui/material";
 import {
-  MENTOR_COVERAGE_TOTAL,
-  coverageDoneCount,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -13,6 +14,8 @@ import {
   relativeTime,
   splitMentorFlags,
 } from "./mentorCoverage";
+import CoverageMeter from "./CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 
 // Refined-token consensus dot colors (calmer than the loud MUI palette ones
 // used on the event-list version) — keeps the team page on-brand. Exported
@@ -32,9 +35,19 @@ export const SCORE_DOT_COLORS = {
  * dedicated /mentor page. Computes from fields the public get_team already
  * returns — no backend change.
  */
-export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
+export default function TeamMentorSummaryCard({
+  team,
+  eventId,
+  teamId,
+  event,
+}) {
   const checklist = team?.mentor_checklist || {};
-  const doneCount = coverageDoneCount(checklist);
+  // Sign-offs over 5h old drop out of the headline (frozen at event end).
+  const coverageNow = useCoverageNow({
+    endDate: event?.end_date,
+    timezone: event?.timezone,
+  });
+  const coverage = coverageSummary(checklist, { now: coverageNow });
   const openFlags = Number(team?.mentor_open_flag_count || 0);
   const resolvedFlags = splitMentorFlags(team?.mentor_flags).resolved.length;
   const lastTouchedAt = team?.mentor_last_touched_at;
@@ -47,7 +60,8 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
   // so the reader knows how fresh the picture is (#412).
   const newest = newestRating(ratingsByMentor);
   const hasActivity =
-    doneCount > 0 ||
+    coverage.signoffs > 0 ||
+    coverage.staleSignoffs > 0 ||
     openFlags > 0 ||
     resolvedFlags > 0 ||
     !!lastTouchedAt ||
@@ -105,9 +119,12 @@ export default function TeamMentorSummaryCard({ team, eventId, teamId }) {
             }}
           >
             <span
-              className={`ohx-tag${doneCount === MENTOR_COVERAGE_TOTAL ? " ohx-tag--accent" : ""}`}
+              className={`ohx-tag${coverage.complete ? " ohx-tag--accent" : ""}`}
+              title={coverageDetail(coverage)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              {doneCount}/{MENTOR_COVERAGE_TOTAL} covered
+              <CoverageMeter summary={coverage} size="sm" />
+              {coverageLabel(coverage)}
             </span>
             {openFlags > 0 && (
               <span className="ohx-tag ohx-tag--accent">

@@ -714,6 +714,7 @@ export default function TeamDetailPage({
                   team={team}
                   eventId={event_id}
                   teamId={team.id}
+                  event={eventData}
                 />
               </SectionBlock>
             )}
