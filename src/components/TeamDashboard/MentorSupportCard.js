@@ -13,6 +13,7 @@ import {
   blendedRating,
   ratingBlendSummary,
   relativeTime,
+  MENTOR_COVERAGE_FRESH_HOURS,
 } from "../Teams/mentorCoverage";
 import CoverageMeter from "../Teams/CoverageMeter";
 import useCoverageNow from "../../hooks/use-coverage-now";
@@ -76,13 +77,14 @@ export default function MentorSupportCard({
         title={coverageDetail(coverage)}
       >
         <CoverageMeter summary={coverage} size="md" />
-        <span>
-          {coverageLabel(coverage)}
-          {coverage.signoffs > 0 && !coverage.complete
-            ? ` · each item wants ${coverage.target}`
-            : ""}
-        </span>
+        <span>{coverageLabel(coverage)}</span>
       </Box>
+      {coverage.staleSignoffs > 0 && (
+        <Box sx={{ color: "var(--faint)", fontSize: "0.8rem", mb: 1 }}>
+          Checks older than {MENTOR_COVERAGE_FRESH_HOURS} hours don&apos;t
+          count.
+        </Box>
+      )}
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
         {coverage.items.map((item) => (
           <li
@@ -112,12 +114,6 @@ export default function MentorSupportCard({
               style={{ color: item.covered ? "var(--muted)" : "var(--ink)" }}
             >
               {item.label}
-              {item.stale > 0 && !item.covered && (
-                <span style={{ color: "var(--faint)" }}>
-                  {" "}
-                  · {item.stale} stale
-                </span>
-              )}
             </span>
           </li>
         ))}

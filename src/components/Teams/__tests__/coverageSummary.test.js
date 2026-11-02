@@ -102,10 +102,10 @@ describe("coverageLabel / coverageDetail", () => {
   });
 
   it("says the share and who contributed, in plain words", () => {
-    expect(coverageLabel(partial)).toBe("17% signed off · 2 mentors");
+    expect(coverageLabel(partial)).toBe("17% covered · 2 mentors");
     expect(coverageLabel(partial, { compact: true })).toBe("17% · 2 mentors");
     expect(coverageDetail(partial)).toBe(
-      "3 of 18 sign-offs (6 items × 3 mentors each) from 2 mentors · 0 of 6 items fully covered",
+      "3 sign-offs · 0 of 6 items fully covered",
     );
   });
 
@@ -113,14 +113,14 @@ describe("coverageLabel / coverageDetail", () => {
     const one = coverageSummary({
       intro_made: { checks: { gina: check("Gina Vannoni") } },
     });
-    expect(coverageLabel(one)).toBe("6% signed off · 1 mentor");
-    expect(coverageDetail(one)).toMatch(/from 1 mentor ·/);
+    expect(coverageLabel(one)).toBe("6% covered · 1 mentor");
+    expect(coverageDetail(one)).toBe("1 sign-off · 0 of 6 items fully covered");
 
     const none = coverageSummary({});
     expect(coverageLabel(none)).toBe("No sign-offs yet");
     expect(coverageLabel(none, { compact: true })).toBe("0%");
-    expect(coverageDetail(none)).toMatch(
-      /0 of 18 sign-offs .* from no mentors yet/,
+    expect(coverageDetail(none)).toBe(
+      "0 sign-offs · 0 of 6 items fully covered",
     );
 
     const full = { a: check("A"), b: check("B"), c: check("C") };
@@ -176,12 +176,12 @@ describe("coverageSummary freshness", () => {
     expect(s.percent).toBe(22);
     expect(s.mentorCount).toBe(3);
     expect(s.fullyCovered).toBe(1);
-    expect(coverageLabel(s)).toBe("22% signed off · 3 mentors · 2 stale");
-    expect(coverageLabel(s, { compact: true })).toBe(
-      "22% · 3 mentors · 2 stale",
-    );
+    // Stale sign-offs stay out of the headline — the meter, tooltip and
+    // per-item chips carry them.
+    expect(coverageLabel(s)).toBe("22% covered · 3 mentors");
+    expect(coverageLabel(s, { compact: true })).toBe("22% · 3 mentors");
     expect(coverageDetail(s)).toBe(
-      "4 of 18 sign-offs in the last 5h (6 items × 3 mentors each) from 3 mentors · 2 older sign-offs over 5h old need a fresh check · 1 of 6 items fully covered",
+      "4 fresh sign-offs · 2 stale (older than 5h) · 1 of 6 items fully covered",
     );
   });
 
@@ -189,8 +189,8 @@ describe("coverageSummary freshness", () => {
     const s = coverageSummary(checklist);
     expect(s.signoffs).toBe(6);
     expect(s.staleSignoffs).toBe(0);
-    expect(coverageLabel(s)).toBe("33% signed off · 3 mentors");
-    expect(coverageDetail(s)).not.toMatch(/in the last/);
+    expect(coverageLabel(s)).toBe("33% covered · 3 mentors");
+    expect(coverageDetail(s)).toBe("6 sign-offs · 1 of 6 items fully covered");
   });
 
   it("says so when everything has gone stale", () => {
@@ -198,10 +198,12 @@ describe("coverageSummary freshness", () => {
       { scope_reviewed: { checks: { a: check("A", ago(7)) } } },
       { now: NOW },
     );
-    expect(coverageLabel(s)).toBe("No fresh sign-offs · 1 stale");
-    expect(coverageLabel(s, { compact: true })).toBe("0% · 1 stale");
+    // The one time the headline mentions stale: everything is, and when
+    // the last check was (relative to the coverage clock, not Date.now).
+    expect(coverageLabel(s)).toBe("No fresh sign-offs · last one 7h ago");
+    expect(coverageLabel(s, { compact: true })).toBe("0% · all stale");
     expect(coverageDetail(s)).toBe(
-      "0 of 18 sign-offs in the last 5h (6 items × 3 mentors each) from no mentors yet · 1 older sign-off over 5h old needs a fresh check · 0 of 6 items fully covered",
+      "0 fresh sign-offs · 1 stale (older than 5h) · 0 of 6 items fully covered",
     );
   });
 

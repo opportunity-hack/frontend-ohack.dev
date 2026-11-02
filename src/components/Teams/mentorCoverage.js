@@ -75,7 +75,10 @@ export const MENTOR_COVERAGE_FRESH_HOURS = 5;
 export const MENTOR_COVERAGE_FRESH_MS =
   MENTOR_COVERAGE_FRESH_HOURS * 60 * 60 * 1000;
 
-export const COVERAGE_FRESH_RULE_COPY = `A sign-off counts for ${MENTOR_COVERAGE_FRESH_HOURS} hours — after that it's stale and the item wants a fresh check. Introductions and the judging-criteria walkthrough only need doing once.`;
+// The one-line caption under the checklist. The full rules live in
+// COVERAGE_RULES (below, behind a "How coverage works" disclosure) so the
+// panel doesn't read like a manual on every visit.
+export const COVERAGE_CAPTION_COPY = `Tick what you've covered yourself. Checks last ${MENTOR_COVERAGE_FRESH_HOURS} hours.`;
 
 export function coverageCadence(slug) {
   return (
@@ -232,46 +235,56 @@ function mentorsWord(n) {
   return `${n} mentor${n === 1 ? "" : "s"}`;
 }
 
-// The headline every surface renders: "56% signed off · 2 mentors",
-// "Fully covered · 3 mentors", "No sign-offs yet". `compact` is the table
-// form ("56% · 2 mentors"). Stale (over-5h) sign-offs are counted out of
-// the share and named — "33% signed off · 1 mentor · 4 stale" — so a drop
-// from yesterday's 100% is never a mystery.
+// The rules, one per bullet, for the "How coverage works" disclosure. This
+// is the only place the 18-sign-off arithmetic is spelled out.
+export const COVERAGE_RULES = [
+  `Each item needs ${COVERAGE_TARGET_MENTORS} different mentors. Tick only what you covered yourself; it turns green at ${COVERAGE_TARGET_MENTORS}, and you can clear your own tick anytime.`,
+  `The percentage is the share of all ${COVERAGE_POSSIBLE_SIGNOFFS} possible sign-offs (${MENTOR_COVERAGE_TOTAL} items × ${COVERAGE_TARGET_MENTORS} mentors) that are fresh.`,
+  `A check lasts ${MENTOR_COVERAGE_FRESH_HOURS} hours, about one shift. After that it shows as stale and asks you to confirm again.`,
+  "Introductions and the judging-criteria walkthrough never go stale.",
+];
+
+// The headline every surface renders — one number, one qualifier, the
+// meter does the rest: "56% covered · 2 mentors", "Fully covered · 3
+// mentors", "No sign-offs yet". `compact` is the table form ("56% · 2
+// mentors"). Stale sign-offs are NOT counted in the headline (the meter's
+// faint segments, the tooltip and the per-item chips carry them); the one
+// exception is a team whose every sign-off has gone stale, which says so
+// and when the last one was.
 export function coverageLabel(summary, { compact = false } = {}) {
   const s = summary;
   if (!s) return "";
   const stale = s.staleSignoffs || 0;
   if (s.signoffs === 0) {
     if (stale === 0) return compact ? "0%" : "No sign-offs yet";
-    return compact
-      ? `0% · ${stale} stale`
-      : `No fresh sign-offs · ${stale} stale`;
+    if (compact) return "0% · all stale";
+    const last = relativeTime(s.newestCheckAt, s.now);
+    return `No fresh sign-offs${last ? ` · last one ${last}` : ""}`;
   }
   const who = mentorsWord(s.mentorCount);
-  const suffix = stale > 0 ? ` · ${stale} stale` : "";
-  if (compact) return `${s.percent}% · ${who}${suffix}`;
-  if (s.complete) return `Fully covered · ${who}${suffix}`;
-  return `${s.percent}% signed off · ${who}${suffix}`;
+  if (compact) return `${s.percent}% · ${who}`;
+  if (s.complete) return `Fully covered · ${who}`;
+  return `${s.percent}% covered · ${who}`;
 }
 
-// The sentence behind the headline (tooltip / caption) — what the
-// percentage is a share of, so "56%" is never a mystery number.
+// The sentence behind the headline (tooltip / meter aria-label): three
+// short clauses, no arithmetic — "4 fresh sign-offs · 8 stale (older than
+// 5h) · 0 of 6 items fully covered". Without a clock (SSR, tests) the
+// sign-offs aren't "fresh", just counted.
 export function coverageDetail(summary) {
   const s = summary;
   if (!s) return "";
-  const who =
-    s.mentorCount === 0 ? "no mentors yet" : mentorsWord(s.mentorCount);
-  const window = s.now != null ? ` in the last ${s.freshHours}h` : "";
-  const stale =
-    s.staleSignoffs > 0
-      ? ` · ${s.staleSignoffs} older sign-off${s.staleSignoffs === 1 ? "" : "s"} ` +
-        `over ${s.freshHours}h old need${s.staleSignoffs === 1 ? "s" : ""} a fresh check`
-      : "";
-  return (
-    `${s.signoffs} of ${s.possible} sign-offs${window} ` +
-    `(${s.totalItems} items × ${s.target} mentors each) from ${who}${stale} · ` +
-    `${s.fullyCovered} of ${s.totalItems} items fully covered`
-  );
+  const plural = s.signoffs === 1 ? "" : "s";
+  const parts = [
+    s.now != null
+      ? `${s.signoffs} fresh sign-off${plural}`
+      : `${s.signoffs} sign-off${plural}`,
+  ];
+  if (s.staleSignoffs > 0) {
+    parts.push(`${s.staleSignoffs} stale (older than ${s.freshHours}h)`);
+  }
+  parts.push(`${s.fullyCovered} of ${s.totalItems} items fully covered`);
+  return parts.join(" · ");
 }
 
 // Judging rubric mentors use to coach teams. The labels and blurbs mirror
@@ -496,11 +509,13 @@ export function ratingBlendSummary(blend, myPropelId) {
   return n > 1 ? `${n} ratings, latest ${latest}` : latest;
 }
 
-export function relativeTime(iso) {
+// `now` (epoch ms) defaults to the wall clock; pass the coverage clock when
+// the caller's other numbers are frozen to it (event end, tests).
+export function relativeTime(iso, now = null) {
   if (!iso) return "";
   const then = parseMentorTimestamp(iso);
   if (Number.isNaN(then)) return "";
-  const diffMs = Date.now() - then;
+  const diffMs = (now ?? Date.now()) - then;
   if (diffMs < 0) return "just now";
   const mins = Math.round(diffMs / 60000);
   if (mins < 1) return "just now";

@@ -71,8 +71,8 @@ import {
   coverageSummary,
   coverageLabel,
   coverageDetail,
-  COVERAGE_FRESH_RULE_COPY,
-  MENTOR_COVERAGE_FRESH_HOURS,
+  COVERAGE_CAPTION_COPY,
+  COVERAGE_RULES,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
@@ -455,6 +455,7 @@ export default function MentorTeamPanel({
   // Per-criterion "Show history" disclosures (Set of criterion slugs).
   const [expandedHistory, setExpandedHistory] = useState(() => new Set());
   const [showResolved, setShowResolved] = useState(false);
+  const [coverageRulesOpen, setCoverageRulesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
@@ -983,13 +984,46 @@ export default function MentorTeamPanel({
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: "block", mb: 1 }}
+        sx={{ display: "block", mb: coverageRulesOpen ? 0.5 : 1 }}
       >
-        Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different
-        mentors — check the ones you&apos;ve personally covered. An item turns
-        green once {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your
-        own check anytime. {COVERAGE_FRESH_RULE_COPY}
+        {COVERAGE_CAPTION_COPY}{" "}
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => setCoverageRulesOpen((v) => !v)}
+          aria-expanded={coverageRulesOpen}
+          aria-controls={`coverage-rules-${team?.id || "team"}`}
+          sx={{
+            textTransform: "none",
+            p: 0,
+            minWidth: 0,
+            fontSize: "inherit",
+            lineHeight: "inherit",
+            verticalAlign: "baseline",
+          }}
+        >
+          How coverage works {coverageRulesOpen ? "▴" : "▾"}
+        </Button>
       </Typography>
+      <Collapse in={coverageRulesOpen} unmountOnExit>
+        <Box
+          component="ul"
+          id={`coverage-rules-${team?.id || "team"}`}
+          sx={{ m: 0, mb: 1, pl: 2.5 }}
+        >
+          {COVERAGE_RULES.map((rule) => (
+            <Typography
+              key={rule}
+              component="li"
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "list-item" }}
+            >
+              {rule}
+            </Typography>
+          ))}
+        </Box>
+      </Collapse>
       <List disablePadding>
         {coverage.items.map((item, idx) => {
           const { checks, count, stale, covered } = item;
@@ -1028,9 +1062,7 @@ export default function MentorTeamPanel({
           const rowIcon = (
             <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
               {mineStale ? (
-                <Tooltip
-                  title={`Your check is over ${MENTOR_COVERAGE_FRESH_HOURS}h old — tap to confirm it again`}
-                >
+                <Tooltip title="Your check is stale — tap to confirm it again">
                   <RefreshIcon sx={{ color: "warning.main" }} />
                 </Tooltip>
               ) : mine ? (
@@ -1114,8 +1146,7 @@ export default function MentorTeamPanel({
                         fontWeight: 600,
                       }}
                     >
-                      ↻ Confirm again — your check is over{" "}
-                      {MENTOR_COVERAGE_FRESH_HOURS}h old
+                      ↻ Confirm again
                     </Typography>
                   )}
                 </Box>

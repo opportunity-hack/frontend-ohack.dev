@@ -20,20 +20,35 @@ describe("MentorTeamPanel coverage headline", () => {
 
   it("shows the share of fresh sign-offs, the mentor count and the stale count — never X/6", () => {
     expect(
-      screen.getAllByText("22% signed off · 3 mentors · 2 stale").length,
+      screen.getAllByText("22% covered · 3 mentors").length,
     ).toBeGreaterThan(0);
     expect(screen.queryByText(/\/ 6 covered/)).not.toBeInTheDocument();
     expect(screen.getByText(/Coverage \(22%\)/)).toBeInTheDocument();
   });
 
-  it("spells out what the percentage is a share of, including the 5h window", () => {
+  it("keeps the detail to three clauses and the rules behind a disclosure", () => {
     expect(
       screen.getAllByText(
-        /4 of 18 sign-offs in the last 5h \(6 items × 3 mentors each\) from 3 mentors · 2 older sign-offs over 5h old need a fresh check · 1 of 6 items fully covered/,
+        /4 fresh sign-offs · 2 stale \(older than 5h\) · 1 of 6 items fully covered/,
       ).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getByText(/A sign-off counts for 5 hours/),
+      screen.getByText(
+        /Tick what you've covered yourself\. Checks last 5 hours\./,
+      ),
+    ).toBeInTheDocument();
+    // The 18-sign-off arithmetic only appears once the mentor asks for it.
+    expect(screen.queryByText(/18 possible sign-offs/)).not.toBeInTheDocument();
+    const how = screen.getByRole("button", { name: /How coverage works/ });
+    expect(how).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(how);
+    expect(how).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/18 possible sign-offs/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/A check lasts 5 hours, about one shift/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/judging-criteria walkthrough never go stale/),
     ).toBeInTheDocument();
   });
 

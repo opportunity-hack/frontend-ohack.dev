@@ -21,8 +21,8 @@ const DEMO_TEAM = {
   // show every case: intro_made (a once-item) is fully covered by 3 mentors
   // regardless of age; scope_reviewed has one fresh + one stale check;
   // architecture_discussed has only a stale check plus a history trail
-  // (checked → cleared → checked again) → "22% signed off · 3 mentors ·
-  // 2 stale" (4 of 18).
+  // (checked → cleared → checked again) → "22% covered · 3 mentors"
+  // (4 fresh of 18, 2 stale).
   mentor_checklist: {
     intro_made: {
       checks: {

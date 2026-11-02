@@ -67,18 +67,17 @@ describe("MentorTeamsTable coverage column", () => {
     expect(screen.getAllByText("0%").length).toBeGreaterThan(0);
     expect(screen.queryByText(/^\d\/6$/)).not.toBeInTheDocument();
     expect(
-      screen.getAllByTitle(
-        "12 of 18 sign-offs in the last 5h (6 items × 3 mentors each) from 2 mentors · 0 of 6 items fully covered",
-      ).length,
+      screen.getAllByTitle("12 fresh sign-offs · 0 of 6 items fully covered")
+        .length,
     ).toBeGreaterThan(0);
   });
 
   it("counts yesterday's sign-offs as stale and flags the team as needing attention", () => {
     render(<MentorTeamsTable teams={teams} eventId="fall-2026" />);
-    expect(screen.getAllByText("0% · 8 stale").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("0% · all stale").length).toBeGreaterThan(0);
     expect(
       screen.getAllByTitle(
-        /0 of 18 sign-offs in the last 5h .* from no mentors yet · 8 older sign-offs over 5h old need a fresh check/,
+        /0 fresh sign-offs · 8 stale \(older than 5h\) · 0 of 6 items fully covered/,
       ).length,
     ).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /Needs attention/ }));

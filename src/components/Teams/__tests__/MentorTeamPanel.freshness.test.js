@@ -71,7 +71,7 @@ describe("MentorTeamPanel stale sign-offs (mentor view)", () => {
   });
 
   it("offers to confirm a stale own check again and re-posts done:true", async () => {
-    await screen.findByText(/Confirm again — your check is over 5h old/);
+    await screen.findByText(/↻ Confirm again/);
     expect(screen.getByText(/You · 7h ago · stale/)).toBeInTheDocument();
     expect(screen.getByText("1/3 · 1 stale")).toBeInTheDocument();
 
@@ -86,7 +86,7 @@ describe("MentorTeamPanel stale sign-offs (mentor view)", () => {
   });
 
   it("still clears a fresh own check on click", async () => {
-    await screen.findByText(/Confirm again — your check is over 5h old/);
+    await screen.findByText(/↻ Confirm again/);
     fireEvent.click(
       screen.getByRole("button", { name: /GitHub repo reviewed/ }),
     );

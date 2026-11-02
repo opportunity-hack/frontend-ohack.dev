@@ -6,8 +6,9 @@ jest.mock("../MentorAvailabilityToggle", () => () => null);
 import MentorSupportCard from "../MentorSupportCard";
 
 // Team-facing mirror: each item says how many of the 3 mentors have checked
-// it, instead of a bare ○ until all three are in. Sign-offs over 5h old are
-// stale and named as such.
+// it, instead of a bare ○ until all three are in. Sign-offs over 5h old
+// drop out of the counts; teams get one muted line saying so, not the
+// mentor-side mechanics.
 const ago = (hours) => new Date(Date.now() - hours * 3_600_000).toISOString();
 const check = (name, hours = 0.5) => ({ name, checked_at: ago(hours) });
 const team = {
@@ -25,20 +26,22 @@ const team = {
 describe("MentorSupportCard coverage", () => {
   it("shows per-item mentor counts, stale checks and the overall share", () => {
     render(<MentorSupportCard team={team} eventId="fall-2026" />);
+    expect(screen.getByText("33% covered · 3 mentors")).toBeInTheDocument();
     expect(
-      screen.getByText(/33% signed off · 3 mentors · 1 stale/),
+      screen.getByText(/Checks older than 5 hours don't count/),
     ).toBeInTheDocument();
     expect(screen.getByText("✓")).toBeInTheDocument();
     expect(screen.getByText("2/3")).toBeInTheDocument();
     expect(screen.getByText("1/3")).toBeInTheDocument();
     expect(screen.getAllByText("0/3")).toHaveLength(3);
-    expect(screen.getByText(/· 1 stale$/)).toBeInTheDocument();
+    expect(screen.queryByText(/stale/)).not.toBeInTheDocument();
     expect(screen.queryByText("○")).not.toBeInTheDocument();
   });
 
   it("reads 'No sign-offs yet' for a fresh team", () => {
     render(<MentorSupportCard team={{ id: "t2" }} eventId="fall-2026" />);
     expect(screen.getByText("No sign-offs yet")).toBeInTheDocument();
+    expect(screen.queryByText(/don't count/)).not.toBeInTheDocument();
     expect(screen.getAllByText("0/3")).toHaveLength(6);
   });
 });
