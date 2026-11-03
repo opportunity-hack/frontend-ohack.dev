@@ -1,17 +1,57 @@
-import React from "react";
-import {
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  Button,
-  CardActions,
-  Chip,
-  Box,
-} from "@mui/material";
+import React, { useState } from "react";
 import Link from "next/link";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { trackEvent } from "../../lib/ga";
+
+// Only ever rendered on /store inside a <RefinedRoot>, so the .ohx-* classes
+// and CSS variables are safe here.
+
+// Reserved 4:3 media box. The catalog's /images/store/*.png paths are plain
+// <img>s with explicit dimensions (CWV); if a file is missing the box falls
+// back to a quiet Fraunces initial instead of a broken-image glyph.
+const ProductImage = ({ src, name }) => {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(src) && !failed;
+  return (
+    <div
+      style={{
+        aspectRatio: "4 / 3",
+        background: "var(--surface-2)",
+        borderBottom: "1px solid var(--line)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
+      {showImage ? (
+        <img
+          src={src}
+          alt={name}
+          width={400}
+          height={300}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            padding: 20,
+            boxSizing: "border-box",
+          }}
+        />
+      ) : (
+        <span
+          className="ohx-display"
+          aria-hidden="true"
+          style={{ fontSize: 44, color: "var(--brand)", opacity: 0.55 }}
+        >
+          {(name || "?").charAt(0)}
+        </span>
+      )}
+    </div>
+  );
+};
 
 export default function ProductCard({ product }) {
   const hasVariations =
@@ -32,53 +72,60 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <Card
-      sx={{
+    <article
+      className="ohx-card ohx-card--hover"
+      style={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: 6,
-        },
+        overflow: "hidden",
       }}
     >
-      <CardMedia
-        component="div"
-        sx={{
-          height: 220,
-          backgroundColor: "grey.100",
+      <ProductImage src={product.image} name={product.name} />
+
+      <div
+        style={{
+          padding: "18px 20px 20px",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
+          flexDirection: "column",
+          flexGrow: 1,
+          gap: 10,
         }}
       >
-        {product.image ? (
-          <Box
-            component="img"
-            src={product.image}
-            alt={product.name}
-            sx={{
-              maxHeight: "100%",
-              maxWidth: "100%",
-              objectFit: "contain",
-              p: 2,
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <h2
+            className="ohx-display"
+            style={{ fontSize: 20, lineHeight: 1.15, margin: 0 }}
+          >
+            {product.name}
+          </h2>
+          <span
+            className="ohx-display"
+            style={{
+              fontSize: 20,
+              lineHeight: 1,
+              color: "var(--brand)",
+              whiteSpace: "nowrap",
+              fontVariantNumeric: "tabular-nums",
             }}
-          />
-        ) : (
-          <ShoppingCartIcon sx={{ fontSize: 64, color: "grey.400" }} />
-        )}
-      </CardMedia>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography gutterBottom variant="h6" component="h2" noWrap>
-          {product.name}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
+          >
+            ${product.price.toFixed(2)}
+          </span>
+        </div>
+
+        <p
+          className="ohx-muted"
+          style={{
+            margin: 0,
+            fontSize: 14.5,
+            lineHeight: 1.55,
             display: "-webkit-box",
             WebkitLineClamp: 3,
             WebkitBoxOrient: "vertical",
@@ -86,28 +133,33 @@ export default function ProductCard({ product }) {
           }}
         >
           {product.description}
-        </Typography>
-        <Box sx={{ mt: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="h6" color="primary" fontWeight="bold">
-            ${product.price.toFixed(2)}
-          </Typography>
-          {product.category && (
-            <Chip label={product.category} size="small" variant="outlined" />
+        </p>
+
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          {product.category ? (
+            <span className="ohx-tag">{product.category}</span>
+          ) : (
+            <span />
           )}
-        </Box>
-      </CardContent>
-      <CardActions sx={{ px: 2, pb: 2 }}>
-        <Link href={`/store/products/${product.id}`} passHref legacyBehavior>
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<ShoppingCartIcon />}
+          <Link
+            href={`/store/products/${product.id}`}
+            className="ohx-btn ohx-btn--primary"
             onClick={handleProductClick}
           >
-            {hasVariations ? "Select Options" : "View Details"}
-          </Button>
-        </Link>
-      </CardActions>
-    </Card>
+            {hasVariations ? "Select options" : "View details"}
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }

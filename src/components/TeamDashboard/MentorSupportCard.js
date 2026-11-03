@@ -4,14 +4,19 @@ import DashboardSection from "./DashboardSection";
 import MentorAvailabilityToggle from "./MentorAvailabilityToggle";
 import { SCORE_DOT_COLORS } from "../Teams/TeamMentorSummaryCard";
 import {
-  MENTOR_COVERAGE_ITEMS,
   JUDGING_CRITERIA,
   SCORE_META,
-  coverageItemCovered,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
   latestRatingsByMentor,
-  consensusForCriterion,
+  blendedRating,
+  ratingBlendSummary,
   relativeTime,
+  MENTOR_COVERAGE_FRESH_HOURS,
 } from "../Teams/mentorCoverage";
+import CoverageMeter from "../Teams/CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 import { MENTORS_TITLE } from "./copy";
 
 /**
@@ -23,11 +28,18 @@ import { MENTORS_TITLE } from "./copy";
 export default function MentorSupportCard({
   team,
   eventId,
+  event,
   accessToken,
   onTeamUpdated,
   onNotify,
 }) {
   const checklist = team?.mentor_checklist || {};
+  // Sign-offs over 5h old drop out of the headline (frozen at event end).
+  const coverageNow = useCoverageNow({
+    endDate: event?.end_date,
+    timezone: event?.timezone,
+  });
+  const coverage = coverageSummary(checklist, { now: coverageNow });
   const ratingsByMentor = latestRatingsByMentor(team?.mentor_ratings);
   const notes = (
     Array.isArray(team?.mentor_notes) ? [...team.mentor_notes] : []
@@ -52,39 +64,68 @@ export default function MentorSupportCard({
         onNotify={onNotify}
       />
 
-      <Box sx={{ fontWeight: 600, mb: 1 }}>What mentors check with you</Box>
+      <Box sx={{ fontWeight: 600, mb: 0.5 }}>What mentors check with you</Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 1,
+          color: "var(--muted)",
+          fontSize: "0.85rem",
+        }}
+        title={coverageDetail(coverage)}
+      >
+        <CoverageMeter summary={coverage} size="md" />
+        <span>{coverageLabel(coverage)}</span>
+      </Box>
+      {coverage.staleSignoffs > 0 && (
+        <Box sx={{ color: "var(--faint)", fontSize: "0.8rem", mb: 1 }}>
+          Checks older than {MENTOR_COVERAGE_FRESH_HOURS} hours don&apos;t
+          count.
+        </Box>
+      )}
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
-        {MENTOR_COVERAGE_ITEMS.map((item) => {
-          const done = coverageItemCovered(checklist[item.slug]);
-          return (
-            <li
-              key={item.slug}
+        {coverage.items.map((item) => (
+          <li
+            key={item.slug}
+            style={{
+              display: "flex",
+              gap: 8,
+              padding: "4px 0",
+              fontSize: "0.92rem",
+            }}
+          >
+            <span
               style={{
-                display: "flex",
-                gap: 8,
-                padding: "4px 0",
-                fontSize: "0.92rem",
+                minWidth: 28,
+                fontVariantNumeric: "tabular-nums",
+                color: item.covered
+                  ? "var(--success, #2F6E50)"
+                  : item.count > 0
+                    ? "var(--brand, #1B3A6B)"
+                    : "var(--faint)",
               }}
+              aria-label={`${item.count} of ${item.target} mentors`}
             >
-              <span
-                style={{
-                  color: done ? "var(--success, #2F6E50)" : "var(--faint)",
-                }}
-              >
-                {done ? "✓" : "○"}
-              </span>
-              <span style={{ color: done ? "var(--muted)" : "var(--ink)" }}>
-                {item.label}
-              </span>
-            </li>
-          );
-        })}
+              {item.covered ? "✓" : `${item.count}/${item.target}`}
+            </span>
+            <span
+              style={{ color: item.covered ? "var(--muted)" : "var(--ink)" }}
+            >
+              {item.label}
+            </span>
+          </li>
+        ))}
       </Box>
 
       <Box sx={{ fontWeight: 600, mb: 1 }}>Judging readiness</Box>
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, mb: 3 }}>
         {JUDGING_CRITERIA.map((c) => {
-          const consensus = consensusForCriterion(ratingsByMentor[c.slug]);
+          // Current = recency-weighted blend of each mentor's latest
+          // rating, rounded to the closest score (#412).
+          const blend = blendedRating(ratingsByMentor[c.slug]);
+          const consensus = blend ? blend.score : null;
           return (
             <li
               key={c.slug}
@@ -111,8 +152,10 @@ export default function MentorSupportCard({
               />
               <strong>{c.label}:</strong>
               <span style={{ color: "var(--muted)" }}>
-                {consensus ? SCORE_META[consensus].label : "Not rated yet"} —{" "}
-                {c.blurb}
+                {blend
+                  ? `${SCORE_META[consensus].label} · ${ratingBlendSummary(blend)}`
+                  : "Not rated yet"}{" "}
+                — {c.blurb}
               </span>
             </li>
           );

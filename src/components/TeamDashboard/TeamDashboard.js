@@ -173,6 +173,7 @@ export default function TeamDashboard({
           <MentorSupportCard
             team={team}
             eventId={eventId}
+            event={event}
             accessToken={accessToken}
             onTeamUpdated={onTeamUpdated}
             onNotify={notify}

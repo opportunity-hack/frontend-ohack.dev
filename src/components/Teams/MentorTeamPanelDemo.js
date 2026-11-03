@@ -16,8 +16,13 @@ const DEMO_TEAM = {
   mentor_last_touched_at: minutesAgo(42),
   mentor_last_touched_by_name: "Sai M.",
   mentor_open_flag_count: 1,
-  // Per-mentor coverage: each item collects sign-off from up to 3 mentors.
-  // intro_made is fully covered (3/3); the rest show partial coverage.
+  // Per-mentor coverage: each item collects sign-off from up to 3 mentors,
+  // and a sign-off on a recurring item only counts for 5 hours. Seeded to
+  // show every case: intro_made (a once-item) is fully covered by 3 mentors
+  // regardless of age; scope_reviewed has one fresh + one stale check;
+  // architecture_discussed has only a stale check plus a history trail
+  // (checked → cleared → checked again) → "22% covered · 3 mentors"
+  // (4 fresh of 18, 2 stale).
   mentor_checklist: {
     intro_made: {
       checks: {
@@ -29,13 +34,47 @@ const DEMO_TEAM = {
     scope_reviewed: {
       checks: {
         "demo-priya": { name: "Priya R.", checked_at: hoursAgo(18) },
-        "demo-greg": { name: "Greg V.", checked_at: hoursAgo(5) },
+        "demo-greg": { name: "Greg V.", checked_at: minutesAgo(40) },
       },
+      history: [
+        {
+          propel_id: "demo-priya",
+          name: "Priya R.",
+          at: hoursAgo(18),
+          action: "checked",
+        },
+        {
+          propel_id: "demo-greg",
+          name: "Greg V.",
+          at: minutesAgo(40),
+          action: "checked",
+        },
+      ],
     },
     architecture_discussed: {
       checks: {
         "demo-greg": { name: "Greg V.", checked_at: hoursAgo(6) },
       },
+      history: [
+        {
+          propel_id: "demo-sai",
+          name: "Sai M.",
+          at: hoursAgo(9),
+          action: "checked",
+        },
+        {
+          propel_id: "demo-sai",
+          name: "Sai M.",
+          at: hoursAgo(7),
+          action: "cleared",
+        },
+        {
+          propel_id: "demo-greg",
+          name: "Greg V.",
+          at: hoursAgo(6),
+          action: "checked",
+        },
+      ],
     },
   },
   mentor_flags: [
@@ -89,13 +128,21 @@ const DEMO_TEAM = {
       body: "Walked them through judging criteria with concrete examples for Scope and Documentation. They have great impact potential — need to lean into nonprofit storytelling for the demo video.",
     },
   ],
+  // Ratings tell the #412 story. Each criterion's state is a recency-weighted
+  // blend of every mentor's latest rating, rounded to the closest score:
+  // - Documentation: Greg's 8h-old yellow (which replaced his own 20h-old
+  //   red) vs Jasmine's green 45m ago → green, with both ratings shown.
+  // - Polish: Greg green 3h ago vs Sai red 2h ago — a fresh disagreement
+  //   blends to "Needs attention" instead of silently picking a side.
+  // - Security: Greg's 8h-old red stands alone — nobody has looked since,
+  //   so the panel asks for a fresh look instead of silently trusting it.
   mentor_ratings: [
     {
-      rated_at: hoursAgo(8),
+      rated_at: hoursAgo(20),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
-      criterion: "scope",
-      score: "green",
+      criterion: "documentation",
+      score: "red",
     },
     {
       rated_at: hoursAgo(8),
@@ -108,14 +155,28 @@ const DEMO_TEAM = {
       rated_at: hoursAgo(8),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
-      criterion: "polish",
-      score: "yellow",
+      criterion: "security",
+      score: "red",
     },
     {
-      rated_at: hoursAgo(8),
+      rated_at: hoursAgo(3),
       rated_by_propel_id: "demo-greg",
       rated_by_name: "Greg V.",
-      criterion: "security",
+      criterion: "scope",
+      score: "green",
+    },
+    {
+      rated_at: hoursAgo(3),
+      rated_by_propel_id: "demo-greg",
+      rated_by_name: "Greg V.",
+      criterion: "polish",
+      score: "green",
+    },
+    {
+      rated_at: hoursAgo(2),
+      rated_by_propel_id: "demo-sai",
+      rated_by_name: "Sai M.",
+      criterion: "polish",
       score: "red",
     },
     {

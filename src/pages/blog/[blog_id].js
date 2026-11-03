@@ -7,6 +7,7 @@ import ScrollTracker from '../../components/ScrollTracker';
 import { serializeJsonLd } from '../../lib/jsonLd';
 import { buildBlogPostingJsonLd } from '../../lib/blogJsonLd';
 import { fetchForStaticProps, NOT_FOUND_REVALIDATE } from '../../lib/ssgFetch';
+import { RefinedPage } from '../../components/design/RefinedPage';
 
 const SingleBlogPost = dynamic(() => import('../../components/Blog/SingleBlogPost'), {
     ssr: true // Enable SSR for better indexing
@@ -63,17 +64,14 @@ export default function BlogPostPage({ title, openGraphData, blogData }) {
         }
     }, [blog_id, title]);
 
-    // Show loading state
+    // Show loading state (reserved height so the article doesn't jump in)
     if (router.isFallback) {
         return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '50vh' 
-            }}>
-                <p>Loading blog post...</p>
-            </div>
+            <RefinedPage as="article" narrow style={{ minHeight: '70vh' }}>
+                <p role="progressbar" aria-busy="true" className="ohx-muted" style={{ marginTop: 18 }}>
+                    Loading blog post…
+                </p>
+            </RefinedPage>
         );
     }
 

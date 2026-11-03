@@ -1,10 +1,7 @@
-import dynamic from "next/dynamic";
+import CommunityChampions from "../../components/CommunityChampions/CommunityChampions";
 
-const CommunityChampions = dynamic(
-  () => import("../../components/CommunityChampions/CommunityChampions"),
-  { ssr: false }
-);
-
+// Server-rendered: the masthead and controls SSR for crawlers; only the
+// leaderboard list itself is fetched client-side (reserved height, no CLS).
 export default function CommunityChampionsPage() {
   return <CommunityChampions />;
 }

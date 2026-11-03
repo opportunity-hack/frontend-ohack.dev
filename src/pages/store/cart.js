@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Divider,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
-import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Link from "next/link";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 import { trackEvent, initFacebookPixel } from "../../lib/ga";
+import { RefinedRoot, Eyebrow } from "../../components/design/refined";
+import { pageSectionStyle } from "../../components/design/RefinedPage";
 import CartItemList from "../../components/Store/CartItemList";
+
+const sameVariations = (a, b) =>
+  JSON.stringify(a || {}) === JSON.stringify(b || {});
 
 export default function CartPage() {
   const { items, total, updateQuantity, removeItem, clearCart } =
@@ -34,11 +28,17 @@ export default function CartPage() {
         currency: "USD",
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRemoveItem = (cartKey) => {
-    const item = items.find((i) => i.cartKey === cartKey);
+  // CartItemList calls this with (id, selectedVariations) — the same pair the
+  // cart context keys on. (It used to look items up by a `cartKey` field that
+  // never existed, so variation items couldn't be removed and the GA event
+  // never fired.)
+  const handleRemoveItem = (id, selectedVariations) => {
+    const item = items.find(
+      (i) =>
+        i.id === id && sameVariations(i.selectedVariations, selectedVariations),
+    );
     if (item) {
       trackEvent({
         action: "store_remove_from_cart",
@@ -53,7 +53,7 @@ export default function CartPage() {
         },
       });
     }
-    removeItem(cartKey);
+    removeItem(id, selectedVariations);
   };
 
   const handleClearCart = () => {
@@ -70,12 +70,11 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    const stripePublishableKey =
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
     if (!stripePublishableKey) {
       setError(
-        "Stripe is not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment."
+        "Stripe is not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment.",
       );
       return;
     }
@@ -96,7 +95,7 @@ export default function CartPage() {
             name: i.name,
             price: i.price,
             quantity: i.quantity,
-          }))
+          })),
         ),
       },
     });
@@ -135,6 +134,9 @@ export default function CartPage() {
     }
   };
 
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const hasItems = items.length > 0;
+
   return (
     <>
       <Head>
@@ -160,74 +162,203 @@ export default function CartPage() {
         <meta property="og:site_name" content="Opportunity Hack" />
       </Head>
 
-      <Container maxWidth="md" sx={{ pt: "9rem", pb: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4" component="h1" fontWeight="bold">
-            Shopping Cart
-          </Typography>
-          <Link href="/store" passHref legacyBehavior>
-            <Button startIcon={<ArrowBackIcon />}>Continue Shopping</Button>
+      <RefinedRoot>
+        <section className="ohx-wrap" style={pageSectionStyle}>
+          <Link href="/store" className="ohx-link" style={{ fontSize: 13 }}>
+            <span aria-hidden="true">←</span> Continue shopping
           </Link>
-        </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
-            {error}
-          </Alert>
-        )}
+          <header style={{ marginTop: 18 }}>
+            <Eyebrow>Opportunity Hack store</Eyebrow>
+            <h1
+              className="ohx-display"
+              style={{ marginTop: 8, maxWidth: "22ch" }}
+            >
+              Your cart
+            </h1>
+            <p className="ohx-lead" style={{ marginTop: 14, maxWidth: "58ch" }}>
+              Every order funds free software for nonprofits. Review your items,
+              then finish payment on Stripe's secure checkout page.
+            </p>
+          </header>
 
-        <CartItemList
-          items={items}
-          total={total}
-          onUpdateQuantity={updateQuantity}
-          onRemoveItem={handleRemoveItem}
-        />
-
-        {items.length > 0 && (
-          <>
-            <Divider sx={{ my: 3 }} />
-            <Box
-              sx={{
+          {error && (
+            <div
+              role="alert"
+              className="ohx-card"
+              style={{
+                marginTop: 28,
+                padding: "14px 18px",
+                borderColor: "var(--danger)",
                 display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: 2,
-                justifyContent: "flex-end",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 16,
               }}
             >
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={handleClearCart}
-                disabled={loading}
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  lineHeight: 1.5,
+                  color: "var(--danger)",
+                }}
               >
-                Clear Cart
-              </Button>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={
-                  loading ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <ShoppingCartCheckoutIcon />
-                  )
-                }
-                onClick={handleCheckout}
-                disabled={loading}
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                aria-label="Dismiss error"
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                  font: "inherit",
+                  fontSize: 18,
+                  lineHeight: 1,
+                  color: "var(--muted)",
+                }}
               >
-                {loading ? "Processing..." : `Checkout — $${total.toFixed(2)}`}
-              </Button>
-            </Box>
-          </>
-        )}
-      </Container>
+                ×
+              </button>
+            </div>
+          )}
+
+          <div
+            style={{
+              marginTop: 36,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 32,
+              alignItems: "flex-start",
+            }}
+          >
+            <div style={{ flex: "999 1 420px", minWidth: 0 }}>
+              <CartItemList
+                items={items}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={handleRemoveItem}
+              />
+            </div>
+
+            {hasItems && (
+              <aside
+                className="ohx-card"
+                aria-label="Order summary"
+                style={{
+                  flex: "1 1 300px",
+                  padding: "22px 24px",
+                  position: "sticky",
+                  top: 88,
+                  minWidth: 0,
+                }}
+              >
+                <Eyebrow>Order summary</Eyebrow>
+                <dl style={{ margin: "14px 0 0" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      fontSize: 15,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <dt style={{ margin: 0 }}>
+                      {itemCount} {itemCount === 1 ? "item" : "items"}
+                    </dt>
+                    <dd
+                      style={{ margin: 0, fontVariantNumeric: "tabular-nums" }}
+                    >
+                      ${total.toFixed(2)}
+                    </dd>
+                  </div>
+                  <hr className="ohx-rule" style={{ margin: "14px 0" }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      gap: 12,
+                    }}
+                  >
+                    <dt
+                      className="ohx-display"
+                      style={{ margin: 0, fontSize: 18 }}
+                    >
+                      Total
+                    </dt>
+                    <dd
+                      className="ohx-display"
+                      style={{
+                        margin: 0,
+                        fontSize: 26,
+                        color: "var(--brand)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      ${total.toFixed(2)}
+                    </dd>
+                  </div>
+                </dl>
+
+                <button
+                  type="button"
+                  className="ohx-btn ohx-btn--primary"
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  aria-busy={loading}
+                  style={{
+                    marginTop: 20,
+                    width: "100%",
+                    justifyContent: "center",
+                    fontSize: 14,
+                    opacity: loading ? 0.7 : 1,
+                    cursor: loading ? "progress" : "pointer",
+                  }}
+                >
+                  {loading ? "Processing…" : `Checkout — $${total.toFixed(2)}`}
+                </button>
+                <p
+                  className="ohx-faint"
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 12.5,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  You'll be redirected to Stripe to pay. Proceeds support
+                  nonprofits through technology.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleClearCart}
+                  disabled={loading}
+                  style={{
+                    marginTop: 16,
+                    background: "none",
+                    border: 0,
+                    padding: 0,
+                    cursor: loading ? "default" : "pointer",
+                    font: "inherit",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--muted)",
+                    textDecoration: "underline",
+                    textDecorationColor: "var(--line)",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Clear cart
+                </button>
+              </aside>
+            )}
+          </div>
+        </section>
+      </RefinedRoot>
     </>
   );
 }

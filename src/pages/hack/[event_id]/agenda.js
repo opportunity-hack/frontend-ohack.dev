@@ -1,531 +1,772 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import NextLink from "next/link";
+import { styled } from "@mui/material/styles";
+import { differenceInMilliseconds, differenceInHours } from "date-fns";
+import ReactMarkdown from "react-markdown";
+import PrintIcon from "@mui/icons-material/Print";
+import { QRCodeSVG } from "qrcode.react";
+import HackathonHeader from "../../../components/Hackathon/HackathonHeader";
+import { Shell } from "../../../components/Teams/RefinedTeamShell";
+import TeamBreadcrumbs from "../../../components/Teams/TeamBreadcrumbs";
+import { parseLocalDate } from "../../../lib/dateUtils";
 import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Button,
-  useMediaQuery,
-  useTheme,
-  Link
-} from "@mui/material";
-import { styled } from '@mui/material/styles';
-import { format, differenceInMilliseconds, differenceInHours } from 'date-fns';
-import ReactMarkdown from 'react-markdown';
-import PrintIcon from '@mui/icons-material/Print';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import EventIcon from '@mui/icons-material/Event';
-import QRCodeIcon from '@mui/icons-material/QrCode';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { QRCodeSVG } from 'qrcode.react';
+  getEventTimezone,
+  getUserTimezone,
+  getTimezoneAbbreviation,
+} from "../../../lib/timezoneUtils";
+import {
+  fetchForStaticProps,
+  NOT_FOUND_REVALIDATE,
+} from "../../../lib/ssgFetch";
 
-// Styled components
-const AgendaContainer = styled(Container)(({ theme }) => ({
-  marginTop: '10px', // Account for navbar spacing
-  paddingTop: theme.spacing(4),
-  paddingBottom: theme.spacing(4),
-  '@media print': {
-    marginTop: '0px', // Remove margin for print
-    padding: theme.spacing(1),
-    paddingTop: theme.spacing(2),
-    maxWidth: 'none',
-    width: '100%',
-  }
-}));
+// Printable event agenda. Refined chrome (Shell + breadcrumbs + the shared
+// HackathonHeader masthead) over a day-grouped timeline of `countdowns`.
+//
+// Times are formatted in the EVENT timezone with Intl (deterministic on the
+// server and in every browser), so the ISR HTML is correct for crawlers and
+// never mismatches on hydration. The viewer's local time is added beside each
+// item only after mount, and only when their timezone differs.
+// See docs/agenda-data-structure.md for the optional per-item fields.
 
-const PrintOnlySection = styled(Box)(({ theme }) => ({
-  display: 'none',
-  '@media print': {
-    display: 'block',
-    marginBottom: theme.spacing(3),
-    padding: theme.spacing(2),
-    border: '2px solid #333',
-    borderRadius: theme.spacing(1),
-    textAlign: 'center',
-    backgroundColor: '#f5f5f5'
-  }
-}));
+const SITE = "https://www.ohack.dev";
+const DEFAULT_DESCRIPTION =
+  "Join us for an exciting hackathon focused on creating technology solutions for nonprofits.";
 
-const NoPrintSection = styled(Box)(({ theme }) => ({
-  '@media print': {
-    display: 'none'
+const parseLocation = (locationStr) => {
+  if (!locationStr) return { venue: "Virtual/TBA", address: "" };
+  if (locationStr.includes(" - ")) {
+    const [venue, ...rest] = locationStr.split(" - ");
+    return { venue: venue.trim(), address: rest.join(" - ").trim() };
   }
-}));
+  return { venue: locationStr, address: "" };
+};
 
-const HackathonHeader = styled(Paper)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-  color: theme.palette.primary.contrastText,
-  padding: theme.spacing(3),
-  marginTop: theme.spacing(5),
-  marginBottom: theme.spacing(3),
-  textAlign: 'center',
-  '@media print': {
-    background: '#333 !important',
-    color: 'white !important',
-    WebkitPrintColorAdjust: 'exact',
-    colorAdjust: 'exact',
-    padding: theme.spacing(2),
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(2)
+const hostnameOf = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
   }
-}));
+};
 
-const EventCard = styled(Card)(({ theme, isPast, isCurrent, isUpcoming }) => ({
-  marginBottom: theme.spacing(2),
-  border: isCurrent ? `2px solid ${theme.palette.primary.main}` : '1px solid transparent',
-  backgroundColor: isPast
-    ? theme.palette.grey[50]
-    : isCurrent
-      ? theme.palette.primary.light + '10'
-      : theme.palette.background.paper,
-  opacity: isPast ? 0.7 : 1,
-  '@media print': {
-    border: isCurrent ? '2px solid #333' : '1px solid #ddd',
-    backgroundColor: isPast ? '#f9f9f9' : isCurrent ? '#f0f0f0' : 'white',
-    WebkitPrintColorAdjust: 'exact',
-    colorAdjust: 'exact',
-    pageBreakInside: 'avoid',
-    marginBottom: theme.spacing(1)
+const formatDateRange = (start, end) => {
+  const s = parseLocalDate(start);
+  const e = parseLocalDate(end);
+  const okS = !Number.isNaN(s.getTime());
+  const okE = !Number.isNaN(e.getTime());
+  if (!okS && !okE) return "";
+  const full = { month: "long", day: "numeric", year: "numeric" };
+  if (okS && okE && s.getTime() !== e.getTime()) {
+    const sameMonth =
+      s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth();
+    const left = s.toLocaleDateString(
+      "en-US",
+      sameMonth ? { month: "long", day: "numeric" } : full,
+    );
+    const right = sameMonth
+      ? `${e.getDate()}, ${e.getFullYear()}`
+      : e.toLocaleDateString("en-US", full);
+    return `${left} – ${right}`;
   }
-}));
+  return (okS ? s : e).toLocaleDateString("en-US", full);
+};
+
+const dayKeyIn = (date, tz) =>
+  date.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+const dayLabelIn = (date, tz) =>
+  date.toLocaleDateString("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+const timeIn = (date, tz) =>
+  date.toLocaleTimeString("en-US", {
+    timeZone: tz,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+// Unchanged status logic: done more than 2h ago, "now" within ±2h, else upcoming.
+const getEventStatus = (eventTime, now) => {
+  if (!now) return null;
+  const hoursDiff = differenceInHours(new Date(eventTime), now);
+  if (hoursDiff < -2) return "past";
+  if (hoursDiff <= 2 && hoursDiff >= -2) return "current";
+  return "upcoming";
+};
+
+const STATUS_LABEL = { past: "Done", current: "Happening now" };
+
+// Sort by time, then group by calendar day in the event timezone. Items with
+// an unparseable time land in a trailing "Time TBA" group instead of vanishing.
+const groupByDay = (countdowns, tz) => {
+  const list = Array.isArray(countdowns) ? countdowns : [];
+  const valid = [];
+  const tba = [];
+  list.forEach((item) => {
+    if (!item) return;
+    const d = new Date(item.time);
+    (Number.isNaN(d.getTime()) ? tba : valid).push({ item, date: d });
+  });
+  valid.sort((a, b) => differenceInMilliseconds(a.date, b.date));
+  const groups = [];
+  valid.forEach((entry) => {
+    const key = dayKeyIn(entry.date, tz);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.entries.push(entry);
+    else
+      groups.push({ key, label: dayLabelIn(entry.date, tz), entries: [entry] });
+  });
+  if (tba.length) groups.push({ key: "tba", label: "Time TBA", entries: tba });
+  return groups;
+};
+
+// --- Module-scope presentational pieces (never defined in the render body) ---
+
+// HackathonHeader clears the fixed NavBar itself (pt 92/120px). Inside the
+// Shell, which already does that, the breadcrumbs sit first, so neutralise
+// the masthead's own clearance.
+const MastheadFrame = styled("div")({
+  "& > header": { paddingTop: "8px !important", minHeight: "0 !important" },
+});
+
+const Columns = styled("div")({
+  display: "grid",
+  gap: 28,
+  gridTemplateColumns: "minmax(0, 1fr)",
+  alignItems: "start",
+  marginTop: 8,
+  "@media (min-width: 960px)": {
+    gridTemplateColumns: "minmax(0, 1fr) 300px",
+    gap: 40,
+  },
+});
+
+const Aside = styled("aside")({
+  display: "grid",
+  gap: 16,
+  "@media (min-width: 960px)": { position: "sticky", top: 88 },
+});
+
+const ItemRow = styled("div")({
+  display: "grid",
+  gap: "4px 20px",
+  gridTemplateColumns: "minmax(0, 1fr)",
+  "@media (min-width: 600px)": {
+    gridTemplateColumns: "118px minmax(0, 1fr)",
+  },
+});
+
+const Description = styled("div")({
+  marginTop: 8,
+  fontSize: "0.95rem",
+  lineHeight: 1.6,
+  color: "var(--muted)",
+  "& p": { margin: "0 0 8px" },
+  "& p:last-child": { marginBottom: 0 },
+  "& ul, & ol": { margin: "0 0 8px", paddingLeft: 20 },
+  "& li::marker": { color: "var(--accent)" },
+  "& a": {
+    color: "var(--brand)",
+    fontWeight: 600,
+    textDecoration: "underline",
+    textUnderlineOffset: 3,
+  },
+  "& a:hover": { color: "var(--accent)" },
+  "& strong": { color: "var(--ink)" },
+});
+
+const dotStyle = (status) => {
+  const current = status === "current";
+  const past = status === "past";
+  const size = current ? 14 : 12;
+  return {
+    position: "absolute",
+    top: 22,
+    left: -(size / 2) - 0.5,
+    width: size,
+    height: size,
+    borderRadius: 999,
+    background: current
+      ? "var(--accent)"
+      : past
+        ? "var(--brand)"
+        : "var(--surface)",
+    border: `2px solid ${current ? "var(--accent)" : past ? "var(--brand)" : "var(--line)"}`,
+    boxShadow: current ? "0 0 0 4px var(--accent-soft)" : "none",
+    boxSizing: "border-box",
+  };
+};
+
+const ScheduleItem = ({ entry, status, etz, userTz, showLocal }) => {
+  const { item, date } = entry;
+  const valid = !Number.isNaN(date.getTime());
+  const past = status === "past";
+  const current = status === "current";
+  const place = [item.location, item.room].filter(Boolean).join(" · ");
+  const presenters = Array.isArray(item.presenters)
+    ? item.presenters.filter(Boolean)
+    : [];
+  const tags = [
+    item.event_type ? String(item.event_type) : null,
+    place || null,
+    item.duration_minutes ? `${item.duration_minutes} min` : null,
+  ].filter(Boolean);
+
+  return (
+    <li
+      className="agenda-item"
+      style={{ position: "relative", padding: "14px 0 14px 26px" }}
+    >
+      <span aria-hidden="true" style={dotStyle(status)} />
+      <ItemRow>
+        <div style={{ paddingTop: 2 }}>
+          <time
+            dateTime={valid ? date.toISOString() : undefined}
+            className="ohx-display"
+            style={{
+              display: "block",
+              fontSize: "1.05rem",
+              fontVariantNumeric: "tabular-nums",
+              color: past ? "var(--muted)" : "var(--ink)",
+            }}
+          >
+            {valid ? timeIn(date, etz) : "TBA"}
+          </time>
+          {valid && showLocal && (
+            <span
+              className="ohx-faint agenda-no-print"
+              style={{ display: "block", fontSize: "0.78rem", marginTop: 2 }}
+            >
+              {timeIn(date, userTz)} {getTimezoneAbbreviation(date, userTz)}
+            </span>
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "6px 10px",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1.05rem",
+                fontWeight: 600,
+                lineHeight: 1.35,
+                color: past ? "var(--muted)" : "var(--ink)",
+              }}
+            >
+              {item.name}
+            </h3>
+            {(current || past) && (
+              <span
+                className={`ohx-tag agenda-no-print${current ? " ohx-tag--accent" : ""}`}
+              >
+                {STATUS_LABEL[status]}
+              </span>
+            )}
+          </div>
+          {tags.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                marginTop: 6,
+              }}
+            >
+              {tags.map((t) => (
+                <span key={t} className="ohx-tag">
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+          {presenters.length > 0 && (
+            <p
+              className="ohx-muted"
+              style={{ margin: "6px 0 0", fontSize: "0.9rem" }}
+            >
+              With {presenters.join(", ")}
+            </p>
+          )}
+          {item.description && (
+            <Description>
+              <ReactMarkdown>{item.description}</ReactMarkdown>
+            </Description>
+          )}
+        </div>
+      </ItemRow>
+    </li>
+  );
+};
+
+const DaySection = ({ group, now, etz, userTz, showLocal }) => (
+  <section aria-labelledby={`day-${group.key}`} style={{ marginBottom: 36 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "space-between",
+        gap: 12,
+        flexWrap: "wrap",
+        marginBottom: 10,
+      }}
+    >
+      <h2
+        id={`day-${group.key}`}
+        className="ohx-display"
+        style={{ fontSize: "clamp(20px, 2.6vw, 26px)" }}
+      >
+        {group.label}
+      </h2>
+      <span className="ohx-faint" style={{ fontSize: "0.85rem" }}>
+        {group.entries.length} {group.entries.length === 1 ? "item" : "items"}
+      </span>
+    </div>
+    <ol
+      style={{
+        listStyle: "none",
+        margin: "0 0 0 8px",
+        padding: 0,
+        borderLeft: "1px solid var(--line)",
+      }}
+    >
+      {group.entries.map((entry, index) => (
+        <ScheduleItem
+          key={`${entry.item.name}-${index}`}
+          entry={entry}
+          status={getEventStatus(entry.item.time, now)}
+          etz={etz}
+          userTz={userTz}
+          showLocal={showLocal}
+        />
+      ))}
+    </ol>
+  </section>
+);
+
+const InfoRow = ({ label, children }) => (
+  <div style={{ padding: "10px 0", borderTop: "1px solid var(--line)" }}>
+    <p className="ohx-eyebrow" style={{ marginBottom: 4 }}>
+      {label}
+    </p>
+    <div style={{ fontSize: "0.95rem", lineHeight: 1.5, color: "var(--ink)" }}>
+      {children}
+    </div>
+  </div>
+);
+
+const EventInfoCard = ({ venue, address, dateRange, website, hashtag }) => (
+  <div className="ohx-card" style={{ padding: "18px 20px 8px" }}>
+    <h2
+      className="ohx-display"
+      style={{ fontSize: "1.15rem", marginBottom: 10 }}
+    >
+      Event information
+    </h2>
+    <InfoRow label="Location">
+      {venue}
+      {address && (
+        <span
+          className="ohx-muted"
+          style={{ display: "block", fontSize: "0.88rem" }}
+        >
+          {address}
+        </span>
+      )}
+    </InfoRow>
+    {dateRange && <InfoRow label="Dates">{dateRange}</InfoRow>}
+    <InfoRow label="Website">
+      <a
+        className="ohx-link"
+        href={website}
+        style={{ fontSize: "0.95rem", overflowWrap: "anywhere" }}
+      >
+        {hostnameOf(website)}
+      </a>
+    </InfoRow>
+    <InfoRow label="Contact">
+      <NextLink
+        href="/contact"
+        className="ohx-link"
+        style={{ fontSize: "0.95rem" }}
+      >
+        Contact us
+      </NextLink>
+    </InfoRow>
+    <InfoRow label="Social media">{hashtag}</InfoRow>
+  </div>
+);
+
+const QrCard = ({ url }) => (
+  <div
+    className="ohx-card agenda-no-print"
+    style={{
+      padding: "18px 20px",
+      display: "flex",
+      gap: 16,
+      alignItems: "center",
+      background: "var(--surface-2)",
+    }}
+  >
+    <div
+      style={{
+        flexShrink: 0,
+        width: 96,
+        height: 96,
+        background: "#fff",
+        border: "1px solid var(--line)",
+        borderRadius: 6,
+        display: "grid",
+        placeItems: "center",
+      }}
+    >
+      <QRCodeSVG value={url} size={84} level="M" />
+    </div>
+    <div style={{ minWidth: 0 }}>
+      <p className="ohx-eyebrow" style={{ marginBottom: 4 }}>
+        Share this agenda
+      </p>
+      <p style={{ margin: 0, fontSize: "0.92rem", lineHeight: 1.5 }}>
+        Scan to open the live schedule on your phone.
+      </p>
+    </div>
+  </div>
+);
+
+const EmptySchedule = ({ eventHref }) => (
+  <div
+    className="ohx-card"
+    style={{
+      padding: "32px 28px",
+      background: "var(--surface-2)",
+      textAlign: "center",
+    }}
+  >
+    <h2 className="ohx-display" style={{ fontSize: "1.4rem" }}>
+      Schedule coming soon
+    </h2>
+    <p
+      className="ohx-muted"
+      style={{ margin: "10px auto 18px", maxWidth: "46ch" }}
+    >
+      The detailed schedule will be posted here closer to the event date. Check
+      back soon or visit the event page for updates.
+    </p>
+    <NextLink href={eventHref} className="ohx-btn ohx-btn--primary">
+      Back to the event
+    </NextLink>
+  </div>
+);
 
 const AgendaPage = ({ eventData }) => {
   const router = useRouter();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { event_id } = router.query;
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  const event = eventData;
+  // `now` stays null during SSR/hydration so item statuses, the local-time
+  // hints and the print timestamp only ever render from the client clock.
+  const [now, setNow] = useState(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
-
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  if (!event) {
+  if (router.isFallback) {
     return (
-      <AgendaContainer>
-        <Typography variant="h4" align="center">
-          Event not found
-        </Typography>
-      </AgendaContainer>
+      <Shell maxWidth={760}>
+        <Head>
+          <title>Loading agenda… | Opportunity Hack</title>
+        </Head>
+        <div
+          className="ohx-card"
+          style={{ padding: "28px 30px", minHeight: 160 }}
+        >
+          <p className="ohx-eyebrow">Agenda</p>
+          <p className="ohx-muted" style={{ margin: "10px 0 0" }}>
+            Loading the schedule…
+          </p>
+        </div>
+      </Shell>
     );
   }
 
-  // Get event details with fallbacks and stub data
-  // NOTE: See docs/agenda-data-structure.md for complete field specifications
-  const eventTitle = event.title || `Hackathon Event ${event_id}`;
+  const event = eventData;
+  if (!event) {
+    return (
+      <Shell maxWidth={760}>
+        <div className="ohx-card" style={{ padding: "28px 30px" }}>
+          <h1 className="ohx-display" style={{ fontSize: "1.6rem" }}>
+            Event not found
+          </h1>
+          <p className="ohx-muted" style={{ margin: "10px 0 18px" }}>
+            We couldn't find that hackathon.
+          </p>
+          <NextLink href="/hack" className="ohx-btn ohx-btn--primary">
+            See all hackathons
+          </NextLink>
+        </div>
+      </Shell>
+    );
+  }
+
+  const eventId = event.event_id || router.query.event_id;
+  const eventHref = `/hack/${eventId}`;
+  const eventTitle = event.title || `Hackathon Event ${eventId}`;
   const eventLocation = event.location || "Virtual/TBA";
-
-  // Parse location to extract venue name and address if combined
-  const parseLocation = (locationStr) => {
-    if (!locationStr || locationStr === "Virtual/TBA") return { venue: "Virtual/TBA", address: "" };
-
-    // Check if location contains " - " separator indicating venue - address format
-    if (locationStr.includes(" - ")) {
-      const parts = locationStr.split(" - ");
-      return { venue: parts[0].trim(), address: parts[1].trim() };
-    }
-
-    // Otherwise treat the whole string as venue
-    return { venue: locationStr, address: "" };
-  };
-
-  const { venue: eventVenue, address: eventAddress } = parseLocation(eventLocation);
-
-  // Stub fields - can be added to event data object:
-  const eventDescription = event.description || "Join us for an exciting hackathon focused on creating technology solutions for nonprofits.";
-  const eventWebsite = event.website || `https://www.ohack.dev/hack/${event_id}`;
+  const { venue, address } = parseLocation(event.location);
+  const eventWebsite = event.website || `${SITE}${eventHref}`;
   const eventHashtag = event.hashtag || "#OpportunityHack";
+  const dateRange = formatDateRange(event.start_date, event.end_date);
+  const agendaUrl = `${SITE}${eventHref}/agenda`;
 
-  // Additional fields that could be added:
-  // const eventParkingInfo = event.venue_details?.parking_info;
-  // const eventWifiInfo = event.venue_details?.wifi_info;
-  // const eventCapacity = event.venue_details?.capacity;
-  // const eventSponsors = event.sponsors || [];
-  // const eventOrganizers = event.organizers || [];
+  const etz = getEventTimezone(event);
+  const mounted = now !== null;
+  const userTz = mounted ? getUserTimezone() : etz;
+  const showLocal = mounted && userTz !== etz;
+  const groups = groupByDay(event.countdowns, etz);
+  // Abbreviation from a date on the schedule (DST-correct), never from the
+  // live clock, so SSR and client print the same label.
+  const abbrDate =
+    groups[0]?.entries?.[0]?.date ?? parseLocalDate(event.start_date);
+  const tzAbbr = getTimezoneAbbreviation(
+    Number.isNaN(abbrDate.getTime()) ? new Date(0) : abbrDate,
+    etz,
+  );
+  const itemCount = groups.reduce((n, g) => n + g.entries.length, 0);
 
-  const eventStartDate = event.start_date ? new Date(event.start_date) : null;
-  const eventEndDate = event.end_date ? new Date(event.end_date) : null;
-
-  // Format event schedule/countdowns
-  const sortedEvents = event.countdowns
-    ? [...event.countdowns].sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
-      )
-    : [];
-
-  // Determine event status
-  const getEventStatus = (eventTime) => {
-    const now = currentTime;
-    const eventDate = new Date(eventTime);
-    const hoursDiff = differenceInHours(eventDate, now);
-
-    if (hoursDiff < -2) return { status: 'past', label: 'Completed', color: 'success' };
-    if (hoursDiff <= 2 && hoursDiff >= -2) return { status: 'current', label: 'In Progress', color: 'primary' };
-    return { status: 'upcoming', label: 'Upcoming', color: 'default' };
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const agendaUrl = `https://www.ohack.dev/hack/${event_id}/agenda`;
+  const pageTitle = `${eventTitle} - Event Agenda | Opportunity Hack`;
+  const pageDescription = `Complete agenda for ${eventTitle} hackathon in ${eventLocation}`;
+  const ogImage =
+    event.image_url || "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
 
   return (
     <>
       <Head>
-        <title>{eventTitle} - Event Agenda | Opportunity Hack</title>
-        <meta name="description" content={`Complete agenda for ${eventTitle} hackathon in ${eventLocation}`} />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={agendaUrl} />
-
-        {/* Print-specific styles */}
-        <style jsx>{`
-          @media print {
-            body {
-              font-family: 'Times New Roman', serif;
-              line-height: 1.4;
-              font-size: 12px;
-            }
-            @page {
-              margin: 0.5in;
-              size: letter;
-            }
-            h1, h2, h3, h4, h5, h6 {
-              page-break-after: avoid;
-              margin-bottom: 8px;
-            }
-            .MuiPaper-root {
-              box-shadow: none !important;
-            }
-          }
-        `}</style>
+        <meta property="og:title" content={`${eventTitle} – Event Agenda`} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={agendaUrl} />
+        <meta property="og:image" content={ogImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${eventTitle} – Event Agenda`} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={ogImage} />
       </Head>
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: letter;
+            margin: 0.5in;
+          }
+          .agenda-no-print {
+            display: none !important;
+          }
+          .agenda-print-only {
+            display: block !important;
+          }
+          .agenda-item {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          h1,
+          h2,
+          h3 {
+            break-after: avoid;
+            page-break-after: avoid;
+          }
+        }
+      `}</style>
 
-      <AgendaContainer maxWidth="lg">
-        {/* Print-only QR Code and URL section */}
-        <PrintOnlySection>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-            View Latest Agenda Online
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 5, justifyContent: 'center', gap: 2, mb: 1 }}>
-            <QRCodeSVG
-              value={agendaUrl}
-              size={64}
-              level="M"
-              includeMargin={true}
-            />
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                Scan QR code or visit:
-              </Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+      <Shell maxWidth={1120}>
+        <div className="agenda-no-print">
+          <TeamBreadcrumbs
+            items={[
+              { name: "Hackathons", href: "/hack" },
+              { name: eventTitle, href: eventHref },
+            ]}
+            current="Agenda"
+          />
+        </div>
+
+        <MastheadFrame>
+          <HackathonHeader
+            title={`${eventTitle} agenda`}
+            startDate={event.start_date}
+            endDate={event.end_date}
+            location={eventLocation}
+            description={event.description || DEFAULT_DESCRIPTION}
+          />
+        </MastheadFrame>
+
+        {/* Print-only: how to get back to the live version. */}
+        <div
+          className="agenda-print-only"
+          style={{
+            display: "none",
+            margin: "16px 0",
+            padding: "12px 16px",
+            border: "1px solid #999",
+            borderRadius: 6,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <QRCodeSVG value={agendaUrl} size={64} level="M" />
+            <div style={{ fontSize: "0.85rem", lineHeight: 1.45 }}>
+              <strong>View the latest agenda online:</strong>
+              <br />
+              <span
+                style={{ fontFamily: "monospace", overflowWrap: "anywhere" }}
+              >
                 {agendaUrl}
-              </Typography>
-            </Box>
-          </Box>
-          <Typography variant="caption" color="text.secondary">
-            This printed agenda may not reflect real-time updates. Check online for latest information.
-          </Typography>
-        </PrintOnlySection>
+              </span>
+              <br />
+              <span>This printout may not reflect real-time updates.</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Header */}
-        <HackathonHeader elevation={3}>
-          <Typography variant={isMobile ? "h4" : "h3"} component="h1" fontWeight="bold" gutterBottom>
-            {eventTitle}
-          </Typography>
-          <Typography variant={isMobile ? "h6" : "h5"} sx={{ opacity: 0.9, mb: 2 }}>
-            Event Agenda & Schedule
-          </Typography>
-
-          <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-            <Grid>
-              <Chip
-                icon={<LocationOnIcon />}
-                label={eventLocation}
-                sx={{
-                  color: 'inherit',
-                  borderColor: 'currentColor',
-                  '@media print': { color: 'white !important', borderColor: 'white !important' }
-                }}
-                variant="outlined"
-              />
-            </Grid>
-            {eventStartDate && (
-              <Grid>
-                <Chip
-                  icon={<CalendarTodayIcon />}
-                  label={`${format(eventStartDate, 'MMM dd')}${eventEndDate ? ` - ${format(eventEndDate, 'MMM dd, yyyy')}` : ''}`}
-                  sx={{
-                    color: 'inherit',
-                    borderColor: 'currentColor',
-                    '@media print': { color: 'white !important', borderColor: 'white !important' }
-                  }}
-                  variant="outlined"
-                />
-              </Grid>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px 20px",
+            margin: "18px 0 22px",
+          }}
+        >
+          <p className="ohx-muted" style={{ margin: 0, fontSize: "0.92rem" }}>
+            {itemCount > 0
+              ? `${itemCount} scheduled ${itemCount === 1 ? "item" : "items"} · times in ${tzAbbr}`
+              : `Times in ${tzAbbr}`}
+            {showLocal && (
+              <span className="ohx-faint">
+                {" "}
+                · your local time ({getTimezoneAbbreviation(now, userTz)}) is
+                shown under each
+              </span>
             )}
-          </Grid>
-        </HackathonHeader>
+          </p>
+          <button
+            type="button"
+            className="ohx-btn ohx-btn--ghost agenda-no-print"
+            onClick={() => window.print()}
+          >
+            <PrintIcon sx={{ fontSize: 16 }} aria-hidden="true" />
+            Print agenda
+          </button>
+        </div>
 
-        {/* Navigation and action buttons - hidden during print */}
-        <NoPrintSection>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.push(`/hack/${event_id}`)}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                px: 3,
-                py: 1,
-              }}
-            >
-              Back to Event
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<PrintIcon />}
-              onClick={handlePrint}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                px: 3,
-                py: 1,
-              }}
-            >
-              Print Agenda
-            </Button>
-          </Box>
-        </NoPrintSection>
+        <Columns>
+          <div>
+            {groups.length > 0 ? (
+              groups.map((group) => (
+                <DaySection
+                  key={group.key}
+                  group={group}
+                  now={now}
+                  etz={etz}
+                  userTz={userTz}
+                  showLocal={showLocal}
+                />
+              ))
+            ) : (
+              <EmptySchedule eventHref={eventHref} />
+            )}
+          </div>
 
-        <Grid container spacing={3}>
-          {/* Event Information */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{
-              p: 2,
-              height: 'fit-content',
-              '@media print': {
-                pageBreakInside: 'avoid',
-                p: 1.5
-              }
-            }}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <EventIcon color="primary" />
-                Event Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+          <Aside aria-label="Event information">
+            <EventInfoCard
+              venue={venue}
+              address={address}
+              dateRange={dateRange}
+              website={eventWebsite}
+              hashtag={eventHashtag}
+            />
+            <QrCard url={agendaUrl} />
+          </Aside>
+        </Columns>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Location</Typography>
-                <Typography variant="body1">{eventVenue}</Typography>
-                {eventAddress && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {eventAddress}
-                  </Typography>
-                )}
-              </Box>
+        <div className="agenda-no-print" style={{ marginTop: 40 }}>
+          <NextLink href={eventHref} className="ohx-btn ohx-btn--primary">
+            ← Back to {eventTitle}
+          </NextLink>
+        </div>
 
-              {eventStartDate && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary">Dates</Typography>
-                  <Typography variant="body2">
-                    {format(eventStartDate, 'MMMM dd, yyyy')}
-                    {eventEndDate && ` - ${format(eventEndDate, 'MMMM dd, yyyy')}`}
-                  </Typography>
-                </Box>
-              )}
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Website</Typography>
-                <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                  {eventWebsite}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Contact</Typography>
-                <Link href="/contact" sx={{ display: 'inline-block' }}>
-                  <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>
-                    Contact Us
-                  </Button>
-                </Link>
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Social Media</Typography>
-                <Typography variant="body2">{eventHashtag}</Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>About This Event</Typography>
-                <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                  {eventDescription}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Schedule/Timeline */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{
-              p: 2,
-              '@media print': {
-                pageBreakInside: 'avoid',
-                p: 1.5
-              }
-            }}>
-              <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccessTimeIcon color="primary" />
-                Event Schedule
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              {sortedEvents.length > 0 ? (
-                <Box>
-                  {sortedEvents.map((item, index) => {
-                    const eventTime = new Date(item.time);
-                    const { status, label, color } = getEventStatus(item.time);
-
-                    // Enhanced event data fields (see docs/agenda-data-structure.md):
-                    // const eventLocation = item.location; // e.g., "Main Lobby"
-                    // const eventRoom = item.room; // e.g., "CIDSE 101"
-                    // const eventDuration = item.duration_minutes; // e.g., 60
-                    // const eventType = item.event_type; // e.g., "presentation"
-                    // const eventPresenters = item.presenters; // e.g., ["John Doe"]
-                    // const eventCapacity = item.capacity; // e.g., 300
-                    // const eventRequirements = item.requirements; // e.g., "Bring ID"
-                    // const eventMaterials = item.materials; // e.g., [{name, url}]
-                    // const eventLiveStream = item.live_stream_url;
-                    // const eventTags = item.tags; // e.g., ["mandatory", "keynote"]
-
-                    return (
-                      <EventCard
-                        key={`${item.name}-${index}`}
-                        isPast={status === 'past'}
-                        isCurrent={status === 'current'}
-                        isUpcoming={status === 'upcoming'}
-                        elevation={status === 'current' ? 3 : 1}
-                      >
-                        <CardContent sx={{ p: 1.5, '@media print': { p: 1 } }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: status === 'current' ? 'bold' : 'medium',
-                                  color: status === 'past' ? 'text.secondary' : 'text.primary',
-                                  fontSize: isMobile ? '1rem' : '1.1rem'
-                                }}
-                              >
-                                {item.name}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
-                              >
-                                <AccessTimeIcon fontSize="small" />
-                                {format(eventTime, 'EEEE, MMMM do \'at\' h:mm a')}
-                              </Typography>
-                            </Box>
-                            <NoPrintSection>
-                              <Chip
-                                label={label}
-                                color={color}
-                                size="small"
-                                variant={status === 'current' ? 'filled' : 'outlined'}
-                              />
-                            </NoPrintSection>
-                          </Box>
-
-                          {item.description && (
-                            <Box sx={{ mt: 2, pt: 1, borderTop: 1, borderColor: 'divider' }}>
-                              <Typography
-                                variant="body2"
-                                component="div"
-                                sx={{
-                                  color: status === 'past' ? 'text.secondary' : 'text.primary',
-                                  '& a': {
-                                    color: theme.palette.primary.main,
-                                    textDecoration: 'none',
-                                    '&:hover': { textDecoration: 'underline' }
-                                  }
-                                }}
-                              >
-                                <ReactMarkdown>{item.description}</ReactMarkdown>
-                              </Typography>
-                            </Box>
-                          )}
-                        </CardContent>
-                      </EventCard>
-                    );
-                  })}
-                </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Schedule Coming Soon
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    The detailed event schedule will be posted here closer to the event date.
-                    Check back soon or visit the main event page for updates.
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Footer for print */}
-        <PrintOnlySection sx={{ mt: 4, textAlign: 'center', borderTop: '1px solid #ddd', pt: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Printed from {agendaUrl} • {format(currentTime, 'MMMM dd, yyyy \'at\' h:mm a')}
-          </Typography>
-        </PrintOnlySection>
-      </AgendaContainer>
+        {mounted && (
+          <p
+            className="agenda-print-only ohx-faint"
+            style={{
+              display: "none",
+              marginTop: 24,
+              paddingTop: 10,
+              borderTop: "1px solid #ddd",
+              fontSize: "0.8rem",
+            }}
+          >
+            Printed from {agendaUrl} ·{" "}
+            {now.toLocaleString("en-US", {
+              timeZone: etz,
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}{" "}
+            {tzAbbr}
+          </p>
+        )}
+      </Shell>
     </>
   );
 };
 
+// Only the fields this page renders — the full event payload (teams,
+// nonprofits, volunteers…) is large and none of it is needed here.
+const AGENDA_FIELDS = [
+  "id",
+  "event_id",
+  "title",
+  "location",
+  "description",
+  "start_date",
+  "end_date",
+  "timezone",
+  "countdowns",
+  "website",
+  "hashtag",
+  "image_url",
+];
+
 export async function getStaticProps({ params }) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`
-    );
-    const data = await res.json();
-    return {
-      props: {
-        eventData: data,
-      },
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.error("Error fetching hackathon data:", error);
-    return {
-      props: {
-        eventData: null,
-      },
-      revalidate: 60
-    };
+  // Same SSG error semantics as /hack/[event_id] (CLAUDE.md "SEO
+  // infrastructure"): 404 or an empty `{}` body → real 404; any other upstream
+  // failure throws so ISR keeps serving the last good copy instead of caching
+  // an "Event not found" shell for 60s.
+  const result = await fetchForStaticProps(
+    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${params.event_id}`,
+    { isEmpty: (data) => !data || !data.id },
+  );
+  if (result.kind === "not_found") {
+    return { notFound: true, revalidate: NOT_FOUND_REVALIDATE };
   }
+  const eventData = {};
+  for (const key of AGENDA_FIELDS) {
+    eventData[key] = result.data[key] === undefined ? null : result.data[key];
+  }
+  return { props: { eventData }, revalidate: 60 };
 }
 
 export async function getStaticPaths() {

@@ -26,7 +26,6 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  LinearProgress,
   Link,
   List,
   ListItem,
@@ -63,24 +62,34 @@ import {
   ChatBubbleOutline as NoteIcon,
   Gavel as GavelIcon,
   OpenInNew as OpenInNewIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 
 import {
-  MENTOR_COVERAGE_ITEMS,
-  MENTOR_COVERAGE_TOTAL,
   COVERAGE_TARGET_MENTORS,
   coverageChecks,
-  coverageDoneCount,
+  coverageSummary,
+  coverageLabel,
+  coverageDetail,
+  COVERAGE_CAPTION_COPY,
+  COVERAGE_RULES,
   JUDGING_CRITERIA,
   SCORE_META,
   latestRatingsByMentor,
-  consensusForCriterion,
+  blendedRating,
+  ratingHistory,
+  ratingAttribution,
+  ratingBlendSummary,
+  isRatingStale,
+  RATING_RULE_COPY,
   relativeTime,
   splitMentorFlags,
   durationLabel,
   applyOptimisticCoverage,
   applyOptimisticRatings,
 } from "./mentorCoverage";
+import CoverageMeter from "./CoverageMeter";
+import useCoverageNow from "../../hooks/use-coverage-now";
 import { parseLocalDate } from "../../lib/dateUtils";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
@@ -260,6 +269,81 @@ function FlagCard({ flag, isOwner, canMentor, onTakeOver, onResolve }) {
   );
 }
 
+// One line of a criterion's rating history (newest first): score, when, who,
+// how much it counts in today's blend (`share`, 0..1) or — for a rating the
+// same mentor later replaced — that it no longer counts. Module scope — see
+// ResolvedFlagRow.
+// One line of a coverage item's audit trail: "Checked · Priya R. · 6h ago".
+function CoverageHistoryRow({ entry, myPropelId }) {
+  const who = entry.propel_id === myPropelId ? "You" : entry.name || "A mentor";
+  return (
+    <Typography
+      variant="caption"
+      component="li"
+      sx={{ display: "block", color: "text.secondary", py: 0.25 }}
+    >
+      {entry.action === "cleared" ? "Cleared" : "Checked"} · {who}
+      {entry.at ? ` · ${relativeTime(entry.at)}` : ""}
+    </Typography>
+  );
+}
+
+function RatingHistoryRow({ entry, share, myPropelId }) {
+  const meta = SCORE_META[entry.score];
+  const counts = typeof share === "number";
+  return (
+    <Box
+      component="li"
+      sx={{
+        listStyle: "none",
+        display: "flex",
+        gap: 1,
+        alignItems: "baseline",
+        flexWrap: "wrap",
+        py: 0.5,
+        opacity: counts ? 1 : 0.7,
+      }}
+    >
+      <Typography
+        variant="body2"
+        component="span"
+        sx={{ fontWeight: counts ? 700 : 500, whiteSpace: "nowrap" }}
+      >
+        {meta.emoji} {meta.label}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" component="span">
+        {ratingAttribution(entry, myPropelId)}
+        {counts
+          ? ` · counts ${Math.round(share * 100)}%`
+          : " · replaced by their later rating"}
+        {entry.note ? ` — ${entry.note}` : ""}
+      </Typography>
+    </Box>
+  );
+}
+
+// A rating that counts in a criterion's blend: score, who, when and its
+// weight. Rendered only when two or more mentors' ratings are blended — for
+// a single rating the main chip already says all of this.
+function RatingContributionChip({ contribution, myPropelId, saving }) {
+  const { entry, share } = contribution;
+  const meta = SCORE_META[entry.score];
+  const isMine = Boolean(myPropelId && entry.rated_by_propel_id === myPropelId);
+  const who = isMine ? "you" : entry.rated_by_name || "a mentor";
+  const when = saving ? "saving…" : relativeTime(entry.rated_at);
+  const pct = Math.round(share * 100);
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      icon={saving ? <CircularProgress size={12} /> : undefined}
+      title={`${meta.label} — counts ${pct}% of the blend`}
+      label={`${meta.emoji} ${who}${when ? ` · ${when}` : ""} · ${pct}%`}
+      sx={{ color: "text.secondary" }}
+    />
+  );
+}
+
 // A resolved flag in the history list: muted, read-only, and led by the
 // resolution note (the part the next mentor on shift actually needs), with
 // "open for …" so you can see how long the team waited. Module scope — a
@@ -361,10 +445,17 @@ export default function MentorTeamPanel({
   // Per-item in-flight markers + optimistic overlays (see mentorCoverage.js
   // applyOptimistic*). `busy` stays for the dialog/notes flows only.
   const [pendingCoverage, setPendingCoverage] = useState(() => new Set());
+  // Per-item "History" disclosures (Set of item slugs).
+  const [coverageHistoryOpen, setCoverageHistoryOpen] = useState(
+    () => new Set(),
+  );
   const [optimisticCoverage, setOptimisticCoverage] = useState({});
   const [pendingCriteria, setPendingCriteria] = useState(() => new Set());
   const [optimisticRatings, setOptimisticRatings] = useState({});
+  // Per-criterion "Show history" disclosures (Set of criterion slugs).
+  const [expandedHistory, setExpandedHistory] = useState(() => new Set());
   const [showResolved, setShowResolved] = useState(false);
+  const [coverageRulesOpen, setCoverageRulesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
@@ -439,7 +530,18 @@ export default function MentorTeamPanel({
     () => splitMentorFlags(team?.mentor_flags),
     [team?.mentor_flags],
   );
-  const doneCount = coverageDoneCount(checklist);
+  // Whole-checklist progress: share of all 18 possible sign-offs + how many
+  // mentors contributed (the old X/6 only moved once an item had all 3).
+  // Sign-offs over MENTOR_COVERAGE_FRESH_HOURS old are stale and drop out;
+  // the clock is null until mounted and frozen at the end of the event.
+  const coverageNow = useCoverageNow({
+    endDate: event?.end_date,
+    timezone: event?.timezone,
+  });
+  const coverage = useMemo(
+    () => coverageSummary(checklist, { now: coverageNow }),
+    [checklist, coverageNow],
+  );
   const ratingsByMentor = useMemo(
     () =>
       applyOptimisticRatings(
@@ -513,7 +615,8 @@ export default function MentorTeamPanel({
   // -- handlers
   // `done` here means "add MY check" (true) or "clear MY check" (false) — the
   // backend only ever touches the calling mentor's own check on the item.
-  const toggleCoverage = async (slug, done) => {
+  // `reconfirm` = my existing (stale) check gets a fresh timestamp.
+  const toggleCoverage = async (slug, done, { reconfirm = false } = {}) => {
     // Flip locally first; the server copy replaces the overlay on success and
     // the overlay is simply dropped (reverting the row) on failure.
     setOptimisticCoverage((o) => ({ ...o, [slug]: done }));
@@ -524,7 +627,13 @@ export default function MentorTeamPanel({
         done,
       });
       updateTeamFromResponse(data);
-      showSnack(done ? "Your check added" : "Your check cleared");
+      showSnack(
+        reconfirm
+          ? "Your check is fresh again"
+          : done
+            ? "Your check added"
+            : "Your check cleared",
+      );
     } catch (e) {
       showSnack(e.message || "Couldn't update coverage", "error");
     } finally {
@@ -533,19 +642,25 @@ export default function MentorTeamPanel({
     }
   };
 
-  // Click adds your check if you haven't signed off; clicking your own check
-  // clears it. Items already at the mentor cap (and not yours) are locked.
+  // Click adds your check if you haven't signed off; clicking your own FRESH
+  // check clears it; clicking your own STALE check confirms it again (new
+  // timestamp). Items at the cap with 3 fresh checks from others are locked.
+  // `item` is a coverageSummary() item (checks carry `fresh`).
   const handleCoverageClick = (item) => {
-    const checks = coverageChecks(checklist[item.slug]);
-    const mine = checks.some((c) => c.propel_id === myPropelId);
-    if (mine) {
-      toggleCoverage(item.slug, false);
-    } else if (checks.length >= COVERAGE_TARGET_MENTORS) {
+    const mineCheck = item.checks.find((c) => c.propel_id === myPropelId);
+    if (mineCheck) {
+      toggleCoverage(item.slug, !mineCheck.fresh, {
+        reconfirm: !mineCheck.fresh,
+      });
+    } else if (item.covered) {
       // Fully covered by other mentors — nothing to do.
     } else {
       toggleCoverage(item.slug, true);
     }
   };
+
+  const toggleCoverageHistory = (slug) =>
+    setCoverageHistoryOpen((s) => withKey(s, slug, !s.has(slug)));
 
   const postNote = async () => {
     const body = noteDraft.trim();
@@ -636,7 +751,7 @@ export default function MentorTeamPanel({
 
   const setRating = async (criterion, score, note) => {
     if (pendingCriteria.has(criterion)) return; // one in-flight write per row
-    // Paint the pressed button + consensus immediately (the round-trip is
+    // Paint the pressed button + current state immediately (the round-trip is
     // ~1-3s: mentor check, Firestore write, Slack audit, team re-read).
     setOptimisticRatings((o) => ({
       ...o,
@@ -713,18 +828,22 @@ export default function MentorTeamPanel({
           label="Team asked for heads-down time — check Slack before dropping in"
         />
       )}
-      <Chip
-        size="small"
-        color={
-          doneCount === MENTOR_COVERAGE_TOTAL
-            ? "success"
-            : doneCount > 0
-              ? "primary"
-              : "default"
-        }
-        label={`${doneCount} / ${MENTOR_COVERAGE_TOTAL} covered`}
-        sx={{ fontWeight: 700 }}
-      />
+      <Tooltip title={coverageDetail(coverage)}>
+        <Chip
+          size="small"
+          variant="outlined"
+          color={
+            coverage.complete
+              ? "success"
+              : coverage.signoffs > 0
+                ? "primary"
+                : "default"
+          }
+          icon={<CoverageMeter summary={coverage} size="sm" />}
+          label={coverageLabel(coverage)}
+          sx={{ fontWeight: 700, "& .MuiChip-icon": { ml: 1 } }}
+        />
+      </Tooltip>
       {openFlags.length > 0 && (
         <Chip
           size="small"
@@ -855,40 +974,65 @@ export default function MentorTeamPanel({
 
   const renderCoverage = () => (
     <Box>
-      <LinearProgress
-        variant="determinate"
-        value={(doneCount / MENTOR_COVERAGE_TOTAL) * 100}
-        sx={{
-          height: 8,
-          borderRadius: 4,
-          mb: 1,
-          backgroundColor: "rgba(0,0,0,0.06)",
-          "& .MuiLinearProgress-bar": {
-            background:
-              doneCount === MENTOR_COVERAGE_TOTAL
-                ? "linear-gradient(90deg, #ffd54f, #ff9800)"
-                : "linear-gradient(90deg, #1dd1a1, #48dbfb)",
-          },
-        }}
-      />
+      <CoverageMeter summary={coverage} size="lg" style={{ marginBottom: 6 }} />
+      <Typography
+        variant="caption"
+        sx={{ display: "block", mb: 0.5, color: "text.primary" }}
+      >
+        <strong>{coverageLabel(coverage)}</strong> — {coverageDetail(coverage)}
+      </Typography>
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: "block", mb: 1 }}
+        sx={{ display: "block", mb: coverageRulesOpen ? 0.5 : 1 }}
       >
-        Each item wants sign-off from {COVERAGE_TARGET_MENTORS} different
-        mentors — check the ones you&apos;ve personally covered. An item turns
-        green once {COVERAGE_TARGET_MENTORS} mentors have it. You can clear your
-        own check anytime.
+        {COVERAGE_CAPTION_COPY}{" "}
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => setCoverageRulesOpen((v) => !v)}
+          aria-expanded={coverageRulesOpen}
+          aria-controls={`coverage-rules-${team?.id || "team"}`}
+          sx={{
+            textTransform: "none",
+            p: 0,
+            minWidth: 0,
+            fontSize: "inherit",
+            lineHeight: "inherit",
+            verticalAlign: "baseline",
+          }}
+        >
+          How coverage works {coverageRulesOpen ? "▴" : "▾"}
+        </Button>
       </Typography>
+      <Collapse in={coverageRulesOpen} unmountOnExit>
+        <Box
+          component="ul"
+          id={`coverage-rules-${team?.id || "team"}`}
+          sx={{ m: 0, mb: 1, pl: 2.5 }}
+        >
+          {COVERAGE_RULES.map((rule) => (
+            <Typography
+              key={rule}
+              component="li"
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "list-item" }}
+            >
+              {rule}
+            </Typography>
+          ))}
+        </Box>
+      </Collapse>
       <List disablePadding>
-        {MENTOR_COVERAGE_ITEMS.map((item, idx) => {
-          const checks = coverageChecks(checklist[item.slug]);
-          const count = checks.length;
-          const mine = checks.some((c) => c.propel_id === myPropelId);
-          const covered = count >= COVERAGE_TARGET_MENTORS;
+        {coverage.items.map((item, idx) => {
+          const { checks, count, stale, covered } = item;
+          const mineCheck = checks.find((c) => c.propel_id === myPropelId);
+          const mine = Boolean(mineCheck);
+          const mineStale = mine && !mineCheck.fresh;
           const lockedForMe = covered && !mine;
           const isPending = pendingCoverage.has(item.slug);
+          const historyOpen = coverageHistoryOpen.has(item.slug);
           // Rows a mentor can act on render as real buttons (focusable,
           // Enter/Space); locked and read-only rows stay plain list items.
           const interactive = canInteract && (mine || !covered);
@@ -897,19 +1041,31 @@ export default function MentorTeamPanel({
             <Chip
               size="small"
               variant={covered ? "filled" : "outlined"}
-              color={covered ? "success" : count > 0 ? "primary" : "default"}
+              color={
+                covered
+                  ? "success"
+                  : count > 0
+                    ? "primary"
+                    : stale > 0
+                      ? "warning"
+                      : "default"
+              }
               icon={isPending ? <CircularProgress size={12} /> : undefined}
               label={
                 covered
                   ? `${count}/${COVERAGE_TARGET_MENTORS} ✓`
-                  : `${count}/${COVERAGE_TARGET_MENTORS}`
+                  : `${count}/${COVERAGE_TARGET_MENTORS}${stale > 0 ? ` · ${stale} stale` : ""}`
               }
             />
           );
 
           const rowIcon = (
             <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
-              {mine ? (
+              {mineStale ? (
+                <Tooltip title="Your check is stale — tap to confirm it again">
+                  <RefreshIcon sx={{ color: "warning.main" }} />
+                </Tooltip>
+              ) : mine ? (
                 <Tooltip title="You checked this — tap to clear your check">
                   <CheckCircleIcon sx={{ color: "success.main" }} />
                 </Tooltip>
@@ -943,7 +1099,7 @@ export default function MentorTeamPanel({
                   >
                     {item.blurb}
                   </Typography>
-                  {count > 0 && (
+                  {checks.length > 0 && (
                     <Typography
                       variant="caption"
                       component="span"
@@ -960,7 +1116,7 @@ export default function MentorTeamPanel({
                               c.checked_at
                                 ? ` · ${relativeTime(c.checked_at)}`
                                 : ""
-                            }`,
+                            }${c.fresh ? "" : " · stale"}`,
                         )
                         .join("  ·  ")}
                     </Typography>
@@ -977,6 +1133,20 @@ export default function MentorTeamPanel({
                       }}
                     >
                       + Add your check
+                    </Typography>
+                  )}
+                  {canInteract && mineStale && (
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      sx={{
+                        display: "block",
+                        mt: 0.25,
+                        color: "warning.dark",
+                        fontWeight: 600,
+                      }}
+                    >
+                      ↻ Confirm again
                     </Typography>
                   )}
                 </Box>
@@ -1035,6 +1205,30 @@ export default function MentorTeamPanel({
                   </Box>
                 )}
               </ListItem>
+              {item.history.length > 0 && (
+                <Box component="li" sx={{ listStyle: "none", pl: 7, pr: 2 }}>
+                  <Button
+                    size="small"
+                    onClick={() => toggleCoverageHistory(item.slug)}
+                    aria-expanded={historyOpen}
+                    sx={{ textTransform: "none", px: 0.5, minWidth: 0 }}
+                  >
+                    {historyOpen ? "Hide history" : "History"} (
+                    {item.history.length})
+                  </Button>
+                  <Collapse in={historyOpen} unmountOnExit>
+                    <Box component="ul" sx={{ m: 0, pl: 1, pb: 1 }}>
+                      {item.history.map((entry, i) => (
+                        <CoverageHistoryRow
+                          key={`${entry.at || ""}-${i}`}
+                          entry={entry}
+                          myPropelId={myPropelId}
+                        />
+                      ))}
+                    </Box>
+                  </Collapse>
+                </Box>
+              )}
             </React.Fragment>
           );
         })}
@@ -1044,10 +1238,18 @@ export default function MentorTeamPanel({
 
   const renderRubric = () => (
     <Box>
-      <Box sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+      <Box
+        sx={{
+          mb: 1.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          flexWrap: "wrap",
+        }}
+      >
         <GavelIcon fontSize="small" color="action" />
         <Typography variant="caption" color="text.secondary">
-          Worst rating wins for the consensus row — coach the lowest.
+          {RATING_RULE_COPY}
         </Typography>
         <Link
           href="https://www.ohack.dev/about/judges#judging-criteria"
@@ -1068,8 +1270,36 @@ export default function MentorTeamPanel({
         {JUDGING_CRITERIA.map((c) => {
           const byMentor = ratingsByMentor[c.slug] || {};
           const myLatest = myPropelId ? byMentor[myPropelId] : null;
-          const consensus = consensusForCriterion(byMentor);
+          // Current = recency-weighted blend of each mentor's latest rating
+          // on this criterion (#412). While my own write is in flight the
+          // optimistic overlay anchors the blend; `history` is the server
+          // copy, newest first, and only matters once a mentor has rated
+          // the same criterion more than once.
+          const blend = blendedRating(byMentor);
+          const history = ratingHistory(team?.mentor_ratings, c.slug);
+          const isBlend = Boolean(blend && blend.contributions.length > 1);
+          const shareByEntry = new Map(
+            (blend?.contributions || [])
+              .filter((x) => !x.entry.optimistic)
+              .map((x) => [
+                `${x.entry.rated_at || ""}|${x.entry.rated_by_propel_id}`,
+                x.share,
+              ]),
+          );
+          const hasSuperseded = Boolean(
+            blend && history.length > blend.contributions.length,
+          );
           const isPending = pendingCriteria.has(c.slug);
+          const savingMine = Boolean(
+            isPending &&
+              blend &&
+              blend.newest.rated_by_propel_id === myPropelId,
+          );
+          const stale = Boolean(
+            blend && !eventEnded && isRatingStale(blend.newest),
+          );
+          const historyOpen = expandedHistory.has(c.slug);
+          const historyId = `rating-history-${c.slug}-${team?.id || "team"}`;
           return (
             <Paper key={c.slug} variant="outlined" sx={{ p: 1.5 }}>
               <Box
@@ -1088,25 +1318,39 @@ export default function MentorTeamPanel({
                 >
                   {c.label}
                 </Typography>
-                {consensus && (
+                {blend ? (
                   <Chip
                     size="small"
-                    color={SCORE_META[consensus].color}
-                    label={`Consensus: ${SCORE_META[consensus].emoji} ${SCORE_META[consensus].label}`}
-                  />
-                )}
-                {myLatest && (
-                  <Chip
-                    size="small"
-                    variant="outlined"
+                    color={SCORE_META[blend.score].color}
                     icon={
-                      isPending ? <CircularProgress size={12} /> : undefined
+                      savingMine && !isBlend ? (
+                        <CircularProgress size={12} color="inherit" />
+                      ) : undefined
                     }
-                    label={`You: ${SCORE_META[myLatest.score].emoji} ${
-                      isPending ? "saving…" : relativeTime(myLatest.rated_at)
+                    label={`${SCORE_META[blend.score].emoji} ${
+                      SCORE_META[blend.score].label
+                    } · ${
+                      isBlend
+                        ? `${blend.contributions.length} ratings`
+                        : savingMine
+                          ? "saving…"
+                          : ratingAttribution(blend.newest, myPropelId)
                     }`}
                   />
+                ) : (
+                  <Chip size="small" variant="outlined" label="Not rated yet" />
                 )}
+                {isBlend &&
+                  blend.contributions.map((x) => (
+                    <RatingContributionChip
+                      key={`${x.entry.rated_at || ""}-${x.entry.rated_by_propel_id}`}
+                      contribution={x}
+                      myPropelId={myPropelId}
+                      saving={
+                        isPending && x.entry.rated_by_propel_id === myPropelId
+                      }
+                    />
+                  ))}
               </Box>
               <Typography
                 variant="caption"
@@ -1115,6 +1359,16 @@ export default function MentorTeamPanel({
               >
                 {c.blurb}
               </Typography>
+              {stale && (
+                <Typography
+                  variant="caption"
+                  role="status"
+                  sx={{ display: "block", mb: 1, color: "warning.dark" }}
+                >
+                  Last rated {relativeTime(blend.newest.rated_at)} — worth a
+                  fresh look.
+                </Typography>
+              )}
               {canInteract && (
                 <ButtonGroup
                   size="small"
@@ -1136,6 +1390,55 @@ export default function MentorTeamPanel({
                     </Button>
                   ))}
                 </ButtonGroup>
+              )}
+              {/* Full trajectory, collapsed by default — the chips above
+                  already show every rating that counts; this appears once a
+                  mentor has re-rated, so their earlier call is never
+                  hidden, just marked as replaced. */}
+              {hasSuperseded && (
+                <Box sx={{ mt: 1 }}>
+                  <Button
+                    size="small"
+                    color="inherit"
+                    startIcon={<HistoryIcon fontSize="small" />}
+                    endIcon={
+                      historyOpen ? (
+                        <ExpandLessIcon fontSize="small" />
+                      ) : (
+                        <ExpandMoreIcon fontSize="small" />
+                      )
+                    }
+                    onClick={() =>
+                      setExpandedHistory((set) =>
+                        withKey(set, c.slug, !historyOpen),
+                      )
+                    }
+                    aria-expanded={historyOpen}
+                    aria-controls={historyId}
+                    sx={{ color: "text.secondary", textTransform: "none" }}
+                  >
+                    {historyOpen ? "Hide" : "Show"} history ({history.length})
+                  </Button>
+                  <Collapse in={historyOpen} unmountOnExit>
+                    <Box
+                      component="ol"
+                      id={historyId}
+                      aria-label={`${c.label} rating history, newest first`}
+                      sx={{ m: 0, mt: 0.5, p: 0 }}
+                    >
+                      {history.map((r, idx) => (
+                        <RatingHistoryRow
+                          key={`${r.rated_at || ""}-${r.rated_by_propel_id}-${idx}`}
+                          entry={r}
+                          share={shareByEntry.get(
+                            `${r.rated_at || ""}|${r.rated_by_propel_id}`,
+                          )}
+                          myPropelId={myPropelId}
+                        />
+                      ))}
+                    </Box>
+                  </Collapse>
+                </Box>
               )}
             </Paper>
           );
@@ -1260,7 +1563,7 @@ export default function MentorTeamPanel({
     },
     {
       key: "coverage",
-      title: `Coverage (${doneCount}/${MENTOR_COVERAGE_TOTAL})`,
+      title: `Coverage (${coverage.percent}%)`,
       icon: <CheckCircleIcon fontSize="small" />,
       defaultExpanded: !isMobile || openFlags.length === 0,
       content: renderCoverage(),

@@ -1,25 +1,158 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  CircularProgress,
-} from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import Link from "next/link";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
 import { trackEvent, initFacebookPixel } from "../../lib/ga";
+import { Eyebrow } from "../../components/design/refined";
+import {
+  RefinedPage,
+  PageMasthead,
+  CtaBand,
+} from "../../components/design/RefinedPage";
+
+const cellStyle = {
+  padding: "12px 0",
+  borderBottom: "1px solid var(--line)",
+  verticalAlign: "top",
+  fontSize: 15,
+};
+
+const headCellStyle = {
+  ...cellStyle,
+  padding: "0 0 10px",
+  textAlign: "left",
+};
+
+// Reserved height so the order card doesn't jump between loading → loaded.
+const OrderCard = ({ loading, order }) => (
+  <section
+    className="ohx-card"
+    aria-live="polite"
+    style={{ marginTop: 36, padding: "26px 28px", minHeight: 160 }}
+  >
+    {loading ? (
+      <>
+        <Eyebrow>Your order</Eyebrow>
+        <p className="ohx-muted" style={{ margin: "12px 0 0", fontSize: 15 }}>
+          Loading your order details…
+        </p>
+      </>
+    ) : order ? (
+      <>
+        <Eyebrow>Order #{order.id?.substring(0, 8)}</Eyebrow>
+        <p style={{ margin: "12px 0 0", fontSize: 16 }}>
+          {order.customerName ? `Thanks, ${order.customerName}! Your` : "Your"}{" "}
+          order has been confirmed.
+        </p>
+
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            marginTop: 18,
+          }}
+        >
+          <thead>
+            <tr>
+              <th scope="col" className="ohx-eyebrow" style={headCellStyle}>
+                Item
+              </th>
+              <th
+                scope="col"
+                className="ohx-eyebrow"
+                style={{ ...headCellStyle, textAlign: "center" }}
+              >
+                Qty
+              </th>
+              <th
+                scope="col"
+                className="ohx-eyebrow"
+                style={{ ...headCellStyle, textAlign: "right" }}
+              >
+                Price
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items?.map((item, i) => (
+              <tr key={i}>
+                <td style={cellStyle}>
+                  {item.name}
+                  {item.description && (
+                    <span
+                      className="ohx-faint"
+                      style={{ display: "block", fontSize: 13, marginTop: 2 }}
+                    >
+                      {item.description}
+                    </span>
+                  )}
+                </td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    textAlign: "center",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {item.quantity}
+                </td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    textAlign: "right",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  ${item.totalPrice?.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td
+                colSpan={2}
+                className="ohx-display"
+                style={{
+                  ...cellStyle,
+                  borderBottom: 0,
+                  textAlign: "right",
+                  fontSize: 17,
+                }}
+              >
+                Total
+              </td>
+              <td
+                className="ohx-display"
+                style={{
+                  ...cellStyle,
+                  borderBottom: 0,
+                  textAlign: "right",
+                  fontSize: 20,
+                  color: "var(--brand)",
+                  fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                ${order.total?.toFixed(2)} {order.currency?.toUpperCase()}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p className="ohx-muted" style={{ margin: "14px 0 0", fontSize: 14.5 }}>
+          A confirmation email has been sent to {order.customerEmail}.
+        </p>
+      </>
+    ) : (
+      <>
+        <Eyebrow>Your order</Eyebrow>
+        <p style={{ margin: "12px 0 0", fontSize: 16 }}>
+          Your order has been confirmed. You will receive an email confirmation
+          shortly.
+        </p>
+      </>
+    )}
+  </section>
+);
 
 export default function SuccessPage() {
   const { clearCart } = useShoppingCart();
@@ -39,7 +172,6 @@ export default function SuccessPage() {
       },
     });
     // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -52,7 +184,7 @@ export default function SuccessPage() {
       setLoading(true);
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/store/orders/by-session/${session_id}`
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/store/orders/by-session/${session_id}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -62,7 +194,7 @@ export default function SuccessPage() {
           retried = true;
           await new Promise((r) => setTimeout(r, 2000));
           const retryRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/store/orders/by-session/${session_id}`
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/store/orders/by-session/${session_id}`,
           );
           if (retryRes.ok) {
             const data = await retryRes.json();
@@ -105,114 +237,24 @@ export default function SuccessPage() {
         <meta property="og:site_name" content="Opportunity Hack" />
       </Head>
 
-      <Container maxWidth="sm" sx={{ pt: "9rem", pb: 8 }}>
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <CheckCircleOutlineIcon
-            sx={{ fontSize: 80, color: "success.main", mb: 2 }}
-          />
-          <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-            Thank You!
-          </Typography>
+      <RefinedPage narrow>
+        <PageMasthead
+          eyebrow="Order confirmed"
+          title="Thank you for"
+          italic="backing the mission."
+          lead="All proceeds support nonprofits through technology at Opportunity Hack. Your order is in, and the details are below."
+        />
 
-          {loading ? (
-            <Box sx={{ my: 3 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Loading your order details...
-              </Typography>
-            </Box>
-          ) : order ? (
-            <>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                {order.customerName
-                  ? `Thanks, ${order.customerName}! Your`
-                  : "Your"}{" "}
-                order has been confirmed.
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 2 }}
-              >
-                Order #{order.id?.substring(0, 8)}
-              </Typography>
+        <OrderCard loading={loading} order={order} />
 
-              <TableContainer sx={{ mb: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Item</TableCell>
-                      <TableCell align="center">Qty</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {order.items?.map((item, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          {item.name}
-                          {item.description && (
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              {item.description}
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell align="center">{item.quantity}</TableCell>
-                        <TableCell align="right">
-                          ${item.totalPrice?.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow>
-                      <TableCell colSpan={2} align="right" sx={{ fontWeight: "bold" }}>
-                        Total
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                        ${order.total?.toFixed(2)} {order.currency?.toUpperCase()}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
-                A confirmation email has been sent to {order.customerEmail}.
-              </Typography>
-            </>
-          ) : (
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ mb: 1 }}
-            >
-              Your order has been confirmed. You will receive an email
-              confirmation shortly.
-            </Typography>
-          )}
-
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ mb: 4 }}
-          >
-            All proceeds support nonprofits through technology at Opportunity
-            Hack. 💙
-          </Typography>
-          <Link href="/store" passHref legacyBehavior>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<StorefrontIcon />}
-            >
-              Continue Shopping
-            </Button>
-          </Link>
-        </Paper>
-      </Container>
+        <CtaBand
+          eyebrow="What's next"
+          title="Keep the good going."
+          body="Pick up another piece of gear, or see the nonprofit projects your purchase helps fund."
+          primary={{ href: "/store", label: "Continue shopping" }}
+          secondary={{ href: "/nonprofits", label: "See the nonprofits" }}
+        />
+      </RefinedPage>
     </>
   );
 }

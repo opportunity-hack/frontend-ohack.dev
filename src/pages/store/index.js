@@ -1,21 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
-import {
-  Container,
-  Typography,
-  Grid,
-  Box,
-  TextField,
-  InputAdornment,
-  Button,
-  Badge,
-  Chip,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import StorefrontIcon from "@mui/icons-material/Storefront";
 import Link from "next/link";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
+import { serializeJsonLd } from "../../lib/jsonLd";
+import { RefinedRoot, Eyebrow } from "../../components/design/refined";
+import { pageSectionStyle } from "../../components/design/RefinedPage";
 import ProductCard from "../../components/Store/ProductCard";
 import FloatingCartButton from "../../components/Store/FloatingCartButton";
 import { useShoppingCart } from "../../context/ShoppingCartContext";
@@ -23,6 +12,21 @@ import products from "../../data/store-products.json";
 
 const STORE_DESCRIPTION =
   "Shop Opportunity Hack merchandise — t-shirts, hoodies, stickers, mugs, and more. All proceeds support nonprofits through technology.";
+
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const searchInputStyle = {
+  flex: "1 1 260px",
+  minWidth: 0,
+  font: "inherit",
+  fontSize: "0.95rem",
+  color: "var(--ink)",
+  background: "var(--surface)",
+  border: "1px solid var(--line)",
+  borderRadius: 6,
+  padding: "11px 14px",
+  outline: "none",
+};
 
 export default function StorePage() {
   const [search, setSearch] = useState("");
@@ -57,13 +61,13 @@ export default function StorePage() {
             results_count: products.filter(
               (p) =>
                 p.name.toLowerCase().includes(value.toLowerCase()) ||
-                p.description.toLowerCase().includes(value.toLowerCase())
+                p.description.toLowerCase().includes(value.toLowerCase()),
             ).length,
           },
         });
       }
     },
-    [products]
+    [products],
   );
 
   const handleCategoryFilter = useCallback((cat) => {
@@ -82,8 +86,7 @@ export default function StorePage() {
       !search ||
       product.name.toLowerCase().includes(search.toLowerCase()) ||
       product.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      category === "all" || product.category === category;
+    const matchesCategory = category === "all" || product.category === category;
     return matchesSearch && matchesCategory;
   });
 
@@ -147,6 +150,11 @@ export default function StorePage() {
     },
   };
 
+  const cartLabel =
+    itemCount > 0
+      ? `View cart with ${itemCount} ${itemCount === 1 ? "item" : "items"}`
+      : "View cart";
+
   return (
     <>
       <Head>
@@ -197,112 +205,177 @@ export default function StorePage() {
         {/* Structured Data */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(storeSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(storeSchema) }}
         />
       </Head>
 
-      <Container maxWidth="lg" sx={{ pt: "9rem", pb: 4 }}>
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 2,
+      <RefinedRoot>
+        {/* ---------------- MASTHEAD ---------------- */}
+        <section
+          className="ohx-wrap"
+          style={{
+            ...pageSectionStyle,
+            paddingBottom: "clamp(32px, 5vh, 56px)",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <StorefrontIcon sx={{ fontSize: 36, color: "primary.main" }} />
-            <Typography variant="h3" component="h1" fontWeight="bold">
-              Store
-            </Typography>
-          </Box>
-          <Link href="/store/cart" passHref legacyBehavior>
-            <Button
-              variant="contained"
-              startIcon={
-                <Badge badgeContent={itemCount} color="error">
-                  <ShoppingCartIcon />
-                </Badge>
-              }
-              aria-label={
-                itemCount > 0
-                  ? `View cart with ${itemCount} ${itemCount === 1 ? "item" : "items"}`
-                  : "View cart"
-              }
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              View Cart
-              {itemCount > 0 && ` (${itemCount})`}
-            </Button>
-          </Link>
-        </Box>
-
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Support Opportunity Hack by purchasing merchandise. All proceeds go
-          towards supporting nonprofits through technology.
-        </Typography>
-
-        {/* Filters */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 2,
-            mb: 4,
-            alignItems: { sm: "center" },
-          }}
-        >
-          <TextField
-            size="small"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: "20px 32px",
             }}
-            sx={{ minWidth: 250 }}
-          />
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {categories.map((cat) => (
-              <Chip
-                key={cat}
-                label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-                onClick={() => handleCategoryFilter(cat)}
-                color={category === cat ? "primary" : "default"}
-                variant={category === cat ? "filled" : "outlined"}
-              />
-            ))}
-          </Box>
-        </Box>
+          >
+            <header style={{ marginTop: 18 }}>
+              <Eyebrow>Opportunity Hack store</Eyebrow>
+              <h1
+                className="ohx-display"
+                style={{ marginTop: 8, maxWidth: "20ch" }}
+              >
+                Gear that funds{" "}
+                <span className="ohx-italic">code for good.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ marginTop: 14, maxWidth: "58ch" }}
+              >
+                Support Opportunity Hack by purchasing merchandise. All proceeds
+                go towards supporting nonprofits through technology.
+              </p>
+            </header>
+            <Link
+              href="/store/cart"
+              className="ohx-btn ohx-btn--ghost"
+              aria-label={cartLabel}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              View cart{itemCount > 0 && ` (${itemCount})`}
+            </Link>
+          </div>
+        </section>
 
-        {/* Product Grid */}
-        {filteredProducts.length > 0 ? (
-          <Grid container spacing={3}>
-            {filteredProducts.map((product) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={product.id}>
-                <ProductCard product={product} />
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Box sx={{ textAlign: "center", py: 8 }}>
-            <Typography variant="h6" color="text.secondary">
-              No products found matching your criteria.
-            </Typography>
-          </Box>
-        )}
-      </Container>
+        {/* ---------------- CONTROLS + GRID ---------------- */}
+        <section
+          style={{
+            background: "var(--surface-2)",
+            borderTop: "1px solid var(--line)",
+          }}
+        >
+          <div
+            className="ohx-wrap"
+            style={{
+              paddingTop: "clamp(36px, 6vh, 64px)",
+              paddingBottom: "clamp(56px, 9vh, 104px)",
+            }}
+          >
+            <Eyebrow>Browse</Eyebrow>
+            <h2
+              className="ohx-display"
+              style={{ marginTop: 8, marginBottom: 24 }}
+            >
+              All products
+            </h2>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 14,
+                marginBottom: 18,
+              }}
+            >
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search products…"
+                aria-label="Search products"
+                style={searchInputStyle}
+              />
+            </div>
+
+            {/* Category filter as quiet toggle tags */}
+            <div
+              role="group"
+              aria-label="Filter by category"
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 28,
+              }}
+            >
+              {categories.map((cat) => {
+                const active = category === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    className="ohx-tag"
+                    aria-pressed={active}
+                    onClick={() => handleCategoryFilter(cat)}
+                    style={{
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      background: active ? "var(--brand)" : "var(--surface)",
+                      color: active ? "#fff" : "var(--muted)",
+                      borderColor: active ? "var(--brand)" : "var(--line)",
+                    }}
+                  >
+                    {capitalize(cat)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p
+              className="ohx-faint"
+              style={{ fontSize: "0.85rem", marginBottom: 20 }}
+              aria-live="polite"
+            >
+              {filteredProducts.length === 0
+                ? "No matching products"
+                : `Showing ${filteredProducts.length} of ${products.length}`}
+            </p>
+
+            {filteredProducts.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gap: 20,
+                  gridTemplateColumns:
+                    "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
+                }}
+              >
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="ohx-card"
+                style={{ padding: "40px 28px", textAlign: "center" }}
+              >
+                <p
+                  className="ohx-display"
+                  style={{ fontSize: 22, margin: "0 0 8px" }}
+                >
+                  No products found matching your criteria.
+                </p>
+                <p className="ohx-muted" style={{ margin: 0, fontSize: 15 }}>
+                  Try a different search or clear the category filter.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      </RefinedRoot>
 
       <FloatingCartButton />
     </>

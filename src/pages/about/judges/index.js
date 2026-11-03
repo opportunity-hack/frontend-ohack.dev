@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import Moment from "moment";
 import { Box, Slider } from "@mui/material";
 import { initFacebookPixel, trackEvent } from "../../../lib/ga";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
-import { RefinedRoot, RefinedFonts, Eyebrow, Arrow } from "../../../components/design/refined";
+import { RefinedRoot, Eyebrow, Arrow } from "../../../components/design/refined";
 
 const JUDGING_CONSTANTS = { DEFAULT_SCORE: 3 };
 
@@ -112,7 +111,8 @@ const specialCategory = {
   reference: "https://www.w3.org/WAI/fundamentals/accessibility-principles/",
 };
 
-const trackClick = (buttonName) => trackEvent("click_judges", buttonName);
+const trackClick = (buttonName) =>
+  trackEvent({ action: "click_judges", params: { button: buttonName } });
 
 const scrollTo = (id) =>
   setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -199,9 +199,6 @@ const AboutJudges = () => {
 
   return (
     <>
-      <Head>
-        <RefinedFonts />
-      </Head>
       <RefinedRoot>
         {/* HERO */}
         <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}>
