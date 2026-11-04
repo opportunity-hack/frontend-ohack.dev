@@ -163,9 +163,9 @@ Participant share cards (branded PNG + landing page + share kit). All fire via `
 | `share_card_landing_cta` | same page | `{ event_label: "hacker" \| "mentor" \| "judge" \| "volunteer" \| "event" \| "next_event" \| "results", event_id }` | The recruiting loop: a viewer of someone's shared card clicked an apply/event link. |
 | `share_card_format` | `components/ShareCard/ShareKit.js` | `{ event_label: "og" \| "square" \| "story", event_id }` | Format toggle. |
 | `share_card_download` | `ShareKit.js` | `{ event_label: <format>, event_id }` | "Download PNG". |
-| `share_card_native_share` | `ShareKit.js` | `{ event_label: <format>, event_id }` | Phone share sheet with the PNG attached (`navigator.share({files})`) completed. |
+| `share_card_native_share` | `ShareKit.js` | `{ event_label: <format> \| "instagram", event_id }` | Phone share sheet with the PNG attached (`navigator.share({files})`) completed. |
 | `share_card_copy_caption` | `ShareKit.js` | `{ event_label: <voice>, event_id }` | Caption copied. |
-| `share_card_share` | `ShareKit.js` | `{ event_label: "linkedin_post" \| "linkedin_link" \| "x" \| "whatsapp" \| "email" \| "facebook" \| "copy_link", event_id, voice }` | A platform button/link. `linkedin_post` = composer prefill (image post flow); `linkedin_link`/`facebook` = link share (unfurls the card). |
+| `share_card_share` | `ShareKit.js` | `{ event_label: "linkedin_post" \| "linkedin_link" \| "instagram" \| "facebook" \| "threads" \| "x" \| "whatsapp" \| "email" \| "copy_link", event_id, voice }` | A platform button/link. `linkedin_post`/`threads` = composer prefill (image attached by hand); `instagram` = caption copied + phone share sheet with the PNG (also fires `share_card_native_share` with label `instagram`) or instagram.com + instructions; `linkedin_link`/`facebook` = link share (unfurls the card). |
 | `share_card_band_click` | `components/ShareCard/RosterShareBand.js` | `{ event_label: <type>, event_id, page: "hackathon_event" }` | "Get your share card →" on the event page's roster band. |
 | `share_card_promo_click` | `components/ShareCard/ShareCardPromo.js`, `pages/mentor/index.js` | `{ event_label: <type>, event_id, page: "<type>_application" \| "mentor_dashboard" }` | The "you're in — share the news" promo beside the check-in QR, or the `/mentor` card link. |
 

@@ -15,22 +15,43 @@ export const ROLE_COPY = {
   mentor: { noun: "Mentor", present: "mentoring at", past: "mentored at" },
   judge: { noun: "Judge", present: "judging", past: "judged" },
   hacker: { noun: "Hacker", present: "hacking at", past: "hacked at" },
-  volunteer: { noun: "Volunteer", present: "volunteering at", past: "volunteered at" },
+  volunteer: {
+    noun: "Volunteer",
+    present: "volunteering at",
+    past: "volunteered at",
+  },
 };
 
 // Pixel dimensions per format. `og` is the Open Graph / link-preview size
 // every network accepts; `square` suits LinkedIn and Instagram image posts;
 // `story` is the 9:16 stories/reels canvas.
 export const SHARE_FORMATS = {
-  og: { width: 1200, height: 630, label: "Post", hint: "LinkedIn, X, Facebook" },
-  square: { width: 1080, height: 1080, label: "Square", hint: "Instagram, LinkedIn" },
-  story: { width: 1080, height: 1920, label: "Story", hint: "Instagram & LinkedIn stories" },
+  og: {
+    width: 1200,
+    height: 630,
+    label: "Post",
+    hint: "LinkedIn, X, Facebook",
+  },
+  square: {
+    width: 1080,
+    height: 1080,
+    label: "Square",
+    hint: "Instagram, LinkedIn",
+  },
+  story: {
+    width: 1080,
+    height: 1920,
+    label: "Story",
+    hint: "Instagram & LinkedIn stories",
+  },
 };
 export const DEFAULT_FORMAT = "og";
 
 export const SITE_URL = "https://www.ohack.dev";
 export const HASHTAGS = "#OpportunityHack #TechForGood #Nonprofits";
 const X_LIMIT = 240;
+/** Threads posts cap at 500 characters; the link gets the full caption when it fits, else the short one. */
+export const THREADS_LIMIT = 500;
 
 export function isShareType(type) {
   return SHARE_TYPES.includes(type);
@@ -44,7 +65,12 @@ export function sharePagePath(eventId, type, volunteerId) {
   return `/hack/${encodeURIComponent(eventId)}/share/${encodeURIComponent(type)}/${encodeURIComponent(volunteerId)}`;
 }
 
-export function shareImagePath(eventId, type, volunteerId, format = DEFAULT_FORMAT) {
+export function shareImagePath(
+  eventId,
+  type,
+  volunteerId,
+  format = DEFAULT_FORMAT,
+) {
   return `/api/share-card/${encodeURIComponent(eventId)}/${encodeURIComponent(type)}/${encodeURIComponent(volunteerId)}?format=${encodeURIComponent(format)}`;
 }
 
@@ -63,7 +89,8 @@ export function withUtm(url, { source, campaign }) {
 }
 
 // "Fall 2026", "Fall Hackathon 2026", "2026 Fall" — up to two words between season and year.
-const SEASON_RE = /\b(spring|summer|fall|autumn|winter)\b(?:\s+[A-Za-z]+){0,2}\s+(20\d{2})\b|\b(20\d{2})\s+(spring|summer|fall|autumn|winter)\b/i;
+const SEASON_RE =
+  /\b(spring|summer|fall|autumn|winter)\b(?:\s+[A-Za-z]+){0,2}\s+(20\d{2})\b|\b(20\d{2})\s+(spring|summer|fall|autumn|winter)\b/i;
 
 /**
  * Short, human event name for cards and captions. Event titles are written
@@ -82,12 +109,16 @@ export function eventDisplayName(event) {
     return `Opportunity Hack ${word === "Autumn" ? "Fall" : word} ${year}`;
   }
   const first = title.split(/\s*[|:–—]\s*|\s+-\s+/)[0].trim() || title;
-  return /opportunity\s*hack/i.test(first) ? first : `Opportunity Hack ${first}`;
+  return /opportunity\s*hack/i.test(first)
+    ? first
+    : `Opportunity Hack ${first}`;
 }
 
 const CITY_PREFIX =
   "(?:San|Los|Las|New|Fort|Ft\\.|St\\.|Santa|Saint|El|North|South|East|West|Lake|Mount|Salt Lake|Sioux)";
-const CITY_STATE_RE = new RegExp(`((?:${CITY_PREFIX}\\s)?[A-Z][a-z]+),\\s*([A-Z]{2})\\b`);
+const CITY_STATE_RE = new RegExp(
+  `((?:${CITY_PREFIX}\\s)?[A-Z][a-z]+),\\s*([A-Z]{2})\\b`,
+);
 
 /** "Engineering Center … Tempe, AZ 85281" → "Tempe, AZ"; "Online" stays. */
 export function shortLocation(location) {
@@ -105,7 +136,11 @@ export function shortLocation(location) {
 export function eventTense(event, now = new Date()) {
   const end = parseLocalDate(event?.end_date || event?.start_date);
   if (isNaN(end.getTime())) return "present";
-  const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+  const endOfDay = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate() + 1,
+  );
   return now.getTime() >= endOfDay.getTime() ? "past" : "present";
 }
 
@@ -118,8 +153,11 @@ export function formatEventDateRange(startDate, endDate) {
   if (isNaN(start.getTime())) return "";
   const year = start.getFullYear();
   const a = start.toLocaleDateString("en-US", MONTH_DAY);
-  if (isNaN(end.getTime()) || end.getTime() === start.getTime()) return `${a}, ${year}`;
-  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  if (isNaN(end.getTime()) || end.getTime() === start.getTime())
+    return `${a}, ${year}`;
+  const sameMonth =
+    start.getMonth() === end.getMonth() &&
+    start.getFullYear() === end.getFullYear();
   const b = sameMonth
     ? end.toLocaleDateString("en-US", { day: "numeric" })
     : end.toLocaleDateString("en-US", MONTH_DAY);
@@ -145,14 +183,31 @@ const ROLE_BLURB = {
  * voice: "self" (the participant posting) | "other" (someone sharing them)
  * tense: "present" | "past" (see eventTense)
  */
-export function buildCaption({ voice = "self", type, name, event, tense = "present", url }) {
+export function buildCaption({
+  voice = "self",
+  type,
+  name,
+  event,
+  tense = "present",
+  url,
+}) {
   const role = ROLE_COPY[type] || ROLE_COPY.volunteer;
   const eventName = eventDisplayName(event);
   const verb = tense === "past" ? role.past : role.present;
-  const subject = voice === "self" ? (tense === "past" ? "I" : "I'm") : `${name || "A friend"} ${tense === "past" ? "" : "is"}`.replace(/\s+$/, "");
+  const subject =
+    voice === "self"
+      ? tense === "past"
+        ? "I"
+        : "I'm"
+      : `${name || "A friend"} ${tense === "past" ? "" : "is"}`.replace(
+          /\s+$/,
+          "",
+        );
   const opener = `${subject} ${verb} ${eventName}`;
-  const what = "a weekend where engineers build free software for nonprofits, then keep it running after the hackathon ends.";
-  const blurb = voice === "self" ? ` ${ROLE_BLURB[type] || ""}`.replace(/\s+$/, "") : "";
+  const what =
+    "a weekend where engineers build free software for nonprofits, then keep it running after the hackathon ends.";
+  const blurb =
+    voice === "self" ? ` ${ROLE_BLURB[type] || ""}`.replace(/\s+$/, "") : "";
   const ask =
     tense === "past"
       ? "Want in next time? Hackers, mentors and judges are all welcome:"
@@ -161,11 +216,26 @@ export function buildCaption({ voice = "self", type, name, event, tense = "prese
 }
 
 /** A short caption for X: stays under ~240 chars including the URL. */
-export function buildShortCaption({ voice = "self", type, name, event, tense = "present", url }) {
+export function buildShortCaption({
+  voice = "self",
+  type,
+  name,
+  event,
+  tense = "present",
+  url,
+}) {
   const role = ROLE_COPY[type] || ROLE_COPY.volunteer;
   const eventName = eventDisplayName(event);
   const verb = tense === "past" ? role.past : role.present;
-  const subject = voice === "self" ? (tense === "past" ? "I" : "I'm") : `${name || "A friend"} ${tense === "past" ? "" : "is"}`.replace(/\s+$/, "");
+  const subject =
+    voice === "self"
+      ? tense === "past"
+        ? "I"
+        : "I'm"
+      : `${name || "A friend"} ${tense === "past" ? "" : "is"}`.replace(
+          /\s+$/,
+          "",
+        );
   const full = `${subject} ${verb} ${eventName} — engineers building free software for nonprofits. Come hack, mentor or judge: ${url} #TechForGood`;
   if (full.length <= X_LIMIT) return full;
   return `${subject} ${verb} ${eventName}. Come hack, mentor or judge: ${url} #TechForGood`;
@@ -178,16 +248,36 @@ export function buildShortCaption({ voice = "self", type, name, event, tense = "
  * - linkedinPost: opens the LinkedIn composer with the caption prefilled
  *   (undocumented `shareActive`/`text` params — the kit also copies the
  *   caption to the clipboard first, as insurance).
+ * - threads: `threads.net/intent/post?text=` composer prefill (documented by
+ *   Meta); gets the full caption when it fits in THREADS_LIMIT, else the
+ *   short one. The image is attached by hand, like LinkedIn.
+ * - instagram: there is no web intent that prefills a post, so this is just
+ *   the site; the kit copies the caption and, on phones, hands the PNG to the
+ *   share sheet (where Instagram shows up).
  * - linkedinLink / facebook: classic link shares; the page's OG tags unfurl
  *   the personalized card.
  */
-export function buildShareLinks({ pageUrl, eventId, event, caption, shortCaption }) {
+export function buildShareLinks({
+  pageUrl,
+  eventId,
+  event,
+  caption,
+  shortCaption,
+}) {
   const tagged = (source) => withUtm(pageUrl, { source, campaign: eventId });
-  const swap = (text, source) => (text || "").split(pageUrl).join(tagged(source));
+  const swap = (text, source) =>
+    (text || "").split(pageUrl).join(tagged(source));
+  const threadsFull = swap(caption, "threads");
+  const threadsText =
+    threadsFull.length <= THREADS_LIMIT
+      ? threadsFull
+      : swap(shortCaption, "threads");
   return {
     linkedinPost: `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(swap(caption, "linkedin"))}`,
     linkedinLink: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(tagged("linkedin"))}`,
     x: `https://x.com/intent/post?text=${encodeURIComponent(swap(shortCaption, "x"))}`,
+    threads: `https://www.threads.net/intent/post?text=${encodeURIComponent(threadsText)}`,
+    instagram: "https://www.instagram.com/",
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(tagged("facebook"))}`,
     whatsapp: `https://wa.me/?text=${encodeURIComponent(swap(caption, "whatsapp"))}`,
     email: `mailto:?subject=${encodeURIComponent(`Join me at ${eventDisplayName(event)}`)}&body=${encodeURIComponent(swap(caption, "email"))}`,
@@ -264,7 +354,13 @@ export function slugify(text) {
 }
 
 export function shareImageFilename({ eventId, type, name, format }) {
-  const parts = ["opportunity-hack", slugify(eventId), type, slugify(firstName(name)) || "card", format];
+  const parts = [
+    "opportunity-hack",
+    slugify(eventId),
+    type,
+    slugify(firstName(name)) || "card",
+    format,
+  ];
   return `${parts.filter(Boolean).join("-")}.png`;
 }
 
@@ -279,6 +375,9 @@ export function shareDescription({ type, event, tense = "present" }) {
   const role = ROLE_COPY[type] || ROLE_COPY.volunteer;
   const when = formatEventDateRange(event?.start_date, event?.end_date);
   const where = event?.location ? ` · ${shortLocation(event.location)}` : "";
-  const lead = tense === "past" ? "Engineers built free software for nonprofits" : "Engineers build free software for nonprofits";
+  const lead =
+    tense === "past"
+      ? "Engineers built free software for nonprofits"
+      : "Engineers build free software for nonprofits";
   return `${role.noun} at ${eventDisplayName(event)}${when ? ` · ${when}` : ""}${where}. ${lead} — hackers, mentors and judges are all welcome.`;
 }
