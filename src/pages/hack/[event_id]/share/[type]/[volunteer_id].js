@@ -121,7 +121,7 @@ const WantIn = ({ event, tense }) => {
   );
 };
 
-export default function ShareCardPage({ event, type, person }) {
+export default function ShareCardPage({ event, type, person, siteUrl = SITE_URL }) {
   const roles = useMyEventRoles(event?.event_id);
   const isOwner = Boolean(person) && roles.selectedIds.includes(String(person.id));
   const [kitOpen, setKitOpen] = useState(false);
@@ -157,8 +157,8 @@ export default function ShareCardPage({ event, type, person }) {
   const eventName = eventDisplayName(event);
   const headline = shareHeadline({ type, name: person.name, event, tense });
   const description = shareDescription({ type, event, tense });
-  const pageUrl = absoluteUrl(sharePagePath(event.event_id, type, person.id));
-  const ogImage = absoluteUrl(shareImagePath(event.event_id, type, person.id, "og"), SITE_URL);
+  const pageUrl = absoluteUrl(sharePagePath(event.event_id, type, person.id), siteUrl);
+  const ogImage = absoluteUrl(shareImagePath(event.event_id, type, person.id, "og"), siteUrl);
   const dates = formatEventDateRange(event.start_date, event.end_date);
   const where = shortLocation(event.location);
   const lead = [role.noun, dates, where].filter(Boolean).join(" · ");
@@ -277,8 +277,12 @@ export async function getStaticProps({ params }) {
   const person = publicVolunteerForCard(rows.find((r) => String(r?.id) === String(volunteerId)));
   if (!person) return { notFound: true, revalidate: NOT_FOUND_REVALIDATE };
 
+  // Absolute OG/canonical URLs follow the deployment (test.ohack.dev has
+  // SITE_URL set, like next-sitemap) so unfurls can be checked there before
+  // production; previews without it fall back to www.
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || SITE_URL).replace(/\/$/, "");
   return {
-    props: { event: leanEventForCard(ev.data), type, person },
+    props: { event: leanEventForCard(ev.data), type, person, siteUrl },
     revalidate: 300,
   };
 }
