@@ -119,6 +119,20 @@ const EventCard = ({ event, phase, onOpenCheckin, onEditApplication }) => {
         <Link href={eventHref} className="ohx-btn ohx-btn--ghost">
           Event page
         </Link>
+        {app.id && (
+          <Link
+            href={`/hack/${encodeURIComponent(eventId)}/share/mentor/${encodeURIComponent(app.id)}#kit`}
+            className="ohx-link"
+            onClick={() =>
+              trackEvent({
+                action: "share_card_promo_click",
+                params: { event_label: "mentor", event_id: eventId, page: "mentor_dashboard" },
+              })
+            }
+          >
+            Share that you're mentoring <Arrow />
+          </Link>
+        )}
       </>
     );
   } else if (state === "approved") {

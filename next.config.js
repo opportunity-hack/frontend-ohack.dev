@@ -11,6 +11,12 @@ module.exports = {
         : false,
   },
 
+  // The share-card renderer (next/og / satori) reads static TTFs from disk at
+  // request time; make sure Vercel bundles them with that function.
+  outputFileTracingIncludes: {
+    "/api/share-card/[event_id]/[type]/[volunteer_id]": ["./src/assets/share-card/fonts/*"],
+  },
+
   // Modular imports / tree-shaking for heavy dependencies. Many MUI components
   // and icons get pulled in via named imports; without this, the full package
   // ships in the initial bundle. Also covers lodash (use lodash-es per import

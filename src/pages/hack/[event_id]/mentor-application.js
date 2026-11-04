@@ -39,6 +39,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
@@ -2181,6 +2182,14 @@ const MentorApplicationComponent = () => {
                     isVirtual={formData.inPerson === "No, I'll be virtual"}
                     sx={{ width: "100%", maxWidth: 500 }}
                   />
+                  <ShareCardPromo
+                    eventId={event_id}
+                    type="mentor"
+                    volunteerId={volunteerId}
+                    event={{ title: eventData?.name }}
+                    page="mentor_application"
+                    style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
+                  />
                 </Box>
               )}
 
@@ -2509,6 +2518,14 @@ const MentorApplicationComponent = () => {
                 <RemoteCheckInNote
                   eventId={event_id}
                   isVirtual={formData.inPerson === "No, I'll be virtual"}
+                />
+                <ShareCardPromo
+                  eventId={event_id}
+                  type="mentor"
+                  volunteerId={volunteerId}
+                  event={{ title: eventData?.name }}
+                  page="mentor_application"
+                  style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
                 />
               </Box>
             )}
