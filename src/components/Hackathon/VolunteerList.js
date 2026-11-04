@@ -43,7 +43,8 @@ import {
   DEFAULT_EVENT_TIMEZONE,
 } from "../../lib/timezoneUtils";
 import NextLink from "next/link";
-import ShareVolunteer from "./ShareVolunteer";
+import ShareIcon from "@mui/icons-material/Share";
+import { sharePagePath } from "../../lib/shareCard";
 import { useEffect } from "react";
 import MentorAvailability from "./MentorAvailability";
 import GroupIcon from "@mui/icons-material/Group";
@@ -437,7 +438,32 @@ const shouldRenderField = (volunteer, fieldKey, type) => {
   return value != null && value !== "";
 };
 
-const VolunteerList = ({ event_id, type, eventTimezone }) => {
+// Links a roster card to the person's share page (/hack/<event>/share/<type>/<id>),
+// which renders their branded card + the share kit. `isMe` opens the kit in
+// first person; otherwise the page offers "share this card" (third person).
+const ShareCardLink = ({ eventId, type, volunteer, isMe }) => {
+  if (!eventId || !volunteer?.id) return null;
+  const href = `${sharePagePath(eventId, type, volunteer.id)}${isMe ? "#kit" : ""}`;
+  return (
+    <Chip
+      component={NextLink}
+      href={href}
+      clickable
+      size="small"
+      icon={<ShareIcon sx={{ fontSize: 16 }} />}
+      label={isMe ? "Share your card" : "Share card"}
+      aria-label={isMe ? "Get your share card" : `Share ${volunteer.name || "this"} card`}
+      sx={{
+        fontWeight: 600,
+        ...(isMe
+          ? { bgcolor: "#1B3A6B", color: "#fff", "& .MuiChip-icon": { color: "#fff" }, "&:hover": { bgcolor: "#16305a" } }
+          : {}),
+      }}
+    />
+  );
+};
+
+const VolunteerList = ({ event_id, type, eventTimezone, myVolunteerIds = [] }) => {
   const volTz = eventTimezone || DEFAULT_EVENT_TIMEZONE;
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -1461,6 +1487,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
 
     const name = volunteer.name || "Volunteer";
     const isExpanded = expandedCards[name] || false;
+    const isMe = Boolean(volunteer.id) && myVolunteerIds.includes(String(volunteer.id));
     const imageUrl = getVolunteerImage(volunteer);
     const subtitle = getCompactSubtitle(volunteer);
     const initials = name
@@ -1517,6 +1544,13 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
             >
               {name}
             </Typography>
+            {isMe && (
+              <Chip
+                label="You"
+                size="small"
+                sx={{ mt: 0.5, height: 18, fontSize: "0.65rem", fontWeight: 700, bgcolor: "#1B3A6B", color: "#fff", "& .MuiChip-label": { px: 0.75 } }}
+              />
+            )}
             {subtitle && (
               <Typography
                 variant="caption"
@@ -1597,7 +1631,7 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                     />
                   )}
                 </Box>
-                <ShareVolunteer volunteer={volunteer} type={type} />
+                <ShareCardLink eventId={event_id} type={type} volunteer={volunteer} isMe={isMe} />
               </Box>
               <ChipContainer>
                 {renderField(volunteer, "participationCount", type)}
@@ -1857,7 +1891,12 @@ const VolunteerList = ({ event_id, type, eventTimezone }) => {
                               />
                             )}
                             {renderField(volunteer, "participationCount", type)}
-                            <ShareVolunteer volunteer={volunteer} type={type} />
+                            <ShareCardLink
+                              eventId={event_id}
+                              type={type}
+                              volunteer={volunteer}
+                              isMe={Boolean(volunteer.id) && myVolunteerIds.includes(String(volunteer.id))}
+                            />
                           </Box>
                           {renderField(volunteer, "bio", type)}
                           {renderField(volunteer, "expertise", type)}

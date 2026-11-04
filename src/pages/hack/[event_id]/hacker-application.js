@@ -40,6 +40,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import SearchIcon from "@mui/icons-material/Search";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
@@ -2090,6 +2091,16 @@ const HackerApplicationComponent = () => {
             qrSize={200}
             sx={{ mx: "auto", maxWidth: 560, mb: 3 }}
           />
+          {Boolean(volunteerId) && isSelected && (
+            <ShareCardPromo
+              eventId={event_id}
+              type="hacker"
+              volunteerId={volunteerId}
+              event={{ title: eventData?.name }}
+              page="hacker_application"
+              style={{ marginBottom: 24, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
+            />
+          )}
 
           {event_id && (
             <Box sx={{ mb: 3 }}>
