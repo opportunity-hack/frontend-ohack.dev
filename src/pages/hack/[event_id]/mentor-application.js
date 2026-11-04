@@ -39,6 +39,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
@@ -2149,6 +2150,13 @@ const MentorApplicationComponent = () => {
                 </Typography>
               </Alert>
 
+              <Typography variant="body1" sx={{ mb: 4, color: "var(--muted)" }}>
+                This event, your shifts and its check-in page now live on your{" "}
+                <Link href="/mentor" sx={refinedInlineLinkSx}>
+                  mentor dashboard →
+                </Link>
+              </Typography>
+
               {Boolean(volunteerId) && isSelected && (
                 <Box
                   sx={{
@@ -2173,6 +2181,14 @@ const MentorApplicationComponent = () => {
                     eventId={event_id}
                     isVirtual={formData.inPerson === "No, I'll be virtual"}
                     sx={{ width: "100%", maxWidth: 500 }}
+                  />
+                  <ShareCardPromo
+                    eventId={event_id}
+                    type="mentor"
+                    volunteerId={volunteerId}
+                    event={{ title: eventData?.name }}
+                    page="mentor_application"
+                    style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
                   />
                 </Box>
               )}
@@ -2502,6 +2518,14 @@ const MentorApplicationComponent = () => {
                 <RemoteCheckInNote
                   eventId={event_id}
                   isVirtual={formData.inPerson === "No, I'll be virtual"}
+                />
+                <ShareCardPromo
+                  eventId={event_id}
+                  type="mentor"
+                  volunteerId={volunteerId}
+                  event={{ title: eventData?.name }}
+                  page="mentor_application"
+                  style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
                 />
               </Box>
             )}

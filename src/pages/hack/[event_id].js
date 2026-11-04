@@ -23,6 +23,8 @@ import NextLink from "next/link";
 import { RefinedRoot } from "../../components/design/refined";
 import SurveyCTA from "../../components/Survey/SurveyCTA";
 import PeerVoteCTA from "../../components/PeerVote/PeerVoteCTA";
+import RosterShareBand from "../../components/ShareCard/RosterShareBand";
+import useMyEventRoles from "../../hooks/use-my-event-roles";
 import TableOfContents from "../../components/Hackathon/TableOfContents";
 import FloatingNavigation from "../../components/Hackathon/FloatingNavigation";
 
@@ -294,6 +296,9 @@ export default function HackathonEvent({ eventData }) {
   const isLoading = router.isFallback;
   const { event_id } = router.query || {};
   const event = eventData;
+  // Which roles the logged-in viewer holds here (ONE request; 404 on an
+  // older backend → nothing renders). Feeds the share band + roster "You" tag.
+  const myRoles = useMyEventRoles(event?.event_id || event_id);
 
   const hackathonExpired = event?.end_date
     ? isHackathonExpired(event.end_date, event.timezone)
@@ -771,6 +776,13 @@ export default function HackathonEvent({ eventData }) {
             eventId={event.event_id || event_id}
             deadlines={event.deadlines}
             constraints={event.constraints}
+          />
+
+          {/* "You're on the roster — share it": selected participants only. */}
+          <RosterShareBand
+            event={event}
+            roles={myRoles.selectedRoles}
+            tense={hackathonExpired ? "past" : "present"}
           />
 
           {/* Expired-event recapture band — links to upcoming events so
@@ -1468,6 +1480,7 @@ export default function HackathonEvent({ eventData }) {
                 event_id={event_id}
                 type="volunteer"
                 eventTimezone={event.timezone}
+                myVolunteerIds={myRoles.selectedIds}
               />
             </Grid>
             <Grid
@@ -1498,6 +1511,7 @@ export default function HackathonEvent({ eventData }) {
                 event_id={event_id}
                 type="mentor"
                 eventTimezone={event.timezone}
+                myVolunteerIds={myRoles.selectedIds}
               />
             </Grid>
             <Grid
@@ -1528,6 +1542,7 @@ export default function HackathonEvent({ eventData }) {
                 event_id={event_id}
                 type="judge"
                 eventTimezone={event.timezone}
+                myVolunteerIds={myRoles.selectedIds}
               />
             </Grid>
             <Grid
@@ -1558,6 +1573,7 @@ export default function HackathonEvent({ eventData }) {
                 event_id={event_id}
                 type="hacker"
                 eventTimezone={event.timezone}
+                myVolunteerIds={myRoles.selectedIds}
               />
             </Grid>
             {/* FAQ */}

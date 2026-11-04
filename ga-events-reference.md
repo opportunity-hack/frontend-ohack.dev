@@ -140,6 +140,35 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `peer_vote_cta_click` | `PeerVote/PeerVoteCTA.js` | `{ event_label: "event" \| "dashboard", event_id }` | Which surface drove the voter to the page (event page vs team dashboard card). |
 | `peer_vote_submitted` | `PeerVote/PeerVotePage.js` | `{ value: <number of picks>, event_id, page: "hackers_choice_vote" }` | Ballot accepted (`POST …/peer-vote/ballot`). Re-votes fire again. No tallies are ever exposed to the client. |
 
+### Mentor dashboard (`/mentor`, Nov 2026)
+
+The mentor counterpart of `/judge`. Events fire via `trackEvent({ action, params })`; every one carries `page: "mentor_dashboard"`.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `mentor_dash_view` | `pages/mentor/index.js` | `{ event_label: "api" \| "probe", value: <events listed> }` | Once per visit when the list is ready. `probe` = the batched `GET /api/mentor/me/events` 404'd (older backend) and the page fell back to per-event application probes of current hackathons. |
+| `mentor_dash_open_checkin` | `pages/mentor/index.js` | `{ event_label: <event_id>, phase: "live" \| "upcoming" \| "past" }` | Click-through to `/hack/<event>/mentor-checkin` from an approved card. |
+| `mentor_dash_edit_application` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Review your application" on a pending/waitlisted card. |
+| `mentor_dash_apply_click` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Apply to mentor" on a current event the mentor hasn't applied to (empty state or "Also happening" rows). |
+| `mentor_dash_guide_click` | `pages/mentor/index.js` | `{ event_label: "about" \| "overview" \| "slack" }` | Guide band / quick-reference links to `/about/mentors`, the overview video, or #ask-a-mentor. |
+
+### Share cards (`/hack/[event_id]/share/[type]/[volunteer_id]`, Nov 2026)
+
+Participant share cards (branded PNG + landing page + share kit). All fire via `trackEvent({ action, params })` with `page: "share_card"` unless noted; `event_id` is the hackathon.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `share_card_view` | `pages/hack/[event_id]/share/[type]/[volunteer_id].js` | `{ event_label: <type>, event_id, voice: "self" \| "other" }` | Once per visit. `self` = arrived via a `#kit` deep link (own application page / `/mentor` / event-page band). |
+| `share_card_kit_open` | same page | `{ event_label: "self" \| "other", event_id }` | Visitor expanded the kit by hand ("This is me" / "Share X's card"). Owners (via `useMyEventRoles`) and `#kit` arrivals open it automatically. |
+| `share_card_landing_cta` | same page | `{ event_label: "hacker" \| "mentor" \| "judge" \| "volunteer" \| "event" \| "next_event" \| "results", event_id }` | The recruiting loop: a viewer of someone's shared card clicked an apply/event link. |
+| `share_card_format` | `components/ShareCard/ShareKit.js` | `{ event_label: "og" \| "square" \| "story", event_id }` | Format toggle. |
+| `share_card_download` | `ShareKit.js` | `{ event_label: <format>, event_id }` | "Download PNG". |
+| `share_card_native_share` | `ShareKit.js` | `{ event_label: <format> \| "instagram", event_id }` | Phone share sheet with the PNG attached (`navigator.share({files})`) completed. |
+| `share_card_copy_caption` | `ShareKit.js` | `{ event_label: <voice>, event_id }` | Caption copied. |
+| `share_card_share` | `ShareKit.js` | `{ event_label: "linkedin_post" \| "linkedin_link" \| "instagram" \| "facebook" \| "threads" \| "x" \| "whatsapp" \| "email" \| "copy_link", event_id, voice }` | A platform button/link. `linkedin_post`/`threads` = composer prefill (image attached by hand); `instagram` = caption copied + phone share sheet with the PNG (also fires `share_card_native_share` with label `instagram`) or instagram.com + instructions; `linkedin_link`/`facebook` = link share (unfurls the card). |
+| `share_card_band_click` | `components/ShareCard/RosterShareBand.js` | `{ event_label: <type>, event_id, page: "hackathon_event" }` | "Get your share card →" on the event page's roster band. |
+| `share_card_promo_click` | `components/ShareCard/ShareCardPromo.js`, `pages/mentor/index.js` | `{ event_label: <type>, event_id, page: "<type>_application" \| "mentor_dashboard" }` | The "you're in — share the news" promo beside the check-in QR, or the `/mentor` card link. |
+
 ### Judging (Oct 2026)
 
 Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.

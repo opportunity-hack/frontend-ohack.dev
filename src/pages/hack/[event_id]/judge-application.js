@@ -45,6 +45,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
 import SurveyCTA from "../../../components/Survey/SurveyCTA";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import InfoIcon from "@mui/icons-material/Info";
@@ -2309,6 +2310,14 @@ const JudgeApplicationComponent = () => {
                     qrSize={200}
                     sx={{ mx: "auto", maxWidth: 500 }}
                   />
+                  <ShareCardPromo
+                    eventId={event_id}
+                    type="judge"
+                    volunteerId={volunteerId}
+                    event={{ title: eventData?.name }}
+                    page="judge_application"
+                    style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
+                  />
                 </Box>
               )}
 
@@ -2591,6 +2600,14 @@ const JudgeApplicationComponent = () => {
                   isSubmitted={true}
                   qrSize={200}
                   sx={{ mx: "auto", maxWidth: 500 }}
+                />
+                <ShareCardPromo
+                  eventId={event_id}
+                  type="judge"
+                  volunteerId={volunteerId}
+                  event={{ title: eventData?.name }}
+                  page="judge_application"
+                  style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
                 />
               </Box>
             )}

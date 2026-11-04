@@ -43,6 +43,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
+import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import InfoIcon from "@mui/icons-material/Info";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
@@ -2792,6 +2793,14 @@ const VolunteerApplicationComponent = () => {
                 isSubmitted={true}
                 qrSize={200}
                 sx={{ mx: "auto", maxWidth: 500 }}
+              />
+              <ShareCardPromo
+                eventId={event_id}
+                type="volunteer"
+                volunteerId={volunteerId}
+                event={{ title: eventData?.name }}
+                page="volunteer_application"
+                style={{ marginTop: 16, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
               />
             </Box>
           )}
