@@ -27,6 +27,7 @@ module.exports = {
     "/volunteer/track",
     "/judge",
     "/judge/*",
+    "/mentor",
     "/server-sitemap.xml",
   ],
   // File-mtime-based lastmod is meaningless on Vercel (every mtime ≈ build

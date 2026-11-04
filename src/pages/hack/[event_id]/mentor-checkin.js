@@ -901,6 +901,11 @@ const MentorCheckinPage = () => {
             Back to event
           </NextLink>
         </Box>
+        <Box sx={{ mt: 3, fontSize: 15 }}>
+          <NextLink href="/mentor" className="ohx-link">
+            See every event you&apos;ve signed up to mentor →
+          </NextLink>
+        </Box>
       </Shell>
     );
   }
@@ -962,6 +967,11 @@ const MentorCheckinPage = () => {
           <Box className="ohx-lead">
             Tell teams you're available, scan who needs help, and jump straight
             into a team's mentor panel — all in one place.
+          </Box>
+          <Box sx={{ mt: 2, fontSize: 15 }}>
+            <NextLink href="/mentor" className="ohx-link">
+              ← All your mentoring events
+            </NextLink>
           </Box>
           <hr className="ohx-rule" style={{ marginTop: 24 }} />
         </Box>

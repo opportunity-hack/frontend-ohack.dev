@@ -2149,6 +2149,13 @@ const MentorApplicationComponent = () => {
                 </Typography>
               </Alert>
 
+              <Typography variant="body1" sx={{ mb: 4, color: "var(--muted)" }}>
+                This event, your shifts and its check-in page now live on your{" "}
+                <Link href="/mentor" sx={refinedInlineLinkSx}>
+                  mentor dashboard →
+                </Link>
+              </Typography>
+
               {Boolean(volunteerId) && isSelected && (
                 <Box
                   sx={{

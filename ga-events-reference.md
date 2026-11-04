@@ -140,6 +140,18 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `peer_vote_cta_click` | `PeerVote/PeerVoteCTA.js` | `{ event_label: "event" \| "dashboard", event_id }` | Which surface drove the voter to the page (event page vs team dashboard card). |
 | `peer_vote_submitted` | `PeerVote/PeerVotePage.js` | `{ value: <number of picks>, event_id, page: "hackers_choice_vote" }` | Ballot accepted (`POST …/peer-vote/ballot`). Re-votes fire again. No tallies are ever exposed to the client. |
 
+### Mentor dashboard (`/mentor`, Nov 2026)
+
+The mentor counterpart of `/judge`. Events fire via `trackEvent({ action, params })`; every one carries `page: "mentor_dashboard"`.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `mentor_dash_view` | `pages/mentor/index.js` | `{ event_label: "api" \| "probe", value: <events listed> }` | Once per visit when the list is ready. `probe` = the batched `GET /api/mentor/me/events` 404'd (older backend) and the page fell back to per-event application probes of current hackathons. |
+| `mentor_dash_open_checkin` | `pages/mentor/index.js` | `{ event_label: <event_id>, phase: "live" \| "upcoming" \| "past" }` | Click-through to `/hack/<event>/mentor-checkin` from an approved card. |
+| `mentor_dash_edit_application` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Review your application" on a pending/waitlisted card. |
+| `mentor_dash_apply_click` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Apply to mentor" on a current event the mentor hasn't applied to (empty state or "Also happening" rows). |
+| `mentor_dash_guide_click` | `pages/mentor/index.js` | `{ event_label: "about" \| "overview" \| "slack" }` | Guide band / quick-reference links to `/about/mentors`, the overview video, or #ask-a-mentor. |
+
 ### Judging (Oct 2026)
 
 Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.
