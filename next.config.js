@@ -12,9 +12,17 @@ module.exports = {
   },
 
   // The share-card renderer (next/og / satori) reads static TTFs from disk at
-  // request time; make sure Vercel bundles them with that function.
+  // request time; make sure Vercel bundles them with that function. The key
+  // is a micromatch glob against the route path — bracketed segments like
+  // [event_id] would be read as character classes, hence the `**`.
   outputFileTracingIncludes: {
-    "/api/share-card/[event_id]/[type]/[volunteer_id]": ["./src/assets/share-card/fonts/*"],
+    "/api/share-card/**": [
+      "./public/share-card/fonts/**/*",
+      // next/og picks its Node build + resvg/yoga wasm through a
+      // runtime-conditional dynamic import the tracer can't follow; without
+      // this the lambda 500s with ERR_MODULE_NOT_FOUND for @vercel/og.
+      "./node_modules/next/dist/compiled/@vercel/og/**/*",
+    ],
   },
 
   // Modular imports / tree-shaking for heavy dependencies. Many MUI components

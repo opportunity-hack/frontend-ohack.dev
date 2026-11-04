@@ -1,7 +1,6 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useAuthInfo } from "@propelauth/react";
-import { useEnv } from "../context/env.context";
 
 // Module-level cache so the event page band, the roster "You" tag and the
 // share page share ONE request per (user, event) per minute.
@@ -21,7 +20,11 @@ const IDLE = { status: "idle", roles: [], available: true };
  */
 export default function useMyEventRoles(eventId) {
   const { accessToken, user } = useAuthInfo();
-  const { apiServerUrl } = useEnv();
+  // process.env directly (not useEnv): the event page imports this hook, and
+  // src/context/env.context.js throws at import time when NEXT_PUBLIC_* vars
+  // are missing, which broke the build-safety test that requires the page
+  // module under a bare environment (CI run on PR #430).
+  const apiServerUrl = process.env.NEXT_PUBLIC_API_SERVER_URL;
   const tokenRef = useRef(accessToken);
   tokenRef.current = accessToken;
   const [state, setState] = useState(IDLE);

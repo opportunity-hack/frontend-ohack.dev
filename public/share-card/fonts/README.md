@@ -2,7 +2,7 @@
 
 Static TTF instances used ONLY by the satori renderer in
 `src/pages/api/share-card/[event_id]/[type]/[volunteer_id].js` (satori can't
-read the woff2 variable fonts the site ships in `src/styles/fonts/`).
+read the woff2 variable fonts the site ships in `src/styles/fonts/`). They live under `public/` so the deployment also serves them at `/share-card/fonts/<file>` — the route's fallback when the files aren't in the function bundle.
 
 | file                   | family                                   | weight / style |
 | ---------------------- | ---------------------------------------- | -------------- |

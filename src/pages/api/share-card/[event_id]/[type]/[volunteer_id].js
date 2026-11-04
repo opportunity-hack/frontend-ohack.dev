@@ -8,8 +8,10 @@
 // don't re-render.
 //
 // Fonts: satori can't read the woff2 variable files the site ships, so static
-// TTF instances live in src/assets/share-card/fonts (OFL). They're registered
-// under neutral names ("Display"/"Body") — see ShareCardImage.js.
+// TTF instances live in public/share-card/fonts (OFL), registered under
+// neutral names ("Display"/"Body") — see ShareCardImage.js. They're read from
+// disk (traced into the function via outputFileTracingIncludes) and, should
+// the bundle ever lack them, fetched from this deployment's own static URL.
 
 import fs from "fs";
 import path from "path";
@@ -32,24 +34,48 @@ import {
 
 export const config = { api: { responseLimit: false } };
 
-const FONT_DIR = path.join(process.cwd(), "src/assets/share-card/fonts");
+const FONT_DIR = path.join(process.cwd(), "public/share-card/fonts");
+const FONT_PUBLIC_PATH = "/share-card/fonts";
+const FONT_FILES = [
+  { file: "display-600.ttf", name: "Display", weight: 600, style: "normal" },
+  { file: "display-600-italic.ttf", name: "Display", weight: 600, style: "italic" },
+  { file: "body-400.ttf", name: "Body", weight: 400, style: "normal" },
+  { file: "body-600.ttf", name: "Body", weight: 600, style: "normal" },
+];
 const LOGO_URL =
   "https://cdn.ohack.dev/ohack.dev/logos/OpportunityHack_2Letter_Dark_Blue.png";
 const UPSTREAM_TIMEOUT_MS = 8000;
 const IMAGE_TIMEOUT_MS = 5000;
 const IMAGE_MAX_BYTES = 6 * 1024 * 1024;
 
+function requestOrigin(req) {
+  const proto = (req.headers["x-forwarded-proto"] || "").split(",")[0] || "http";
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  return host ? `${proto}://${host}` : null;
+}
+
+async function readFont(file, origin) {
+  try {
+    return fs.readFileSync(path.join(FONT_DIR, file));
+  } catch (err) {
+    if (!origin) throw err;
+    console.warn(`share-card: font ${file} not on disk, fetching`, err?.code);
+    const res = await fetch(`${origin}${FONT_PUBLIC_PATH}/${file}`, {
+      signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`Font ${file}: ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+}
+
 let fontsPromise = null;
-function loadFonts() {
+function loadFonts(origin) {
   if (!fontsPromise) {
-    fontsPromise = Promise.resolve().then(() => {
-      const read = (f) => fs.readFileSync(path.join(FONT_DIR, f));
-      return [
-        { name: "Display", data: read("display-600.ttf"), weight: 600, style: "normal" },
-        { name: "Display", data: read("display-600-italic.ttf"), weight: 600, style: "italic" },
-        { name: "Body", data: read("body-400.ttf"), weight: 400, style: "normal" },
-        { name: "Body", data: read("body-600.ttf"), weight: 600, style: "normal" },
-      ];
+    fontsPromise = Promise.all(
+      FONT_FILES.map(async ({ file, ...font }) => ({ ...font, data: await readFont(file, origin) })),
+    ).catch((err) => {
+      fontsPromise = null; // don't cache a failure for the lambda's lifetime
+      throw err;
     });
   }
   return fontsPromise;
@@ -144,7 +170,7 @@ export default async function handler(req, res) {
 
   const { width, height } = SHARE_FORMATS[format];
   const [fonts, photo, logo] = await Promise.all([
-    loadFonts(),
+    loadFonts(requestOrigin(req)),
     photoDataUri(person.photoUrl, format === "og" ? 600 : 1040),
     logoDataUri(),
   ]);
