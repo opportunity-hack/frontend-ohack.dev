@@ -73,6 +73,9 @@ const Mentorship = () => {
           <a href="#upcoming-events" className="ohx-btn ohx-btn--primary" onClick={() => { scrollTo("upcoming-events"); track("find_events_hero"); }}>Find events to mentor <Arrow /></a>
           <Link href="/volunteer" className="ohx-btn ohx-btn--ghost" onClick={() => track("explore_roles_hero")}>Explore all roles</Link>
         </div>
+        <p className="rise" style={{ marginTop: 16, fontSize: "0.95rem", animationDelay: "260ms" }}>
+          <Link href="/mentor" className="ohx-link" onClick={() => track("open_dashboard_hero")}>Already applied? Open your mentor dashboard <Arrow /></Link>
+        </p>
 
         <div className="ohx-card rise" style={{ marginTop: 28, padding: "22px 24px", borderLeft: "3px solid var(--accent)", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, animationDelay: "300ms" }}>
           <div>
@@ -205,6 +208,9 @@ const Mentorship = () => {
           <a href="#upcoming-events" className="ohx-btn ohx-btn--primary" onClick={() => scrollTo("upcoming-events")}>Find events to mentor <Arrow /></a>
           <Link href="/about/judges" className="ohx-btn ohx-btn--ghost">Consider judging instead</Link>
         </div>
+        <p style={{ margin: "16px auto 0", fontSize: "0.95rem" }}>
+          <Link href="/mentor" className="ohx-link" onClick={() => track("open_dashboard_cta")}>Already a mentor? See your events <Arrow /></Link>
+        </p>
       </section>
 
       <section className="ohx-wrap" style={{ paddingBottom: "clamp(24px, 4vh, 48px)" }}>
