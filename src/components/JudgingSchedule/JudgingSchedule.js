@@ -393,7 +393,12 @@ const TeamRow = ({
       <td data-label="Video">
         {team.demo_video_url ? (
           <>
-            <span className="js-no-print" style={{ display: "inline-block" }}>
+            {/* LiteVideoThumbnail is width:100% / maxWidth:96 — give it a
+                sized block or it collapses to 0 inside a table cell. */}
+            <span
+              className="js-no-print"
+              style={{ display: "block", width: 96, height: 54 }}
+            >
               <LiteVideoThumbnail
                 url={team.demo_video_url}
                 width={96}
@@ -629,7 +634,6 @@ const TocStyles = styled("div")({
   "& .js-toc-link": {
     display: "block",
     textDecoration: "none",
-    whiteSpace: "nowrap",
     fontFamily: "var(--body)",
     fontWeight: 600,
     fontSize: "0.86rem",
@@ -657,11 +661,12 @@ const TocStyles = styled("div")({
   "& .js-toc-link.is-active .js-toc-room": { color: "rgba(255,255,255,0.8)" },
   "& .js-layout": { display: "flex", gap: 32, alignItems: "flex-start" },
   "& .js-toc-col": {
-    flex: "0 0 240px",
+    flex: "0 0 200px",
     position: "sticky",
     top: SCROLL_OFFSET,
     maxHeight: `calc(100vh - ${SCROLL_OFFSET + 16}px)`,
     overflowY: "auto",
+    overflowX: "hidden",
   },
   "@media (max-width: 899px)": {
     "& .js-layout": { flexDirection: "column", gap: 16 },
@@ -678,6 +683,7 @@ const TocStyles = styled("div")({
       WebkitOverflowScrolling: "touch",
       gap: 4,
     },
+    "& .js-toc-link": { whiteSpace: "nowrap" },
   },
 });
 
@@ -782,11 +788,12 @@ const UnassignedTeams = ({ teams, eventId, onTeamClick }) => (
 export default function JudgingSchedule({
   eventId,
   eventData,
+  eventTitle: eventTitleProp,
   initialSchedule,
 }) {
   const timezone = eventData?.timezone || null;
   const eventHref = `/hack/${eventId}`;
-  const eventTitle = eventData?.title || eventId;
+  const eventTitle = eventTitleProp || eventData?.title || eventId;
 
   const { schedule, loading } = useJudgingSchedule(eventId, {
     initialData: initialSchedule,

@@ -121,7 +121,7 @@ describe("states", () => {
     render(<JudgingPage eventData={eventData} schedule={{ ...published, published: false, rounds: { round1: [], round2: [] } }} />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Judging schedule");
     expect(screen.getByText("The judging schedule hasn't been published yet.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Back to Fall 2026/ })).toHaveAttribute("href", "/hack/fall-2026");
+    expect(screen.getByRole("link", { name: /Back to Opportunity Hack Fall 2026/ })).toHaveAttribute("href", "/hack/fall-2026");
     expect(judgeApi.getPublicSchedule).not.toHaveBeenCalled();
     expect(trackEvent).toHaveBeenCalledWith(
       expect.objectContaining({ action: "judging_schedule_view", params: expect.objectContaining({ state: "unpublished" }) }),

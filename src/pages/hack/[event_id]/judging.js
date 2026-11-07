@@ -4,6 +4,7 @@ import TeamBreadcrumbs from "../../../components/Teams/TeamBreadcrumbs";
 import { PageMasthead } from "../../../components/design/RefinedPage";
 import JudgingSchedule from "../../../components/JudgingSchedule/JudgingSchedule";
 import { projectEventForSchedule } from "../../../lib/judgingSchedule";
+import { eventDisplayName } from "../../../lib/shareCard";
 import {
   fetchForStaticProps,
   NOT_FOUND_REVALIDATE,
@@ -20,7 +21,9 @@ const OG_IMAGE = "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp";
 
 const JudgingPage = ({ eventData, schedule }) => {
   const eventId = eventData.event_id || eventData.id;
-  const eventTitle = eventData.title || `Event ${eventId}`;
+  // SEO event titles run long ("ASU Fall Hackathon 2026 | Phoenix …") —
+  // the short display name reads better in a masthead and buttons.
+  const eventTitle = eventDisplayName(eventData);
   const eventHref = `/hack/${eventId}`;
   const pageUrl = `${SITE}${eventHref}/judging`;
   const description = `Judging panels, rooms, judges and team readiness for ${eventTitle}.`;
@@ -60,6 +63,7 @@ const JudgingPage = ({ eventData, schedule }) => {
         <JudgingSchedule
           eventId={eventId}
           eventData={eventData}
+          eventTitle={eventTitle}
           initialSchedule={schedule}
         />
       </Shell>
