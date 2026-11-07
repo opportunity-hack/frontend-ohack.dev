@@ -209,6 +209,7 @@ All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_cate
 | `judging_schedule_view` | `{ state: ready\|unpublished\|empty\|unavailable }` | Once per page visit, after the schedule state resolves. `unavailable` also covers a 404 from an older backend. |
 | `judging_schedule_team_click` | — | A team name (panel table or "not on a panel yet" list) was clicked. |
 | `judging_schedule_video_play` | — | A demo thumbnail opened the page-level video dialog. |
+| `judging_schedule_video_present` | — | The video dialog entered Present (full-screen) mode via the button or the F key. |
 | `judging_schedule_print` | — | "Print" pressed (`window.print()`). |
 | `judging_schedule_search` | — | Debounced 1.5 s after typing in "Find your team". The query text is never sent. |
 
