@@ -10,6 +10,7 @@ import {
   Grid,
   IconButton,
   InputLabel,
+  Link,
   MenuItem,
   Select,
   Stack,
@@ -28,10 +29,15 @@ import {
   QuizOutlined as QuizIcon,
 } from "@mui/icons-material";
 import SectionContainer from "../SectionContainer";
+import * as ga from "../../../../lib/ga";
+import { formatDeadlineMoment } from "../../../../lib/timezoneUtils";
+import { hackerApplicationDeadline } from "../../../../lib/hackerApplicationGates";
 
 const urlIsValid = (v) => !v || /^https?:\/\//.test(v);
 
-const ToggleRow = ({ icon: Icon, title, subtitle, checked, onChange, children }) => (
+// showChildrenWhenOff: keep the row's settings reachable while the toggle is
+// off — the hacker/judge access codes matter exactly when the form is locked.
+const ToggleRow = ({ icon: Icon, title, subtitle, checked, onChange, children, showChildrenWhenOff = false }) => (
   <Card variant="outlined" sx={{ borderColor: checked ? "primary.light" : "divider" }}>
     <CardContent>
       <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -46,7 +52,7 @@ const ToggleRow = ({ icon: Icon, title, subtitle, checked, onChange, children })
             </Box>
             <Switch checked={!!checked} onChange={(e) => onChange(e.target.checked)} />
           </Stack>
-          {checked && children && <Box sx={{ mt: 2 }}>{children}</Box>}
+          {(checked || showChildrenWhenOff) && children && <Box sx={{ mt: 2 }}>{children}</Box>}
         </Box>
       </Stack>
     </CardContent>
@@ -64,6 +70,14 @@ const ExternalUrlField = ({ label, value, onChange }) => (
     error={!urlIsValid(value)}
   />
 );
+
+// Blank → null (no limit); anything else must be a positive whole number.
+export const parseCapacityInput = (raw) => {
+  const text = String(raw ?? "").trim();
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isInteger(n) && n >= 1 && n <= 10000 ? n : undefined;
+};
 
 const ParticipantsSection = ({ admin }) => {
   const { hackathon, setConstraint, setDeposit, markSectionDirty, dirtySections, commitSection, discardSection, saveState } = admin;
@@ -92,6 +106,23 @@ const ParticipantsSection = ({ admin }) => {
   const depositDirty = dirtySections.has("deposit");
   const saving = saveState.status === "saving";
 
+  // Same deadline the hacker form nudges toward (start − 3 days, 8 PM event tz).
+  const eventTz = hackathon.timezone || undefined;
+  const hackerDeadline = hackerApplicationDeadline(hackathon.start_date, eventTz);
+  const hackerDeadlineLabel = hackerDeadline
+    ? formatDeadlineMoment(hackerDeadline.toDate(), hackerDeadline.tz())
+    : null;
+
+  const [capacityDraft, setCapacityDraft] = React.useState(
+    constraints.hacker_capacity == null ? "" : String(constraints.hacker_capacity),
+  );
+  // Re-seed when the stored value changes underneath us (load / refetch).
+  React.useEffect(() => {
+    setCapacityDraft(constraints.hacker_capacity == null ? "" : String(constraints.hacker_capacity));
+  }, [constraints.hacker_capacity]);
+  const capacityParsed = parseCapacityInput(capacityDraft);
+  const capacityInvalid = capacityParsed === undefined;
+
   return (
     <Stack spacing={3}>
       <SectionContainer
@@ -102,9 +133,10 @@ const ParticipantsSection = ({ admin }) => {
           <ToggleRow
             icon={HackerIcon}
             title="Hacker applications"
-            subtitle="Hackathon participants apply at /hack/[event_id]/hacker-application."
-            checked={!!constraints.application_hacker_enabled}
+            subtitle="On = open. Off = locked; only people with the access code can apply or update."
+            checked={constraints.application_hacker_enabled !== false}
             onChange={(v) => setConstraint("application_hacker_enabled", v)}
+            showChildrenWhenOff
           >
             <Stack spacing={2}>
               <ExternalUrlField
@@ -112,21 +144,31 @@ const ParticipantsSection = ({ admin }) => {
                 value={constraints.application_hacker_external_url}
                 onChange={(v) => setConstraint("application_hacker_external_url", v)}
               />
+              <TextField
+                label="Hacker access code"
+                size="small"
+                value={constraints.application_hacker_enabled_code || ""}
+                onChange={(e) => setConstraint("application_hacker_enabled_code", e.target.value)}
+                inputProps={{ maxLength: 64 }}
+                helperText="Share with late applicants or anyone updating after you lock. It also works after the event has ended."
+              />
               <FormControlLabel
                 control={
                   <Switch
-                    checked={!!constraints.application_hacker_force_open}
-                    onChange={(e) => setConstraint("application_hacker_force_open", e.target.checked)}
+                    checked={constraints.application_hacker_close_at_deadline === true}
+                    onChange={(e) => setConstraint("application_hacker_close_at_deadline", e.target.checked)}
                   />
                 }
                 label={
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Force applications open (override deadline)
+                      Close automatically at the deadline
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Bypasses the automatic "applications closed" cutoff (3 days before start)
-                      and the "event ended" wall. Turn off after accepting late entries.
+                    <Typography variant="caption" color="text.secondary" component="div">
+                      {hackerDeadlineLabel
+                        ? `${hackerDeadlineLabel} — 3 days before kickoff. `
+                        : "3 days before kickoff at 8:00 PM event time. "}
+                      Off by default: the form only nudges people to apply by then and stays open until you lock it.
                     </Typography>
                   </Box>
                 }
@@ -152,8 +194,9 @@ const ParticipantsSection = ({ admin }) => {
             icon={JudgeIcon}
             title="Judge applications"
             subtitle="People evaluating final submissions."
-            checked={!!constraints.application_judge_enabled}
+            checked={constraints.application_judge_enabled !== false}
             onChange={(v) => setConstraint("application_judge_enabled", v)}
+            showChildrenWhenOff
           >
             <Stack spacing={2}>
               <ExternalUrlField
@@ -186,6 +229,69 @@ const ParticipantsSection = ({ admin }) => {
             checked={!!constraints.application_sponsor_enabled}
             onChange={(v) => setConstraint("application_sponsor_enabled", v)}
           />
+        </Stack>
+      </SectionContainer>
+
+      <SectionContainer
+        title="Roster & capacity"
+        description="How many hackers this event can hold, and whether new hacker applications go straight onto the roster."
+      >
+        <Stack spacing={2} sx={{ maxWidth: 640 }}>
+          <TextField
+            label="Hacker capacity"
+            type="number"
+            size="small"
+            value={capacityDraft}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setCapacityDraft(raw);
+              const parsed = parseCapacityInput(raw);
+              if (parsed !== undefined) setConstraint("hacker_capacity", parsed);
+            }}
+            error={capacityInvalid}
+            inputProps={{ min: 1, max: 10000, step: 1 }}
+            helperText={
+              capacityInvalid
+                ? "Enter a whole number from 1 to 10,000, or leave blank for no limit."
+                : "Shown on the application form. Auto-approve stops adding people once the roster reaches this number. Leave blank for no limit."
+            }
+            sx={{ maxWidth: 320 }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={constraints.hacker_auto_approve === true}
+                onChange={(e) => {
+                  setConstraint("hacker_auto_approve", e.target.checked);
+                  ga.trackStructuredEvent(
+                    ga.EventCategory.ADMIN,
+                    "admin_hacker_auto_approve_toggle",
+                    e.target.checked ? "on" : "off",
+                    null,
+                    { event_id: hackathon.event_id },
+                  );
+                }}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Auto-approve hacker applications
+                </Typography>
+                <Typography variant="caption" color="text.secondary" component="div">
+                  Every new or still-pending hacker application goes straight onto the roster
+                  {constraints.hacker_capacity ? ` (until ${constraints.hacker_capacity} hackers)` : " (until capacity)"}
+                  ; after that people are waitlisted. Turn on the morning of the event for walk-ins; turn
+                  off afterwards. Denied applications are never auto-approved.
+                </Typography>
+              </Box>
+            }
+          />
+          <Typography variant="body2">
+            <Link href={`/admin/hackathons/${hackathon.event_id}?section=volunteer`} underline="hover">
+              Manage the roster in the Volunteer section →
+            </Link>
+          </Typography>
         </Stack>
       </SectionContainer>
 

@@ -169,6 +169,15 @@ Participant share cards (branded PNG + landing page + share kit). All fire via `
 | `share_card_band_click` | `components/ShareCard/RosterShareBand.js` | `{ event_label: <type>, event_id, page: "hackathon_event" }` | "Get your share card →" on the event page's roster band. |
 | `share_card_promo_click` | `components/ShareCard/ShareCardPromo.js`, `pages/mentor/index.js` | `{ event_label: <type>, event_id, page: "<type>_application" \| "mentor_dashboard" }` | The "you're in — share the news" promo beside the check-in QR, or the `/mentor` card link. |
 
+### Hacker application lock + auto-approve (`/hack/[event_id]/hacker-application`, Nov 2026)
+
+Fire via `trackEvent({ action, params })` with `page: "hacker_application"` and `event_id`.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `hacker_app_unlocked` | `pages/hack/[event_id]/hacker-application.js` | `{ event_label: "locked" \| "event_ended", event_id }` | The organizer-shared access code (`constraints.application_hacker_enabled_code`) unlocked a locked or ended form. |
+| `hacker_app_auto_approved` | same page | `{ event_label: "approved" \| "waitlisted", event_id }` | Success screen after a submit the backend auto-decided (`hacker_auto_approve` on): straight onto the roster, or waitlisted at `hacker_capacity`. Not fired for manually approved hackers who update. |
+
 ### Event volunteer guide (`/about/volunteers`, Nov 2026)
 
 The volunteer counterpart of `/about/mentors` + `/about/judges`. One action, `click_volunteers`, fired via `trackEvent({ action, params })`; `button` says what was clicked.
@@ -209,6 +218,7 @@ All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_cate
 | `admin_peer_vote_void_ballot` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | A ballot was voided. |
 | `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
 | `admin_judging_lock` / `admin_judging_unlock` | `admin/judging/JudgeProgressPanel.js` | `{ event_category: "admin", event_label: "round1" \| "round2", event_id }` | Scoring for a round locked/unlocked from the Round 1 / Round 2 admin tabs (`POST /api/judge/admin/locks/<event>/<round>`). |
+| `admin_hacker_auto_approve_toggle` | `admin/hackathon-edit/sections/ParticipantsSection.js` | `{ event_category: "admin", event_label: "on" \| "off", event_id }` | "Auto-approve hacker applications" switch in the Participants section's Roster & capacity card. |
 | `admin_judging_schedule_publish` | `admin/hackathon-edit/sections/JudgingSection.js` | `{ event_category: "admin", event_label: <event_id>, value: 1\|0 }` | "Publish the judging schedule" switch flipped on (1) / off (0) — writes `constraints.judging_schedule_published` (autosave). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
 | `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
