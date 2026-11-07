@@ -134,6 +134,12 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
 | `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
 
+### "Your teams" card on `/profile` (Nov 2026, `event_category: "engagement"`)
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `profile_my_teams_click` | Click on a link in the profile's "Your teams" card | `{ event_label: "manage" \| "team_page" \| "find_team" \| "create_team" \| "browse_events", event_id? }` | Does the profile actually route people to their team dashboard / team formation |
+
 ### Team membership (`/hack/[event_id]#teams` cards + `/hack/[event_id]/team/[team_id]#members`, Nov 2026, `event_category: "engagement"`)
 
 Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — only after the backend confirmed the change (never on a 200 + "Error: …" soft failure).

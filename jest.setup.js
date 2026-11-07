@@ -1,3 +1,18 @@
+// Tests must not depend on environment variables: src/context/env.context.js
+// throws at import time unless three NEXT_PUBLIC_* vars are set, and CI has
+// no .env file. Default them to clearly-fake values here so any test that
+// imports a page (which pulls in the env context through its components)
+// works with no environment set. A real value from the environment wins.
+if (!process.env.NEXT_PUBLIC_API_SERVER_URL) {
+  process.env.NEXT_PUBLIC_API_SERVER_URL = "https://api.example.test";
+}
+if (!process.env.NEXT_PUBLIC_API_NODEJS_SERVER_URL) {
+  process.env.NEXT_PUBLIC_API_NODEJS_SERVER_URL = "https://api.example.test";
+}
+if (!process.env.NEXT_PUBLIC_SLACK_SIGNUP_LINK) {
+  process.env.NEXT_PUBLIC_SLACK_SIGNUP_LINK = "https://join.slack.com/test";
+}
+
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
