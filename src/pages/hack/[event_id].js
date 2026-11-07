@@ -1085,6 +1085,17 @@ export default function HackathonEvent({ eventData }) {
               >
                 Teams
               </Typography>
+              {event.constraints?.judging_schedule_published && (
+                <p style={{ margin: "0 0 14px", textAlign: "right" }}>
+                  <NextLink
+                    href={`/hack/${encodeURIComponent(event.event_id || event_id)}/judging`}
+                    className="ohx-link"
+                    style={{ fontWeight: 600 }}
+                  >
+                    Judging schedule &amp; rooms →
+                  </NextLink>
+                </p>
+              )}
               <LinksContainer elevation={2} id="build-a-team">
                 <Box>
                   {hackathonExpired ? (

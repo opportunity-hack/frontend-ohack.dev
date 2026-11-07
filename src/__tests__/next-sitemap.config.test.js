@@ -18,6 +18,7 @@ describe("next-sitemap.config exclude", () => {
     "/judge/overview",
     "/nonprofit/Tranquility Trail Animal Sanctuary",
     "/project/abc",
+    "/hack/fall-2026/judging",
   ])("excludes %s", (p) => {
     expect(isExcluded(p)).toBe(true);
   });
