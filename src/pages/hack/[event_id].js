@@ -1293,76 +1293,86 @@ export default function HackathonEvent({ eventData }) {
               </LinksContainer>
             </Grid>
 
-            {/* Donation Progress and Event Links side by side on larger screens */}
-            <Grid
-              container
-              spacing={3}
-              component="section"
-              aria-labelledby="event-info-heading"
-            >
-              <Typography
-                variant="h2"
-                component="h2"
-                id="event-info-heading"
-                sx={{
-                  position: "absolute",
-                  width: "1px",
-                  height: "1px",
-                  padding: "0",
-                  margin: "-1px",
-                  overflow: "hidden",
-                  clip: "rect(0, 0, 0, 0)",
-                  whiteSpace: "nowrap",
-                  borderWidth: "0",
-                }}
-              >
-                Event Information
-              </Typography>
-              {(() => {
-                const hasDonationData =
-                  (event.donation_goals &&
-                    Object.keys(event.donation_goals).length > 0) ||
-                  (event.donation_current &&
-                    Object.keys(event.donation_current).length > 0);
-                const showBudgetWidget =
-                  event.planning?.enabled === true &&
-                  event.planning?.budget_widget_on_event_page === true;
-                return hasDonationData ? (
-                  <>
-                    {showBudgetWidget && (
-                      <Grid size={{ xs: 12 }}>
-                        <PlanningBudgetEventPageWidget
-                          eventId={event_id}
+            {/* Donation Progress and Event Links side by side on larger screens.
+                Skipped entirely when the event has neither — an empty section
+                just left a gap (and EventLinks used to fall back to a duplicate
+                "Apply to participate" grid when links[] was empty). */}
+            {(() => {
+              const hasDonationData =
+                (event.donation_goals &&
+                  Object.keys(event.donation_goals).length > 0) ||
+                (event.donation_current &&
+                  Object.keys(event.donation_current).length > 0);
+              const hasEventLinks =
+                Array.isArray(event.links) && event.links.length > 0;
+              if (!hasDonationData && !hasEventLinks) return null;
+              const showBudgetWidget =
+                event.planning?.enabled === true &&
+                event.planning?.budget_widget_on_event_page === true;
+              return (
+                <Grid
+                  container
+                  spacing={3}
+                  component="section"
+                  aria-labelledby="event-info-heading"
+                >
+                  <Typography
+                    variant="h2"
+                    component="h2"
+                    id="event-info-heading"
+                    sx={{
+                      position: "absolute",
+                      width: "1px",
+                      height: "1px",
+                      padding: "0",
+                      margin: "-1px",
+                      overflow: "hidden",
+                      clip: "rect(0, 0, 0, 0)",
+                      whiteSpace: "nowrap",
+                      borderWidth: "0",
+                    }}
+                  >
+                    Event Information
+                  </Typography>
+                  {hasDonationData ? (
+                    <>
+                      {showBudgetWidget && (
+                        <Grid size={{ xs: 12 }}>
+                          <PlanningBudgetEventPageWidget
+                            eventId={event_id}
+                            donationGoals={event.donation_goals}
+                            donationCurrent={event.donation_current}
+                          />
+                        </Grid>
+                      )}
+                      <Grid size={{ xs: 12, md: hasEventLinks ? 6 : 12 }}>
+                        <DonationProgress
                           donationGoals={event.donation_goals}
                           donationCurrent={event.donation_current}
                         />
                       </Grid>
-                    )}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <DonationProgress
-                        donationGoals={event.donation_goals}
-                        donationCurrent={event.donation_current}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                      {hasEventLinks && (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <EventLinks
+                            links={event.links}
+                            variant="event-links"
+                            constraints={event.constraints}
+                          />
+                        </Grid>
+                      )}
+                    </>
+                  ) : (
+                    <Grid size={{ xs: 12 }}>
                       <EventLinks
                         links={event.links}
                         variant="event-links"
                         constraints={event.constraints}
                       />
                     </Grid>
-                  </>
-                ) : (
-                  <Grid size={{ xs: 12 }}>
-                    <EventLinks
-                      links={event.links}
-                      variant="event-links"
-                      constraints={event.constraints}
-                    />
-                  </Grid>
-                );
-              })()}
-            </Grid>
+                  )}
+                </Grid>
+              );
+            })()}
             {/* Hackathon Stats and Countdown side by side */}
             <Grid
               container

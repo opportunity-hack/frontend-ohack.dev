@@ -1,14 +1,6 @@
 import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React from "react";
-import {
-  Paper,
-  Typography,
-  Button,
-  Grid,
-  Box,
-  Divider,
-  Chip,
-} from "@mui/material";
+import { Paper, Typography, Button, Grid, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PersonIcon from "@mui/icons-material/Person";
@@ -383,8 +375,11 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     );
   }
 
-  // For event-links-only variant
-  if (variant === "event-links" && links && links.length > 0) {
+  // For event-links-only variant. With no links there is nothing to show.
+  // (It used to fall through to a legacy "full" layout that re-rendered the
+  // whole "Apply to participate" grid a second time on events with links: [].)
+  if (variant === "event-links") {
+    if (!links || links.length === 0) return null;
     return (
       <LinksContainer elevation={2} id="event-links">
         <Typography
@@ -409,136 +404,7 @@ const EventLinks = ({ links, variant = "full", constraints = {} }) => {
     );
   }
 
-  // For full variant (original behavior - both sections)
-  return (
-    <LinksContainer elevation={2} id="applications">
-      <Box mb={3}>
-        <Typography variant="h5" gutterBottom fontWeight="bold">
-          Apply to Participate
-        </Typography>
-        <Typography variant="body2" color="textSecondary" paragraph>
-          Join the community! Select the role that best matches how you'd like
-          to contribute to this hackathon.
-        </Typography>
-
-        {/* Overall Social Proof Summary */}
-        {!countsLoading &&
-          Object.values(counts).some((c) => c.accepted > 0) && (
-            <Box
-              sx={{
-                mb: 2,
-                p: 1.5,
-                backgroundColor: "primary.main",
-                borderRadius: 2,
-                border: "2px solid",
-                borderColor: "primary.dark",
-                boxShadow: 2,
-                background:
-                  "linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%)",
-                position: "relative",
-                overflow: "hidden",
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background:
-                    "linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)",
-                  backgroundSize: "20px 20px",
-                  backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-                  opacity: 0.1,
-                  pointerEvents: "none",
-                },
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "common.white",
-                  fontWeight: 700,
-                  fontSize: "0.875rem",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                  position: "relative",
-                  zIndex: 1,
-                }}
-              >
-                🎉 Join{" "}
-                {Object.values(counts).reduce((sum, c) => sum + c.accepted, 0)}+
-                participants already confirmed for this hackathon!
-              </Typography>
-            </Box>
-          )}
-
-        <Grid container spacing={2} mb={3}>
-          {applicationTypes.map((app) => (
-            <Grid size={{ xs: 12, sm: 6 }} key={app.type}>
-              <ApplicationButton
-                variant="contained"
-                color={app.color}
-                fullWidth
-                startIcon={app.icon}
-                href={app.enabled ? app.link : undefined}
-                disabled={!app.enabled}
-                component={app.enabled ? "a" : "button"}
-                {...(app.enabled && app.isExternal
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  height: "100%",
-                  minHeight: "80px",
-                  opacity: app.enabled ? 1 : 0.6,
-                  cursor: app.enabled ? "pointer" : "not-allowed",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    width: "100%",
-                  }}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    component="span"
-                    fontWeight="bold"
-                  >
-                    {app.title}
-                  </Typography>
-                  <Typography variant="caption" component="span" align="left">
-                    {app.description}
-                    {!app.enabled && " (Closed)"}
-                    {app.enabled && app.isExternal && " (Opens in new tab)"}
-                  </Typography>
-                </Box>
-              </ApplicationButton>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {links && links.length > 0 && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <Typography variant="h6" gutterBottom>
-            Important Event Links
-          </Typography>
-          <Grid container spacing={2}>
-            {links.map((link, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
-                {renderButton(link)}
-              </Grid>
-            ))}
-          </Grid>
-        </>
-      )}
-    </LinksContainer>
-  );
+  return null;
 };
 
 export default EventLinks;
