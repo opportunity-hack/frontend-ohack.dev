@@ -27,6 +27,7 @@ import SurveyCTA from "../../../../../components/Survey/SurveyCTA";
 import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
 import TeamCompletionSummaryCard from "../../../../../components/Teams/TeamCompletionSummaryCard";
 import TeamProjectSection from "../../../../../components/Teams/TeamProjectSection";
+import JudgingAssignmentCard from "../../../../../components/Teams/JudgingAssignmentCard";
 import { serializeJsonLd } from "../../../../../lib/jsonLd";
 import {
   COMPLETION_VISIBLE_STATUSES,
@@ -151,6 +152,9 @@ export default function TeamDetailPage({
     initialNonprofitData || null,
   );
   const [activeId, setActiveId] = useState(null);
+  // Flips true once the published judging schedule has this team on a
+  // panel (client-only data) — adds the "Judging" TOC entry.
+  const [hasJudging, setHasJudging] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
   const { isOnTeam, membershipChecked } = useTeamMembership(event_id, team?.id);
@@ -246,7 +250,7 @@ export default function TeamDetailPage({
     );
     els.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [team, event, problemStatements]);
+  }, [team, event, problemStatements, hasJudging]);
 
   // Honor a deep link (#section) once data has rendered.
   useEffect(() => {
@@ -389,6 +393,7 @@ export default function TeamDetailPage({
   // Build the TOC from the sections that actually render.
   const sections = [];
   if (showProjectSection) sections.push({ id: "project", name: "Project" });
+  if (hasJudging) sections.push({ id: "judging", name: "Judging" });
   if (eventHasStarted)
     sections.push({ id: "mentor-support", name: "Mentor support" });
   if (showCompletionChecklist)
@@ -701,6 +706,26 @@ export default function TeamDetailPage({
                 />
               </SectionBlock>
             )}
+
+            {/* Judging — panel, room, judges once the schedule is published.
+                The wrapper stays mounted at the same position (the card
+                fetches the schedule itself and renders null until there's
+                an assignment); data-team-section only once it has content
+                so the TOC observer never tracks an empty block. */}
+            <Box
+              component="div"
+              id="judging"
+              {...(hasJudging ? { "data-team-section": true } : {})}
+              sx={{ scrollMarginTop: `${SCROLL_OFFSET}px` }}
+            >
+              <JudgingAssignmentCard
+                eventId={event_id}
+                teamId={team.id}
+                eventTimezone={event?.timezone}
+                heading="Judging"
+                onAvailabilityChange={setHasJudging}
+              />
+            </Box>
 
             {/* Mentor Support — compact summary; full panel lives at /mentor */}
             {eventHasStarted && (

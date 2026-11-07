@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Alert, Box, Tab, Tabs } from "@mui/material";
+import {
+  Alert,
+  Box,
+  FormControlLabel,
+  Link as MuiLink,
+  Switch,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
+import { trackEvent, EventCategory } from "../../../../lib/ga";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import SectionContainer from "../SectionContainer";
@@ -77,8 +87,80 @@ const JudgingSection = ({ admin, accessToken, orgId, onSnack }) => {
     setSelectedHackathon: noopSetSelected,
   };
 
+  const published = !!admin.hackathon?.constraints?.judging_schedule_published;
+  const handlePublishToggle = (e) => {
+    const next = e.target.checked;
+    // setConstraint autosaves (debounced PATCH) like the Hackers' Choice
+    // switches in the Deadlines section.
+    admin.setConstraint("judging_schedule_published", next);
+    trackEvent({
+      action: "admin_judging_schedule_publish",
+      params: {
+        event_category: EventCategory.ADMIN,
+        event_label: eventId,
+        value: next ? 1 : 0,
+      },
+    });
+    onSnack?.(
+      next
+        ? "Judging schedule published — it's public at /hack/" +
+            eventId +
+            "/judging."
+        : "Judging schedule hidden from the public page.",
+      "success",
+    );
+  };
+
   return (
     <SectionContainer disableGutters>
+      <Box
+        sx={{
+          px: { xs: 2, md: 3 },
+          py: 2,
+          borderBottom: 1,
+          borderColor: "divider",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+        }}
+      >
+        <Box sx={{ minWidth: 0, flex: "1 1 360px" }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={published}
+                onChange={handlePublishToggle}
+                inputProps={{ "aria-describedby": "judging-publish-help" }}
+              />
+            }
+            label={
+              <Typography sx={{ fontWeight: 600 }}>
+                Publish the judging schedule
+              </Typography>
+            }
+          />
+          <Typography
+            id="judging-publish-help"
+            variant="body2"
+            color="text.secondary"
+            sx={{ ml: { sm: 6 } }}
+          >
+            Shows panels, rooms, judges and team readiness at /hack/{eventId}
+            /judging. Turn on once Round 1 panels are saved.
+          </Typography>
+        </Box>
+        <MuiLink
+          href={`/hack/${encodeURIComponent(eventId)}/judging`}
+          target="_blank"
+          rel="noopener noreferrer"
+          underline="hover"
+          sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
+        >
+          Open schedule ↗
+        </MuiLink>
+      </Box>
       <Box
         sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 2, md: 3 } }}
       >

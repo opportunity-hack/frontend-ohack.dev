@@ -12,6 +12,7 @@ import GatewayKeyCard from "./GatewayKeyCard";
 import MentorSupportCard from "./MentorSupportCard";
 import SlackCoachCard from "./SlackCoachCard";
 import TeamRoster from "./TeamRoster";
+import JudgingAssignmentCard from "../Teams/JudgingAssignmentCard";
 import useTeamProject from "../../hooks/use-team-project";
 import usePublicTeam from "../../hooks/use-public-team";
 import useGithubActivity from "../../hooks/use-github-activity";
@@ -118,6 +119,15 @@ export default function TeamDashboard({
         </>
       ) : (
         <>
+          {/* Renders nothing until the judging schedule is published and
+              this team is on a panel. */}
+          <JudgingAssignmentCard
+            id="judging"
+            eventId={eventId}
+            teamId={team?.id}
+            eventTimezone={event?.timezone}
+          />
+
           <GatewayKeyCard
             team={team}
             accessToken={accessToken}
