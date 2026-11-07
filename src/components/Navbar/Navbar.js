@@ -59,6 +59,7 @@ const getInvolvedMenuItems = [
   ["Become a Hacker", "/about/hackers"],
   ["Become a Mentor", "/about/mentors"],
   ["Become a Judge", "/about/judges"],
+  ["Become a Volunteer", "/about/volunteers"],
   ["Track Your Time", "/volunteer/track"],
   ["Join Our Slack", "/signup"],
   ["Office Hours", "/office-hours"],

@@ -191,7 +191,11 @@ const VolunteerPage = () => {
     return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
   };
 
-  const ROLE_GUIDE = { judge: ["/about/judges", "Read the complete Judge Guide"], mentor: ["/about/mentors", "Read the complete Mentor Guide"] };
+  const ROLE_GUIDE = {
+    judge: ["/about/judges", "Read the complete Judge Guide"],
+    mentor: ["/about/mentors", "Read the complete Mentor Guide"],
+    volunteer: ["/about/volunteers", "Read the complete Volunteer Guide"],
+  };
 
   return (
     <>

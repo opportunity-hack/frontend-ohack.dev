@@ -2754,7 +2754,7 @@ const VolunteerApplicationComponent = () => {
                 building.
               </Typography>
               <Link
-                href="/volunteer"
+                href="/about/volunteers"
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{

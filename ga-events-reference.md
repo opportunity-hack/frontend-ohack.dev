@@ -169,6 +169,15 @@ Participant share cards (branded PNG + landing page + share kit). All fire via `
 | `share_card_band_click` | `components/ShareCard/RosterShareBand.js` | `{ event_label: <type>, event_id, page: "hackathon_event" }` | "Get your share card →" on the event page's roster band. |
 | `share_card_promo_click` | `components/ShareCard/ShareCardPromo.js`, `pages/mentor/index.js` | `{ event_label: <type>, event_id, page: "<type>_application" \| "mentor_dashboard" }` | The "you're in — share the news" promo beside the check-in QR, or the `/mentor` card link. |
 
+### Event volunteer guide (`/about/volunteers`, Nov 2026)
+
+The volunteer counterpart of `/about/mentors` + `/about/judges`. One action, `click_volunteers`, fired via `trackEvent({ action, params })`; `button` says what was clicked.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `click_volunteers` | `pages/about/volunteers/index.js` | `{ button: "find_events_hero" \| "checkin_guide_hero" \| "volunteer_apply_upcoming" \| "event_details" \| "all_hackathons" \| "explore_roles" \| "cta_hackathons" \| "cta_all_roles" \| "cta_jobs", event_id? }` | Hero CTAs, the upcoming-events cards (`event_id` set), and the closing CTA band. |
+| `click_volunteers` | `components/About/Volunteering/VolunteerChecklist.js` | `{ button: "checklist_toggle", item: <checklist item id> }` / `{ button: "checklist_reset" }` | The before/during/after checklist (ticks persist in `localStorage["ohack.volunteerChecklist.v1"]`, never sent to the server). |
+
 ### Judging (Oct 2026)
 
 Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.
