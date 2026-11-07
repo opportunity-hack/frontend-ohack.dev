@@ -79,13 +79,13 @@ const VolunteerChecklist = () => {
         {
           title: "Pack your bag",
           details:
-            "Bring your QR code, an ID, and your laptop and charger.",
+            "Bring your QR code and an ID. You do not need a laptop.",
           checked: false,
         },
         {
-          title: "Track your volunteer time",
+          title: "Track your volunteer time (optional)",
           details:
-            "Bookmark the time tracker to log your hours for the event.",
+            "If you want your hours logged, for example for work or school, bookmark the time tracker. This is optional.",
           checked: false,
         },
       ],
@@ -115,9 +115,9 @@ const VolunteerChecklist = () => {
           checked: false,
         },
         {
-          title: "Track your volunteer time",
+          title: "Track your volunteer time (optional)",
           details:
-            "Click the button above to log your volunteer hours for the event.",
+            "If you want your hours logged, click the button above. This is optional.",
           checked: false,
         },
       ],
@@ -135,15 +135,21 @@ const VolunteerChecklist = () => {
           checked: false,
         },
         {
+          title: "Ask questions in Slack",
+          details:
+            "General questions go in #help. Technical questions go in #ask-a-mentor.",
+          checked: false,
+        },
+        {
           title: "Help the registration desk stay fast",
           details:
             "During busy arrivals, keep the line moving: one volunteer greets, one scans QR codes, one points people to their team area.",
           checked: false,
         },
         {
-          title: "Track your volunteer time",
+          title: "Track your volunteer time (optional)",
           details:
-            "Click the button above to log your volunteer hours for the event.",
+            "If you want your hours logged, click the button above. This is optional.",
           checked: false,
         },
       ],
@@ -151,7 +157,7 @@ const VolunteerChecklist = () => {
         {
           title: "Check out when your shift ends",
           details:
-            "Log your hours at the time tracker before you leave so your time is counted.",
+            "If you track your hours, log them at the time tracker before you leave so your time is counted.",
           checked: false,
         },
         {
@@ -169,9 +175,9 @@ const VolunteerChecklist = () => {
       ],
       after: [
         {
-          title: "Log your hours",
+          title: "Log your hours (optional)",
           details:
-            "Log your time at the time tracker if you have not already.",
+            "If you track your hours, log them at the time tracker if you have not already.",
           checked: false,
         },
         {

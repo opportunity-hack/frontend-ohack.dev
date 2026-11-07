@@ -44,7 +44,11 @@ const VOLUNTEER_FAQ = [
   },
   {
     question: "How do I log my hours?",
-    answer: "Log them at /volunteer/track.",
+    answer: "Log them at /volunteer/track. This is optional — it is for volunteers who want their hours tracked, for example for work or school.",
+  },
+  {
+    question: "Where do I ask questions?",
+    answer: "Ask in Slack. General questions go in #help, and technical questions go in #ask-a-mentor.",
   },
   {
     question: "I am a virtual volunteer. How do I check in?",
