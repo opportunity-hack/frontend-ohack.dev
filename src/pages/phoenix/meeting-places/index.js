@@ -5,11 +5,14 @@
 // or a rate published on the venue's own site, and each card says which.
 // Nothing here is a booking: availability and prices change, so confirm
 // directly with the venue before you plan around a number.
+// Updated Nov 6, 2026: SEO title, meta, and area copy; venue ItemList
+// JSON-LD; one DonateCard (DonateNudge, placement phoenix_meeting_places).
 import React, { useMemo, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { serializeJsonLd } from "../../../lib/jsonLd";
 import { RefinedPage, PageMasthead, CtaBand, Prose, BackLink } from "../../../components/design/RefinedPage";
+import { DonateCard } from "../../../components/design/DonateNudge";
 
 const CANONICAL = "https://www.ohack.dev/phoenix/meeting-places";
 const LAST_UPDATED = "November 6, 2026";
@@ -289,31 +292,31 @@ export default function PhoenixMeetingPlaces() {
   return (
     <>
       <Head>
-        <title>Phoenix Meeting Places for Nonprofits | Opportunity Hack</title>
+        <title>Phoenix Meeting Space and Training Rooms for Nonprofits | Opportunity Hack</title>
         <meta
           name="description"
-          content="Affordable meeting and training spaces in Phoenix for small nonprofits, with real written quotes: FOUND:RE about $318 all-in for an evening, Press Coffee $100 daytime, Workuity $136-$176. Prices, capacities, screens, Wi-Fi, and evening availability, researched Nov 5-6, 2026."
+          content="Affordable Phoenix meeting space and training rooms for nonprofits, with real written quotes. FOUND:RE about $318 all-in for evenings, Press Coffee $100 daytime, Workuity $136-$176."
         />
         <meta
           name="keywords"
-          content="Phoenix meeting space nonprofit, affordable training room Phoenix, nonprofit meeting room Phoenix, Biltmore meeting room, downtown Phoenix boardroom, FOUND:RE Phoenix, Press Coffee conference room, Workuity meeting rooms"
+          content="Phoenix meeting space nonprofit, affordable training room Phoenix, nonprofit meeting room Phoenix, Phoenix training room rental, Biltmore meeting room, downtown Phoenix boardroom, Scottsdale meeting room, FOUND:RE Phoenix, Press Coffee conference room, Workuity meeting rooms"
         />
         <meta name="author" content="Opportunity Hack" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={CANONICAL} />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Phoenix Meeting Places for Nonprofits | Opportunity Hack" />
+        <meta property="og:title" content="Phoenix Meeting Space and Training Rooms for Nonprofits | Opportunity Hack" />
         <meta
           property="og:description"
-          content="Real quotes for Phoenix meeting and training space, gathered by emailing venues for a 10-12 person nonprofit training. Cheapest confirmed evening: FOUND:RE, about $318 all-in."
+          content="Real quotes for Phoenix meeting space and training rooms for small nonprofits. Cheapest confirmed evening: FOUND:RE, about $318 all-in."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:site_name" content="Opportunity Hack" />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Phoenix Meeting Places for Nonprofits | Opportunity Hack" />
+        <meta name="twitter:title" content="Phoenix Meeting Space and Training Rooms for Nonprofits | Opportunity Hack" />
         <meta
           name="twitter:description"
-          content="Real quotes for Phoenix meeting and training space for small nonprofits. Cheapest confirmed evening: FOUND:RE, about $318 all-in."
+          content="Real quotes for Phoenix meeting space and training rooms for small nonprofits. Cheapest confirmed evening: FOUND:RE, about $318 all-in."
         />
         <meta name="twitter:creator" content="@opportunityhack" />
         <script
@@ -326,7 +329,7 @@ export default function PhoenixMeetingPlaces() {
                   "@type": "WebPage",
                   "@id": CANONICAL + "#webpage",
                   url: CANONICAL,
-                  name: "Phoenix Meeting Places for Nonprofits | Opportunity Hack",
+                  name: "Phoenix Meeting Space and Training Rooms for Nonprofits | Opportunity Hack",
                   description:
                     "Affordable meeting and training spaces in Phoenix for small nonprofits, with real written quotes gathered Nov 5-6, 2026.",
                   isPartOf: { "@type": "WebSite", "@id": "https://www.ohack.dev/#website" },
@@ -341,7 +344,7 @@ export default function PhoenixMeetingPlaces() {
                   "@type": "BreadcrumbList",
                   itemListElement: [
                     { "@type": "ListItem", position: 1, name: "Home", item: "https://www.ohack.dev" },
-                    { "@type": "ListItem", position: 2, name: "Phoenix Meeting Places", item: CANONICAL },
+                    { "@type": "ListItem", position: 2, name: "Phoenix Meeting Space", item: CANONICAL },
                   ],
                 },
                 {
@@ -350,6 +353,20 @@ export default function PhoenixMeetingPlaces() {
                     "@type": "Question",
                     name: item.q,
                     acceptedAnswer: { "@type": "Answer", text: item.a },
+                  })),
+                },
+                {
+                  "@type": "ItemList",
+                  name: "Phoenix meeting and training venues for nonprofits",
+                  itemListElement: VENUES.map((v, i) => ({
+                    "@type": "ListItem",
+                    position: i + 1,
+                    item: {
+                      "@type": "Place",
+                      name: v.name,
+                      address: v.address,
+                      url: v.contact.url,
+                    },
                   })),
                 },
               ],
@@ -362,9 +379,9 @@ export default function PhoenixMeetingPlaces() {
         <BackLink href="/nonprofits">Nonprofits</BackLink>
         <PageMasthead
           eyebrow="Phoenix, Arizona · For small nonprofits"
-          title="Meeting places in Phoenix,"
+          title="Phoenix meeting space,"
           italic="with real prices."
-          lead="We needed a room for 10-12 people on a Thursday evening, with a screen and Wi-Fi, for a nonprofit training. Nobody publishes this. So we emailed the venues and wrote down what they actually quoted. These are the answers, so the next nonprofit does not have to start from zero."
+          lead="We needed a meeting space and training room for 10-12 people on a Thursday evening, with a screen and Wi-Fi, for a nonprofit training. Nobody publishes this. So we emailed the venues and wrote down what they actually quoted. These are the answers, so the next nonprofit does not have to start from zero."
         >
           <p style={{ marginTop: 12, fontSize: 13.5, color: "var(--muted, #5a5f6a)" }}>
             Last updated {LAST_UPDATED}. Prices and availability change: confirm directly with the venue before you plan around a number.
@@ -551,6 +568,53 @@ export default function PhoenixMeetingPlaces() {
           )}
         </section>
 
+        <section aria-label="Meeting space by area" style={{ marginTop: 48 }}>
+          <h2 className="ohx-display" style={{ fontSize: 26 }}>
+            Where to meet in Phoenix: Biltmore, downtown, Scottsdale, and Chandler
+          </h2>
+          <Prose>
+            <p>
+              Most of the affordable meeting space and training rooms we found cluster in two parts of town:
+              the Biltmore and Camelback corridor, and downtown Phoenix. A nonprofit training in Phoenix can
+              usually stay in one of those two areas and still have a room that fits 12 people with a screen
+              and Wi-Fi.
+            </p>
+            <h3>Biltmore and Camelback</h3>
+            <p>
+              Three of the seven venues sit in the Biltmore corridor on Camelback Road: Press Coffee and
+              Workuity Biltmore share the 2390 E Camelback address, and The Camby is across the road at 2401 E
+              Camelback. This is the cheapest daytime area on the list, with Press Coffee at $100 flat and
+              Workuity Biltmore from $88 an hour, but neither room is available for a 6-8 PM evening training.
+            </p>
+            <h3>Downtown Phoenix</h3>
+            <p>
+              Downtown holds the evening options. FOUND:RE Phoenix (1100 N Central Ave) quoted about $318
+              all-in for The Studio and confirmed it for a weekday evening. The AC Hotel Phoenix Downtown
+              (414 N 5th St) quoted $1,000 plus a $500 food and beverage minimum for its Lantana Boardroom.
+              Kimpton Hotel Palomar Phoenix (2 E Jefferson St) has boardrooms that seat up to 10, so it fits a
+              smaller group.
+            </p>
+            <h3>Scottsdale and Chandler</h3>
+            <p>
+              Hotel Valley Ho (6850 E Main St, Scottsdale) quoted $500+ for its Riviera Boardroom, which seats
+              12. In Chandler, Workuity's Four Peaks room seats exactly 12 from $68 an hour ($136 for two
+              hours), about 25 minutes from central Phoenix, with the same evening limits as its Biltmore rooms.
+            </p>
+          </Prose>
+        </section>
+
+        <div style={{ marginTop: 44 }}>
+          <DonateCard
+            placement="phoenix_meeting_places"
+            eyebrow="Keep this guide free"
+            cta="Donate to Opportunity Hack"
+          >
+            Opportunity Hack is a nonprofit, and this guide is free because donors keep our work going. If it
+            saved you a few emails, a gift of any size helps us keep publishing practical help for Phoenix
+            nonprofits, and keep pairing them with volunteers who build their software.
+          </DonateCard>
+        </div>
+
         <section aria-label="How we got these numbers" style={{ marginTop: 48 }}>
           <h2 className="ohx-display" style={{ fontSize: 26 }}>
             How we got these numbers
@@ -636,9 +700,9 @@ export default function PhoenixMeetingPlaces() {
 }
 
 export const getStaticProps = async () => {
-  const title = "Phoenix Meeting Places for Nonprofits | Opportunity Hack";
+  const title = "Phoenix Meeting Space and Training Rooms for Nonprofits | Opportunity Hack";
   const description =
-    "Affordable meeting and training spaces in Phoenix for small nonprofits, with real written quotes: FOUND:RE about $318 all-in for an evening, Press Coffee $100 daytime, Workuity $136-$176. Prices, capacities, screens, Wi-Fi, and evening availability, researched Nov 5-6, 2026.";
+    "Affordable Phoenix meeting space and training rooms for nonprofits, with real written quotes. FOUND:RE about $318 all-in for evenings, Press Coffee $100 daytime, Workuity $136-$176.";
 
   return {
     props: {
@@ -663,7 +727,7 @@ export const getStaticProps = async () => {
           name: "keywords",
           property: "keywords",
           content:
-            "Phoenix meeting space nonprofit, affordable training room Phoenix, nonprofit meeting room Phoenix, Biltmore meeting room, downtown Phoenix boardroom, FOUND:RE Phoenix, Press Coffee conference room, Workuity meeting rooms",
+            "Phoenix meeting space nonprofit, affordable training room Phoenix, nonprofit meeting room Phoenix, Phoenix training room rental, Biltmore meeting room, downtown Phoenix boardroom, Scottsdale meeting room, FOUND:RE Phoenix, Press Coffee conference room, Workuity meeting rooms",
           key: "keywords",
         },
       ],
@@ -688,7 +752,7 @@ export const getStaticProps = async () => {
             "@type": "BreadcrumbList",
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "Home", item: "https://www.ohack.dev" },
-              { "@type": "ListItem", position: 2, name: "Phoenix Meeting Places", item: CANONICAL },
+              { "@type": "ListItem", position: 2, name: "Phoenix Meeting Space", item: CANONICAL },
             ],
           },
           {
@@ -697,6 +761,20 @@ export const getStaticProps = async () => {
               "@type": "Question",
               name: item.q,
               acceptedAnswer: { "@type": "Answer", text: item.a },
+            })),
+          },
+          {
+            "@type": "ItemList",
+            name: "Phoenix meeting and training venues for nonprofits",
+            itemListElement: VENUES.map((v, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Place",
+                name: v.name,
+                address: v.address,
+                url: v.contact.url,
+              },
             })),
           },
         ],
