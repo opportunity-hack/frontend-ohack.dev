@@ -220,7 +220,7 @@ export const PHOTOGRAPHER_NOTES = [
   {
     id: "certificate",
     title: "You'll receive a certificate",
-    body: "Photography counts as volunteer time like any other shift. You'll get a volunteer certificate after the event, plus Hearts on your ohack.dev profile — track your hours on the time tracker so nothing is missed.",
+    body: "Photography counts as volunteer time like any other shift. You'll get a volunteer certificate after the event, plus Hearts on your ohack.dev profile. If you need documented hours for work or school, the time tracker keeps a log for you (optional).",
     links: [{ label: "Volunteer time tracker", href: "/volunteer/track" }],
   },
 ];
@@ -390,6 +390,7 @@ export const CHECKIN_SITUATIONS = [
 ];
 
 export const WHAT_TO_BRING = [
+  "No laptop needed — your phone covers everything a shift asks for",
   "A fully charged phone (and a battery pack if you're on the check-in or photo shift)",
   "Comfortable shoes — you'll be on your feet",
   "A reusable water bottle; we keep refill stations stocked",
@@ -453,7 +454,7 @@ export const FAQ_ITEMS = [
     id: "hours",
     question: "Can I get a letter, certificate, or volunteer hours?",
     answer:
-      "Yes. Track your hours on ohack.dev/volunteer/track during the event. After the event, request a General Volunteer letter from the event's letters page — it's reviewed and signed by an organizer. Every volunteer also earns Hearts toward certificates and rewards on your profile.",
+      "Yes. If you need documented hours for work or school, you can log them on ohack.dev/volunteer/track — it's optional. After the event, request a General Volunteer letter from the event's letters page — it's reviewed and signed by an organizer. Every volunteer also earns Hearts toward certificates and rewards on your profile.",
   },
   {
     id: "photo",
