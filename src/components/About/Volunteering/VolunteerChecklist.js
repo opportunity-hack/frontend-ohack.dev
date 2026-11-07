@@ -96,16 +96,22 @@ export const VOLUNTEER_CHECKLIST = [
           "Many hackers are at their first event and nervous. A warm hello and 'breakfast is that way' sets the tone for the whole weekend.",
       },
       {
-        id: "during-escalate",
-        title: "Escalate, don't improvise",
+        id: "during-sheet",
+        title: "Check the shared shift sheet and initial what you finish",
         details:
-          "Not on the roster, a medical question, a venue problem, an unhappy sponsor — get an organizer. You're never expected to decide those alone.",
+          "Everyone on shift shares the room — the printed sheet in the food area lists what's due and when. Pick up anything that's outstanding, then add your initials so the next volunteer knows it's handled.",
+      },
+      {
+        id: "during-escalate",
+        title: "When in doubt, grab an organizer",
+        details:
+          "Not on the roster, a medical question, a venue problem, an unhappy sponsor — an organizer will take it from there. You're never expected to handle those alone.",
       },
       {
         id: "during-space",
         title: "Walk the room once an hour",
         details:
-          "Clear trash, restock snacks and water, and notice teams that look stuck — point them to #ask-a-mentor or a mentor in the room.",
+          "Trash about every two hours (sooner if a bin is full), snacks and water about every four, and notice teams that look stuck — point them to #ask-a-mentor or a mentor in the room.",
       },
       {
         id: "during-photos",
@@ -142,7 +148,7 @@ export const VOLUNTEER_CHECKLIST = [
         id: "wrap-handoff",
         title: "Hand off photos, notes, and anything you noticed",
         details:
-          "Tell the organizers what worked and what didn't while it's fresh — it goes straight into next year's plan.",
+          "Photos go in the event's shared Google Drive folder. Then tell the organizers what worked and what didn't while it's fresh — it goes straight into next year's plan.",
       },
     ],
   },
@@ -252,7 +258,11 @@ const ChecklistItem = ({ item, checked, onToggle }) => {
           {item.href && (
             <>
               {" "}
-              <Link href={item.href} className="ohx-link" style={{ fontSize: "0.9rem" }}>
+              <Link
+                href={item.href}
+                className="ohx-link"
+                style={{ fontSize: "0.9rem" }}
+              >
                 {item.hrefLabel}
               </Link>
             </>
@@ -266,7 +276,11 @@ const ChecklistItem = ({ item, checked, onToggle }) => {
 const PhaseBlock = ({ phase, checked, onToggle }) => {
   const done = phase.items.filter((i) => checked[i.id]).length;
   return (
-    <details open className="ohx-card" style={{ padding: 0, overflow: "hidden" }}>
+    <details
+      open
+      className="ohx-card"
+      style={{ padding: 0, overflow: "hidden" }}
+    >
       <summary
         style={{
           listStyle: "none",
@@ -342,7 +356,9 @@ export default function VolunteerChecklist() {
     () => Object.keys(checked).filter((k) => checked[k]).length,
     [checked],
   );
-  const pct = CHECKLIST_TOTAL ? Math.round((doneCount / CHECKLIST_TOTAL) * 100) : 0;
+  const pct = CHECKLIST_TOTAL
+    ? Math.round((doneCount / CHECKLIST_TOTAL) * 100)
+    : 0;
 
   return (
     <div>

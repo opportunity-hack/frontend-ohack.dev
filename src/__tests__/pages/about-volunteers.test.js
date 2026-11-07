@@ -33,12 +33,18 @@ jest.mock("../../hooks/use-hackathon-events", () => ({
 }));
 
 import useHackathonEvents from "../../hooks/use-hackathon-events";
-import VolunteersGuide, { getStaticProps } from "../../pages/about/volunteers/index";
+import VolunteersGuide, {
+  getStaticProps,
+} from "../../pages/about/volunteers/index";
 import {
   FAQ_ITEMS,
   CHECKIN_STEPS,
   CHECKIN_SITUATIONS,
   VOLUNTEER_ROLES,
+  SHIFT_PRINCIPLES,
+  FOOD_AREA_RULES,
+  FOOD_RHYTHM,
+  PHOTOGRAPHER_NOTES,
 } from "../../components/About/Volunteering/volunteerGuideData";
 
 describe("/about/volunteers", () => {
@@ -72,8 +78,46 @@ describe("/about/volunteers", () => {
       expect(within(table).getByText(row.situation)).toBeInTheDocument();
     });
     VOLUNTEER_ROLES.forEach((role) => {
-      expect(screen.getByRole("heading", { level: 3, name: role.title })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 3, name: role.title }),
+      ).toBeInTheDocument();
     });
+  });
+
+  it("renders the shared-shift-sheet principles, food-area rules and rhythm", () => {
+    render(<VolunteersGuide />);
+    SHIFT_PRINCIPLES.forEach((p) => {
+      expect(
+        screen.getByRole("heading", { level: 3, name: p.title }),
+      ).toBeInTheDocument();
+    });
+    FOOD_AREA_RULES.forEach((rule) => {
+      expect(screen.getByText(rule.body)).toBeInTheDocument();
+    });
+    FOOD_RHYTHM.forEach((row) => {
+      expect(screen.getByText(row.when)).toBeInTheDocument();
+    });
+    expect(document.getElementById("food-area")).not.toBeNull();
+  });
+
+  it("renders the photographers callout with its release, conduct, media and tracker links", () => {
+    render(<VolunteersGuide />);
+    const callout = document.getElementById("photographers");
+    expect(callout).not.toBeNull();
+    PHOTOGRAPHER_NOTES.forEach((note) => {
+      expect(within(callout).getByText(note.title)).toBeInTheDocument();
+      note.links.forEach((link) => {
+        expect(
+          within(callout).getByRole("link", { name: link.label }),
+        ).toHaveAttribute("href", link.href);
+      });
+    });
+    expect(
+      within(callout).getByRole("link", { name: "Photo release" }),
+    ).toHaveAttribute("href", "/hack/photo-release");
+    expect(
+      within(callout).getByRole("link", { name: "Code of conduct" }),
+    ).toHaveAttribute("href", "/hack/code-of-conduct");
   });
 
   it("keeps the visible FAQ and the FAQPage JSON-LD in sync", async () => {
@@ -83,13 +127,21 @@ describe("/about/volunteers", () => {
       expect(screen.getByText(item.answer)).toBeInTheDocument();
     });
     const { props } = await getStaticProps();
-    const faq = props.structuredData["@graph"].find((n) => n["@type"] === "FAQPage");
-    expect(faq.mainEntity.map((q) => q.name)).toEqual(FAQ_ITEMS.map((i) => i.question));
+    const faq = props.structuredData["@graph"].find(
+      (n) => n["@type"] === "FAQPage",
+    );
+    expect(faq.mainEntity.map((q) => q.name)).toEqual(
+      FAQ_ITEMS.map((i) => i.question),
+    );
     expect(faq.mainEntity.map((q) => q.acceptedAnswer.text)).toEqual(
       FAQ_ITEMS.map((i) => i.answer),
     );
-    const howTo = props.structuredData["@graph"].find((n) => n["@type"] === "HowTo");
-    expect(howTo.step.map((s) => s.name)).toEqual(CHECKIN_STEPS.map((s) => s.title));
+    const howTo = props.structuredData["@graph"].find(
+      (n) => n["@type"] === "HowTo",
+    );
+    expect(howTo.step.map((s) => s.name)).toEqual(
+      CHECKIN_STEPS.map((s) => s.title),
+    );
     expect(props.canonical).toBe("https://www.ohack.dev/about/volunteers");
   });
 
@@ -107,10 +159,9 @@ describe("/about/volunteers", () => {
       ],
     });
     render(<VolunteersGuide />);
-    expect(screen.getByRole("link", { name: "Apply to volunteer" })).toHaveAttribute(
-      "href",
-      "/hack/fall-2026/volunteer-application",
-    );
+    expect(
+      screen.getByRole("link", { name: "Apply to volunteer" }),
+    ).toHaveAttribute("href", "/hack/fall-2026/volunteer-application");
   });
 
   it("reserves space while events load", () => {

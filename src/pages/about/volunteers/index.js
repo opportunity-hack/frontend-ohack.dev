@@ -12,6 +12,12 @@ import {
   SHIFT_BLOCKS,
   CHECKIN_STEPS,
   CHECKIN_SITUATIONS,
+  PHOTOGRAPHER_NOTES,
+  SHIFT_PRINCIPLES,
+  FOOD_AREA_RULES,
+  FOOD_RHYTHM,
+  SNACK_IDEAS,
+  SNACK_INCLUSIVE_NOTE,
   WHAT_TO_BRING,
   FAQ_ITEMS,
 } from "../../../components/About/Volunteering/volunteerGuideData";
@@ -113,6 +119,62 @@ const RoleCard = ({ role }) => (
       ))}
     </ul>
   </article>
+);
+
+const PhotographerNote = ({ note }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: 600, color: "var(--ink)" }}>
+      {note.title}
+    </h4>
+    <p className="ohx-muted" style={{ margin: 0, fontSize: "0.92rem", lineHeight: 1.6 }}>
+      {note.body}
+    </p>
+    {note.links.length > 0 && (
+      <p style={{ margin: "2px 0 0", fontSize: "0.9rem", display: "flex", gap: 14, flexWrap: "wrap" }}>
+        {note.links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="ohx-link"
+            onClick={() => track("photographer_link", { href: link.href })}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </p>
+    )}
+  </div>
+);
+
+const PrincipleCard = ({ principle, index }) => (
+  <article className="ohx-card" style={{ padding: "22px 24px" }}>
+    <p className="ohx-eyebrow" style={{ margin: "0 0 8px" }}>
+      {String(index + 1).padStart(2, "0")}
+    </p>
+    <h3 className="ohx-display" style={{ fontSize: "1.15rem", margin: "0 0 8px" }}>
+      {principle.title}
+    </h3>
+    <p className="ohx-muted" style={{ margin: 0, fontSize: "0.95rem", lineHeight: 1.6 }}>
+      {principle.body}
+    </p>
+  </article>
+);
+
+const RhythmRow = ({ row }) => (
+  <li
+    style={{
+      display: "grid",
+      gridTemplateColumns: "minmax(140px, 200px) 1fr",
+      gap: 16,
+      padding: "12px 0",
+      borderTop: "1px solid var(--line)",
+      fontSize: "0.95rem",
+      lineHeight: 1.55,
+    }}
+  >
+    <span style={{ fontWeight: 600 }}>{row.when}</span>
+    <span className="ohx-muted">{row.what}</span>
+  </li>
 );
 
 const ShiftDay = ({ day }) => (
@@ -462,6 +524,45 @@ export default function VolunteersGuide() {
             <RoleCard key={role.id} role={role} />
           ))}
         </div>
+
+        {/* PHOTOGRAPHERS CALLOUT */}
+        <aside
+          id="photographers"
+          aria-labelledby="photographers-heading"
+          className="ohx-card"
+          style={{
+            marginTop: 28,
+            padding: "clamp(22px, 3vw, 32px)",
+            background: "var(--surface-2)",
+            borderLeft: "4px solid var(--accent)",
+            scrollMarginTop: 90,
+          }}
+        >
+          <Eyebrow>📸 For photographers &amp; videographers</Eyebrow>
+          <h3
+            id="photographers-heading"
+            className="ohx-display"
+            style={{ fontSize: "1.35rem", margin: "8px 0 6px" }}
+          >
+            Thank you for capturing the weekend
+          </h3>
+          <p className="ohx-muted" style={{ margin: "0 0 20px", maxWidth: "62ch", lineHeight: 1.6 }}>
+            Your photos are how sponsors, nonprofits, and next year&apos;s
+            volunteers see what happened. Four things to know before you start
+            shooting.
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gap: "20px 28px",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
+            }}
+          >
+            {PHOTOGRAPHER_NOTES.map((note) => (
+              <PhotographerNote key={note.id} note={note} />
+            ))}
+          </div>
+        </aside>
       </section>
 
       {/* SHIFTS */}
@@ -495,6 +596,97 @@ export default function VolunteersGuide() {
             {SHIFT_BLOCKS.map((day) => (
               <ShiftDay key={day.day} day={day} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOD AREA + SHARED SHIFT SHEET */}
+      <section id="food-area" className="ohx-wrap" style={{ ...sectionPad, scrollMarginTop: 90 }}>
+        <Eyebrow>On shift</Eyebrow>
+        <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 10 }}>
+          The shared shift sheet and the food area
+        </h2>
+        <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 28, maxWidth: "64ch", lineHeight: 1.6 }}>
+          Most of a volunteer weekend is keeping one room running: food out,
+          food away, snacks topped up, trash gone. Organizers print a reference
+          sheet for the event and leave it in the food area — here is how it
+          works and the rules it carries, so nothing on this page surprises you
+          on the day.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gap: 20,
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          }}
+        >
+          {SHIFT_PRINCIPLES.map((principle, i) => (
+            <PrincipleCard key={principle.id} principle={principle} index={i} />
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gap: 24,
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            marginTop: 36,
+            alignItems: "start",
+          }}
+        >
+          <div className="ohx-card" style={{ padding: "24px 26px" }}>
+            <h3 className="ohx-display" style={{ fontSize: "1.3rem", margin: "0 0 14px" }}>
+              Food area rules
+            </h3>
+            <dl style={{ margin: 0 }}>
+              {FOOD_AREA_RULES.map((rule) => (
+                <div
+                  key={rule.id}
+                  style={{ padding: "10px 0", borderTop: "1px solid var(--line)" }}
+                >
+                  <dt style={{ fontWeight: 600, fontSize: "0.95rem", marginBottom: 4 }}>
+                    {rule.label}
+                  </dt>
+                  <dd className="ohx-muted" style={{ margin: 0, fontSize: "0.92rem", lineHeight: 1.55 }}>
+                    {rule.body}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div className="ohx-card" style={{ padding: "24px 26px" }}>
+              <h3 className="ohx-display" style={{ fontSize: "1.3rem", margin: "0 0 6px" }}>
+                A day&apos;s rhythm
+              </h3>
+              <p className="ohx-faint" style={{ margin: "0 0 10px", fontSize: "0.85rem" }}>
+                The printed sheet has the exact times for your event; meal times
+                are confirmed on the day.
+              </p>
+              <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {FOOD_RHYTHM.map((row) => (
+                  <RhythmRow key={row.when} row={row} />
+                ))}
+              </ol>
+            </div>
+
+            <div className="ohx-card" style={{ padding: "22px 26px", background: "var(--surface-2)" }}>
+              <h3 className="ohx-display" style={{ fontSize: "1.1rem", margin: "0 0 10px" }}>
+                What we try to keep stocked
+              </h3>
+              <ul className="ohx-muted" style={{ margin: 0, paddingLeft: 18, fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {SNACK_IDEAS.map((group) => (
+                  <li key={group.group}>
+                    <strong style={{ color: "var(--ink)", fontWeight: 600 }}>{group.group}:</strong>{" "}
+                    {group.items}
+                  </li>
+                ))}
+              </ul>
+              <p className="ohx-faint" style={{ margin: "10px 0 0", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                {SNACK_INCLUSIVE_NOTE}
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -640,7 +832,7 @@ export default function VolunteersGuide() {
 export const getStaticProps = async () => {
   const title = "Event Volunteer Guide - Check-in, Shifts & Roles | Opportunity Hack";
   const description =
-    "Everything an Opportunity Hack event volunteer needs: the roles on the sign-up form, the shift blocks, a step-by-step check-in walkthrough, a before-during-after checklist, and answers to the questions volunteers ask most.";
+    "Everything an Opportunity Hack event volunteer needs: the roles on the sign-up form, the shift blocks, how the shared shift sheet and food area work, a step-by-step check-in walkthrough, a before-during-after checklist, and answers to the questions volunteers ask most.";
   const image = "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp";
   return {
     props: {
