@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,6 +12,49 @@ import {
 } from "@mui/icons-material";
 import useHackathonEvents from '../../hooks/use-hackathon-events';
 import { RefinedRoot, RefinedFonts, Eyebrow, Stat, Arrow } from '../../components/design/refined';
+
+const VolunteerChecklist = dynamic(
+  () => import("../../components/About/Volunteering/VolunteerChecklist")
+);
+
+const VOLUNTEER_FAQ = [
+  {
+    question: "Where do I check in?",
+    answer: "At the registration desk in the Engineering Center G Wing, ASU Tempe. Show your QR code from your application confirmation email and a volunteer scans it for instant check-in. Bring your ID as backup.",
+  },
+  {
+    question: "I lost my QR code. What do I do?",
+    answer: "It is also on your application page. Open the application you submitted for the event and screenshot the code before you leave home. Bring your ID as backup.",
+  },
+  {
+    question: "What time should I arrive?",
+    answer: "Before your slot starts. Registration opens at 8:00 AM on Saturday and doors open at 9:00 AM.",
+  },
+  {
+    question: "What will I actually be doing?",
+    answer: "It depends on your role: Check-in Registration greets arrivals and scans QR codes; Food Service helps with meals; Cleanup Crew keeps the space tidy; Photography captures the weekend; Judging Support helps judges and teams; Virtual Event Moderator keeps the online event running. Assignments are shared after approval.",
+  },
+  {
+    question: "What if I am late or cannot make my slot?",
+    answer: "Tell the organizers in Slack as soon as you know so they can find cover for your shift.",
+  },
+  {
+    question: "Do I need to stay the whole weekend?",
+    answer: "No. Volunteer slots are shifts. Sign up for the ones you can do.",
+  },
+  {
+    question: "How do I log my hours?",
+    answer: "Log them at /volunteer/track. This is optional — it is for volunteers who want their hours tracked, for example for work or school.",
+  },
+  {
+    question: "Where do I ask questions?",
+    answer: "Ask in Slack. General questions go in #help, and technical questions go in #ask-a-mentor.",
+  },
+  {
+    question: "I am a virtual volunteer. How do I check in?",
+    answer: "The Virtual Event Moderator role is remote, so coordinate in Slack. The online check-in portal is for remote mentors only.",
+  },
+];
 
 function Disclosure({ summary, defaultOpen, onOpen, children }) {
   return (
@@ -191,7 +235,7 @@ const VolunteerPage = () => {
     return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
   };
 
-  const ROLE_GUIDE = { judge: ["/about/judges", "Read the complete Judge Guide"], mentor: ["/about/mentors", "Read the complete Mentor Guide"] };
+  const ROLE_GUIDE = { judge: ["/about/judges", "Read the complete Judge Guide"], mentor: ["/about/mentors", "Read the complete Mentor Guide"], volunteer: ["/volunteer#volunteer-checklist", "Read the volunteer checklist"] };
 
   return (
     <>
@@ -320,6 +364,33 @@ const VolunteerPage = () => {
             <Link href="/jobs" className="ohx-btn ohx-btn--primary" onClick={() => track("roles_cta", "jobs_page")}>
               See organizer roles <Arrow />
             </Link>
+          </div>
+        </section>
+
+        {/* YOUR VOLUNTEER CHECKLIST */}
+        <section id="volunteer-checklist" style={{ background: "var(--surface-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", scrollMarginTop: 90 }}>
+          <div className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(48px, 7vh, 80px)" }}>
+            <Eyebrow>Your volunteer checklist</Eyebrow>
+            <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 12 }}>Show up ready</h2>
+            <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 36, maxWidth: "72ch", lineHeight: 1.6 }}>
+              Volunteers run registration. Every volunteer gets a personal checklist — what to
+              do before the event, how check-in works at the door, and what to do during and
+              after your shift — so nothing falls through the cracks on event day.
+            </p>
+            <Box sx={{ mb: 6 }}><VolunteerChecklist /></Box>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 7vh, 80px)", paddingBottom: "clamp(40px, 6vh, 64px)" }}>
+          <Eyebrow>FAQ for event volunteers</Eyebrow>
+          <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>Questions, answered</h2>
+          <div style={{ maxWidth: 820 }}>
+            {VOLUNTEER_FAQ.map((item, idx) => (
+              <Disclosure key={idx} summary={item.question}>
+                <p className="ohx-muted" style={{ margin: 0, fontSize: "0.96rem", lineHeight: 1.7 }}>{item.answer}</p>
+              </Disclosure>
+            ))}
           </div>
         </section>
 
