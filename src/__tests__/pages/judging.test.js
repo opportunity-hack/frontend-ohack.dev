@@ -202,8 +202,33 @@ describe("published schedule", () => {
     const panel = screen.getByRole("region", { name: "Panel A" });
     fireEvent.click(within(panel).getByRole("button", { name: "Watch Alpha demo" }));
     expect(await screen.findByTestId("video-player")).toHaveTextContent("dQw4w9WgXcQ");
-    expect(screen.getByText("Alpha demo")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Alpha demo" })).toBeInTheDocument();
+    // Team context stays visible next to the video.
+    expect(screen.getByText(/^Panel A · Room 101/)).toBeInTheDocument();
     expect(trackEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "judging_schedule_video_play" }));
+  });
+
+  it("Present maximizes the video, F toggles it, Esc leaves Present before closing", async () => {
+    window.sessionStorage.clear();
+    render(<JudgingPage eventData={eventData} schedule={published} />);
+    const panel = screen.getByRole("region", { name: "Panel A" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Watch Alpha demo" }));
+    await screen.findByTestId("video-player");
+
+    fireEvent.click(screen.getByRole("button", { name: "Present" }));
+    expect(screen.getByRole("button", { name: "Exit presentation" })).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".MuiDialog-paperFullScreen")).not.toBeNull();
+    expect(trackEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "judging_schedule_video_present" }));
+    expect(window.sessionStorage.getItem("ohack.judgingVideo.present")).toBe("1");
+
+    // First Esc exits Present; the video stays open.
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(screen.getByRole("button", { name: "Present" })).toBeInTheDocument();
+    expect(screen.getByTestId("video-player")).toBeInTheDocument();
+
+    // "F" toggles it back on.
+    fireEvent.keyDown(window, { key: "f" });
+    expect(screen.getByRole("button", { name: "Exit presentation" })).toBeInTheDocument();
   });
 
   it("print button calls window.print and fires GA", () => {

@@ -7,15 +7,8 @@ import React, {
 } from "react";
 import NextLink from "next/link";
 import { styled } from "@mui/material/styles";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
-import VideoDisplay from "../VideoDisplay/VideoDisplay";
+import DemoVideoDialog from "./DemoVideoDialog";
 import { getWinningStatus } from "../../constants/teamStatus";
 import { submissionLabel } from "../Teams/projectMeta";
 import { relativeTime } from "../Teams/mentorCoverage";
@@ -322,6 +315,8 @@ const TeamRow = ({
   eventId,
   timezone,
   query,
+  panelName,
+  panelRoom,
   onPlayVideo,
   onTeamClick,
 }) => {
@@ -404,7 +399,13 @@ const TeamRow = ({
                 width={96}
                 height={54}
                 label={`Watch ${team.name || "team"} demo`}
-                onClick={() => onPlayVideo(team.demo_video_url, team.name)}
+                onClick={() =>
+                  onPlayVideo(team.demo_video_url, team.name, {
+                    panelName,
+                    room: team.room || panelRoom,
+                    nonprofit: team.nonprofitName,
+                  })
+                }
               />
             </span>
             <span className="js-print-only" style={{ fontSize: "9pt" }}>
@@ -562,6 +563,8 @@ const PanelCard = ({
                   eventId={eventId}
                   timezone={timezone}
                   query={query}
+                  panelName={panel.panel_name}
+                  panelRoom={panel.room}
                   onPlayVideo={onPlayVideo}
                   onTeamClick={onTeamClick}
                 />
@@ -876,10 +879,15 @@ export default function JudgingSchedule({
   );
 
   // --- video dialog (exactly one) ---------------------------------------------------
-  const [video, setVideo] = useState({ open: false, url: null, teamName: null });
+  const [video, setVideo] = useState({
+    open: false,
+    url: null,
+    teamName: null,
+    context: null,
+  });
   const onPlayVideo = useCallback(
-    (url, teamName) => {
-      setVideo({ open: true, url, teamName: teamName || null });
+    (url, teamName, context) => {
+      setVideo({ open: true, url, teamName: teamName || null, context: context || null });
       ga("judging_schedule_video_play", eventId);
     },
     [eventId],
@@ -887,6 +895,10 @@ export default function JudgingSchedule({
   const closeVideo = useCallback(
     () => setVideo((v) => ({ ...v, open: false })),
     [],
+  );
+  const onPresentVideo = useCallback(
+    () => ga("judging_schedule_video_present", eventId),
+    [eventId],
   );
 
   const onPrint = () => {
@@ -1112,29 +1124,14 @@ export default function JudgingSchedule({
         </div>
       </TocStyles>
 
-      <Dialog
+      <DemoVideoDialog
         open={video.open}
+        url={video.url}
+        teamName={video.teamName}
+        context={video.context}
         onClose={closeVideo}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="judging-video-title"
-      >
-        <DialogTitle id="judging-video-title" sx={{ pr: 6 }}>
-          {video.teamName ? `${video.teamName} demo` : "Team demo"}
-          <IconButton
-            aria-label="Close demo video"
-            onClick={closeVideo}
-            sx={{ position: "absolute", right: 8, top: 8, color: "#5B6270" }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {video.url && (
-            <VideoDisplay url={video.url} title={video.teamName || "Team demo"} />
-          )}
-        </DialogContent>
-      </Dialog>
+        onPresent={onPresentVideo}
+      />
     </Frame>
   );
 }

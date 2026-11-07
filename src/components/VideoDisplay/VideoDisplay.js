@@ -21,7 +21,9 @@ const VideoWrapper = styled("div")({
 // Raw video files (e.g. bio videos uploaded to cdn.ohack.dev)
 const RAW_VIDEO_REGEX = /\.(mp4|webm|mov)(\?|#|$)/i;
 
-const VideoDisplay = ({ url, title }) => {
+// `fill`: take the parent's full width (no 600px cap, no margin) and keep
+// the title for the iframe only — for callers that frame the video themselves.
+const VideoDisplay = ({ url, title, fill = false }) => {
   const getVideoConfig = (url) => {
     if (!url) return null;
 
@@ -88,13 +90,19 @@ const VideoDisplay = ({ url, title }) => {
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '600px', margin: '1rem 0' }}>
-      {title && (
+    <Box
+      sx={
+        fill
+          ? { width: '100%' }
+          : { width: '100%', maxWidth: '600px', margin: '1rem 0' }
+      }
+    >
+      {title && !fill && (
         <Typography variant="subtitle1" gutterBottom>
           {title}
         </Typography>
       )}
-      <VideoWrapper>
+      <VideoWrapper sx={fill ? { marginBottom: 0, borderRadius: '6px', bgcolor: '#000' } : undefined}>
         {videoConfig.type === 'file' ? (
           <video
             src={videoConfig.embedUrl}
