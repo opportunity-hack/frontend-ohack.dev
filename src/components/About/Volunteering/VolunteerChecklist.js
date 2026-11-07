@@ -76,9 +76,9 @@ export const VOLUNTEER_CHECKLIST = [
       },
       {
         id: "arrive-track",
-        title: "Start tracking your volunteer time",
+        title: "Track your volunteer time (optional)",
         details:
-          "Log your hours on the volunteer time tracker so they count toward Hearts and your volunteer letter.",
+          "Handy if you need documented hours for work or school — the time tracker keeps a log you can share.",
         href: "/volunteer/track",
         hrefLabel: "Open the time tracker",
       },
@@ -159,8 +159,8 @@ export const VOLUNTEER_CHECKLIST = [
     items: [
       {
         id: "after-hours",
-        title: "Finish logging your hours",
-        details: "Close out your sessions on the time tracker.",
+        title: "Close out your tracked time (optional)",
+        details: "If you used the time tracker, end your session so the log is complete.",
         href: "/volunteer/track",
         hrefLabel: "Time tracker",
       },
