@@ -109,8 +109,11 @@ const JudgeTeamCard = ({
           <span className="ohx-tag">Not scored yet</span>
         )}
         {demoTime && <span className="ohx-tag">Demo {demoTime}</span>}
-        {round === "round2" && team.room && (
-          <span className="ohx-tag">{team.room}</span>
+        {team.room && <span className="ohx-tag">{team.room}</span>}
+        {team.panel_name && (
+          <span className="ohx-tag" style={{ color: "var(--muted, #5B6270)" }}>
+            {team.panel_name}
+          </span>
         )}
       </div>
 

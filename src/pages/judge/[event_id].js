@@ -36,6 +36,7 @@ import {
   MAX_TOTAL,
 } from "../../components/Judge/judgingCriteria";
 import { trackEvent } from "../../lib/ga";
+import useJudgingSchedule from "../../hooks/use-judging-schedule";
 
 const VideoDisplay = dynamic(
   () => import("../../components/VideoDisplay/VideoDisplay"),
@@ -133,6 +134,10 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
   const [activeTab, setActiveTab] = useState(0);
   const [adjustingKey, setAdjustingKey] = useState(null);
   const [savingKey, setSavingKey] = useState(null);
+  // Public schedule: only used to link "Rooms & co-judges" once published.
+  const { schedule: publicSchedule } = useJudgingSchedule(
+    typeof event_id === "string" ? event_id : null,
+  );
   const [saveError, setSaveError] = useState(null);
   const [video, setVideo] = useState(null);
   const [toast, setToast] = useState(null);
@@ -486,6 +491,17 @@ const HackathonJudgePage = withRequiredAuthInfo(() => {
                 adjust a score from this page any time before the round is
                 locked — nothing changes until you press Save.
               </p>
+              {publicSchedule?.published && (
+                <p style={{ marginTop: 10 }}>
+                  <Link
+                    href={`/hack/${encodeURIComponent(event_id)}/judging`}
+                    className="ohx-link"
+                    style={{ fontWeight: 600 }}
+                  >
+                    Rooms &amp; co-judges →
+                  </Link>
+                </p>
+              )}
               <div
                 style={{
                   display: "flex",

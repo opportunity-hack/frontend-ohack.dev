@@ -50,6 +50,7 @@ jest.mock("../../lib/judgeApi", () => {
     getJudgeTeams: jest.fn(),
     getJudgeScores: jest.fn(),
     submitScore: jest.fn(),
+    getPublicSchedule: jest.fn(() => Promise.resolve(null)),
   };
   class JudgeApiError extends Error {
     constructor(message, { status, body } = {}) {

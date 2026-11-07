@@ -178,6 +178,15 @@ Fire via `trackEvent({ action, params })` with `page: "hacker_application"` and 
 | `hacker_app_unlocked` | `pages/hack/[event_id]/hacker-application.js` | `{ event_label: "locked" \| "event_ended", event_id }` | The organizer-shared access code (`constraints.application_hacker_enabled_code`) unlocked a locked or ended form. |
 | `hacker_app_auto_approved` | same page | `{ event_label: "approved" \| "waitlisted", event_id }` | Success screen after a submit the backend auto-decided (`hacker_auto_approve` on): straight onto the roster, or waitlisted at `hacker_capacity`. Not fired for manually approved hackers who update. |
 
+### Event volunteer guide (`/about/volunteers`, Nov 2026)
+
+The volunteer counterpart of `/about/mentors` + `/about/judges`. One action, `click_volunteers`, fired via `trackEvent({ action, params })`; `button` says what was clicked.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `click_volunteers` | `pages/about/volunteers/index.js` | `{ button: "find_events_hero" \| "checkin_guide_hero" \| "volunteer_apply_upcoming" \| "event_details" \| "all_hackathons" \| "explore_roles" \| "cta_hackathons" \| "cta_all_roles" \| "cta_jobs", event_id? }` | Hero CTAs, the upcoming-events cards (`event_id` set), and the closing CTA band. |
+| `click_volunteers` | `components/About/Volunteering/VolunteerChecklist.js` | `{ button: "checklist_toggle", item: <checklist item id> }` / `{ button: "checklist_reset" }` | The before/during/after checklist (ticks persist in `localStorage["ohack.volunteerChecklist.v1"]`, never sent to the server). |
+
 ### Judging (Oct 2026)
 
 Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.
@@ -189,6 +198,18 @@ Judge-side events fire via `trackEvent({ action, params })` from the refined jud
 | `judge_inline_adjust_saved` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Inline "Save changes" succeeded (`POST /api/judge/score` re-submit). Ratio to `_open` = how often judges actually change their mind after a demo. |
 | `judge_score_submitted` | `pages/judge/[event_id]/team/[team_id].js` | `{ event_id, round, event_label: "submit" \| "update", page: "judge_team" }` | Full scoring page submit succeeded; `update` = re-submitting an already-submitted score. |
 
+### Judging schedule (`/hack/[event_id]/judging`, Nov 2026, `event_category: "engagement"`)
+
+All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_category: "engagement", event_label: <event_id> }`.
+
+| Event Name | Extra parameters | Notes |
+|------------|------------------|-------|
+| `judging_schedule_view` | `{ state: ready\|unpublished\|empty\|unavailable }` | Once per page visit, after the schedule state resolves. `unavailable` also covers a 404 from an older backend. |
+| `judging_schedule_team_click` | — | A team name (panel table or "not on a panel yet" list) was clicked. |
+| `judging_schedule_video_play` | — | A demo thumbnail opened the page-level video dialog. |
+| `judging_schedule_print` | — | "Print" pressed (`window.print()`). |
+| `judging_schedule_search` | — | Debounced 1.5 s after typing in "Find your team". The query text is never sent. |
+
 ### Admin (`event_category: "admin"`)
 
 | Event Name | Source | Parameters | Notes |
@@ -198,6 +219,7 @@ Judge-side events fire via `trackEvent({ action, params })` from the refined jud
 | `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
 | `admin_judging_lock` / `admin_judging_unlock` | `admin/judging/JudgeProgressPanel.js` | `{ event_category: "admin", event_label: "round1" \| "round2", event_id }` | Scoring for a round locked/unlocked from the Round 1 / Round 2 admin tabs (`POST /api/judge/admin/locks/<event>/<round>`). |
 | `admin_hacker_auto_approve_toggle` | `admin/hackathon-edit/sections/ParticipantsSection.js` | `{ event_category: "admin", event_label: "on" \| "off", event_id }` | "Auto-approve hacker applications" switch in the Participants section's Roster & capacity card. |
+| `admin_judging_schedule_publish` | `admin/hackathon-edit/sections/JudgingSection.js` | `{ event_category: "admin", event_label: <event_id>, value: 1\|0 }` | "Publish the judging schedule" switch flipped on (1) / off (0) — writes `constraints.judging_schedule_published` (autosave). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
 | `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
