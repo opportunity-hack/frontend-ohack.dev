@@ -1,329 +1,306 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import React from "react";
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import "@testing-library/jest-dom";
 
-// Define ga
-import * as ga from '../../../lib/ga';
+import * as ga from "../../../lib/ga";
 
-// Move ALL mocks before ANY imports from the application code
-// Mock Google Analytics
-jest.mock('../../../lib/ga', () => ({
+jest.mock("../../../lib/ga", () => ({
   __esModule: true,
+  initFacebookPixel: jest.fn(),
   trackPageView: jest.fn(),
   trackEvent: jest.fn(),
-  trackSearch: jest.fn(),
   trackStructuredEvent: jest.fn(),
   EventCategory: {
-    CONTENT: 'content',
-    USER_INTERACTION: 'user_interaction',
-    NAVIGATION: 'navigation',
-    CONVERSION: 'conversion'
+    CONTENT: "content",
+    NAVIGATION: "navigation",
+    CONVERSION: "conversion",
   },
   EventAction: {
-    VIEW: 'view',
-    SEARCH: 'search',
-    FILTER: 'filter',
-    CLICK: 'click'
-  }
-}));
-
-// Mock Next.js router
-jest.mock('next/router', () => ({
-  useRouter: () => ({
-    pathname: '/blog',
-    query: {},
-    push: jest.fn(),
-    replace: jest.fn(),
-    isReady: true
-  })
-}));
-
-// Mock MUI icons
-jest.mock('@mui/icons-material/GitHub', () => ({
-  __esModule: true,
-  default: () => <span data-testid="github-icon">GH</span>
-}));
-
-jest.mock('@mui/icons-material/Search', () => ({
-  __esModule: true,
-  default: () => <span data-testid="search-icon">S</span>
-}));
-
-jest.mock('@mui/icons-material/RssFeed', () => ({
-  __esModule: true,
-  default: () => <span data-testid="rss-feed-icon">RSS</span>
-}));
-
-// Mock MUI components
-jest.mock('@mui/material', () => ({
-  Typography: (props) => <div {...props} data-testid="mui-typography">{props.children}</div>,
-  Container: (props) => <div {...props} data-testid="mui-container">{props.children}</div>,
-  Grid: (props) => <div {...props} data-testid="mui-grid">{props.children}</div>,
-  Card: (props) => <div {...props} data-testid="mui-card">{props.children}</div>,
-  CardContent: (props) => <div {...props} data-testid="mui-card-content">{props.children}</div>,
-  CardMedia: (props) => <div {...props} data-testid="mui-card-media" />,
-  Chip: (props) => <span {...props} role="button" data-testid="mui-chip">{props.label}</span>,
-  CircularProgress: () => <div role="progressbar" data-testid="mui-progress" />,
-  Divider: () => <hr data-testid="mui-divider" />,
-  Button: (props) => <button {...props} data-testid="mui-button">{props.children}</button>,
-  Box: (props) => <div {...props} data-testid="mui-box">{props.children}</div>,
-  Paper: (props) => <div {...props} data-testid="mui-paper">{props.children}</div>,
-  InputAdornment: (props) => <div {...props} data-testid="mui-input-adornment">{props.children}</div>,
-  TextField: (props) => (
-    <div data-testid="mui-text-field">
-      <input 
-        type="text" 
-        placeholder={props.placeholder} 
-        value={props.value} 
-        onChange={props.onChange}
-      />
-    </div>
-  ),
-  useMediaQuery: jest.fn().mockReturnValue(false),
-  styled: (component) => (styles) => {
-    const StyledComponent = React.forwardRef((props, ref) => 
-      React.createElement(component, { ...props, ref, 'data-testid': 'styled-component' })
-    );
-    StyledComponent.displayName = `Styled(${component.displayName || component.name || 'Component'})`;
-    return StyledComponent;
-  }
-}));
-
-// Mock styled components
-jest.mock('@mui/material/styles', () => ({
-  styled: (component) => (styles) => {
-    const StyledComponent = React.forwardRef((props, ref) => 
-      React.createElement(component, { ...props, ref, 'data-testid': 'styled-component' })
-    );
-    StyledComponent.displayName = `Styled(${component.displayName || component.name || 'Component'})`;
-    return StyledComponent;
+    VIEW: "view",
+    SEARCH: "search",
+    FILTER: "filter",
+    CLICK: "click",
   },
-  useTheme: jest.fn(() => ({
-    palette: {
-      primary: { main: '#000' },
-      background: { paper: '#fff' },
-      text: { primary: '#000', secondary: '#666' },
-      action: { hover: '#f5f5f5' },
-      common: { white: '#fff' }
-    },
-    spacing: jest.fn(factor => `${factor * 8}px`),
-    breakpoints: {
-      up: jest.fn(),
-      down: jest.fn(),
-      between: jest.fn()
-    },
-    shape: {
-      borderRadius: 4
-    },
-    shadows: ['none', '0px 2px 1px -1px rgba(0,0,0,0.2)']
-  }))
 }));
 
-// Mock styles import
-jest.mock('../../../styles/nonprofit/styles', () => ({
-  TitleContainer: (props) => <div {...props} data-testid="title-container">{props.children}</div>,
-  LayoutContainer: (props) => <div {...props} data-testid="layout-container">{props.children}</div>,
+const mockReplace = jest.fn();
+let mockQuery = {};
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    pathname: "/blog",
+    query: mockQuery,
+    push: jest.fn(),
+    replace: mockReplace,
+    isReady: true,
+  }),
 }));
 
-// Mock News component to simplify testing. Records every props object it's
-// called with (via a `mock`-prefixed var so babel-plugin-jest-hoist allows
-// referencing it inside the factory) so tests can inspect exactly what the
-// very FIRST render pass — before any effect has run — received.
-var mockNewsCalls = [];
-jest.mock('../../News/News', () => {
-  return function MockNews(props) {
-    mockNewsCalls.push(props);
-    const { newsData, loading } = props;
+// jest.setup.js reduces next/link to bare children; the CtaBand's Join
+// Slack click handler lives on the Link, so render a real anchor.
+jest.mock("next/link", () => {
+  const ReactLib = require("react");
+  const MockLink = ReactLib.forwardRef(({ children, href, ...rest }, ref) =>
+    ReactLib.createElement("a", { href, ref, ...rest }, children),
+  );
+  MockLink.displayName = "MockLink";
+  return MockLink;
+});
+
+// Records every props object PostList is rendered with so tests can inspect
+// exactly what the very FIRST render pass — before any effect — received.
+var mockListCalls = [];
+jest.mock("../PostList", () => {
+  return function MockPostList(props) {
+    mockListCalls.push(props);
+    const { posts, loading } = props;
     return (
-      <div data-testid="news-component">
+      <div data-testid="post-list">
         {loading ? (
           <div>Loading...</div>
+        ) : posts && posts.length > 0 ? (
+          posts.map((item) => (
+            <div key={item.id} data-testid={`post-${item.id}`}>
+              {item.title}
+            </div>
+          ))
         ) : (
-          <div>
-            {newsData && newsData.length > 0 ? (
-              newsData.map(item => (
-                <div key={item.id} data-testid={`news-item-${item.id}`}>
-                  {item.title}
-                </div>
-              ))
-            ) : (
-              <div>No news data</div>
-            )}
-          </div>
+          <div>No posts</div>
         )}
       </div>
     );
   };
 });
 
-// Configure process.env
-process.env.NEXT_PUBLIC_API_SERVER_URL = 'http://localhost:3000';
+process.env.NEXT_PUBLIC_API_SERVER_URL = "http://localhost:3000";
 
-// Import the component AFTER all mocks are defined
-import BlogPage from '../BlogPage';
+import BlogPage from "../BlogPage";
 
-// Mock data for testing
 const mockPosts = [
-  { id: '1', title: 'Test Post 1', description: 'This is post 1 #react', links: [{ url: '#general', name: 'general' }] },
-  { id: '2', title: 'Test Post 2', description: 'This is post 2 #javascript', links: [] },
-  { id: '3', title: 'Test Post 3', description: 'This is post 3 #javascript #react', links: [] }
+  {
+    id: "1",
+    title: "Test Post 1",
+    description: "This is post 1 #react",
+    links: [{ url: "#general", name: "general" }],
+  },
+  {
+    id: "2",
+    title: "Test Post 2",
+    description: "This is post 2 #javascript",
+    links: [],
+  },
+  {
+    id: "3",
+    title: "Test Post 3",
+    description: "This is post 3 #javascript #react",
+    links: [],
+  },
 ];
 
-describe('BlogPage Component', () => {
+const chipsIn = (cloud) =>
+  within(cloud)
+    .getAllByRole("button")
+    .filter((b) => b.textContent.startsWith("#"));
+
+const tagCloud = () => screen.getByText("Browse by tag:").parentElement;
+
+describe("BlogPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock fetch for when posts aren't provided as props
+    mockQuery = {};
+    mockListCalls.length = 0;
     global.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({ text: mockPosts }),
-      })
+      Promise.resolve({ json: () => Promise.resolve({ text: mockPosts }) }),
     );
   });
 
-  test('renders with loading state initially', () => {
-    // Arrange & Act
+  test("renders with loading state initially (no posts prop)", () => {
     render(<BlogPage />);
-    
-    // Assert
-    expect(screen.getByTestId('news-component')).toHaveTextContent('Loading...');
+    expect(screen.getByTestId("post-list")).toHaveTextContent("Loading...");
   });
 
-  test('renders posts passed as props without fetching', async () => {
-    // Arrange & Act
+  test("renders posts passed as props without fetching", async () => {
     render(<BlogPage posts={mockPosts} />);
-
-    // Assert - should not be in loading state
     await waitFor(() => {
-      expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
+      expect(screen.getByTestId("post-list")).not.toHaveTextContent(
+        "Loading...",
+      );
     });
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('renders post titles synchronously on first render when posts are provided as props', () => {
-    // Arrange & Act — no waitFor/findBy: this must be true on the very first render.
+  test("seeds state from the posts prop on the very first render (SSR contract)", () => {
     render(<BlogPage posts={mockPosts} />);
-
-    // Assert
-    expect(screen.getByText('Test Post 1')).toBeInTheDocument();
-    expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
+    expect(screen.getByText("Test Post 1")).toBeInTheDocument();
+    expect(mockListCalls[0].loading).toBe(false);
+    expect(mockListCalls[0].posts).toEqual(mockPosts);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('seeds state from the posts prop directly (no SSR/hydration skeleton flash)', () => {
-    // The very first call News is rendered with — i.e. the initial render
-    // pass, before any useEffect has had a chance to run — must already
-    // carry the real data. RTL's render() flushes passive effects
-    // synchronously, which would otherwise mask a `useState([])` +
-    // `useEffect(() => setNewsData(posts))` implementation (it "self-heals"
-    // in this one synchronous act() flush, but not during an actual SSR
-    // pass, which never runs effects at all).
-    mockNewsCalls.length = 0;
-    render(<BlogPage posts={mockPosts} />);
-
-    expect(mockNewsCalls[0].loading).toBe(false);
-    expect(mockNewsCalls[0].newsData).toEqual(mockPosts);
-  });
-
-  test('fetches posts when none are provided as props', async () => {
-    // Arrange & Act
+  test("fetches posts when none are provided as props", async () => {
     render(<BlogPage />);
-    
-    // Assert
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/messages/news?limit=50'));
-    });
-  });
-
-  test('filters posts when search term is entered', async () => {
-    // Arrange
-    render(<BlogPage posts={mockPosts} />);
-    
-    // Wait for posts to load
-    await waitFor(() => {
-      expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
-    });
-    
-    // Act - search for "post 1"
-    const searchInput = screen.getByPlaceholderText(/search posts/i);
-    fireEvent.change(searchInput, { target: { value: 'post 1' } });
-    
-    // Assert
-    await waitFor(() => {
-      expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
-        ga.EventCategory.CONTENT,
-        'search',
-        'blog_content',
-        null,
-        { search_term: 'post 1' }
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/messages/news?limit=50"),
       );
     });
   });
 
-  test('filters posts when tag is selected', async () => {
-    // Arrange
+  test("initialises the Facebook pixel once on mount", () => {
     render(<BlogPage posts={mockPosts} />);
-    
-    // Wait for posts to load
-    await waitFor(() => {
-      expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
-    });
-    
-    // Act - find and click on a tag chip
-    const tagChips = await screen.findAllByRole('button');
-    const reactTag = tagChips.find(chip => chip.textContent.includes('react'));
-    fireEvent.click(reactTag);
-    
-    // Assert
-    await waitFor(() => {
-      expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
-        ga.EventCategory.CONTENT,
-        'filter',
-        'blog_tag',
-        null,
-        expect.objectContaining({ selected_tag: expect.any(String) })
-      );
-    });
+    expect(ga.initFacebookPixel).toHaveBeenCalledTimes(1);
   });
 
-  test('tracks click on GitHub code link', async () => {
-    // Arrange
+  test("search filters instantly but fires ONE GA event after the debounce", () => {
+    jest.useFakeTimers();
+    try {
+      render(<BlogPage posts={mockPosts} />);
+      const input = screen.getByPlaceholderText(/search posts/i);
+      fireEvent.change(input, { target: { value: "po" } });
+      fireEvent.change(input, { target: { value: "post 1" } });
+      // filtered at once
+      expect(screen.getByText("Test Post 1")).toBeInTheDocument();
+      expect(screen.queryByText("Test Post 2")).toBeNull();
+      expect(screen.getByText(/1 result for “post 1”/)).toBeInTheDocument();
+      expect(ga.trackStructuredEvent).not.toHaveBeenCalledWith(
+        "content",
+        "search",
+        expect.anything(),
+        null,
+        expect.anything(),
+      );
+      act(() => {
+        jest.advanceTimersByTime(600);
+      });
+      const searchCalls = ga.trackStructuredEvent.mock.calls.filter(
+        (c) => c[1] === "search",
+      );
+      expect(searchCalls).toEqual([
+        ["content", "search", "blog_content", null, { search_term: "post 1" }],
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test("tag chip filters, writes ?tag= shallowly and fires the filter GA event", async () => {
     render(<BlogPage posts={mockPosts} />);
-    
-    // Wait for posts to load
+    const react = within(tagCloud()).getByRole("button", { name: /#react/ });
+    fireEvent.click(react);
+    expect(react).toHaveAttribute("aria-pressed", "true");
+    expect(mockReplace).toHaveBeenCalledWith(
+      { pathname: "/blog", query: { tag: "react" } },
+      undefined,
+      { shallow: true, scroll: false },
+    );
     await waitFor(() => {
-      expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
+      expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
+        "content",
+        "filter",
+        "blog_tag",
+        null,
+        expect.objectContaining({ selected_tag: "react" }),
+      );
     });
-    
-    // Act - find and click the GitHub code button
-    const githubButton = screen.getByText(/view the blog code/i);
-    fireEvent.click(githubButton);
-    
-    // Assert
-    expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
-      ga.EventCategory.NAVIGATION,
-      ga.EventAction.CLICK,
-      'github_code_link'
+    expect(screen.queryByText("Test Post 2")).toBeNull();
+    expect(screen.getByText(/2 posts tagged #react/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+    expect(screen.getByText("Test Post 2")).toBeInTheDocument();
+    expect(mockReplace).toHaveBeenLastCalledWith(
+      { pathname: "/blog", query: {} },
+      undefined,
+      { shallow: true, scroll: false },
     );
   });
 
-  test('tracks click on Join Slack button', async () => {
-    // Arrange
+  test("hydrates the selected tag from ?tag= on load", () => {
+    mockQuery = { tag: "javascript" };
     render(<BlogPage posts={mockPosts} />);
-    
-    // Wait for posts to load
-    await waitFor(() => {
-      expect(screen.getByTestId('news-component')).not.toHaveTextContent('Loading...');
-    });
-    
-    // Act - find and click the Slack button
-    const slackButton = screen.getByText('Join Slack');
-    fireEvent.click(slackButton);
-    
-    // Assert
+    expect(
+      screen.getByRole("heading", { name: /tagged #javascript/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Test Post 1")).toBeNull();
+  });
+
+  test("tag cloud shows the top 8 by count, hides junk, and expands with Show all", () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({
+      id: `m${i}`,
+      title: `M${i}`,
+      // tag0 appears in every post, tagN in posts >= N → descending counts
+      description:
+        Array.from({ length: i + 1 }, (_, j) => `#tag${j}`).join(" ") +
+        " #C01CMCF4BUN #55",
+      links: [],
+    }));
+    render(<BlogPage posts={many} />);
+    const cloud = tagCloud();
+    expect(chipsIn(cloud)).toHaveLength(8);
+    expect(chipsIn(cloud)[0]).toHaveTextContent("#tag0 · 12");
+    expect(
+      within(cloud).queryByRole("button", { name: /C01CMCF4BUN|#55/ }),
+    ).toBeNull();
+
+    const showAll = within(cloud).getByRole("button", { name: /show all 12/i });
+    expect(showAll).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(showAll);
+    expect(chipsIn(tagCloud())).toHaveLength(12);
+    expect(
+      within(tagCloud()).getByRole("button", { name: /show fewer/i }),
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("no tag block at all when posts carry no tags", () => {
+    render(
+      <BlogPage
+        posts={[
+          { id: "x", title: "Plain", description: "no tags here", links: [] },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("Browse by tag:")).toBeNull();
+  });
+
+  test("tracks the GitHub 'how these posts are made' link", () => {
+    render(<BlogPage posts={mockPosts} />);
+    fireEvent.click(screen.getByText(/how these posts are made/i));
     expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
-      ga.EventCategory.CONVERSION,
-      ga.EventAction.CLICK,
-      'join_slack'
+      "navigation",
+      "click",
+      "github_code_link",
+    );
+  });
+
+  test("tracks click on Join Slack in the closing band", () => {
+    render(<BlogPage posts={mockPosts} />);
+    fireEvent.click(screen.getByText("Join Slack"));
+    expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
+      "conversion",
+      "click",
+      "join_slack",
+    );
+    expect(screen.getByText("Join Slack").closest("a")).toHaveAttribute(
+      "href",
+      "/signup",
+    );
+  });
+
+  test("forwards post clicks as blog_list_post with position", () => {
+    render(<BlogPage posts={mockPosts} />);
+    const { onPostClick } = mockListCalls[mockListCalls.length - 1];
+    onPostClick(mockPosts[1], 2);
+    expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
+      "navigation",
+      "click",
+      "blog_list_post",
+      null,
+      { post_id: "2", position: 2 },
     );
   });
 });

@@ -157,6 +157,7 @@ export const CtaBand = ({
           href={primary.href}
           className="ohx-btn"
           style={{ background: "#fff", color: "var(--brand)" }}
+          onClick={primary.onClick}
         >
           {primary.label}
         </Link>
@@ -166,6 +167,7 @@ export const CtaBand = ({
           href={secondary.href}
           className="ohx-btn ohx-btn--ghost"
           style={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}
+          onClick={secondary.onClick}
         >
           {secondary.label}
         </Link>
