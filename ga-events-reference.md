@@ -134,6 +134,24 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
 | `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
 
+<<<<<<< HEAD
+=======
+### Team membership (`/hack/[event_id]#teams` cards + `/hack/[event_id]/team/[team_id]#members`, Nov 2026, `event_category: "engagement"`)
+
+Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — only after the backend confirmed the change (never on a 200 + "Error: …" soft failure).
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `team_join` | Hacker joined a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Which surface forms teams; join volume per event |
+| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Churn between teams before/during the event |
+
+### "Your teams" card on `/profile` (Nov 2026, `event_category: "engagement"`)
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `profile_my_teams_click` | Click on a link in the profile's "Your teams" card | `{ event_label: "manage" \| "team_page" \| "find_team" \| "create_team" \| "browse_events", event_id? }` | Does the profile actually route people to their team dashboard / team formation |
+
+>>>>>>> 54f3f92 (feat(profile): "Your teams" card — current hackathon's team first)
 ### Hackers' Choice peer vote (`/hack/[event_id]/vote` + CTAs)
 
 | Event Name | Source | Parameters | Notes |
