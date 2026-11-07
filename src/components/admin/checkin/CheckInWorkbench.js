@@ -23,6 +23,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Autocomplete,
+  Collapse,
 } from "@mui/material";
 import QrScanner from 'react-qr-scanner';
 import AdminPage from "../../../components/admin/AdminPage";
@@ -33,6 +35,19 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonIcon from '@mui/icons-material/Person';
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 import ExportCsvButton from "../ExportCsvButton";
+
+const VOLUNTEER_TYPES = [
+  { value: "hacker", label: "Hacker" },
+  { value: "mentor", label: "Mentor" },
+  { value: "judge", label: "Judge" },
+  { value: "volunteer", label: "Volunteer" },
+  { value: "sponsor", label: "Sponsor" },
+];
+
+// Label for a roster row in the Manual Entry search. Email is the tiebreaker
+// when two people share a name at the desk.
+const rosterOptionLabel = (p) =>
+  [p?.name || "(no name)", p?.email].filter(Boolean).join(" — ");
 
 const CHECKED_IN_CSV_COLUMNS = [
   { key: "name", label: "Name" },
@@ -90,6 +105,13 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
   const [manualEventId, setManualEventId] = useState("");
   const [manualVolunteerId, setManualVolunteerId] = useState("");
   const [manualVolunteerType, setManualVolunteerType] = useState("");
+  // Manual Entry roster search: the desk volunteer rarely knows a record id,
+  // so the dialog loads the chosen role's roster and lets them pick by name
+  // or email. The raw-id field stays behind a toggle as the fallback.
+  const [manualRoster, setManualRoster] = useState({ key: "", loading: false, people: [], error: null });
+  const [manualSelection, setManualSelection] = useState(null);
+  const [manualIdFieldOpen, setManualIdFieldOpen] = useState(false);
+  const rosterCacheRef = React.useRef({});
 
   // Scanner settings
   const [facingMode, setFacingMode] = useState('environment'); // 'user' for front camera, 'environment' for back camera
@@ -201,6 +223,46 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
       setAllCheckedInPeople([]);
     }
   }, [accessToken, orgId]);
+
+  // Load one role's roster for the Manual Entry search (admin endpoint — the
+  // same list processCheckIn verifies against). Cached per event+type until a
+  // check-in succeeds, so "already checked in" stays truthful.
+  const fetchManualRoster = useCallback(async (eventId, volunteerType) => {
+    if (!eventId || !volunteerType) return;
+    const key = `${eventId}|${volunteerType}`;
+    const cached = rosterCacheRef.current[key];
+    if (cached) {
+      setManualRoster({ key, loading: false, people: cached, error: null });
+      return;
+    }
+    setManualRoster({ key, loading: true, people: [], error: null });
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/admin/hackathon/${eventId}/${volunteerType}`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            "content-type": "application/json",
+            "X-Org-Id": orgId,
+          },
+        }
+      );
+      if (!response.ok) throw new Error(`Couldn't load the ${volunteerType} list (${response.status})`);
+      const data = await response.json();
+      const people = (Array.isArray(data.data) ? data.data : [])
+        .filter((p) => p && p.id)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      rosterCacheRef.current[key] = people;
+      setManualRoster({ key, loading: false, people, error: null });
+    } catch (error) {
+      setManualRoster({ key, loading: false, people: [], error: error.message });
+    }
+  }, [accessToken, orgId]);
+
+  useEffect(() => {
+    if (!manualEntryOpen) return;
+    fetchManualRoster(manualEventId, manualVolunteerType);
+  }, [manualEntryOpen, manualEventId, manualVolunteerType, fetchManualRoster]);
 
   // Handle hackathon event selection
   const handleEventChange = (eventId) => {
@@ -330,6 +392,7 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
       };
 
       setCheckInHistory(prev => [checkInRecord, ...prev.slice(0, 9)]); // Keep last 10 records
+      rosterCacheRef.current = {};
 
       setSnackbar({
         open: true,
@@ -456,9 +519,15 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
 
     await processCheckIn(manualEventId, manualVolunteerId, manualVolunteerType);
     setManualEntryOpen(false);
-    setManualEventId("");
     setManualVolunteerId("");
-    setManualVolunteerType("");
+    setManualSelection(null);
+  };
+
+  const openManualEntry = () => {
+    setManualEventId(selectedEventId || manualEventId);
+    setManualSelection(null);
+    setManualVolunteerId("");
+    setManualEntryOpen(true);
   };
 
   const handleViewVolunteer = (eventId, volunteerId, volunteerType) => {
@@ -596,7 +665,7 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
                 <Button
                   variant="outlined"
                   size="large"
-                  onClick={() => setManualEntryOpen(true)}
+                  onClick={openManualEntry}
                   sx={{ mb: 2 }}
                 >
                   Manual Entry
@@ -763,37 +832,137 @@ const CheckInWorkbench = ({ userClass, embedded = false, externalEventId, onSnac
         </Grid>
       </Grid>
 
-      {/* Manual Entry Dialog */}
+      {/* Manual Entry Dialog — pick a role, search the roster by name/email */}
       <Dialog open={manualEntryOpen} onClose={() => setManualEntryOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Manual Check-In Entry</DialogTitle>
+        <DialogTitle>Manual check-in</DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            For anyone without their QR code. Pick their role, then find them by name or email.
+          </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Event ID"
-              value={manualEventId}
-              onChange={(e) => setManualEventId(e.target.value)}
-              placeholder="e.g., 2025_fall"
+            {embedded ? (
+              <Typography variant="caption" color="textSecondary">
+                Event: <strong>{manualEventId || selectedEventId}</strong>
+              </Typography>
+            ) : (
+              <TextField
+                fullWidth
+                label="Event ID"
+                value={manualEventId}
+                onChange={(e) => setManualEventId(e.target.value)}
+                placeholder="e.g., 2025_fall"
+              />
+            )}
+            <FormControl fullWidth>
+              <InputLabel id="manual-volunteer-type-label">Role</InputLabel>
+              <Select
+                labelId="manual-volunteer-type-label"
+                id="manual-volunteer-type"
+                label="Role"
+                value={manualVolunteerType}
+                onChange={(e) => {
+                  setManualVolunteerType(e.target.value);
+                  setManualSelection(null);
+                  setManualVolunteerId("");
+                }}
+              >
+                {VOLUNTEER_TYPES.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Autocomplete
+              id="manual-roster-search"
+              options={manualRoster.people}
+              value={manualSelection}
+              loading={manualRoster.loading}
+              disabled={!manualVolunteerType}
+              getOptionLabel={rosterOptionLabel}
+              isOptionEqualToValue={(a, b) => a?.id === b?.id}
+              onChange={(_, person) => {
+                setManualSelection(person);
+                setManualVolunteerId(person?.id || "");
+              }}
+              noOptionsText={
+                manualRoster.error
+                  ? manualRoster.error
+                  : manualRoster.loading
+                    ? "Loading…"
+                    : manualVolunteerType
+                      ? "Nobody on this list matches"
+                      : "Pick a role first"
+              }
+              renderOption={(props, person) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li key={key} {...optionProps}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {person.name || '(no name)'}
+                        </Typography>
+                        {person.checkedIn === true && (
+                          <Chip size="small" color="success" label="Checked in" />
+                        )}
+                        {person.isSelected !== true && (
+                          <Chip size="small" color="warning" variant="outlined" label="Not on roster" />
+                        )}
+                      </Box>
+                      {person.email && (
+                        <Typography variant="caption" color="textSecondary">{person.email}</Typography>
+                      )}
+                    </Box>
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search by name or email"
+                  placeholder={manualVolunteerType ? "Start typing a name…" : "Pick a role first"}
+                  helperText={
+                    manualSelection?.isSelected !== true && manualSelection
+                      ? "This person isn't on the roster yet — check with an organizer before checking them in."
+                      : manualSelection?.checkedIn === true
+                        ? `Already checked in${manualSelection.checkedInAt ? ` at ${new Date(manualSelection.checkedInAt).toLocaleString()}` : ''}.`
+                        : manualRoster.loading
+                          ? "Loading the roster…"
+                          : " "
+                  }
+                />
+              )}
             />
-            <TextField
-              fullWidth
-              label="Volunteer ID"
-              value={manualVolunteerId}
-              onChange={(e) => setManualVolunteerId(e.target.value)}
-              placeholder="e.g., 12345"
-            />
-            <TextField
-              fullWidth
-              label="Volunteer Type"
-              value={manualVolunteerType}
-              onChange={(e) => setManualVolunteerType(e.target.value)}
-              placeholder="mentor, judge, volunteer, hacker, or sponsor"
-            />
+            <Box>
+              <Button
+                size="small"
+                onClick={() => setManualIdFieldOpen((v) => !v)}
+                sx={{ textTransform: 'none', px: 0 }}
+              >
+                {manualIdFieldOpen ? "Hide the ID field" : "Have their record ID? Enter it directly"}
+              </Button>
+              <Collapse in={manualIdFieldOpen}>
+                <TextField
+                  fullWidth
+                  sx={{ mt: 1 }}
+                  label="Record ID"
+                  value={manualVolunteerId}
+                  onChange={(e) => {
+                    setManualVolunteerId(e.target.value);
+                    setManualSelection(null);
+                  }}
+                  placeholder="The id shown on their QR card"
+                />
+              </Collapse>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManualEntryOpen(false)}>Cancel</Button>
-          <Button onClick={handleManualCheckIn} variant="contained" disabled={loading}>
+          <Button
+            onClick={handleManualCheckIn}
+            variant="contained"
+            disabled={loading || !manualEventId || !manualVolunteerId || !manualVolunteerType}
+          >
             {loading ? <CircularProgress size={20} /> : "Check In"}
           </Button>
         </DialogActions>
