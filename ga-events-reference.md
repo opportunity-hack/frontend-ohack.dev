@@ -31,6 +31,8 @@ export const trackEvent = ({ action, params }) => {
 | `button_donate` | User clicks donation link | `{ action_name: "donate" }` | Track donation conversion funnel |
 | `button_request` | User requests a hackathon | `{ action_name: "request_hackathon" }` | Measure demand for organized events |
 | `button_see_all` | User clicks to see all projects | `{ action_name: "see_all_nonprofit_projects" }` | Track project discovery behavior |
+| `home_blog_post` | Homepage "From the blog" band: user clicks a post (featured card = position 1, rows = 2–3). Structured NAVIGATION/CLICK event via the homepage `track()` | `{ button_text: <post title>, post_id, position }` | Measure whether the homepage drives blog readership |
+| `home_blog_all_posts` | Homepage "From the blog" band: "All posts →" link to `/blog` | `{ button_text: "All posts" }` | Track blog index discovery from the landing page |
 
 ### Authentication Events
 
