@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import NextLink from "next/link";
@@ -14,14 +14,22 @@ import {
   Description as DescriptionIcon,
 } from "@mui/icons-material";
 import { FaSlack, FaHeart } from "react-icons/fa";
+import { useRedirectFunctions } from "@propelauth/react";
 import {
   isWinningStatus,
   getWinningStatus,
-  isJoiningDisabled,
 } from "../../../../../constants/teamStatus";
 import { parseLocalDate } from "../../../../../lib/dateUtils";
 import { RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
-import useTeamMembership from "../../../../../hooks/use-team-membership";
+import useTeamJoinLeave from "../../../../../hooks/use-team-join-leave";
+import useHeartsSummary from "../../../../../hooks/use-hearts-summary";
+import TeamMembershipActions from "../../../../../components/Teams/TeamMembershipActions";
+import {
+  teamJoinBlockedReason,
+  teamLeaveBlockedReason,
+  addProfileToUsers,
+  removeProfileFromUsers,
+} from "../../../../../lib/teamMembershipApi";
 import TeamBreadcrumbs from "../../../../../components/Teams/TeamBreadcrumbs";
 import SurveyCTA from "../../../../../components/Survey/SurveyCTA";
 import TeamMentorSummaryCard from "../../../../../components/Teams/TeamMentorSummaryCard";
@@ -157,7 +165,54 @@ export default function TeamDetailPage({
   const [hasJudging, setHasJudging] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
-  const { isOnTeam, membershipChecked } = useTeamMembership(event_id, team?.id);
+  const { redirectToLoginPage } = useRedirectFunctions();
+  // Own profile for the optimistic roster update after join/leave. Module-
+  // cached and shared with the NavBar, so this adds no request.
+  const { profile: ownProfile } = useHeartsSummary();
+
+  // Re-read the team after a join/leave so the roster converges on the
+  // server's answer (get_team reads Firestore fresh on every call).
+  const refreshTeam = useCallback(async () => {
+    if (!team_id) return;
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team/${team_id}`,
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      const teamObj = json.team || json;
+      if (teamObj?.id) setTeam(teamObj);
+    } catch (err) {
+      console.error("Error refreshing team:", err);
+    }
+  }, [team_id]);
+
+  const membership = useTeamJoinLeave({
+    eventId: event_id,
+    teamId: team?.id,
+    source: "team_page",
+    onJoined: () => {
+      if (ownProfile) {
+        setTeam((prev) =>
+          prev
+            ? { ...prev, users: addProfileToUsers(prev.users, ownProfile) }
+            : prev,
+        );
+      }
+      refreshTeam();
+    },
+    onLeft: () => {
+      if (ownProfile) {
+        setTeam((prev) =>
+          prev
+            ? { ...prev, users: removeProfileFromUsers(prev.users, ownProfile) }
+            : prev,
+        );
+      }
+      refreshTeam();
+    },
+  });
+  const { isOnTeam, membershipChecked } = membership;
 
   useEffect(() => {
     if (!event_id || !team_id) return;
@@ -364,12 +419,18 @@ export default function TeamDetailPage({
     return end < new Date();
   })();
 
-  const canJoin =
-    membershipChecked &&
-    !isOnTeam &&
-    isActive &&
-    !eventEnded &&
-    !isJoiningDisabled(team.status);
+  // Same gates as the event page's team cards (Hackathon/TeamList).
+  const teamJoinEnabled = event?.constraints?.team_join_enabled !== false;
+  const joinBlockedReason = teamJoinBlockedReason({
+    eventEnded,
+    teamJoinEnabled,
+    isActive,
+    status: team.status,
+  });
+  const leaveBlockedReason = teamLeaveBlockedReason({
+    eventEnded,
+    teamJoinEnabled,
+  });
 
   const missingStory = isOnTeam && isProjectStoryMissing(team);
   const missingDemo = isOnTeam && !team.demo_video_url;
@@ -1064,6 +1125,28 @@ export default function TeamDetailPage({
                     No members yet. Be the first to join!
                   </Box>
                 )}
+                <TeamMembershipActions
+                  eventId={event_id}
+                  teamName={teamName}
+                  slackChannel={team.slack_channel}
+                  isLoggedIn={membership.isLoggedIn}
+                  isOnTeam={isOnTeam}
+                  membershipChecked={membershipChecked}
+                  hackerStatus={membership.hackerStatus}
+                  joinBlockedReason={joinBlockedReason}
+                  leaveBlockedReason={leaveBlockedReason}
+                  pending={membership.pending}
+                  error={membership.error}
+                  result={membership.result}
+                  onJoin={membership.join}
+                  onLeave={membership.leave}
+                  onDismissFeedback={membership.clearFeedback}
+                  onLogin={() =>
+                    redirectToLoginPage({
+                      postLoginRedirectUrl: `${window.location.origin}/hack/${event_id}/team/${team_id}#members`,
+                    })
+                  }
+                />
               </Box>
             </SectionBlock>
 
@@ -1077,22 +1160,12 @@ export default function TeamDetailPage({
                   Manage your team
                 </NextLink>
               ) : (
-                <>
-                  {canJoin && (
-                    <NextLink
-                      href={`/hack/${event_id}/manageteam`}
-                      className="ohx-btn ohx-btn--ghost"
-                    >
-                      Want to join this team?
-                    </NextLink>
-                  )}
-                  <NextLink
-                    href={`/hack/${event_id}/findteam`}
-                    className="ohx-btn ohx-btn--ghost"
-                  >
-                    Find a team
-                  </NextLink>
-                </>
+                <NextLink
+                  href={`/hack/${event_id}/findteam`}
+                  className="ohx-btn ohx-btn--ghost"
+                >
+                  Find a team
+                </NextLink>
               )}
               <NextLink
                 href={`/hack/${event_id}`}
