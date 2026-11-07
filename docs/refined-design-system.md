@@ -164,6 +164,9 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       left-aligned Hanken items).
 - [x] `/blog` — `BlogPage` rewritten (hero + search + tag toggles + sidebar);
       the reused `News` component renders the post list inside the refined frame.
+      **Nov 2026:** sidebar removed; single `.ohx-narrow` column, `Blog/PostList`
+      (8 cards with 1:1 thumbs → compact rows), tag cloud with "Show all",
+      `CtaBand` closing band. See `docs/plans/blog-index-ux-2026-11.md`.
 - [x] `/about/completion` — `ProjectCompletion` rewritten (numbered DoD checklist).
 - [x] `/about/success-stories` — rewritten to refined story cards (data array
       kept verbatim); video + CTA refined.

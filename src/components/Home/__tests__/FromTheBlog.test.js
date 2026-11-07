@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import FromTheBlog from "../FromTheBlog";
+import FromTheBlog, { PostImage } from "../FromTheBlog";
 
 // jest.setup.js mocks next/link down to bare children; the hrefs ARE the
 // assertions here, so render a real anchor.
@@ -15,7 +15,8 @@ jest.mock("next/link", () => {
 jest.mock("next/image", () => {
   const ReactLib = require("react");
   // eslint-disable-next-line react/display-name
-  return ({ fill, ...props }) => ReactLib.createElement("img", { ...props, "data-next-image": "true" });
+  return ({ fill, ...props }) =>
+    ReactLib.createElement("img", { ...props, "data-next-image": "true" });
 });
 
 const posts = [
@@ -26,8 +27,20 @@ const posts = [
     image: "https://cdn.ohack.dev/news/p1.png",
     date: "2026-11-04 15:00:00",
   },
-  { id: "p2", title: "Fall recap", excerpt: "Recap.", image: null, date: "2026-10-20T10:00:00Z" },
-  { id: "p3", title: "Mentors wanted", excerpt: "", image: "https://example.com/x.jpg", date: null },
+  {
+    id: "p2",
+    title: "Fall recap",
+    excerpt: "Recap.",
+    image: null,
+    date: "2026-10-20T10:00:00Z",
+  },
+  {
+    id: "p3",
+    title: "Mentors wanted",
+    excerpt: "",
+    image: "https://example.com/x.jpg",
+    date: null,
+  },
 ];
 
 describe("FromTheBlog", () => {
@@ -38,12 +51,27 @@ describe("FromTheBlog", () => {
 
   it("renders a featured card and two rows with blog hrefs", () => {
     render(<FromTheBlog posts={posts} onTrack={jest.fn()} />);
-    expect(screen.getByRole("heading", { level: 2, name: /what we're writing about/i })).toBeInTheDocument();
-    const featured = screen.getByRole("link", { name: /chapterstack is live/i });
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: /what we're writing about/i,
+      }),
+    ).toBeInTheDocument();
+    const featured = screen.getByRole("link", {
+      name: /chapterstack is live/i,
+    });
     expect(featured).toHaveAttribute("href", "/blog/p1");
-    expect(screen.getByRole("link", { name: "Fall recap" })).toHaveAttribute("href", "/blog/p2");
-    expect(screen.getByRole("link", { name: "Mentors wanted" })).toHaveAttribute("href", "/blog/p3");
-    expect(screen.getByRole("link", { name: /all posts/i })).toHaveAttribute("href", "/blog");
+    expect(screen.getByRole("link", { name: "Fall recap" })).toHaveAttribute(
+      "href",
+      "/blog/p2",
+    );
+    expect(
+      screen.getByRole("link", { name: "Mentors wanted" }),
+    ).toHaveAttribute("href", "/blog/p3");
+    expect(screen.getByRole("link", { name: /all posts/i })).toHaveAttribute(
+      "href",
+      "/blog",
+    );
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3);
   });
 
@@ -79,10 +107,52 @@ describe("FromTheBlog", () => {
     const onTrack = jest.fn();
     render(<FromTheBlog posts={posts} onTrack={onTrack} />);
     fireEvent.click(screen.getByRole("link", { name: "Fall recap" }));
-    expect(onTrack).toHaveBeenCalledWith("home_blog_post", "Fall recap", { post_id: "p2", position: 2 });
-    fireEvent.click(screen.getByRole("link", { name: /chapterstack is live/i }));
-    expect(onTrack).toHaveBeenCalledWith("home_blog_post", "Chapterstack is live", { post_id: "p1", position: 1 });
+    expect(onTrack).toHaveBeenCalledWith("home_blog_post", "Fall recap", {
+      post_id: "p2",
+      position: 2,
+    });
+    fireEvent.click(
+      screen.getByRole("link", { name: /chapterstack is live/i }),
+    );
+    expect(onTrack).toHaveBeenCalledWith(
+      "home_blog_post",
+      "Chapterstack is live",
+      { post_id: "p1", position: 1 },
+    );
     fireEvent.click(screen.getByRole("link", { name: /all posts/i }));
     expect(onTrack).toHaveBeenCalledWith("home_blog_all_posts", "All posts");
+  });
+
+  it("PostImage keeps the homepage's 16:9 default; /blog passes ratio + sizes", () => {
+    const { container } = render(<PostImage url={null} title="Owls" />);
+    // jsdom drops aspect-ratio from inline styles; the wrapper mirrors it.
+    expect(container.firstChild).toHaveAttribute("data-ratio", "16 / 9");
+
+    const { container: c2 } = render(
+      <PostImage
+        url="https://cdn.ohack.dev/x.png"
+        title="Owls"
+        ratio="1 / 1"
+        sizes="112px"
+        imgWidth={224}
+        imgHeight={224}
+      />,
+    );
+    expect(c2.firstChild).toHaveAttribute("data-ratio", "1 / 1");
+    expect(c2.querySelector("img[data-next-image]")).toHaveAttribute(
+      "sizes",
+      "112px",
+    );
+
+    const { container: c3 } = render(
+      <PostImage
+        url="https://example.com/x.jpg"
+        title="Owls"
+        ratio="1 / 1"
+        imgWidth={224}
+        imgHeight={224}
+      />,
+    );
+    expect(c3.querySelector("img")).toHaveAttribute("width", "224");
   });
 });

@@ -18,7 +18,7 @@ const clamp = (lines) => ({
   overflow: "hidden",
 });
 
-function ImagePlaceholder({ title }) {
+function ImagePlaceholder({ title, size = 64 }) {
   const initial = (title || "O").trim().charAt(0).toUpperCase() || "O";
   return (
     <span
@@ -30,7 +30,7 @@ function ImagePlaceholder({ title }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 64,
+        fontSize: size,
         color: "var(--brand)",
         opacity: 0.35,
       }}
@@ -40,27 +40,38 @@ function ImagePlaceholder({ title }) {
   );
 }
 
-export function PostImage({ url, title }) {
+// `ratio` / `sizes` / `imgWidth` / `imgHeight` default to the homepage's 16:9
+// card so that band is unchanged; /blog's PostList passes a 1:1 thumb.
+export function PostImage({
+  url,
+  title,
+  ratio = "16 / 9",
+  sizes = "(max-width: 760px) 100vw, 560px",
+  imgWidth = 560,
+  imgHeight = 315,
+  placeholderSize = 64,
+}) {
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(url) && !failed;
   return (
     <div
+      data-ratio={ratio}
       style={{
         position: "relative",
         width: "100%",
-        aspectRatio: "16 / 9",
+        aspectRatio: ratio,
         background: "var(--surface-2)",
         overflow: "hidden",
       }}
     >
       {!showImage ? (
-        <ImagePlaceholder title={title} />
+        <ImagePlaceholder title={title} size={placeholderSize} />
       ) : isCdnImage(url) ? (
         <Image
           src={url}
           alt=""
           fill
-          sizes="(max-width: 760px) 100vw, 560px"
+          sizes={sizes}
           style={{ objectFit: "cover" }}
           onError={() => setFailed(true)}
         />
@@ -68,12 +79,18 @@ export function PostImage({ url, title }) {
         <img
           src={url}
           alt=""
-          width={560}
-          height={315}
+          width={imgWidth}
+          height={imgHeight}
           loading="lazy"
           decoding="async"
           onError={() => setFailed(true)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
         />
       )}
     </div>
@@ -93,10 +110,23 @@ function FeaturedPost({ post, onTrack }) {
         textDecoration: "none",
         color: "inherit",
       }}
-      onClick={() => onTrack?.("home_blog_post", post.title, { post_id: post.id, position: 1 })}
+      onClick={() =>
+        onTrack?.("home_blog_post", post.title, {
+          post_id: post.id,
+          position: 1,
+        })
+      }
     >
       <PostImage url={post.image} title={post.title} />
-      <div style={{ padding: "20px 24px 24px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+      <div
+        style={{
+          padding: "20px 24px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          flex: 1,
+        }}
+      >
         {date && (
           <p className="ohx-faint" style={{ margin: 0, fontSize: 13 }}>
             {date}
@@ -106,11 +136,17 @@ function FeaturedPost({ post, onTrack }) {
           {post.title}
         </h3>
         {post.excerpt && (
-          <p className="ohx-muted" style={{ margin: 0, fontSize: 15, lineHeight: 1.55, ...clamp(3) }}>
+          <p
+            className="ohx-muted"
+            style={{ margin: 0, fontSize: 15, lineHeight: 1.55, ...clamp(3) }}
+          >
             {post.excerpt}
           </p>
         )}
-        <span className="ohx-link" style={{ marginTop: "auto", paddingTop: 6, fontSize: 15 }}>
+        <span
+          className="ohx-link"
+          style={{ marginTop: "auto", paddingTop: 6, fontSize: 15 }}
+        >
           Read the post <Arrow />
         </span>
       </div>
@@ -122,11 +158,19 @@ function CompactRow({ post, position, onTrack }) {
   const date = formatPublished(post.date);
   return (
     <li style={{ borderTop: "1px solid var(--line)", padding: "16px 0" }}>
-      <h3 className="ohx-display" style={{ fontSize: 16, margin: 0, lineHeight: 1.35 }}>
+      <h3
+        className="ohx-display"
+        style={{ fontSize: 16, margin: 0, lineHeight: 1.35 }}
+      >
         <Link
           href={`/blog/${post.id}`}
           className="ohx-home-blog-row-link"
-          onClick={() => onTrack?.("home_blog_post", post.title, { post_id: post.id, position })}
+          onClick={() =>
+            onTrack?.("home_blog_post", post.title, {
+              post_id: post.id,
+              position,
+            })
+          }
         >
           {post.title}
         </Link>
@@ -137,7 +181,15 @@ function CompactRow({ post, position, onTrack }) {
         </p>
       )}
       {post.excerpt && (
-        <p className="ohx-muted" style={{ margin: "6px 0 0", fontSize: 14.5, lineHeight: 1.55, ...clamp(2) }}>
+        <p
+          className="ohx-muted"
+          style={{
+            margin: "6px 0 0",
+            fontSize: 14.5,
+            lineHeight: 1.55,
+            ...clamp(2),
+          }}
+        >
           {post.excerpt}
         </p>
       )}
@@ -160,7 +212,10 @@ export default function FromTheBlog({ posts, onTrack }) {
     <section
       className="ohx-wrap"
       aria-labelledby="home-blog-heading"
-      style={{ paddingTop: "clamp(56px, 9vh, 96px)", paddingBottom: "clamp(40px, 6vh, 72px)" }}
+      style={{
+        paddingTop: "clamp(56px, 9vh, 96px)",
+        paddingBottom: "clamp(40px, 6vh, 72px)",
+      }}
     >
       <style>{GRID_CSS}</style>
       <div
@@ -174,7 +229,11 @@ export default function FromTheBlog({ posts, onTrack }) {
       >
         <div>
           <Eyebrow>From the blog</Eyebrow>
-          <h2 id="home-blog-heading" className="ohx-display" style={{ marginTop: 8 }}>
+          <h2
+            id="home-blog-heading"
+            className="ohx-display"
+            style={{ marginTop: 8 }}
+          >
             What we&apos;re writing about
           </h2>
         </div>
@@ -198,7 +257,12 @@ export default function FromTheBlog({ posts, onTrack }) {
             <Eyebrow>Older posts</Eyebrow>
             <ul style={{ listStyle: "none", margin: "10px 0 0", padding: 0 }}>
               {rest.map((post, i) => (
-                <CompactRow key={post.id} post={post} position={i + 2} onTrack={onTrack} />
+                <CompactRow
+                  key={post.id}
+                  post={post}
+                  position={i + 2}
+                  onTrack={onTrack}
+                />
               ))}
             </ul>
           </div>

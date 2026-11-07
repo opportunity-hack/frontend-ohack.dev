@@ -33,6 +33,8 @@ export const trackEvent = ({ action, params }) => {
 | `button_see_all` | User clicks to see all projects | `{ action_name: "see_all_nonprofit_projects" }` | Track project discovery behavior |
 | `home_blog_post` | Homepage "From the blog" band: user clicks a post (featured card = position 1, rows = 2–3). Structured NAVIGATION/CLICK event via the homepage `track()` | `{ button_text: <post title>, post_id, position }` | Measure whether the homepage drives blog readership |
 | `home_blog_all_posts` | Homepage "From the blog" band: "All posts →" link to `/blog` | `{ button_text: "All posts" }` | Track blog index discovery from the landing page |
+| `navigation_click` (`event_label: "blog_list_post"`) | `/blog` index: a post title / "Read the post" click, via `trackStructuredEvent(NAVIGATION, CLICK, "blog_list_post")` | `{ post_id, position }` (1-based; cards are 1–8, rows 9+) | Which positions on the index actually get read; whether rows below the cards earn their place |
+| `content_search` (`event_label: "blog_content"`) | `/blog` search — **debounced 500ms** since Nov 2026 (was one event per keystroke) | `{ search_term }` | What readers look for |
 
 ### Authentication Events
 
