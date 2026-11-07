@@ -54,7 +54,7 @@ const roles = [
       'Everything that keeps a hackathon running smoothly: check-in and registration, room logistics, meals, photography, social media, and cheering teams on. No coding required.',
     time: 'Shifts during the event — as much or as little as you can give.',
     apply: 'Apply on the event page as a volunteer.',
-    link: { href: '/volunteer', label: 'More ways to volunteer' }
+    link: { href: '/about/volunteers', label: 'More about volunteering' }
   },
   {
     icon: '🤝',

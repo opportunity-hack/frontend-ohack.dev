@@ -137,6 +137,10 @@ visually, disable cache via CDP (`Network.setCacheDisabled` +
       by event pages, so it was left untouched).
 - [x] `/sponsor`
 - [x] `/about/judges`
+- [x] `/about/volunteers` (Nov 2026) — event-volunteer guide; data-array sections
+      (`volunteerGuideData.js`), numbered check-in walkthrough w/ screenshot figures,
+      hairline situations `<table>`, refined localStorage `VolunteerChecklist`, FAQ
+      `<details>` single-sourced into FAQPage + HowTo JSON-LD.
 - [x] `/about`
 - [x] `/about/mentors` — `Mentorship` component rewritten as refined sections
       (no own `RefinedRoot`); the page wraps it + the impact/checklist/FAQ in one
