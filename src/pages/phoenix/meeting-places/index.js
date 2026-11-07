@@ -1,8 +1,9 @@
 // Phoenix meeting places for nonprofits.
-// Built from real outreach Opportunity Hack did for Coding in Color's
-// Nov 12, 2026 AI fundamentals training (10-12 people, 6-8 PM, screen +
-// Wi-Fi). Every price below is either a written quote received Nov 6, 2026
-// or a rate published on the venue's own site, and each card says which.
+// Built from real outreach Opportunity Hack did while researching
+// affordable evening meeting space for a small nonprofit training
+// (10-12 people, 6-8 PM, screen + Wi-Fi). Every price below is either
+// a written quote received Nov 6, 2026 or a rate published on the venue's
+// own site, and each card says which.
 // Nothing here is a booking: availability and prices change, so confirm
 // directly with the venue before you plan around a number.
 // Updated Nov 6, 2026: SEO title, meta, and area copy; venue ItemList
@@ -381,7 +382,7 @@ export default function PhoenixMeetingPlaces() {
           eyebrow="Phoenix, Arizona · For small nonprofits"
           title="Phoenix meeting space,"
           italic="with real prices."
-          lead="We needed a meeting space and training room for 10-12 people on a Thursday evening, with a screen and Wi-Fi, for a nonprofit training. Nobody publishes this. So we emailed the venues and wrote down what they actually quoted. These are the answers, so the next nonprofit does not have to start from zero."
+          lead="Finding an inexpensive meeting space in Phoenix is hard for a small nonprofit. Almost nobody publishes prices, and evening slots are the scarcest. We needed a room for 10-12 people on a Thursday evening, with a screen and Wi-Fi, for a nonprofit training. So we emailed the venues and wrote down what they actually quoted. These are the answers, so the next nonprofit does not have to start from zero."
         >
           <p style={{ marginTop: 12, fontSize: 13.5, color: "var(--muted, #5a5f6a)" }}>
             Last updated {LAST_UPDATED}. Prices and availability change: confirm directly with the venue before you plan around a number.
@@ -621,7 +622,7 @@ export default function PhoenixMeetingPlaces() {
           </h2>
           <Prose>
             <p>
-              In November 2026, Coding in Color asked Opportunity Hack for help finding a room to train 10-12 women
+              In November 2026, a small Phoenix nonprofit asked Opportunity Hack for help finding a room to train 10-12 people
               on AI fundamentals: Thursday, November 12, 2026, 6:00-8:00 PM, with a projector or large screen and
               reliable Wi-Fi. We researched seven Phoenix-area venues on Nov 5, then emailed five of them and
               submitted request forms to two more, all with the same ask. Five replied on Nov 6: FOUND:RE, Hotel
