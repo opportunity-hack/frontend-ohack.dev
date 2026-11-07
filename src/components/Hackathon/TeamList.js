@@ -27,10 +27,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Checkbox,
-  Alert as MuiAlertComponent,
   List,
   ListItem,
   ListItemIcon,
@@ -43,15 +39,10 @@ import {
   FaHeart,
   FaCodeBranch,
   FaExclamationCircle,
-  FaCheckCircle,
   FaCode,
   FaGitAlt,
   FaExternalLinkAlt,
   FaClock,
-  FaUserFriends,
-  FaHandshake,
-  FaUsers,
-  FaShieldAlt,
   FaTimes,
 } from "react-icons/fa";
 import { useAuthInfo } from "@propelauth/react";
@@ -63,6 +54,13 @@ import {
   isJoiningDisabled,
 } from "../../constants/teamStatus";
 import { isHackathonExpired } from "../../lib/dateUtils";
+import TeamJoinConfirmationModal from "../Teams/TeamJoinConfirmationModal";
+import {
+  joinTeam,
+  leaveTeam,
+  teamJoinBlockedReason,
+  teamLeaveBlockedReason,
+} from "../../lib/teamMembershipApi";
 import LiteVideoThumbnail from "../VideoDisplay/LiteVideoThumbnail";
 import VideoDisplay from "../VideoDisplay/VideoDisplay";
 import {
@@ -366,333 +364,6 @@ const parseGithubUrl = (url) => {
     console.error("Invalid GitHub URL:", url, error);
   }
   return null;
-};
-
-// Team Join Confirmation Modal Component
-const TeamJoinConfirmationModal = ({
-  open,
-  onClose,
-  onConfirm,
-  teamName,
-  loading,
-}) => {
-  const [confirmations, setConfirmations] = useState({
-    knowTeamMember: false,
-    notMentor: false,
-    understands: false,
-  });
-
-  const handleCheckboxChange = (field) => (event) => {
-    setConfirmations((prev) => ({
-      ...prev,
-      [field]: event.target.checked,
-    }));
-  };
-
-  const allConfirmed = Object.values(confirmations).every(Boolean);
-
-  const handleConfirm = () => {
-    if (allConfirmed) {
-      onConfirm();
-      // Reset confirmations for next time
-      setConfirmations({
-        knowTeamMember: false,
-        notMentor: false,
-        understands: false,
-      });
-    }
-  };
-
-  const handleClose = () => {
-    onClose();
-    // Reset confirmations when closing
-    setConfirmations({
-      knowTeamMember: false,
-      notMentor: false,
-      understands: false,
-    });
-  };
-
-  const checklistItems = [
-    {
-      key: "knowTeamMember",
-      icon: <FaHandshake style={{ color: "#2e7d32", fontSize: "20px" }} />,
-      title: "I know someone on this team",
-      description:
-        "Connect with existing members or come with friends for the best experience, don't join random teams",
-      color: "#2e7d32",
-    },
-    {
-      key: "notMentor",
-      icon: <FaShieldAlt style={{ color: "#1976d2", fontSize: "20px" }} />,
-      title: "I'm participating as a hacker",
-      description:
-        "Mentors can help multiple teams, may not be available for the entire hackathon, and shouldn't join individual teams",
-      color: "#1976d2",
-    },
-    {
-      key: "understands",
-      icon: <FaUsers style={{ color: "#9c27b0", fontSize: "20px" }} />,
-      title: "I'm ready to collaborate",
-      description:
-        "I'll contribute actively throughout the hackathon making something great for nonprofits and the community",
-      color: "#9c27b0",
-    },
-  ];
-
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          overflow: "hidden",
-        },
-      }}
-    >
-      {/* Header with gradient background */}
-      <Box
-        sx={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white",
-          p: 3,
-          textAlign: "center",
-          position: "relative",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 1,
-          }}
-        >
-          <Box
-            sx={{
-              background: "rgba(255, 255, 255, 0.2)",
-              borderRadius: "50%",
-              p: 1.5,
-              mr: 2,
-            }}
-          >
-            <FaUserFriends style={{ fontSize: "24px" }} />
-          </Box>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-            Ready to join {teamName}?
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          Let's make sure you're all set for an awesome collaboration! 🚀
-        </Typography>
-      </Box>
-
-      <DialogContent sx={{ p: 0 }}>
-        {/* Quick checklist */}
-        <Box sx={{ p: 3 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 3, textAlign: "center", color: "text.primary" }}
-          >
-            Quick Team Guidelines
-          </Typography>
-
-          <Grid container spacing={2}>
-            {checklistItems.map((item) => (
-              <Grid size={{ xs: 12, sm: 4 }} key={item.key}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    transition: "all 0.3s ease",
-                    cursor: "pointer",
-                    border: confirmations[item.key]
-                      ? `2px solid ${item.color}`
-                      : "2px solid transparent",
-                    background: confirmations[item.key]
-                      ? `linear-gradient(135deg, ${item.color}08, ${item.color}15)`
-                      : "white",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                  onClick={() =>
-                    handleCheckboxChange(item.key)({
-                      target: { checked: !confirmations[item.key] },
-                    })
-                  }
-                >
-                  <CardContent sx={{ textAlign: "center", p: 2 }}>
-                    <Box sx={{ mb: 2 }}>{item.icon}</Box>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={confirmations[item.key]}
-                          onChange={handleCheckboxChange(item.key)}
-                          sx={{
-                            color: item.color,
-                            "&.Mui-checked": { color: item.color },
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      }
-                      label={
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 600, mb: 1 }}
-                        >
-                          {item.title}
-                        </Typography>
-                      }
-                      sx={{
-                        flexDirection: "column",
-                        alignItems: "center",
-                        m: 0,
-                        "& .MuiFormControlLabel-label": { mt: 1 },
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "12px", lineHeight: 1.4 }}
-                    >
-                      {item.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Progress indicator */}
-          <Box sx={{ mt: 3, mb: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Progress: {Object.values(confirmations).filter(Boolean).length}
-                /3
-              </Typography>
-              <Box sx={{ flexGrow: 1, mx: 2 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={
-                    (Object.values(confirmations).filter(Boolean).length / 3) *
-                    100
-                  }
-                  sx={{
-                    height: 6,
-                    borderRadius: 3,
-                    "& .MuiLinearProgress-bar": {
-                      background: "linear-gradient(90deg, #667eea, #764ba2)",
-                      borderRadius: 3,
-                    },
-                  }}
-                />
-              </Box>
-              {allConfirmed && (
-                <FaCheckCircle style={{ color: "#4caf50", fontSize: "18px" }} />
-              )}
-            </Box>
-          </Box>
-
-          {/* Encouragement message */}
-          {allConfirmed ? (
-            <MuiAlertComponent
-              severity="success"
-              sx={{
-                mt: 2,
-                borderRadius: 2,
-                "& .MuiAlert-icon": {
-                  fontSize: "20px",
-                },
-              }}
-            >
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                Perfect! 🎉 You're all set to join the team and start building
-                something amazing together.
-              </Typography>
-            </MuiAlertComponent>
-          ) : (
-            <MuiAlertComponent
-              severity="info"
-              sx={{
-                mt: 2,
-                borderRadius: 2,
-                background: "linear-gradient(135deg, #e3f2fd, #f3e5f5)",
-                border: "none",
-              }}
-            >
-              <Typography variant="body1">
-                Almost there! Just confirm the items above to join your new
-                team.
-              </Typography>
-            </MuiAlertComponent>
-          )}
-        </Box>
-      </DialogContent>
-
-      <DialogActions
-        sx={{
-          px: 3,
-          pb: 3,
-          pt: 0,
-          background: "linear-gradient(to right, #fafafa, #f5f5f5)",
-          gap: 2,
-        }}
-      >
-        <Button
-          onClick={handleClose}
-          disabled={loading}
-          variant="outlined"
-          color="inherit"
-          size="large"
-          sx={{
-            minWidth: 100,
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 500,
-          }}
-        >
-          Maybe Later
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          disabled={!allConfirmed || loading}
-          variant="contained"
-          size="large"
-          startIcon={
-            loading ? (
-              <CircularProgress size={18} color="inherit" />
-            ) : (
-              <FaUserFriends />
-            )
-          }
-          sx={{
-            minWidth: 140,
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-            background: allConfirmed
-              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-              : undefined,
-            opacity: !allConfirmed ? 0.6 : 1,
-            transform: allConfirmed ? "scale(1.02)" : "scale(1)",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              background: allConfirmed
-                ? "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)"
-                : undefined,
-              transform: allConfirmed ? "scale(1.05)" : "scale(1)",
-            },
-          }}
-        >
-          {loading ? "Joining Team..." : "Join Team! 🚀"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
 };
 
 // Enhanced TeamMember component with GitHub stats integration
@@ -1673,11 +1344,10 @@ const TeamCard = ({
                     display="block"
                     sx={{ mt: 1 }}
                   >
-                    {isHackathonExpired
-                      ? "Hackathon has ended - teams are now closed"
-                      : !teamJoinEnabled
-                        ? "Team joining is currently disabled"
-                        : "Team operations are currently restricted"}
+                    {teamLeaveBlockedReason({
+                      eventEnded: isHackathonExpired,
+                      teamJoinEnabled,
+                    }) || "Team changes are paused right now."}
                   </Typography>
                 )}
               </>
@@ -1708,15 +1378,12 @@ const TeamCard = ({
                     display="block"
                     sx={{ mt: 1 }}
                   >
-                    {isHackathonExpired
-                      ? "Hackathon has ended - teams are now closed"
-                      : !teamJoinEnabled
-                        ? "Team joining is currently disabled"
-                        : !isActive
-                          ? "You cannot join inactive teams"
-                          : joiningDisabledByStatus
-                            ? "This team is no longer accepting new members"
-                            : "Team operations are currently restricted"}
+                    {teamJoinBlockedReason({
+                      eventEnded: isHackathonExpired,
+                      teamJoinEnabled,
+                      isActive: team.active === "True" || team.active === true,
+                      status: team?.status,
+                    }) || "Team changes are paused right now."}
                   </Typography>
                 )}
               </>
@@ -2083,44 +1750,36 @@ const TeamList = ({
       // Set loading state for this specific team
       setLoadingTeamId(teamId);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ teamId }),
-        },
+      // Shared client: rejects on HTTP errors AND on the backend's
+      // 200 + "Error: …" soft failures (see lib/teamMembershipApi.js).
+      await joinTeam({
+        accessToken,
+        teamId,
+        eventId: event_id,
+        source: "event_page",
+      });
+      // Update local state by adding the user profile to the team
+      setTeamData((prevTeams) =>
+        prevTeams.map((team) =>
+          team.id === teamId
+            ? {
+                ...team,
+                users: [...team.users, userProfile],
+              }
+            : team,
+        ),
       );
-      if (response.ok) {
-        // Update local state by adding the user profile to the team
-        // After joining, store the user's full profile object
-        setTeamData((prevTeams) =>
-          prevTeams.map((team) =>
-            team.id === teamId
-              ? {
-                  ...team,
-                  users: [...team.users, userProfile],
-                }
-              : team,
-          ),
-        );
 
-        setSnackbar({
-          open: true,
-          message: "Successfully joined the team",
-          severity: "success",
-        });
-      } else {
-        throw new Error("Failed to join team");
-      }
+      setSnackbar({
+        open: true,
+        message: "Successfully joined the team",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error joining team:", error);
       setSnackbar({
         open: true,
-        message: "Error joining team",
+        message: error?.message || "Error joining team",
         severity: "error",
       });
     } finally {
@@ -2134,55 +1793,46 @@ const TeamList = ({
       // Set loading state for this specific team
       setLoadingTeamId(teamId);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/team`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ teamId }),
-        },
-      );
-      if (response.ok) {
-        // Update local state by removing the user from the team
-        // Handle both string IDs and user objects
-        setTeamData((prevTeams) =>
-          prevTeams.map((team) => {
-            if (team.id === teamId) {
-              return {
-                ...team,
-                users: team.users.filter((user) => {
-                  if (typeof user === "string") {
-                    return (
-                      user !== userProfile.user_id && user !== userProfile.id
-                    );
-                  }
+      await leaveTeam({
+        accessToken,
+        teamId,
+        eventId: event_id,
+        source: "event_page",
+      });
+      // Update local state by removing the user from the team
+      // Handle both string IDs and user objects
+      setTeamData((prevTeams) =>
+        prevTeams.map((team) => {
+          if (team.id === teamId) {
+            return {
+              ...team,
+              users: team.users.filter((user) => {
+                if (typeof user === "string") {
                   return (
-                    user.id !== userProfile.id &&
-                    user.user_id !== userProfile.user_id
+                    user !== userProfile.user_id && user !== userProfile.id
                   );
-                }),
-              };
-            }
-            return team;
-          }),
-        );
+                }
+                return (
+                  user.id !== userProfile.id &&
+                  user.user_id !== userProfile.user_id
+                );
+              }),
+            };
+          }
+          return team;
+        }),
+      );
 
-        setSnackbar({
-          open: true,
-          message: "Successfully left the team",
-          severity: "success",
-        });
-      } else {
-        throw new Error("Failed to leave team");
-      }
+      setSnackbar({
+        open: true,
+        message: "Successfully left the team",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error leaving team:", error);
       setSnackbar({
         open: true,
-        message: "Error leaving team",
+        message: error?.message || "Error leaving team",
         severity: "error",
       });
     } finally {
