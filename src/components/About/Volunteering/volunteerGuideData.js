@@ -23,7 +23,7 @@ export const VOLUNTEER_ROLES = [
     tips: [
       "Arrive 30 minutes before doors open so the table, signage, and scanner are ready before the first hacker.",
       "Most people have their QR code on their phone. Anyone who doesn't can be looked up by name — see the check-in walkthrough below.",
-      "Approvals happen with an organizer rather than at the desk, so if someone isn't on the roster, just wave one over — they'll take it from there.",
+      "Hackers who aren't on the roster can apply on their phone and be checked in right there; for anyone else not on the roster, wave an organizer over — they'll take it from there.",
     ],
   },
   {
@@ -351,8 +351,8 @@ export const CHECKIN_STEPS = [
   },
   {
     id: "edge",
-    title: "Not on the list? Bring in an organizer",
-    body: "If someone isn't on the roster, flag an organizer — they handle approvals. Walk-ups can apply on their phone right there. Mentors may already have checked in online; that counts, so just confirm they're in the list.",
+    title: "Not on the list? Hackers can apply right there",
+    body: "Hackers who haven't applied or aren't on the roster can apply on their phone at the desk, and you can check them in. Most events are first-come-first-served, and budget can cap the headcount, so if a hacker still doesn't appear or you hear we're full, flag an organizer. For mentors, judges, volunteers, and sponsors, an organizer handles approval. Mentors may already have checked in online; that counts, so just confirm they're in the list.",
   },
 ];
 
@@ -368,14 +368,19 @@ export const CHECKIN_SITUATIONS = [
       "Manual Entry → pick their role → search their name or email → Check In.",
   },
   {
-    situation: "They applied but aren't on the roster",
+    situation: "A hacker applied but isn't on the roster",
     action:
-      "Call an organizer over — they approve from the Volunteer section, and once that's done you can scan or look the person up like anyone else.",
+      "Look them up by name first. If they still don't appear, call an organizer — most events are first-come-first-served with a capped headcount, and the organizer will sort it out.",
   },
   {
-    situation: "They never applied (a walk-up)",
+    situation: "A hacker never applied (a walk-up)",
     action:
-      "Have them apply on their phone from the event page right there, then an organizer approves them and you scan or look them up.",
+      "Have them apply on their phone from the event page right there, then check them in. If we're at capacity, an organizer will let you know.",
+  },
+  {
+    situation: "A mentor, judge, volunteer, or sponsor isn't on the roster",
+    action:
+      "Call an organizer over — they approve from the Volunteer section, and then you can scan or look the person up like anyone else.",
   },
   {
     situation: "A mentor says they already checked in online",
