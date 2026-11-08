@@ -46,6 +46,7 @@ import {
   orgIsFullAdmin,
 } from "../../lib/adminPermissions";
 import useHackathonEvents from "../../hooks/use-hackathon-events";
+import { newestEventId } from "../../lib/newestEvent";
 
 // Cards are filtered by `permissions` (any-of; default = volunteer.admin).
 // A `checkin.admin`-only desk helper therefore lands on a one-card dashboard.
@@ -178,11 +179,7 @@ const AdminDashboard = () => {
   // Desk helpers go straight to the newest current event's check-in.
   const { hackathons: currentEvents = [] } =
     useHackathonEvents("current") || {};
-  const checkInEventId = [...currentEvents]
-    .filter((h) => h?.event_id)
-    .sort(
-      (a, b) => new Date(b.start_date || 0) - new Date(a.start_date || 0),
-    )[0]?.event_id;
+  const checkInEventId = newestEventId(currentEvents);
   const visiblePages = adminPages
     .filter((page) =>
       hasAnyPermission(org, page.permissions || [ADMIN_PERMISSION]),
