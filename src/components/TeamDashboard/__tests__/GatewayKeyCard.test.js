@@ -33,25 +33,32 @@ describe("GatewayKeyCard", () => {
     expect(fetchGatewayKey).not.toHaveBeenCalled();
   });
 
-  it("shows the 'being prepared' copy when the key is not provisioned yet", async () => {
+  it("shows the 'being prepared' copy when the keys are not provisioned yet", async () => {
     fetchGatewayKey.mockRejectedValue(
       new ApiError(404, { error: "key_not_provisioned", retryable: true }),
     );
     render(<GatewayKeyCard team={team} accessToken="tok" />);
     expect(
-      await screen.findByText(/Your AI key is being prepared/),
+      await screen.findByText(/Your AI keys are being prepared/),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  it("renders the masked key and budget meter once the key loads", async () => {
+  it("renders the masked key and budget meter once the keys load", async () => {
     fetchGatewayKey.mockResolvedValue({
-      key: "sk-live-abc",
-      key_alias: "fall26-team-1",
-      models: ["muse-spark"],
-      max_budget: 15,
-      expires: "2026-11-16T07:00:00Z",
-      spend: 3.5,
+      team_id: "team-1",
+      keys: [
+        {
+          label: "Key 1",
+          key: "sk-live-abc",
+          key_alias: "fall26-team-1",
+          models: ["muse-spark"],
+          max_budget: 15,
+          expires: "2026-11-16T07:00:00Z",
+          spend: 3.5,
+          status: "active",
+        },
+      ],
     });
     render(<GatewayKeyCard team={team} accessToken="tok" />);
     expect(await screen.findByLabelText("Key 1 API key hidden")).toBeInTheDocument();
@@ -61,10 +68,18 @@ describe("GatewayKeyCard", () => {
 
   it("omits the budget meter when spend is unavailable, without crashing", async () => {
     fetchGatewayKey.mockResolvedValue({
-      key: "sk-live-abc",
-      models: [],
-      max_budget: 15,
-      spend: null,
+      team_id: "team-1",
+      keys: [
+        {
+          label: "Key 1",
+          key: "sk-live-abc",
+          key_alias: "fall26-team-1",
+          models: [],
+          max_budget: 15,
+          spend: null,
+          status: "active",
+        },
+      ],
     });
     render(<GatewayKeyCard team={team} accessToken="tok" />);
     expect(await screen.findByLabelText("Key 1 API key hidden")).toBeInTheDocument();
@@ -72,14 +87,31 @@ describe("GatewayKeyCard", () => {
       expect(screen.queryByText(/of \$15\.00/)).not.toBeInTheDocument(),
     );
   });
+
+  it("shows the 'being prepared' copy with Retry when the keys list is empty", async () => {
+    fetchGatewayKey.mockResolvedValue({ team_id: "team-1", keys: [] });
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(
+      await screen.findByText(/Your AI keys are being prepared/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
 });
 
 describe("GatewayKeyCard setup snippets", () => {
   const loaded = {
-    key: "sk-live-abc123def456",
-    models: ["muse-spark", "gpt-oss-120b"],
-    max_budget: 15,
-    spend: 0,
+    team_id: "team-1",
+    keys: [
+      {
+        label: "Key 1",
+        key: "sk-live-abc123def456",
+        key_alias: "fall26-team-1",
+        models: ["muse-spark", "gpt-oss-120b"],
+        max_budget: 15,
+        spend: 0,
+        status: "active",
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -127,12 +159,7 @@ describe("GatewayKeyCard setup snippets", () => {
 
 describe("GatewayKeyCard two keys", () => {
   const twoKeys = {
-    key: "sk-live-key1",
-    key_alias: "fall26-team-1",
-    models: ["muse-spark", "kimi-k2.7-code", "gpt-oss-120b"],
-    max_budget: 15,
-    expires: "2026-11-16T07:00:00Z",
-    spend: 3.5,
+    team_id: "team-1",
     keys: [
       {
         label: "Key 1",
@@ -233,7 +260,7 @@ describe("GatewayKeyCard two keys", () => {
   it("Key 2 missing shows the not-provisioned line and Retry re-fetches", async () => {
     const { fireEvent } = require("@testing-library/react");
     const missingKey2 = {
-      ...twoKeys,
+      team_id: "team-1",
       keys: [
         twoKeys.keys[0],
         {
@@ -257,20 +284,5 @@ describe("GatewayKeyCard two keys", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(await screen.findByLabelText("Key 2 API key hidden")).toBeInTheDocument();
     expect(fetchGatewayKey).toHaveBeenCalledTimes(2);
-  });
-
-  it("a legacy single-key response renders one key only, no Key 2 section", async () => {
-    fetchGatewayKey.mockResolvedValue({
-      key: "sk-live-abc",
-      key_alias: "fall26-team-1",
-      models: ["muse-spark"],
-      max_budget: 15,
-      expires: "2026-11-16T07:00:00Z",
-      spend: 3.5,
-    });
-    render(<GatewayKeyCard team={team} accessToken="tok" />);
-    expect(await screen.findByLabelText("Key 1 API key hidden")).toBeInTheDocument();
-    expect(screen.queryByText(/Key 2/)).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Reveal" })).toHaveLength(1);
   });
 });

@@ -42,13 +42,14 @@ describe("adminTeamApi gateway helpers", () => {
 
   it("reveal / rotate / provision hit the per-team routes", async () => {
     const client = {
-      get: jest.fn().mockResolvedValue({ data: { key: "sk-1", spend: 2 } }),
-      post: jest.fn().mockResolvedValue({ data: { key_alias: "fall26-t 1" } }),
+      get: jest.fn().mockResolvedValue({ data: { team_id: "t 1", keys: [] } }),
+      post: jest.fn().mockResolvedValue({ data: { team_id: "t 1", keys: [] } }),
     };
-    await expect(fetchAdminGatewayKey("t 1", params, { client })).resolves.toEqual({ key: "sk-1", spend: 2 });
+    await expect(fetchAdminGatewayKey("t 1", params, { client })).resolves.toEqual({ team_id: "t 1", keys: [] });
     expect(client.get.mock.calls[0][0]).toBe("https://api.test/api/team/t%201/gateway-key");
-    await rotateGatewayKey("t 1", params, { client });
+    await rotateGatewayKey("t 1", params, { client }, "key1");
     expect(client.post.mock.calls[0][0]).toBe("https://api.test/api/team/t%201/gateway-key/rotate");
+    expect(client.post.mock.calls[0][1]).toEqual({ key: "key1" });
     await provisionGatewayKey("t 1", params, { client });
     expect(client.post.mock.calls[1][0]).toBe("https://api.test/api/team/t%201/gateway-key/retry");
   });
@@ -64,9 +65,9 @@ describe("adminTeamApi gateway helpers", () => {
   });
 });
 
-  it("rotate sends the selected key in the body, defaulting to key1", async () => {
-    const client = { post: jest.fn().mockResolvedValue({ data: { key_alias: "fall26-t1" } }) };
-    await rotateGatewayKey("t1", params, { client });
+  it("rotate sends the selected key in the body and takes no default", async () => {
+    const client = { post: jest.fn().mockResolvedValue({ data: { team_id: "t1", keys: [] } }) };
+    await rotateGatewayKey("t1", params, { client }, "key1");
     expect(client.post.mock.calls[0][1]).toEqual({ key: "key1" });
     await rotateGatewayKey("t1", params, { client }, "key2");
     expect(client.post.mock.calls[1][1]).toEqual({ key: "key2" });

@@ -682,7 +682,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
         fetchAdminGatewayKey(teamId, gatewayApiParams).catch((e) => {
           throw new Error(gatewayErrorMessage(e, "Couldn't load the key"));
         }),
-      rotate: (teamId, keyLabel = "key1") =>
+      rotate: (teamId, keyLabel) =>
         rotateGatewayKey(teamId, gatewayApiParams, undefined, keyLabel)
           .then((data) => {
             ga.trackStructuredEvent(
@@ -750,13 +750,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       const t = targets[i];
       try {
         const data = await provisionGatewayKey(t.id, gatewayApiParams);
-        patches[t.id] = {
-          status: "active",
-          key_alias: data?.key_alias,
-          max_budget: data?.max_budget,
-          expires: data?.expires,
-          provisioned_at: new Date().toISOString(),
-        };
+        patches[t.id] = { keys: data?.keys || [] };
       } catch (e) {
         failed.push({ team: t, message: gatewayErrorMessage(e) });
       }
@@ -3270,12 +3264,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                               }
                               const cfg = GATEWAY_STATUS_CHIP[st] || GATEWAY_STATUS_CHIP.missing;
                               const entry = gatewayKeyStatuses[team.id] || {};
-                              // Key 2 fields only exist on a backend that
-                              // mints Key 2; omit the chip on an old backend.
-                              const hasKey2 =
-                                entry.key2_status != null || entry.key2_alias != null;
-                              const key2Cfg = hasKey2
-                                ? GATEWAY_STATUS_CHIP[entry.key2_status] || GATEWAY_STATUS_CHIP.missing
+                              const key2 = entry.keys?.[1] || null;
+                              const key2Cfg = key2
+                                ? GATEWAY_STATUS_CHIP[key2.status] || GATEWAY_STATUS_CHIP.missing
                                 : null;
                               return (
                                 <Stack direction="column" spacing={0.5} alignItems="flex-start">
@@ -3289,7 +3280,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                                     aria-label={`AI key: ${cfg.label} — manage`}
                                     onClick={(e) => openGatewayPopover(e, team)}
                                   />
-                                  {hasKey2 && (
+                                  {key2Cfg && (
                                     <Chip
                                       size="small"
                                       icon={<FaKey size={10} />}

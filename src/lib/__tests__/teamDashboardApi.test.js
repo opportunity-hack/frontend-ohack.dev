@@ -293,14 +293,9 @@ describe("teamDashboardApi", () => {
   });
 });
 
-  describe("fetchGatewayKey — Key 2 normalization", () => {
+  describe("fetchGatewayKey — keys-array normalization", () => {
     const twoKeyBody = {
-      key: "sk-live-key1",
-      key_alias: "fall26-team-1",
-      models: ["muse-spark"],
-      max_budget: 15,
-      expires: "2026-11-16T07:00:00Z",
-      spend: 3.5,
+      team_id: "team-1",
       keys: [
         {
           label: "Key 1",
@@ -325,10 +320,13 @@ describe("teamDashboardApi", () => {
       ],
     };
 
-    it("passes a two-key response through with the keys array and legacy fields intact", async () => {
+    it("passes a two-key response through with the keys array intact and no top-level key fields", async () => {
       mockFetchOnce({ body: twoKeyBody });
       const result = await fetchGatewayKey("team1", "tok");
-      expect(result.keys).toHaveLength(2);
+      expect(result).toEqual({
+        team_id: "team-1",
+        keys: twoKeyBody.keys,
+      });
       expect(result.keys[1]).toMatchObject({
         label: "Key 2",
         key: "sk-live-key2",
@@ -338,27 +336,23 @@ describe("teamDashboardApi", () => {
         spend: 1,
         status: "active",
       });
-      expect(result.key).toBe("sk-live-key1");
-      expect(result.max_budget).toBe(15);
+      expect(result.key).toBeUndefined();
+      expect(result.max_budget).toBeUndefined();
     });
 
-    it("synthesizes a single Key 1 entry when the backend omits the keys array", async () => {
-      const { keys, ...legacy } = twoKeyBody;
-      mockFetchOnce({ body: legacy });
+    it("returns an empty keys list when the backend omits the keys array", async () => {
+      mockFetchOnce({ body: { team_id: "team-1" } });
       const result = await fetchGatewayKey("team1", "tok");
-      expect(result.keys).toHaveLength(1);
-      expect(result.keys[0]).toMatchObject({
-        label: "Key 1",
-        key: "sk-live-key1",
-        max_budget: 15,
-        status: "active",
+      expect(result).toEqual({ team_id: "team-1", keys: [] });
+      expect(normalizeGatewayKeyResponse(null)).toEqual({
+        team_id: null,
+        keys: [],
       });
-      expect(result.key).toBe("sk-live-key1");
     });
 
     it("keeps a missing Key 2 entry with key null and status missing", async () => {
       const body = {
-        ...twoKeyBody,
+        team_id: "team-1",
         keys: [
           twoKeyBody.keys[0],
           { label: "Key 2", status: "missing", key: null, spend: null },
@@ -372,12 +366,26 @@ describe("teamDashboardApi", () => {
         spend: null,
         status: "missing",
       });
+      expect(result.keys[1].models).toEqual([]);
+      expect(result.keys[1].max_budget).toBeNull();
     });
 
-    it("normalizeGatewayKeyResponse fills the legacy fields from Key 1 when they are absent", () => {
-      const result = normalizeGatewayKeyResponse({ keys: twoKeyBody.keys });
-      expect(result.key).toBe("sk-live-key1");
-      expect(result.models).toEqual(["muse-spark"]);
-      expect(result.max_budget).toBe(15);
+    it("normalizeGatewayKeyResponse fills per-entry defaults for sparse entries", () => {
+      const result = normalizeGatewayKeyResponse({ keys: [{ label: "Key 2" }] });
+      expect(result).toEqual({
+        team_id: null,
+        keys: [
+          {
+            label: "Key 2",
+            key: null,
+            key_alias: null,
+            models: [],
+            max_budget: null,
+            expires: null,
+            spend: null,
+            status: "missing",
+          },
+        ],
+      });
     });
   });

@@ -7,9 +7,7 @@ import { fetchGatewayKey } from "../lib/teamDashboardApi";
  * when `enabled` is true - callers keep it off for IN_REVIEW teams, where
  * no key can exist yet.
  *
- * `keyData` shape: the legacy top-level fields (Key 1)
- * `{ key, key_alias, models, max_budget, expires, spend }` plus a `keys`
- * array, one entry per key:
+ * `keyData` shape: `{ team_id, keys }`, one entry per key:
  * `{ label, key, key_alias, models, max_budget, expires, spend, status }`
  * (`spend` may be null when the backend can't reach LiteLLM right now;
  * a `status: "missing"` entry has `key: null`). See

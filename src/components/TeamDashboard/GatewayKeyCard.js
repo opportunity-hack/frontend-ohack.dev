@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import { Box, Skeleton, LinearProgress } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import useGatewayKey from "../../hooks/use-gateway-key";
-import {
-  isGatewayKeyNotProvisioned,
-  normalizeGatewayKeyResponse,
-} from "../../lib/teamDashboardApi";
+import { isGatewayKeyNotProvisioned } from "../../lib/teamDashboardApi";
 import { trackEvent, EventCategory } from "../../lib/ga";
 
 import {
@@ -45,14 +42,13 @@ function keyDisplayLabel(entry, index) {
 function KeySection({
   entry,
   index,
-  showLabel,
   revealed,
   onToggleReveal,
   onCopy,
   onRetry,
 }) {
   const slug = keySlug(entry, index);
-  const heading = showLabel ? keyDisplayLabel(entry, index) : "API key";
+  const heading = keyDisplayLabel(entry, index);
   const isMissing = entry?.status === "missing" || !entry?.key;
 
   if (isMissing) {
@@ -336,8 +332,8 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
         <Box>
           <Box sx={{ color: "var(--muted)", mb: 2 }}>
             {isGatewayKeyNotProvisioned(error)
-              ? "Your AI key is being prepared. It appears here once your team is approved."
-              : error.message || "Couldn't load your AI key."}
+              ? "Your AI keys are being prepared. They appear here once your team is approved."
+              : error.message || "Couldn't load your AI keys."}
           </Box>
           <button
             type="button"
@@ -366,11 +362,24 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
           </Box>
 
           {(() => {
-            // fetchGatewayKey already normalizes, but the card re-normalizes
-            // defensively: tests and older callers may hand it a legacy
-            // single-key shape with no `keys` array.
-            const keys = normalizeGatewayKeyResponse(keyData).keys;
-            const multi = keys.length > 1;
+            const keys = keyData?.keys || [];
+            if (!keys.some((entry) => entry?.key)) {
+              return (
+                <Box>
+                  <Box sx={{ color: "var(--muted)", mb: 2 }}>
+                    Your AI keys are being prepared. They appear here once
+                    your team is approved.
+                  </Box>
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--ghost"
+                    onClick={retry}
+                  >
+                    Retry
+                  </button>
+                </Box>
+              );
+            }
             return keys.map((entry, i) => {
               const slug = keySlug(entry, i);
               return (
@@ -378,7 +387,6 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
                   key={entry.key_alias || slug}
                   entry={entry}
                   index={i}
-                  showLabel={multi}
                   revealed={!!revealed[slug]}
                   onToggleReveal={() => toggleReveal(slug)}
                   onCopy={copy}

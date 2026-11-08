@@ -14,9 +14,9 @@ import { FaKey, FaSyncAlt, FaEye, FaEyeSlash, FaCopy } from "react-icons/fa";
 
 /**
  * Status chip config shared by the Teams table column and this popover.
- * `missing` = approval's best-effort mint failed (or the team predates the
- * feature) — the admin fix is "Provision". There is no persisted error state
- * on the backend: a failed mint deletes the doc, so missing IS the error.
+ * `missing` = approval's best-effort mint failed — the admin fix is
+ * "Provision". Statuses come from the batch endpoint's `keys` array:
+ * entry 0 is Key 1, entry 1 is Key 2.
  */
 export const GATEWAY_STATUS_CHIP = {
   active: { label: "Active", color: "success" },
@@ -28,7 +28,19 @@ export function gatewayStatusFor(team, statuses) {
   if (!team) return null;
   if ((team.status || "IN_REVIEW") === "IN_REVIEW") return "not_approved";
   const entry = statuses?.[team.id];
-  return entry?.status || "missing";
+  return entry?.keys?.[0]?.status || "missing";
+}
+
+/** Key 1 / Key 2 entry from a batch status record, or null when absent. */
+function keyEntry(status, index) {
+  return status?.keys?.[index] || null;
+}
+
+/** A copy of the status record's keys with one entry's fields replaced. */
+function withKeyPatched(status, index, patch) {
+  const keys = [...(status?.keys || [])];
+  keys[index] = { ...(keys[index] || {}), ...patch };
+  return { keys };
 }
 
 function formatWhen(iso) {
@@ -70,13 +82,11 @@ export default function GatewayKeyAdminPopover({
   const [confirmRotate, setConfirmRotate] = useState(null); // null | "key1" | "key2"
   const [notice, setNotice] = useState(null); // { severity, text }
 
-  const state = status?.status || "missing";
+  const key1 = keyEntry(status, 0);
+  const key2 = keyEntry(status, 1);
+  const state = key1?.status || "missing";
   const chip = GATEWAY_STATUS_CHIP[state] || GATEWAY_STATUS_CHIP.missing;
-  // Key 2 fields come from the batch status endpoint on a backend that
-  // mints Key 2. An older backend omits them entirely: hide the Key 2
-  // row rather than showing it as missing.
-  const hasKey2 = status?.key2_status != null || status?.key2_alias != null;
-  const key2State = status?.key2_status || "missing";
+  const key2State = key2?.status || "missing";
   const key2Chip =
     GATEWAY_STATUS_CHIP[key2State] || GATEWAY_STATUS_CHIP.missing;
 
@@ -97,8 +107,9 @@ export default function GatewayKeyAdminPopover({
 
   const handleReveal = async () => {
     const data = await run("reveal", () => api.reveal(team.id));
-    if (data?.key) {
-      setRevealed({ key: data.key, spend: data.spend });
+    const key1Data = data?.keys?.[0];
+    if (key1Data?.key) {
+      setRevealed({ key: key1Data.key, spend: key1Data.spend });
       setShowKey(true);
     }
   };
@@ -107,49 +118,27 @@ export default function GatewayKeyAdminPopover({
     const data = await run(
       "provision",
       () => api.provision(team.id),
-      "Key minted. The team sees it on their dashboard now.",
+      "Keys minted. The team sees them on their dashboard now.",
     );
-    if (data) {
+    if (data?.keys) {
       setRevealed(null);
-      // Retry provisions any missing key, so a missing Key 2 comes back too.
-      const key2Patch =
-        status?.key2_status === "missing" || status?.key2_status === "pending"
-          ? {
-              key2_status: "active",
-              key2_alias: data.key2_alias ?? data.key_alias,
-              key2_max_budget: data.key2_max_budget ?? data.max_budget,
-              key2_provisioned_at: new Date().toISOString(),
-            }
-          : {};
-      onStatusChange?.(team.id, {
-        status: "active",
-        key_alias: data.key_alias,
-        max_budget: data.max_budget,
-        expires: data.expires,
-        provisioned_at: new Date().toISOString(),
-        ...key2Patch,
-      });
+      onStatusChange?.(team.id, { keys: data.keys });
     }
   };
 
-  // Key 2 only: Key 1 is already active, so only the Key 2 fields move.
+  // Key 2 only: Key 1 is already active, so only Key 2 is minted.
   const handleProvisionKey2 = async () => {
     const data = await run(
       "provision",
       () => api.provision(team.id),
       "Key 2 minted. The team sees it on their dashboard now.",
     );
-    if (data) {
-      onStatusChange?.(team.id, {
-        key2_status: "active",
-        key2_alias: data.key2_alias ?? data.key_alias,
-        key2_max_budget: data.key2_max_budget ?? data.max_budget,
-        key2_provisioned_at: new Date().toISOString(),
-      });
+    if (data?.keys) {
+      onStatusChange?.(team.id, { keys: data.keys });
     }
   };
 
-  const handleRotate = async (keyLabel = "key1") => {
+  const handleRotate = async (keyLabel) => {
     setConfirmRotate(null);
     const isKey2 = keyLabel === "key2";
     const data = await run(
@@ -161,26 +150,14 @@ export default function GatewayKeyAdminPopover({
     );
     setRevealed(null);
     setShowKey(false);
-    if (data) {
-      if (isKey2) {
-        onStatusChange?.(team.id, {
-          key2_status: "active",
-          key2_alias: data.key_alias,
-          key2_rotated_at: new Date().toISOString(),
-        });
-      } else {
-        onStatusChange?.(team.id, {
-          status: "active",
-          key_alias: data.key_alias,
-          rotated_at: new Date().toISOString(),
-        });
-      }
+    if (data?.keys) {
+      onStatusChange?.(team.id, { keys: data.keys });
     } else {
-      // The backend deletes the doc when the re-mint fails after the delete,
-      // so the truthful state is now "missing" until Provision succeeds.
+      // The backend marks only the failed key missing, so downgrade just
+      // that entry until Provision succeeds.
       onStatusChange?.(
         team.id,
-        isKey2 ? { key2_status: "missing" } : { status: "missing" },
+        withKeyPatched(status, isKey2 ? 1 : 0, { status: "missing" }),
       );
     }
   };
@@ -205,95 +182,93 @@ export default function GatewayKeyAdminPopover({
         </Stack>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {status?.key_alias ? (
+          {key1?.key_alias ? (
             <>
-              Alias <code>{status.key_alias}</code>
-              {status.max_budget != null && <> · ${status.max_budget} lifetime budget</>}
-              {status.expires && <> · expires {formatWhen(status.expires)}</>}
+              Alias <code>{key1.key_alias}</code>
+              {key1.max_budget != null && <> · ${key1.max_budget} lifetime budget</>}
+              {key1.expires && <> · expires {formatWhen(key1.expires)}</>}
             </>
           ) : (
             "No key record for this team."
           )}
         </Typography>
-        {(status?.provisioned_at || status?.rotated_at) && (
+        {(key1?.provisioned_at || key1?.rotated_at) && (
           <Typography variant="caption" color="text.secondary" component="div" sx={{ mb: 1 }}>
-            {status.provisioned_at && <>Provisioned {formatWhen(status.provisioned_at)}</>}
-            {status.rotated_at && <> · Rotated {formatWhen(status.rotated_at)}</>}
+            {key1.provisioned_at && <>Provisioned {formatWhen(key1.provisioned_at)}</>}
+            {key1.rotated_at && <> · Rotated {formatWhen(key1.rotated_at)}</>}
           </Typography>
         )}
 
-        {hasKey2 && (
-          <Box sx={{ mb: 1.5, borderTop: "1px solid var(--border, #e0e0e0)", pt: 1.5 }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ flex: 1 }}>
-                Key 2 - $20 frontier
-              </Typography>
-              <Chip size="small" label={key2Chip.label} color={key2Chip.color} variant="outlined" />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {status?.key2_alias ? (
-                <>
-                  Alias <code>{status.key2_alias}</code>
-                  {status.key2_max_budget != null && <> · ${status.key2_max_budget} lifetime budget</>}
-                </>
-              ) : key2State === "missing" ? (
-                "Key 2 has not been minted for this team yet."
-              ) : (
-                "No Key 2 record for this team."
-              )}
+        <Box sx={{ mb: 1.5, borderTop: "1px solid var(--border, #e0e0e0)", pt: 1.5 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ flex: 1 }}>
+              Key 2 - $20 frontier
             </Typography>
-            {key2State === "missing" && (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleProvisionKey2}
-                disabled={busy !== null}
-                startIcon={busy === "provision" ? <CircularProgress size={12} color="inherit" /> : <FaKey />}
-                sx={{ mb: 1 }}
-              >
-                Provision Key 2
-              </Button>
+            <Chip size="small" label={key2Chip.label} color={key2Chip.color} variant="outlined" />
+          </Stack>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {key2?.key_alias ? (
+              <>
+                Alias <code>{key2.key_alias}</code>
+                {key2.max_budget != null && <> · ${key2.max_budget} lifetime budget</>}
+              </>
+            ) : key2State === "missing" ? (
+              "Key 2 has not been minted for this team yet."
+            ) : (
+              "No Key 2 record for this team."
             )}
-            {key2State === "active" && confirmRotate !== "key2" && (
-              <Tooltip title="Rotating kills the old Key 2 instantly and mints a new one. Key 1 is untouched.">
-                <span>
+          </Typography>
+          {key2State === "missing" && state === "active" && (
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleProvisionKey2}
+              disabled={busy !== null}
+              startIcon={busy === "provision" ? <CircularProgress size={12} color="inherit" /> : <FaKey />}
+              sx={{ mb: 1 }}
+            >
+              Provision Key 2
+            </Button>
+          )}
+          {key2State === "active" && confirmRotate !== "key2" && (
+            <Tooltip title="Rotating kills the old Key 2 instantly and mints a new one. Key 1 is untouched.">
+              <span>
+                <Button
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  onClick={() => setConfirmRotate("key2")}
+                  disabled={busy !== null}
+                  startIcon={<FaSyncAlt />}
+                >
+                  Rotate Key 2
+                </Button>
+              </span>
+            </Tooltip>
+          )}
+          {key2State === "active" && confirmRotate === "key2" && (
+            <Alert
+              severity="warning"
+              sx={{ width: "100%", mt: 1 }}
+              action={
+                <Stack direction="row" spacing={1}>
+                  <Button size="small" onClick={() => setConfirmRotate(null)}>Cancel</Button>
                   <Button
                     size="small"
                     color="warning"
-                    variant="outlined"
-                    onClick={() => setConfirmRotate("key2")}
+                    variant="contained"
+                    onClick={() => handleRotate("key2")}
                     disabled={busy !== null}
-                    startIcon={<FaSyncAlt />}
                   >
-                    Rotate Key 2
+                    {busy === "rotate_key2" ? "Rotating…" : "Yes, rotate Key 2"}
                   </Button>
-                </span>
-              </Tooltip>
-            )}
-            {key2State === "active" && confirmRotate === "key2" && (
-              <Alert
-                severity="warning"
-                sx={{ width: "100%", mt: 1 }}
-                action={
-                  <Stack direction="row" spacing={1}>
-                    <Button size="small" onClick={() => setConfirmRotate(null)}>Cancel</Button>
-                    <Button
-                      size="small"
-                      color="warning"
-                      variant="contained"
-                      onClick={() => handleRotate("key2")}
-                      disabled={busy !== null}
-                    >
-                      {busy === "rotate_key2" ? "Rotating…" : "Yes, rotate Key 2"}
-                    </Button>
-                  </Stack>
-                }
-              >
-                The current Key 2 stops working the moment you confirm. Key 1 keeps working.
-              </Alert>
-            )}
-          </Box>
-        )}
+                </Stack>
+              }
+            >
+              The current Key 2 stops working the moment you confirm. Key 1 keeps working.
+            </Alert>
+          )}
+        </Box>
 
         {notice && (
           <Alert severity={notice.severity} sx={{ mb: 1.5 }} onClose={() => setNotice(null)}>
