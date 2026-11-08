@@ -15,6 +15,139 @@ import {
 
 const GATEWAY_ENDPOINT = GATEWAY_OPENAI_BASE;
 const FALLBACK_MODELS = [DEFAULT_MODEL, "kimi-k2.7-code", "gpt-oss-120b"];
+const FRONTIER_MODELS = ["muse-wonder", "kimi-k3"];
+const FRONTIER_MODEL = "muse-wonder";
+
+/** "Key 1" -> "key1", "Key 2" -> "key2": the slug used in GA labels and reveal state. */
+function keySlug(entry, index) {
+  const label = entry?.label || `Key ${index + 1}`;
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/** "Key 1 - $15" / "Key 2 - $20 frontier", from the entry's own budget. */
+function keyDisplayLabel(entry, index) {
+  const label = entry?.label || `Key ${index + 1}`;
+  const budget = Number(entry?.max_budget);
+  const budgetPart = Number.isFinite(budget) ? ` - $${budget.toFixed(0)}` : "";
+  const frontierPart = index === 1 ? " frontier" : "";
+  return `${label}${budgetPart}${frontierPart}`;
+}
+
+/**
+ * One key's section: masked key with its own Reveal/Hide and Copy, budget
+ * bar, model chips, and setup snippets built from that key and its first
+ * model. An entry without usable key material (`status: "missing"` when the
+ * mint failed, `"error"` when the backend couldn't decrypt it) renders a
+ * short "ask an organizer" line instead — minting is admin-only, so a
+ * team-side Retry could never fix it (it would only re-run the GET).
+ */
+function KeySection({ entry, index, revealed, onToggleReveal, onCopy }) {
+  const slug = keySlug(entry, index);
+  const heading = keyDisplayLabel(entry, index);
+  const label = entry?.label || `Key ${index + 1}`;
+  const isUnusable = entry?.status !== "active" || !entry?.key;
+
+  if (isUnusable) {
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <RowLabel>{heading}</RowLabel>
+        <Box sx={{ color: "var(--muted)" }} role="status">
+          {entry?.status === "error"
+            ? `${label} couldn't be read right now — ask an organizer in Slack and they can re-issue it.`
+            : `${label} isn't ready yet — ask an organizer in Slack and they can mint it for your team.`}
+        </Box>
+      </Box>
+    );
+  }
+
+  const models =
+    entry.models && entry.models.length > 0
+      ? entry.models
+      : index === 0
+        ? FALLBACK_MODELS
+        : FRONTIER_MODELS;
+  const model = entry.models?.[0] || (index === 1 ? FRONTIER_MODEL : DEFAULT_MODEL);
+
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <RowLabel>{heading}</RowLabel>
+      <Box
+        sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 2.5 }}
+      >
+        <code
+          style={{ fontSize: "0.9rem", letterSpacing: "0.02em" }}
+          aria-label={
+            revealed
+              ? `${entry.label || `Key ${index + 1}`} API key revealed`
+              : `${entry.label || `Key ${index + 1}`} API key hidden`
+          }
+        >
+          {revealed ? entry.key : "•".repeat(28)}
+        </code>
+        <button
+          type="button"
+          className="ohx-btn ohx-btn--ghost"
+          onClick={onToggleReveal}
+        >
+          {revealed ? "Hide" : "Reveal"}
+        </button>
+        <button
+          type="button"
+          className="ohx-btn ohx-btn--ghost"
+          onClick={() => onCopy(entry.key, slug)}
+        >
+          Copy
+        </button>
+      </Box>
+
+      {entry.spend != null && entry.max_budget > 0 && (
+        <Box sx={{ mb: 2.5 }}>
+          <RowLabel>Budget</RowLabel>
+          <Box sx={{ fontSize: "0.9rem", mb: 1 }}>
+            {formatMoney(entry.spend)} of {formatMoney(entry.max_budget)} used
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(
+              100,
+              (Number(entry.spend) / Number(entry.max_budget)) * 100,
+            )}
+            sx={{ height: 6, borderRadius: 3 }}
+          />
+        </Box>
+      )}
+
+      <Box sx={{ mb: 2.5 }}>
+        <RowLabel>Models on this key</RowLabel>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {models.map((m) => (
+            <Box
+              key={m}
+              component="span"
+              sx={{
+                fontSize: "0.8rem",
+                fontFamily: "monospace",
+                border: "1px solid var(--border, #e0e0e0)",
+                borderRadius: "999px",
+                px: 1.25,
+                py: 0.25,
+              }}
+            >
+              {m}
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      <SetupSnippets
+        keyValue={entry.key}
+        model={model}
+        revealed={revealed}
+        onCopy={(text, label) => onCopy(text, `${label}_${slug}`)}
+      />
+    </Box>
+  );
+}
 
 function copyToClipboard(text) {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -128,7 +261,7 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
     accessToken,
     enabled: !!teamId && !!accessToken,
   });
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState({}); // keyed by key slug ("key1", "key2")
 
   const copy = (text, label) => {
     copyToClipboard(text);
@@ -148,15 +281,16 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
     }
   };
 
-  const toggleReveal = () => {
+  const toggleReveal = (slug) => {
+    const isRevealed = !!revealed[slug];
     trackEvent({
       action: "team_gateway_key_reveal",
       params: {
         event_category: EventCategory.ENGAGEMENT,
-        event_label: revealed ? "hide" : "reveal",
+        event_label: isRevealed ? `hide_${slug}` : `reveal_${slug}`,
       },
     });
-    setRevealed(!revealed);
+    setRevealed((prev) => ({ ...prev, [slug]: !isRevealed }));
   };
 
   return (
@@ -189,8 +323,8 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
         <Box>
           <Box sx={{ color: "var(--muted)", mb: 2 }}>
             {isGatewayKeyNotProvisioned(error)
-              ? "Your AI key is being prepared. It appears here once your team is approved."
-              : error.message || "Couldn't load your AI key."}
+              ? "Your AI keys are being prepared. They appear here once your team is approved."
+              : error.message || "Couldn't load your AI keys."}
           </Box>
           <button
             type="button"
@@ -218,87 +352,39 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
             </Box>
           </Box>
 
-          <Box sx={{ mb: 2.5 }}>
-            <RowLabel>API key</RowLabel>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}
-            >
-              <code
-                style={{ fontSize: "0.9rem", letterSpacing: "0.02em" }}
-                aria-label={revealed ? "API key revealed" : "API key hidden"}
-              >
-                {revealed ? keyData.key : "•".repeat(28)}
-              </code>
-              <button
-                type="button"
-                className="ohx-btn ohx-btn--ghost"
-                onClick={toggleReveal}
-              >
-                {revealed ? "Hide" : "Reveal"}
-              </button>
-              <button
-                type="button"
-                className="ohx-btn ohx-btn--ghost"
-                onClick={() => copy(keyData.key, "key")}
-              >
-                Copy
-              </button>
-            </Box>
-          </Box>
-
-          {keyData.spend != null && keyData.max_budget > 0 && (
-            <Box sx={{ mb: 2.5 }}>
-              <RowLabel>Budget</RowLabel>
-              <Box sx={{ fontSize: "0.9rem", mb: 1 }}>
-                {formatMoney(keyData.spend)} of {formatMoney(keyData.max_budget)}{" "}
-                used
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={Math.min(
-                  100,
-                  (Number(keyData.spend) / Number(keyData.max_budget)) * 100,
-                )}
-                sx={{ height: 6, borderRadius: 3 }}
-              />
-            </Box>
-          )}
-
-          <Box sx={{ mb: 2.5 }}>
-            <RowLabel>Models on this key</RowLabel>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {(keyData.models && keyData.models.length > 0
-                ? keyData.models
-                : FALLBACK_MODELS
-              ).map((m) => (
-                <Box
-                  key={m}
-                  component="span"
-                  sx={{
-                    fontSize: "0.8rem",
-                    fontFamily: "monospace",
-                    border: "1px solid var(--border, #e0e0e0)",
-                    borderRadius: "999px",
-                    px: 1.25,
-                    py: 0.25,
-                  }}
-                >
-                  {m}
+          {(() => {
+            const keys = keyData?.keys || [];
+            if (!keys.some((entry) => entry?.key)) {
+              return (
+                <Box>
+                  <Box sx={{ color: "var(--muted)", mb: 2 }}>
+                    Your AI keys are being prepared. They appear here once
+                    your team is approved.
+                  </Box>
+                  <button
+                    type="button"
+                    className="ohx-btn ohx-btn--ghost"
+                    onClick={retry}
+                  >
+                    Retry
+                  </button>
                 </Box>
-              ))}
-            </Box>
-          </Box>
-
-          <SetupSnippets
-            keyValue={keyData.key}
-            model={
-              keyData.models && keyData.models.length > 0
-                ? keyData.models[0]
-                : DEFAULT_MODEL
+              );
             }
-            revealed={revealed}
-            onCopy={copy}
-          />
+            return keys.map((entry, i) => {
+              const slug = keySlug(entry, i);
+              return (
+                <KeySection
+                  key={entry.key_alias || slug}
+                  entry={entry}
+                  index={i}
+                  revealed={!!revealed[slug]}
+                  onToggleReveal={() => toggleReveal(slug)}
+                  onCopy={copy}
+                />
+              );
+            });
+          })()}
 
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
             <a

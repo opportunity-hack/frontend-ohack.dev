@@ -67,7 +67,8 @@ function authHeaders({ accessToken, orgId }) {
 
 /**
  * Batch status for the admin Teams table:
- * `{ [teamId]: { status: "active"|"pending"|"missing", key_alias, max_budget, expires, provisioned_at, rotated_at } }`.
+ * `{ [teamId]: { keys: [{ label, key_alias, models, max_budget, expires,
+ *   status, provisioned_at, rotated_at }] } }`.
  * Resolves to `null` on a 404 (older backend without the route) so callers
  * can hide the column instead of showing every team as "missing".
  */
@@ -96,7 +97,7 @@ export async function fetchGatewayKeyStatuses(
   return merged;
 }
 
-/** Plaintext key + spend for ONE team (admins may read any team's). */
+/** Plaintext keys + spend for ONE team (admins may read any team's). Returns `{ team_id, keys }`. */
 export async function fetchAdminGatewayKey(
   teamId,
   { apiServerUrl, accessToken, orgId },
@@ -109,15 +110,20 @@ export async function fetchAdminGatewayKey(
   return response.data;
 }
 
-/** Leak recovery: deletes the old key in LiteLLM, mints a new one (same alias). */
+/**
+ * Leak recovery: deletes the old key in LiteLLM, mints a new one (same alias).
+ * @param {"key1"|"key2"} keyLabel - which key to rotate; required, the
+ * backend has no default.
+ */
 export async function rotateGatewayKey(
   teamId,
   { apiServerUrl, accessToken, orgId },
   { client = axios } = {},
+  keyLabel,
 ) {
   const response = await client.post(
     `${apiServerUrl}/api/team/${encodeURIComponent(teamId)}/gateway-key/rotate`,
-    {},
+    { key: keyLabel },
     { headers: authHeaders({ accessToken, orgId }) },
   );
   return response.data;

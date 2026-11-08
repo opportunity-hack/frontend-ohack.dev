@@ -108,6 +108,7 @@ import {
 import GatewayKeyAdminPopover, {
   GATEWAY_STATUS_CHIP,
   gatewayStatusFor,
+  gatewayNeedsProvision,
 } from "./GatewayKeyAdminPopover";
 
 // Submission-status chip shown in the table's "Submission" column and the
@@ -578,10 +579,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
           return !team.demo_video_url;
         case "missing_devpost":
           return !team.devpost_link;
-        case "missing_ai_key": {
-          const st = gatewayStatusFor(team, gatewayKeyStatuses);
-          return st === "missing" || st === "pending";
-        }
+        case "missing_ai_key":
+          // Either key missing/pending — not just Key 1 (gatewayStatusFor).
+          return gatewayNeedsProvision(team, gatewayKeyStatuses);
         case "all":
         default:
           return true;
@@ -682,8 +682,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
         fetchAdminGatewayKey(teamId, gatewayApiParams).catch((e) => {
           throw new Error(gatewayErrorMessage(e, "Couldn't load the key"));
         }),
-      rotate: (teamId) =>
-        rotateGatewayKey(teamId, gatewayApiParams)
+      rotate: (teamId, keyLabel) =>
+        rotateGatewayKey(teamId, gatewayApiParams, undefined, keyLabel)
           .then((data) => {
             ga.trackStructuredEvent(
               ga.EventCategory.ADMIN,
@@ -726,14 +726,13 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     setGatewayPopover((prev) => ({ ...prev, open: false }));
   };
 
-  // Approved teams with no usable key — the bulk "Provision" audience.
+  // Approved teams with ANY key missing/pending — the bulk "Provision"
+  // audience. Same predicate as the "No AI key" filter chip, so a team whose
+  // Key 2 mint failed during approval (Key 1 active) is counted too.
   const teamsMissingGatewayKey = useMemo(
     () =>
       gatewayKeysSupported
-        ? teams.filter((t) => {
-            const st = gatewayStatusFor(t, gatewayKeyStatuses);
-            return st === "missing" || st === "pending";
-          })
+        ? teams.filter((t) => gatewayNeedsProvision(t, gatewayKeyStatuses))
         : [],
     [teams, gatewayKeyStatuses, gatewayKeysSupported],
   );
@@ -750,13 +749,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       const t = targets[i];
       try {
         const data = await provisionGatewayKey(t.id, gatewayApiParams);
-        patches[t.id] = {
-          status: "active",
-          key_alias: data?.key_alias,
-          max_budget: data?.max_budget,
-          expires: data?.expires,
-          provisioned_at: new Date().toISOString(),
-        };
+        // Always record the true per-key state — on a 200 with
+        // `partial_failure` one key is live and the other still missing.
+        patches[t.id] = { keys: data?.keys || [] };
+        if (data?.partial_failure) {
+          const p = data.partial_failure;
+          failed.push({
+            team: t,
+            message: `${p.label || "One key"} failed to mint${p.error ? `: ${p.error}` : ""}`,
+          });
+        }
       } catch (e) {
         failed.push({ team: t, message: gatewayErrorMessage(e) });
       }
@@ -3269,17 +3271,36 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                                 );
                               }
                               const cfg = GATEWAY_STATUS_CHIP[st] || GATEWAY_STATUS_CHIP.missing;
+                              const entry = gatewayKeyStatuses[team.id] || {};
+                              const key2 = entry.keys?.[1] || null;
+                              const key2Cfg = key2
+                                ? GATEWAY_STATUS_CHIP[key2.status] || GATEWAY_STATUS_CHIP.missing
+                                : null;
                               return (
-                                <Chip
-                                  size="small"
-                                  icon={<FaKey size={10} />}
-                                  label={cfg.label}
-                                  color={cfg.color}
-                                  variant="outlined"
-                                  clickable
-                                  aria-label={`AI key: ${cfg.label} — manage`}
-                                  onClick={(e) => openGatewayPopover(e, team)}
-                                />
+                                <Stack direction="column" spacing={0.5} alignItems="flex-start">
+                                  <Chip
+                                    size="small"
+                                    icon={<FaKey size={10} />}
+                                    label={cfg.label}
+                                    color={cfg.color}
+                                    variant="outlined"
+                                    clickable
+                                    aria-label={`AI key: ${cfg.label} — manage`}
+                                    onClick={(e) => openGatewayPopover(e, team)}
+                                  />
+                                  {key2Cfg && (
+                                    <Chip
+                                      size="small"
+                                      icon={<FaKey size={10} />}
+                                      label={`Key 2: ${key2Cfg.label}`}
+                                      color={key2Cfg.color}
+                                      variant="outlined"
+                                      clickable
+                                      aria-label={`AI Key 2: ${key2Cfg.label} — manage`}
+                                      onClick={(e) => openGatewayPopover(e, team)}
+                                    />
+                                  )}
+                                </Stack>
                               );
                             })()}
                           </TableCell>

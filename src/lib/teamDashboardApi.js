@@ -217,10 +217,43 @@ export function getPeerVoteSummary(eventId) {
 
 // --- AI gateway key (GET /api/team/<id>/gateway-key) ---
 
-export function fetchGatewayKey(teamId, token) {
-  return request(`/api/team/${encodeURIComponent(teamId)}/gateway-key`, {
-    token,
+/**
+ * Normalizes a gateway-key response into the shape the dashboard card
+ * consumes: `{ team_id, keys }`, one entry per key:
+ * `{ label, key, key_alias, models, max_budget, expires, spend, status }`.
+ * Entries are kept as-is, with defaults filled in for fields the backend
+ * omits. `status` is "active" when the entry carries a plaintext key,
+ * "missing" when the backend reports it as not yet provisioned. A response
+ * with no `keys` array normalizes to an empty list.
+ */
+export function normalizeGatewayKeyResponse(data) {
+  const raw = data && typeof data === "object" ? data : {};
+  const rawKeys = Array.isArray(raw.keys) ? raw.keys : [];
+
+  const keys = rawKeys.map((entry, index) => {
+    const e = entry && typeof entry === "object" ? entry : {};
+    const fallbackLabel = index === 0 ? "Key 1" : "Key 2";
+    return {
+      label: e.label || fallbackLabel,
+      key: e.key ?? null,
+      key_alias: e.key_alias ?? null,
+      models: Array.isArray(e.models) ? e.models : [],
+      max_budget: e.max_budget ?? null,
+      expires: e.expires ?? null,
+      spend: e.spend ?? null,
+      status: e.status || (e.key ? "active" : "missing"),
+    };
   });
+
+  return { team_id: raw.team_id ?? null, keys };
+}
+
+export async function fetchGatewayKey(teamId, token) {
+  const data = await request(
+    `/api/team/${encodeURIComponent(teamId)}/gateway-key`,
+    { token },
+  );
+  return normalizeGatewayKeyResponse(data);
 }
 
 /** True when `error` is the `key_not_provisioned` the backend returns before a team's gateway key is minted. */
