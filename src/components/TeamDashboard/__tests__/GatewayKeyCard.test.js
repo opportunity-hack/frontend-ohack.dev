@@ -257,8 +257,9 @@ describe("GatewayKeyCard two keys", () => {
     );
   });
 
-  it("Key 2 missing shows the not-provisioned line and Retry re-fetches", async () => {
-    const { fireEvent } = require("@testing-library/react");
+  // Minting is admin-only (volunteer.admin on /gateway-key/retry), so a
+  // team-side Retry could only re-run the GET and never fix a missing key.
+  it("Key 2 missing tells the team to ask an organizer and offers no Retry", async () => {
     const missingKey2 = {
       team_id: "team-1",
       keys: [
@@ -275,14 +276,29 @@ describe("GatewayKeyCard two keys", () => {
         },
       ],
     };
-    fetchGatewayKey
-      .mockResolvedValueOnce(missingKey2)
-      .mockResolvedValue(twoKeys);
+    fetchGatewayKey.mockResolvedValue(missingKey2);
     render(<GatewayKeyCard team={team} accessToken="tok" />);
-    expect(await screen.findByText("Key 2 is not provisioned yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Key 2 isn't ready yet — ask an organizer/),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText("Key 2 API key hidden")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByLabelText("Key 2 API key hidden")).toBeInTheDocument();
-    expect(fetchGatewayKey).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    // Key 1 is still fully usable.
+    expect(screen.getByLabelText("Key 1 API key hidden")).toBeInTheDocument();
+  });
+
+  it("Key 2 with status 'error' (backend decrypt failure) gets its own ask-an-organizer line", async () => {
+    fetchGatewayKey.mockResolvedValue({
+      team_id: "team-1",
+      keys: [
+        twoKeys.keys[0],
+        { ...twoKeys.keys[1], key: null, spend: null, status: "error" },
+      ],
+    });
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(
+      await screen.findByText(/Key 2 couldn't be read right now — ask an organizer/),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Key 2 API key hidden")).not.toBeInTheDocument();
   });
 });

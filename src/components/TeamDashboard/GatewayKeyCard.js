@@ -36,35 +36,26 @@ function keyDisplayLabel(entry, index) {
 /**
  * One key's section: masked key with its own Reveal/Hide and Copy, budget
  * bar, model chips, and setup snippets built from that key and its first
- * model. A `status: "missing"` entry (Key 2 not provisioned yet) renders a
- * short line plus Retry instead of key material.
+ * model. An entry without usable key material (`status: "missing"` when the
+ * mint failed, `"error"` when the backend couldn't decrypt it) renders a
+ * short "ask an organizer" line instead — minting is admin-only, so a
+ * team-side Retry could never fix it (it would only re-run the GET).
  */
-function KeySection({
-  entry,
-  index,
-  revealed,
-  onToggleReveal,
-  onCopy,
-  onRetry,
-}) {
+function KeySection({ entry, index, revealed, onToggleReveal, onCopy }) {
   const slug = keySlug(entry, index);
   const heading = keyDisplayLabel(entry, index);
-  const isMissing = entry?.status === "missing" || !entry?.key;
+  const label = entry?.label || `Key ${index + 1}`;
+  const isUnusable = entry?.status !== "active" || !entry?.key;
 
-  if (isMissing) {
+  if (isUnusable) {
     return (
       <Box sx={{ mb: 2.5 }}>
         <RowLabel>{heading}</RowLabel>
-        <Box sx={{ color: "var(--muted)", mb: 1.5 }}>
-          {entry?.label || `Key ${index + 1}`} is not provisioned yet.
+        <Box sx={{ color: "var(--muted)" }} role="status">
+          {entry?.status === "error"
+            ? `${label} couldn't be read right now — ask an organizer in Slack and they can re-issue it.`
+            : `${label} isn't ready yet — ask an organizer in Slack and they can mint it for your team.`}
         </Box>
-        <button
-          type="button"
-          className="ohx-btn ohx-btn--ghost"
-          onClick={onRetry}
-        >
-          Retry
-        </button>
       </Box>
     );
   }
@@ -390,7 +381,6 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
                   revealed={!!revealed[slug]}
                   onToggleReveal={() => toggleReveal(slug)}
                   onCopy={copy}
-                  onRetry={retry}
                 />
               );
             });

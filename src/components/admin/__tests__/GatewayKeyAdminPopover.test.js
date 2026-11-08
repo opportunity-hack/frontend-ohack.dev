@@ -1,6 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import GatewayKeyAdminPopover, { gatewayStatusFor } from "../GatewayKeyAdminPopover";
+import GatewayKeyAdminPopover, {
+  gatewayStatusFor,
+  gatewayNeedsProvision,
+} from "../GatewayKeyAdminPopover";
 
 const team = { id: "t1", name: "Team Rocket", status: "NONPROFIT_SELECTED" };
 const anchor = () => document.body;
@@ -47,6 +50,31 @@ describe("gatewayStatusFor", () => {
     expect(gatewayStatusFor(team, { t1: { keys: [] } })).toBe("missing");
     expect(gatewayStatusFor(team, {})).toBe("missing");
     expect(gatewayStatusFor(null, {})).toBeNull();
+  });
+});
+
+// The "No AI key" filter and the bulk "Provision missing" button use this —
+// a team whose Key 2 mint failed during approval (Key 1 active) must count.
+describe("gatewayNeedsProvision", () => {
+  it("is false for IN_REVIEW teams and fully active teams", () => {
+    expect(gatewayNeedsProvision({ id: "x", status: "IN_REVIEW" }, {})).toBe(false);
+    expect(gatewayNeedsProvision(team, { t1: { keys: [key1Active, key2Active] } })).toBe(false);
+  });
+  it("is true when Key 1 is active but Key 2 is missing or pending", () => {
+    expect(
+      gatewayNeedsProvision(team, { t1: { keys: [key1Active, { ...key2Active, status: "missing" }] } }),
+    ).toBe(true);
+    expect(
+      gatewayNeedsProvision(team, { t1: { keys: [key1Active, { ...key2Active, status: "pending" }] } }),
+    ).toBe(true);
+    expect(gatewayNeedsProvision(team, { t1: { keys: [key1Active] } })).toBe(true);
+  });
+  it("is true with no record, an empty keys list, or Key 1 missing", () => {
+    expect(gatewayNeedsProvision(team, {})).toBe(true);
+    expect(gatewayNeedsProvision(team, { t1: { keys: [] } })).toBe(true);
+    expect(
+      gatewayNeedsProvision(team, { t1: { keys: [{ ...key1Active, status: "missing" }, key2Active] } }),
+    ).toBe(true);
   });
 });
 
@@ -179,6 +207,54 @@ describe("GatewayKeyAdminPopover Key 2", () => {
         ]),
       }),
     );
+  });
+
+  it("reveals Key 2 from the same GET and keeps Key 1 masked until its own Show", async () => {
+    const { api } = renderPopover({
+      status: { keys: [key1Active, key2Active] },
+      api: {
+        reveal: jest.fn().mockResolvedValue({
+          team_id: "t1",
+          keys: [
+            { ...key1Active, key: "sk-key1-plain", spend: 0.5 },
+            { ...key2Active, key: "sk-key2-plain", spend: 3.75 },
+          ],
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Reveal Key 2/ }));
+    await screen.findByText("sk-key2-plain");
+    expect(api.reveal).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/\$3\.75 spent/)).toBeInTheDocument();
+    // Key 1 came back in the same response: masked, no second request.
+    expect(screen.queryByText("sk-key1-plain")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Reveal key/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show" }));
+    expect(screen.getByText("sk-key1-plain")).toBeInTheDocument();
+    expect(api.reveal).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Copy Key 2" }));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("sk-key2-plain");
+  });
+
+  it("a provision that minted Key 1 but not Key 2 shows a warning, not success, and records both statuses", async () => {
+    const { onStatusChange } = renderPopover({
+      status: undefined,
+      api: {
+        provision: jest.fn().mockResolvedValue({
+          team_id: "t1",
+          keys: [key1Active, { ...key2Active, status: "missing" }],
+          partial_failure: { key: "key2", label: "Key 2", error: "LiteLLM down" },
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Provision key/ }));
+    await screen.findByText(/Key 1 is ready, but Key 2 failed to mint: LiteLLM down/);
+    expect(screen.queryByText(/Keys minted/)).not.toBeInTheDocument();
+    // The host merges this into its statuses map, so the re-rendered popover
+    // offers "Provision Key 2" (covered by the next test).
+    expect(onStatusChange).toHaveBeenCalledWith("t1", {
+      keys: [key1Active, { ...key2Active, status: "missing" }],
+    });
   });
 
   it("a missing Key 2 offers Provision Key 2 and marks it active on success", async () => {

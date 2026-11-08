@@ -108,6 +108,7 @@ import {
 import GatewayKeyAdminPopover, {
   GATEWAY_STATUS_CHIP,
   gatewayStatusFor,
+  gatewayNeedsProvision,
 } from "./GatewayKeyAdminPopover";
 
 // Submission-status chip shown in the table's "Submission" column and the
@@ -578,10 +579,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
           return !team.demo_video_url;
         case "missing_devpost":
           return !team.devpost_link;
-        case "missing_ai_key": {
-          const st = gatewayStatusFor(team, gatewayKeyStatuses);
-          return st === "missing" || st === "pending";
-        }
+        case "missing_ai_key":
+          // Either key missing/pending — not just Key 1 (gatewayStatusFor).
+          return gatewayNeedsProvision(team, gatewayKeyStatuses);
         case "all":
         default:
           return true;
@@ -726,14 +726,13 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     setGatewayPopover((prev) => ({ ...prev, open: false }));
   };
 
-  // Approved teams with no usable key — the bulk "Provision" audience.
+  // Approved teams with ANY key missing/pending — the bulk "Provision"
+  // audience. Same predicate as the "No AI key" filter chip, so a team whose
+  // Key 2 mint failed during approval (Key 1 active) is counted too.
   const teamsMissingGatewayKey = useMemo(
     () =>
       gatewayKeysSupported
-        ? teams.filter((t) => {
-            const st = gatewayStatusFor(t, gatewayKeyStatuses);
-            return st === "missing" || st === "pending";
-          })
+        ? teams.filter((t) => gatewayNeedsProvision(t, gatewayKeyStatuses))
         : [],
     [teams, gatewayKeyStatuses, gatewayKeysSupported],
   );
@@ -750,7 +749,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       const t = targets[i];
       try {
         const data = await provisionGatewayKey(t.id, gatewayApiParams);
+        // Always record the true per-key state — on a 200 with
+        // `partial_failure` one key is live and the other still missing.
         patches[t.id] = { keys: data?.keys || [] };
+        if (data?.partial_failure) {
+          const p = data.partial_failure;
+          failed.push({
+            team: t,
+            message: `${p.label || "One key"} failed to mint${p.error ? `: ${p.error}` : ""}`,
+          });
+        }
       } catch (e) {
         failed.push({ team: t, message: gatewayErrorMessage(e) });
       }
