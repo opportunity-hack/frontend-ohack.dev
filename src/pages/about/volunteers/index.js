@@ -16,8 +16,6 @@ import {
   SHIFT_PRINCIPLES,
   FOOD_AREA_RULES,
   FOOD_RHYTHM,
-  SNACK_IDEAS,
-  SNACK_INCLUSIVE_NOTE,
   WHAT_TO_BRING,
   FAQ_ITEMS,
 } from "../../../components/About/Volunteering/volunteerGuideData";
@@ -669,23 +667,6 @@ export default function VolunteersGuide() {
                   <RhythmRow key={row.when} row={row} />
                 ))}
               </ol>
-            </div>
-
-            <div className="ohx-card" style={{ padding: "22px 26px", background: "var(--surface-2)" }}>
-              <h3 className="ohx-display" style={{ fontSize: "1.1rem", margin: "0 0 10px" }}>
-                What we try to keep stocked
-              </h3>
-              <ul className="ohx-muted" style={{ margin: 0, paddingLeft: 18, fontSize: "0.9rem", lineHeight: 1.6 }}>
-                {SNACK_IDEAS.map((group) => (
-                  <li key={group.group}>
-                    <strong style={{ color: "var(--ink)", fontWeight: 600 }}>{group.group}:</strong>{" "}
-                    {group.items}
-                  </li>
-                ))}
-              </ul>
-              <p className="ohx-faint" style={{ margin: "10px 0 0", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                {SNACK_INCLUSIVE_NOTE}
-              </p>
             </div>
           </div>
         </div>
