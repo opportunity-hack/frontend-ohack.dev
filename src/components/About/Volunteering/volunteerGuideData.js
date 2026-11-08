@@ -307,25 +307,6 @@ export const FOOD_RHYTHM = [
   },
 ];
 
-// What organizers aim to stock — handy if you're sent on a supply run.
-export const SNACK_IDEAS = [
-  {
-    group: "Drinks",
-    items: "Water, coffee and cold brew, energy drinks, soda, sparkling water",
-  },
-  {
-    group: "Snacks",
-    items:
-      "Chips and salsa, popcorn, pretzels, trail mix, granola bars, fruit (bananas, apples, oranges), candy and cookies",
-  },
-  {
-    group: "Late-day treats",
-    items: "Brownies, ice cream cups, instant ramen, pizza rolls",
-  },
-];
-export const SNACK_INCLUSIVE_NOTE =
-  "Fruit, popcorn, chips and salsa, and granola bars cover vegan and gluten-free needs without a separate table.";
-
 // The registration-desk playbook. Mirrors what the check-in tool really does:
 // scan → PATCH checkedIn, manual lookup by name as the fallback.
 export const CHECKIN_STEPS = [
