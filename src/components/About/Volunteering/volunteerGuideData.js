@@ -390,7 +390,7 @@ export const CHECKIN_SITUATIONS = [
   {
     situation: "The name on screen is misspelled or out of date",
     action:
-      "Check them in anyway and let an organizer know; details are easy to fix in the Volunteer section afterwards.",
+      "Check them in anyway. They can fix it by updating their application.",
   },
 ];
 
