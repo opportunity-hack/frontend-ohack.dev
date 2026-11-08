@@ -63,3 +63,12 @@ describe("adminTeamApi gateway helpers", () => {
     expect(gatewayErrorMessage(new Error("Network Error"))).toBe("Network Error");
   });
 });
+
+  it("rotate sends the selected key in the body, defaulting to key1", async () => {
+    const client = { post: jest.fn().mockResolvedValue({ data: { key_alias: "fall26-t1" } }) };
+    await rotateGatewayKey("t1", params, { client });
+    expect(client.post.mock.calls[0][1]).toEqual({ key: "key1" });
+    await rotateGatewayKey("t1", params, { client }, "key2");
+    expect(client.post.mock.calls[1][1]).toEqual({ key: "key2" });
+    expect(client.post).toHaveBeenCalledTimes(2);
+  });

@@ -217,10 +217,68 @@ export function getPeerVoteSummary(eventId) {
 
 // --- AI gateway key (GET /api/team/<id>/gateway-key) ---
 
-export function fetchGatewayKey(teamId, token) {
-  return request(`/api/team/${encodeURIComponent(teamId)}/gateway-key`, {
-    token,
-  });
+/**
+ * Normalizes a gateway-key response into the shape the dashboard card
+ * consumes: the legacy top-level fields (Key 1) plus a `keys` array with
+ * one entry per key: { label, key, key_alias, models, max_budget, expires,
+ * spend, status }. `status` is "active" when the entry carries a plaintext
+ * key, "missing" when the backend reports it as not yet provisioned.
+ *
+ * - New backend: returns a `keys` array (Key 1 + Key 2, or Key 1 + a
+ *   Key 2 entry with status "missing"). Entries are kept as-is, with
+ *   defaults filled in for fields the backend omits.
+ * - Old backend: returns NO `keys` array, only the legacy top-level
+ *   fields. A single Key 1 entry is synthesized from them so the card
+ *   still works, and no Key 2 section is invented.
+ */
+export function normalizeGatewayKeyResponse(data) {
+  const raw = data && typeof data === "object" ? data : {};
+  const rawKeys = Array.isArray(raw.keys) ? raw.keys : null;
+
+  const normalizeEntry = (entry, index) => {
+    const e = entry && typeof entry === "object" ? entry : {};
+    const fallbackLabel = index === 0 ? "Key 1" : "Key 2";
+    return {
+      label: e.label || fallbackLabel,
+      key: e.key ?? null,
+      key_alias: e.key_alias ?? null,
+      models: Array.isArray(e.models) ? e.models : [],
+      max_budget: e.max_budget ?? null,
+      expires: e.expires ?? null,
+      spend: e.spend ?? null,
+      status: e.status || (e.key ? "active" : "missing"),
+    };
+  };
+
+  let keys;
+  if (rawKeys && rawKeys.length > 0) {
+    keys = rawKeys.map((entry, i) => normalizeEntry(entry, i));
+  } else {
+    keys = [normalizeEntry(raw, 0)];
+  }
+
+  // Legacy top-level fields stay Key 1, as the contract promises. If an
+  // old response somehow lacks them but the keys array has Key 1, fill
+  // them in so callers that still read keyData.key keep working.
+  const key1 = keys[0] || null;
+  return {
+    ...raw,
+    key: raw.key ?? key1?.key ?? null,
+    key_alias: raw.key_alias ?? key1?.key_alias ?? null,
+    models: raw.models ?? key1?.models ?? [],
+    max_budget: raw.max_budget ?? key1?.max_budget ?? null,
+    expires: raw.expires ?? key1?.expires ?? null,
+    spend: raw.spend ?? key1?.spend ?? null,
+    keys,
+  };
+}
+
+export async function fetchGatewayKey(teamId, token) {
+  const data = await request(
+    `/api/team/${encodeURIComponent(teamId)}/gateway-key`,
+    { token },
+  );
+  return normalizeGatewayKeyResponse(data);
 }
 
 /** True when `error` is the `key_not_provisioned` the backend returns before a team's gateway key is minted. */

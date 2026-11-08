@@ -62,7 +62,7 @@ describe("GatewayKeyAdminPopover", () => {
     expect(api.rotate).not.toHaveBeenCalled();
     expect(screen.getByText(/stops working the moment you confirm/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Yes, rotate/ }));
-    await waitFor(() => expect(api.rotate).toHaveBeenCalledWith("t1"));
+    await waitFor(() => expect(api.rotate).toHaveBeenCalledWith("t1", "key1"));
     await screen.findByText(/Rotated\. The old key stopped working/);
     expect(onStatusChange).toHaveBeenCalledWith("t1", expect.objectContaining({ status: "active", rotated_at: expect.any(String) }));
   });
@@ -95,5 +95,66 @@ describe("GatewayKeyAdminPopover", () => {
     renderPopover({ status: { status: "pending", key_alias: "fall26-t1" } });
     expect(screen.getByText("Minting…")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Retry mint/ })).toBeInTheDocument();
+  });
+});
+
+describe("GatewayKeyAdminPopover Key 2", () => {
+  beforeEach(() => {
+    Object.assign(navigator, { clipboard: { writeText: jest.fn().mockResolvedValue() } });
+  });
+
+  const withKey2 = {
+    status: "active",
+    key_alias: "fall26-t1",
+    max_budget: 15,
+    key2_status: "active",
+    key2_alias: "fall26-t1-frontier",
+    key2_max_budget: 20,
+  };
+
+  it("shows the Key 2 row alongside Key 1 and rotates Key 2 separately", async () => {
+    const { api, onStatusChange } = renderPopover({
+      status: withKey2,
+      api: { rotate: jest.fn().mockResolvedValue({ key_alias: "fall26-t1-frontier" }) },
+    });
+    expect(screen.getByText("Key 2 - $20 frontier")).toBeInTheDocument();
+    expect(screen.getByText("fall26-t1-frontier")).toBeInTheDocument();
+    expect(screen.getAllByText("Active")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: /Rotate Key 2/ }));
+    expect(api.rotate).not.toHaveBeenCalled();
+    expect(screen.getByText(/Key 1 keeps working/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Yes, rotate Key 2/ }));
+    await waitFor(() => expect(api.rotate).toHaveBeenCalledWith("t1", "key2"));
+    await screen.findByText(/Key 2 rotated/);
+    expect(onStatusChange).toHaveBeenCalledWith(
+      "t1",
+      expect.objectContaining({ key2_status: "active", key2_alias: "fall26-t1-frontier" }),
+    );
+  });
+
+  it("hides the Key 2 row entirely on an old backend without key2 fields", () => {
+    renderPopover({ status: { status: "active", key_alias: "fall26-t1", max_budget: 15 } });
+    expect(screen.queryByText(/Key 2/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Rotate Key 2/ })).not.toBeInTheDocument();
+  });
+
+  it("a missing Key 2 offers Provision Key 2 and marks it active on success", async () => {
+    const { api, onStatusChange } = renderPopover({
+      status: { ...withKey2, key2_status: "missing", key2_alias: "fall26-t1-frontier" },
+      api: {
+        provision: jest.fn().mockResolvedValue({
+          key_alias: "fall26-t1",
+          key2_alias: "fall26-t1-frontier",
+          key2_max_budget: 20,
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Provision Key 2/ }));
+    await screen.findByText(/Key 2 minted/);
+    expect(api.provision).toHaveBeenCalledWith("t1");
+    expect(onStatusChange).toHaveBeenCalledWith(
+      "t1",
+      expect.objectContaining({ key2_status: "active", key2_alias: "fall26-t1-frontier" }),
+    );
   });
 });
