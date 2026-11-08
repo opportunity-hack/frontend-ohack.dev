@@ -23,7 +23,7 @@ export const VOLUNTEER_ROLES = [
     tips: [
       "Arrive 30 minutes before doors open so the table, signage, and scanner are ready before the first hacker.",
       "Most people have their QR code on their phone. Anyone who doesn't can be looked up by name — see the check-in walkthrough below.",
-      "Approvals happen with an organizer rather than at the desk, so if someone isn't on the roster, just wave one over — they'll take it from there.",
+      "Hackers who aren't on the roster can apply on their phone and be checked in right there; for anyone else not on the roster, wave an organizer over — they'll take it from there.",
     ],
   },
   {
@@ -312,28 +312,28 @@ export const FOOD_RHYTHM = [
 export const CHECKIN_STEPS = [
   {
     id: "access",
-    title: "Get check-in access before the event",
-    body: "The check-in tool lives inside the event's admin pages, so an organizer has to add you as a check-in admin ahead of time. Ask the organizer who approved you to confirm you can open the Check-In section on your phone — do this the week before, not at the door.",
+    title: "Grab a scanning phone at the desk",
+    body: "Organizers provide phones for scanning QR codes at the registration desk, so there's nothing to set up or get access to ahead of time. When your shift starts, find the organizer on duty — they'll hand you a phone and point you to the Check-In section.",
   },
   {
     id: "qr",
     title: "Everyone approved has a QR code",
-    body: "Hackers, mentors, judges, sponsors, and fellow volunteers all see a personal check-in QR code on their application page once they're approved. It encodes the event, their record, and their role. Ask people to open their application page on their phone (the approval email links to it) and have the code ready while they're in line.",
+    body: "Once approved, everyone has a personal check-in QR code on their application page (the approval email links to it). Ask people to have it open on their phone while they're in line.",
   },
   {
     id: "scan",
     title: "Open the Check-In section and start scanning",
-    body: "From the event's admin page choose Check-In, tap Start Scanning, and allow camera access. Point the camera at the QR code; the tool confirms 'Successfully checked in' with their name, the live counts tick up, and they appear in the checked-in list on the right. If the camera opens the wrong way, use Switch Camera.",
+    body: "Choose Check-In, tap Start Scanning, and allow camera access. Point the camera at the QR code — you'll see \"Successfully checked in\" with their name. If the camera opens the wrong way, use Switch Camera.",
   },
   {
     id: "manual",
     title: "No QR code? Look them up by name",
-    body: "Tap Manual Entry, pick the person's role (hacker, mentor, judge, volunteer, or sponsor), then search by name or email. The list shows whether they're on the roster and whether they've already been checked in. Select them and tap Check In — same result as a scan.",
+    body: "Tap Manual Entry, pick their role, then search by name or email. Select them and tap Check In — same result as a scan.",
   },
   {
     id: "edge",
-    title: "Not on the list? Bring in an organizer",
-    body: "If someone applied but isn't on the roster, or hasn't applied yet, flag an organizer — they handle approvals from the event's Volunteer section, which keeps the desk simple. Walk-ups can apply on their phone right there so their badge, meals, and certificate are tracked. Mentors may have already checked in online through the mentor check-in page — that counts, so just confirm they're in the list.",
+    title: "Not on the list? Hackers can apply right there",
+    body: "Hackers who haven't applied or aren't on the roster can apply on their phone at the desk, and you can check them in. Most events are first-come-first-served, and budget can cap the headcount, so if a hacker still doesn't appear or you hear we're full, flag an organizer. For mentors, judges, volunteers, and sponsors, an organizer handles approval. Mentors may already have checked in online; that counts, so just confirm they're in the list.",
   },
 ];
 
@@ -349,14 +349,19 @@ export const CHECKIN_SITUATIONS = [
       "Manual Entry → pick their role → search their name or email → Check In.",
   },
   {
-    situation: "They applied but aren't on the roster",
+    situation: "A hacker applied but isn't on the roster",
     action:
-      "Call an organizer over — they approve from the Volunteer section, and once that's done you can scan or look the person up like anyone else.",
+      "Look them up by name first. If they still don't appear, call an organizer — most events are first-come-first-served with a capped headcount, and the organizer will sort it out.",
   },
   {
-    situation: "They never applied (a walk-up)",
+    situation: "A hacker never applied (a walk-up)",
     action:
-      "Have them apply on their phone from the event page right there, then an organizer approves them and you scan or look them up.",
+      "Have them apply on their phone from the event page right there, then check them in. If we're at capacity, an organizer will let you know.",
+  },
+  {
+    situation: "A mentor, judge, volunteer, or sponsor isn't on the roster",
+    action:
+      "Call an organizer over — they approve from the Volunteer section, and then you can scan or look the person up like anyone else.",
   },
   {
     situation: "A mentor says they already checked in online",
@@ -366,13 +371,13 @@ export const CHECKIN_SITUATIONS = [
   {
     situation: "The name on screen is misspelled or out of date",
     action:
-      "Check them in anyway and let an organizer know; details are easy to fix in the Volunteer section afterwards.",
+      "Check them in anyway. They can fix it by updating their application.",
   },
 ];
 
 export const WHAT_TO_BRING = [
   "No laptop needed — your phone covers everything a shift asks for",
-  "A fully charged phone (and a battery pack if you're on the check-in or photo shift)",
+  "A fully charged phone (and a battery pack if you're on the photo shift)",
   "Comfortable shoes — you'll be on your feet",
   "A reusable water bottle; we keep refill stations stocked",
   "Layers: hacking rooms run cold overnight and warm by afternoon",
@@ -423,7 +428,7 @@ export const FAQ_ITEMS = [
     id: "checkin-access",
     question: "I signed up for check-in. How do I actually check people in?",
     answer:
-      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. An organizer needs to give you access to that tool before the event — ask when you're approved. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
+      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. Organizers provide phones at the registration desk for scanning, so there's nothing to set up beforehand. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
   },
   {
     id: "parking",
