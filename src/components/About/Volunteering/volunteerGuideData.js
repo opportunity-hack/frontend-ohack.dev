@@ -337,22 +337,22 @@ export const CHECKIN_STEPS = [
   {
     id: "qr",
     title: "Everyone approved has a QR code",
-    body: "Hackers, mentors, judges, sponsors, and fellow volunteers all see a personal check-in QR code on their application page once they're approved. It encodes the event, their record, and their role. Ask people to open their application page on their phone (the approval email links to it) and have the code ready while they're in line.",
+    body: "Once approved, everyone has a personal check-in QR code on their application page (the approval email links to it). Ask people to have it open on their phone while they're in line.",
   },
   {
     id: "scan",
     title: "Open the Check-In section and start scanning",
-    body: "From the event's admin page choose Check-In, tap Start Scanning, and allow camera access. Point the camera at the QR code; the tool confirms 'Successfully checked in' with their name, the live counts tick up, and they appear in the checked-in list on the right. If the camera opens the wrong way, use Switch Camera.",
+    body: "Choose Check-In, tap Start Scanning, and allow camera access. Point the camera at the QR code — you'll see \"Successfully checked in\" with their name. If the camera opens the wrong way, use Switch Camera.",
   },
   {
     id: "manual",
     title: "No QR code? Look them up by name",
-    body: "Tap Manual Entry, pick the person's role (hacker, mentor, judge, volunteer, or sponsor), then search by name or email. The list shows whether they're on the roster and whether they've already been checked in. Select them and tap Check In — same result as a scan.",
+    body: "Tap Manual Entry, pick their role, then search by name or email. Select them and tap Check In — same result as a scan.",
   },
   {
     id: "edge",
     title: "Not on the list? Bring in an organizer",
-    body: "If someone applied but isn't on the roster, or hasn't applied yet, flag an organizer — they handle approvals from the event's Volunteer section, which keeps the desk simple. Walk-ups can apply on their phone right there so their badge, meals, and certificate are tracked. Mentors may have already checked in online through the mentor check-in page — that counts, so just confirm they're in the list.",
+    body: "If someone isn't on the roster, flag an organizer — they handle approvals. Walk-ups can apply on their phone right there. Mentors may already have checked in online; that counts, so just confirm they're in the list.",
   },
 ];
 
