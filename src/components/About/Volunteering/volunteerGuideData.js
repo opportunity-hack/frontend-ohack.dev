@@ -331,8 +331,8 @@ export const SNACK_INCLUSIVE_NOTE =
 export const CHECKIN_STEPS = [
   {
     id: "access",
-    title: "Get check-in access before the event",
-    body: "The check-in tool lives inside the event's admin pages, so an organizer has to add you as a check-in admin ahead of time. Ask the organizer who approved you to confirm you can open the Check-In section on your phone — do this the week before, not at the door.",
+    title: "Grab a scanning phone at the desk",
+    body: "Organizers provide phones for scanning QR codes at the registration desk, so there's nothing to set up or get access to ahead of time. When your shift starts, find the organizer on duty — they'll hand you a phone and point you to the Check-In section.",
   },
   {
     id: "qr",
@@ -391,7 +391,7 @@ export const CHECKIN_SITUATIONS = [
 
 export const WHAT_TO_BRING = [
   "No laptop needed — your phone covers everything a shift asks for",
-  "A fully charged phone (and a battery pack if you're on the check-in or photo shift)",
+  "A fully charged phone (and a battery pack if you're on the photo shift)",
   "Comfortable shoes — you'll be on your feet",
   "A reusable water bottle; we keep refill stations stocked",
   "Layers: hacking rooms run cold overnight and warm by afternoon",
@@ -442,7 +442,7 @@ export const FAQ_ITEMS = [
     id: "checkin-access",
     question: "I signed up for check-in. How do I actually check people in?",
     answer:
-      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. An organizer needs to give you access to that tool before the event — ask when you're approved. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
+      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. Organizers provide phones at the registration desk for scanning, so there's nothing to set up beforehand. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
   },
   {
     id: "parking",

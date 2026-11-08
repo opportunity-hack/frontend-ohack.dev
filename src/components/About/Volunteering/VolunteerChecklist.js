@@ -31,9 +31,9 @@ export const VOLUNTEER_CHECKLIST = [
       },
       {
         id: "before-access",
-        title: "Check-in shift? Confirm you can open the check-in tool",
+        title: "Check-in shift? Nothing to set up",
         details:
-          "The scanner lives inside the event's admin pages, so an organizer has to grant you access. Open it on your phone before the event and make sure the camera permission prompt appears.",
+          "Organizers provide phones for scanning QR codes at the registration desk. When your shift starts, the organizer on duty will hand you one and show you the Check-In screen.",
       },
       {
         id: "before-contact",
