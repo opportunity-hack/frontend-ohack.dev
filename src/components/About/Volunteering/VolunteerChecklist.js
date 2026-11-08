@@ -33,7 +33,7 @@ export const VOLUNTEER_CHECKLIST = [
         id: "before-access",
         title: "Check-in shift? Nothing to set up",
         details:
-          "Organizers provide phones for scanning QR codes at the registration desk. When your shift starts, the organizer on duty will hand you one and show you the Check-In screen.",
+          "Organizers provide phones for scanning QR codes at the registration desk. When your shift starts, the organizer on duty will hand you one and show you the Check-In screen (or give your own login check-in access if you'd rather use your phone).",
       },
       {
         id: "before-contact",

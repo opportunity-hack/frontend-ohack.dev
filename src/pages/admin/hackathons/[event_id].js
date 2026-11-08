@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
   useAuthInfo,
@@ -11,10 +11,12 @@ import AdminPage from "../../../components/admin/AdminPage";
 import HackathonAdminLayout from "../../../components/admin/hackathon-edit/HackathonAdminLayout";
 import {
   SECTIONS,
-  DEFAULT_SECTION,
+  defaultSectionForOrg,
   isValidSection,
+  sectionsForOrg,
 } from "../../../components/admin/hackathon-edit/sectionsManifest";
 import { useHackathonAdmin } from "../../../components/admin/hackathon-edit/useHackathonAdmin";
+import { orgCanCheckIn, orgIsFullAdmin } from "../../../lib/adminPermissions";
 
 // Dynamic-load section bodies so a single-section view doesn't pull in every
 // editor's bundle (especially the heavy Meals/Schedule editors and react-markdown).
@@ -120,15 +122,19 @@ const AdminHackathonEditPage = () => {
   const router = useRouter();
   const { accessToken, userClass } = useAuthInfo();
   const org = userClass?.getOrgByName("Opportunity Hack Org");
-  const isAdmin = !!org?.hasPermission("volunteer.admin");
+  // Full admins open every section; `checkin.admin` desk helpers open ONLY
+  // Check-in (sidebar filtered, no back-to-list, writes disabled).
+  const isAdmin = orgIsFullAdmin(org);
+  const canView = orgCanCheckIn(org);
   const orgId = org?.orgId;
+  const allowedSections = useMemo(() => sectionsForOrg(org), [org]);
 
   const { event_id: eventIdRaw, section: sectionRaw } = router.query;
   const eventId = Array.isArray(eventIdRaw) ? eventIdRaw[0] : eventIdRaw;
   const sectionFromUrl = Array.isArray(sectionRaw) ? sectionRaw[0] : sectionRaw;
-  const activeSection = isValidSection(sectionFromUrl)
+  const activeSection = isValidSection(sectionFromUrl, org)
     ? sectionFromUrl
-    : DEFAULT_SECTION;
+    : defaultSectionForOrg(org);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -139,7 +145,13 @@ const AdminHackathonEditPage = () => {
     setSnackbar({ open: true, message, severity });
   }, []);
 
-  const admin = useHackathonAdmin({ eventId, accessToken, orgId, isAdmin });
+  const admin = useHackathonAdmin({
+    eventId,
+    accessToken,
+    orgId,
+    isAdmin: canView,
+    readOnly: !isAdmin,
+  });
 
   // Surface autosave errors as toasts (debounced — we only want one per failure)
   useEffect(() => {
@@ -156,7 +168,7 @@ const AdminHackathonEditPage = () => {
     );
   };
 
-  if (!isAdmin) {
+  if (!canView) {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
@@ -215,7 +227,8 @@ const AdminHackathonEditPage = () => {
             onSelectSection={navigateToSection}
             saveState={admin.saveState}
             dirtySections={admin.dirtySections}
-            onBack={() => router.push("/admin/hackathons")}
+            sections={allowedSections}
+            onBack={isAdmin ? () => router.push("/admin/hackathons") : null}
           >
             {SectionComponent && admin.hackathon && (
               <SectionComponent

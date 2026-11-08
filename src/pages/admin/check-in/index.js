@@ -4,10 +4,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { useAuthInfo } from "@propelauth/react";
 import { Box, CircularProgress } from "@mui/material";
+import { orgIsFullAdmin } from "../../../lib/adminPermissions";
 
 const AdminCheckInRedirect = () => {
   const router = useRouter();
+  const { userClass } = useAuthInfo();
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -18,12 +21,15 @@ const AdminCheckInRedirect = () => {
         query: { ...rest, section: "checkin" },
       });
     } else {
+      // No event: full admins pick one from the list; a checkin.admin-only
+      // helper can't open that list, so send them to the (one-card) /admin.
+      const org = userClass?.getOrgByName?.("Opportunity Hack Org");
       router.replace({
-        pathname: "/admin/hackathons",
+        pathname: orgIsFullAdmin(org) ? "/admin/hackathons" : "/admin",
         query: rest,
       });
     }
-  }, [router.isReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
