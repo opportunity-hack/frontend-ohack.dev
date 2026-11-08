@@ -332,7 +332,7 @@ export const CHECKIN_STEPS = [
   {
     id: "access",
     title: "Grab a scanning phone at the desk",
-    body: "Organizers provide phones for scanning QR codes at the registration desk, so there's nothing to set up or get access to ahead of time. When your shift starts, find the organizer on duty — they'll hand you a phone and point you to the Check-In section.",
+    body: "Organizers provide phones for scanning QR codes at the registration desk, so there's nothing to set up or get access to ahead of time. When your shift starts, find the organizer on duty — they'll hand you a phone and point you to the Check-In section. Prefer your own phone? An organizer can give your ohack.dev login check-in access (just that, nothing else in the admin) — ask at the desk.",
   },
   {
     id: "qr",
@@ -447,7 +447,7 @@ export const FAQ_ITEMS = [
     id: "checkin-access",
     question: "I signed up for check-in. How do I actually check people in?",
     answer:
-      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. Organizers provide phones at the registration desk for scanning, so there's nothing to set up beforehand. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
+      "Scan their QR code with the check-in tool inside the event's admin pages, or look them up by name with Manual Entry if they don't have the code. Organizers provide phones at the registration desk for scanning, so there's nothing to set up beforehand — and if you'd rather use your own phone, an organizer can give your ohack.dev login check-in-only access on the spot. The full walkthrough, including what to do when someone isn't on the roster, is on this page.",
   },
   {
     id: "parking",
