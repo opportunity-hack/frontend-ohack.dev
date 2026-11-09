@@ -68,10 +68,11 @@ describe("/recruit-tech-talent", () => {
     );
     // No auto-fit *usage* (the explanatory comment may still name it).
     expect(source).not.toMatch(/gridTemplateColumns[^}]*auto-fit/);
-    // 4 value cards + 4 sponsor tiers -> 2-up; 3 steps -> 3-up; 5 roles -> 5-up.
+    // 4 value cards + 4 sponsor tiers -> 2-up; 3 steps -> 3-up; 5 roles ->
+    // 6-column with center-justified 3+2 rows so cards stay wide and balanced.
     expect(source).toContain('md: "repeat(2, 1fr)"');
     expect(source).toContain('md: "repeat(3, 1fr)"');
-    expect(source).toContain('lg: "repeat(5, 1fr)"');
+    expect(source).toContain('lg: "repeat(6, 1fr)"');
     expect(source).not.toContain("RefinedFonts");
   });
 
