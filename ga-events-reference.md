@@ -135,6 +135,7 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_devpost_saved` | `TeamDashboard/DevPostEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /devpost` (DevPost is optional now — expect this to trend down). |
 | `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
 | `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
+| `team_gateway_model_select` | `TeamDashboard/GatewayKeyCard.js` | `{ event_category, event_label: "<key slug>_<model>" }` | A model chip was picked; the setup snippets switch to that model. Fired only on a change. |
 
 ### "Your teams" card on `/profile` (Nov 2026, `event_category: "engagement"`)
 
