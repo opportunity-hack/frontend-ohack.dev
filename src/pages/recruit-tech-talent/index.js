@@ -142,10 +142,16 @@ const rolesGrid = {
     xs: "1fr",
     sm: "repeat(2, 1fr)",
     md: "repeat(3, 1fr)",
-    lg: "repeat(5, 1fr)",
+    lg: "repeat(6, 1fr)",
   },
-  "& > *:last-child": {
-    gridColumn: { xs: "auto", sm: "span 2", md: "span 1", lg: "auto" },
+  "& > *": {
+    gridColumn: { lg: "span 2" },
+  },
+  "& > *:nth-of-type(4)": {
+    gridColumn: { lg: "2 / span 2" },
+  },
+  "& > *:nth-of-type(5)": {
+    gridColumn: { lg: "4 / span 2" },
   },
 };
 
