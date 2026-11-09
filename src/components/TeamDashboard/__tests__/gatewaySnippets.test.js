@@ -57,6 +57,26 @@ describe("gatewaySnippets", () => {
     expect(cc.text).toContain('ANTHROPIC_MODEL="muse-spark"');
   });
 
+  it("keeps Claude Code's background models on fastModel when a bigger model is picked", () => {
+    const snippets = buildSetupSnippets({
+      key: KEY,
+      model: "kimi-k2.7-code",
+      fastModel: "muse-spark",
+    });
+    const cc = snippets.find((sn) => sn.id === "claude-code").text;
+    expect(cc).toContain('ANTHROPIC_MODEL="kimi-k2.7-code"');
+    expect(cc).toContain('ANTHROPIC_SMALL_FAST_MODEL="muse-spark"');
+    expect(cc).toContain('ANTHROPIC_DEFAULT_HAIKU_MODEL="muse-spark"');
+    const settings = JSON.parse(
+      snippets.find((sn) => sn.id === "claude-settings").text,
+    );
+    expect(settings.env.ANTHROPIC_MODEL).toBe("kimi-k2.7-code");
+    expect(settings.env.ANTHROPIC_SMALL_FAST_MODEL).toBe("muse-spark");
+    for (const id of ["cursor", "python", "node", "curl"]) {
+      expect(snippets.find((sn) => sn.id === id).text).toContain("kimi-k2.7-code");
+    }
+  });
+
   it("masks the key for display without leaking any of the secret", () => {
     expect(maskKey(KEY)).toBe("sk-••••••••");
     expect(maskKey("abc")).toBe("••••••••");

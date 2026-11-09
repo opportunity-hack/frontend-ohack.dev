@@ -20,11 +20,18 @@ export function maskKey(key) {
 }
 
 /**
+ * `model` is the model the team picked on the card; every block uses it.
+ * `fastModel` is what Claude Code runs its background/small tasks on
+ * (ANTHROPIC_SMALL_FAST_MODEL + ANTHROPIC_DEFAULT_HAIKU_MODEL) — the card
+ * keeps it on the key's default model so picking a bigger model doesn't
+ * also bill every background call at that price. Defaults to `model`.
+ *
  * @returns {Array<{id: string, label: string, hint: string, guideAnchor: string, text: string}>}
  */
-export function buildSetupSnippets({ key, model = DEFAULT_MODEL }) {
+export function buildSetupSnippets({ key, model = DEFAULT_MODEL, fastModel }) {
   const k = String(key || "");
   const m = model || DEFAULT_MODEL;
+  const f = fastModel || m;
   return [
     {
       id: "claude-code",
@@ -35,8 +42,8 @@ export function buildSetupSnippets({ key, model = DEFAULT_MODEL }) {
         `export ANTHROPIC_BASE_URL="${GATEWAY_HOST}"`,
         `export ANTHROPIC_AUTH_TOKEN="${k}"`,
         `export ANTHROPIC_MODEL="${m}"`,
-        `export ANTHROPIC_SMALL_FAST_MODEL="${m}"`,
-        `export ANTHROPIC_DEFAULT_HAIKU_MODEL="${m}"`,
+        `export ANTHROPIC_SMALL_FAST_MODEL="${f}"`,
+        `export ANTHROPIC_DEFAULT_HAIKU_MODEL="${f}"`,
         "claude",
       ].join("\n"),
     },
@@ -51,8 +58,8 @@ export function buildSetupSnippets({ key, model = DEFAULT_MODEL }) {
             ANTHROPIC_BASE_URL: GATEWAY_HOST,
             ANTHROPIC_AUTH_TOKEN: k,
             ANTHROPIC_MODEL: m,
-            ANTHROPIC_SMALL_FAST_MODEL: m,
-            ANTHROPIC_DEFAULT_HAIKU_MODEL: m,
+            ANTHROPIC_SMALL_FAST_MODEL: f,
+            ANTHROPIC_DEFAULT_HAIKU_MODEL: f,
           },
         },
         null,

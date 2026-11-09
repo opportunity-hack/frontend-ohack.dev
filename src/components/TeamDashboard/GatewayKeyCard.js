@@ -16,7 +16,6 @@ import {
 const GATEWAY_ENDPOINT = GATEWAY_OPENAI_BASE;
 const FALLBACK_MODELS = [DEFAULT_MODEL, "kimi-k2.7-code", "gpt-oss-120b"];
 const FRONTIER_MODELS = ["muse-wonder", "kimi-k3"];
-const FRONTIER_MODEL = "muse-wonder";
 
 /** "Key 1" -> "key1", "Key 2" -> "key2": the slug used in GA labels and reveal state. */
 function keySlug(entry, index) {
@@ -35,13 +34,21 @@ function keyDisplayLabel(entry, index) {
 
 /**
  * One key's section: masked key with its own Reveal/Hide and Copy, budget
- * bar, model chips, and setup snippets built from that key and its first
- * model. An entry without usable key material (`status: "missing"` when the
+ * bar, model chips, and setup snippets built from that key and the model
+ * chip the team picked (the key's first model until they pick another). An entry without usable key material (`status: "missing"` when the
  * mint failed, `"error"` when the backend couldn't decrypt it) renders a
  * short "ask an organizer" line instead — minting is admin-only, so a
  * team-side Retry could never fix it (it would only re-run the GET).
  */
-function KeySection({ entry, index, revealed, onToggleReveal, onCopy }) {
+function KeySection({
+  entry,
+  index,
+  revealed,
+  onToggleReveal,
+  onCopy,
+  selectedModel,
+  onSelectModel,
+}) {
   const slug = keySlug(entry, index);
   const heading = keyDisplayLabel(entry, index);
   const label = entry?.label || `Key ${index + 1}`;
@@ -60,13 +67,11 @@ function KeySection({ entry, index, revealed, onToggleReveal, onCopy }) {
     );
   }
 
-  const models =
-    entry.models && entry.models.length > 0
-      ? entry.models
-      : index === 0
-        ? FALLBACK_MODELS
-        : FRONTIER_MODELS;
-  const model = entry.models?.[0] || (index === 1 ? FRONTIER_MODEL : DEFAULT_MODEL);
+  const models = modelsForKey(entry, index);
+  const defaultModel = models[0];
+  // The picked chip wins; fall back to the key's default if the list changed
+  // underneath it (e.g. a refetch after an organizer edited the key).
+  const model = models.includes(selectedModel) ? selectedModel : defaultModel;
 
   return (
     <Box sx={{ mb: 2.5 }}>
@@ -119,34 +124,59 @@ function KeySection({ entry, index, revealed, onToggleReveal, onCopy }) {
 
       <Box sx={{ mb: 2.5 }}>
         <RowLabel>Models on this key</RowLabel>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {models.map((m) => (
-            <Box
-              key={m}
-              component="span"
-              sx={{
-                fontSize: "0.8rem",
-                fontFamily: "monospace",
-                border: "1px solid var(--border, #e0e0e0)",
-                borderRadius: "999px",
-                px: 1.25,
-                py: 0.25,
-              }}
-            >
-              {m}
-            </Box>
-          ))}
+        <Box
+          role="group"
+          aria-label={`Model for ${label} setup`}
+          sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
+        >
+          {models.map((m) => {
+            const selected = m === model;
+            return (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onSelectModel(m)}
+                style={{
+                  fontSize: "0.8rem",
+                  fontFamily: "monospace",
+                  border: `1px solid ${
+                    selected ? "var(--brand, #1B3A6B)" : "var(--border, #e0e0e0)"
+                  }`,
+                  borderRadius: "999px",
+                  padding: "2px 10px",
+                  background: selected ? "var(--brand, #1B3A6B)" : "transparent",
+                  color: selected ? "#fff" : "var(--ink, #16181D)",
+                  cursor: "pointer",
+                }}
+              >
+                {m}
+              </button>
+            );
+          })}
         </Box>
+        {models.length > 1 && (
+          <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mt: 0.75 }}>
+            Pick one — the setup below uses it.
+          </Box>
+        )}
       </Box>
 
       <SetupSnippets
         keyValue={entry.key}
         model={model}
+        fastModel={defaultModel}
         revealed={revealed}
         onCopy={(text, label) => onCopy(text, `${label}_${slug}`)}
       />
     </Box>
   );
+}
+
+/** The key's model list, with a per-slot fallback for older payloads. */
+function modelsForKey(entry, index) {
+  if (entry?.models && entry.models.length > 0) return entry.models;
+  return index === 1 ? FRONTIER_MODELS : FALLBACK_MODELS;
 }
 
 function copyToClipboard(text) {
@@ -173,8 +203,8 @@ function RowLabel({ children }) {
  * filled in. On screen the key is masked unless the card's Reveal is on; the
  * Copy button always copies the real thing.
  */
-function SetupSnippets({ keyValue, model, revealed, onCopy }) {
-  const snippets = buildSetupSnippets({ key: keyValue, model });
+function SetupSnippets({ keyValue, model, fastModel, revealed, onCopy }) {
+  const snippets = buildSetupSnippets({ key: keyValue, model, fastModel });
   const [activeId, setActiveId] = useState(snippets[0].id);
   const active = snippets.find((sn) => sn.id === activeId) || snippets[0];
   const shown = revealed ? active.text : maskSnippet(active.text, keyValue);
@@ -262,6 +292,19 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
     enabled: !!teamId && !!accessToken,
   });
   const [revealed, setRevealed] = useState({}); // keyed by key slug ("key1", "key2")
+  const [selectedModels, setSelectedModels] = useState({}); // keyed by key slug
+
+  const selectModel = (slug, model) => {
+    if (selectedModels[slug] === model) return;
+    trackEvent({
+      action: "team_gateway_model_select",
+      params: {
+        event_category: EventCategory.ENGAGEMENT,
+        event_label: `${slug}_${model}`,
+      },
+    });
+    setSelectedModels((prev) => ({ ...prev, [slug]: model }));
+  };
 
   const copy = (text, label) => {
     copyToClipboard(text);
@@ -381,6 +424,8 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
                   revealed={!!revealed[slug]}
                   onToggleReveal={() => toggleReveal(slug)}
                   onCopy={copy}
+                  selectedModel={selectedModels[slug]}
+                  onSelectModel={(m) => selectModel(slug, m)}
                 />
               );
             });

@@ -233,6 +233,47 @@ describe("GatewayKeyCard two keys", () => {
     expect(copied).toContain('ANTHROPIC_MODEL="muse-wonder"');
   });
 
+  it("picking a model chip rewrites that key's snippets (and only that key's)", async () => {
+    const { fireEvent } = require("@testing-library/react");
+    const { trackEvent } = require("../../../lib/ga");
+    fetchGatewayKey.mockResolvedValue(twoKeys);
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    await screen.findAllByRole("tabpanel", { name: "Claude Code setup" });
+
+    const chip = screen.getByRole("button", { name: "kimi-k2.7-code" });
+    expect(chip).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "muse-spark" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+
+    const panels = screen.getAllByRole("tabpanel", { name: "Claude Code setup" });
+    expect(panels[0].textContent).toContain('ANTHROPIC_MODEL="kimi-k2.7-code"');
+    // Background tasks stay on the key's default (cheapest) model.
+    expect(panels[0].textContent).toContain('ANTHROPIC_SMALL_FAST_MODEL="muse-spark"');
+    expect(panels[1].textContent).toContain('ANTHROPIC_MODEL="muse-wonder"');
+    expect(trackEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "team_gateway_model_select",
+        params: expect.objectContaining({ event_label: "key1_kimi-k2.7-code" }),
+      }),
+    );
+
+    // The pick survives switching tools, and the copy carries it.
+    fireEvent.click(screen.getAllByRole("tab", { name: "Python" })[0]);
+    expect(
+      screen.getByRole("tabpanel", { name: "Python setup" }).textContent,
+    ).toContain('model="kimi-k2.7-code"');
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /Copy Python setup/ })[0],
+    );
+    expect(navigator.clipboard.writeText.mock.calls[0][0]).toContain(
+      'model="kimi-k2.7-code"',
+    );
+  });
+
   it("copies are tagged key1/key2 in the GA event label", async () => {
     const { fireEvent } = require("@testing-library/react");
     const { trackEvent } = require("../../../lib/ga");
