@@ -171,6 +171,7 @@ The mentor counterpart of `/judge`. Events fire via `trackEvent({ action, params
 | `mentor_dash_edit_application` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Review your application" on a pending/waitlisted card. |
 | `mentor_dash_apply_click` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Apply to mentor" on a current event the mentor hasn't applied to (empty state or "Also happening" rows). |
 | `mentor_dash_guide_click` | `pages/mentor/index.js` | `{ event_label: "about" \| "overview" \| "slack" }` | Guide band / quick-reference links to `/about/mentors`, the overview video, or #ask-a-mentor. |
+| `mentor_checkin_gate_view` | `pages/hack/[event_id]/mentor-checkin.js` | `{ page: "mentor_checkin", event_label: "logged_out" \| "event_error" \| "mentor_error" \| "not_applied" \| "pending" \| "not_selected" \| "ready_upcoming" \| "ready_open" \| "ready_closed", event_id }` | Once per distinct state per visit on the mentor check-in page (Nov 2026) — `ready_upcoming` counts approved mentors who arrive before check-in opens. |
 
 ### Share cards (`/hack/[event_id]/share/[type]/[volunteer_id]`, Nov 2026)
 
@@ -242,6 +243,7 @@ All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_cate
 | `admin_hacker_auto_approve_toggle` | `admin/hackathon-edit/sections/ParticipantsSection.js` | `{ event_category: "admin", event_label: "on" \| "off", event_id }` | "Auto-approve hacker applications" switch in the Participants section's Roster & capacity card. |
 | `admin_judging_schedule_publish` | `admin/hackathon-edit/sections/JudgingSection.js` | `{ event_category: "admin", event_label: <event_id>, value: 1\|0 }` | "Publish the judging schedule" switch flipped on (1) / off (0) — writes `constraints.judging_schedule_published` (autosave). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
+| `admin_checkin_reset` | `admin/checkin/CheckInWorkbench.js` | `{ event_category: "admin", event_label: <volunteer_type>, value: <people reset>, event_id }` | "Reset check-ins…" confirmed in the Check-in section (full admins only). |
 | `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
 ## Business Intelligence Applications

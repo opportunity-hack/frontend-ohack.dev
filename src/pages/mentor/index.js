@@ -18,6 +18,7 @@ import {
   upcomingNotApplied,
 } from "../../lib/mentorEvents";
 import { KEY_CHANNELS, slackChannelUrl } from "../../lib/slackLinks";
+import { parseLocalDate } from "../../lib/dateUtils";
 import { RefinedRoot, Eyebrow, Arrow } from "../../components/design/refined";
 import { formSectionStyle } from "../../components/ApplicationForm/refinedStyles";
 
@@ -94,6 +95,16 @@ const Shifts = ({ availability }) => {
   );
 };
 
+function checkinOpensLabel(startDate) {
+  const d = parseLocalDate(startDate);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 const EventCard = ({ event, phase, onOpenCheckin, onEditApplication }) => {
   const app = event.application || {};
   const state = applicationState(app);
@@ -107,6 +118,14 @@ const EventCard = ({ event, phase, onOpenCheckin, onEditApplication }) => {
   let actions;
   let note = null;
   if (state === "approved" && phase !== "past") {
+    // Check-in opens when the event starts (backend-enforced) — say so up
+    // front so nobody arrives early expecting a button.
+    if (phase === "upcoming") {
+      const opens = checkinOpensLabel(event.start_date);
+      note = opens
+        ? `Check-in opens ${opens}, when the event starts.`
+        : "Check-in opens when the event starts.";
+    }
     actions = (
       <>
         <Link
@@ -114,7 +133,7 @@ const EventCard = ({ event, phase, onOpenCheckin, onEditApplication }) => {
           className="ohx-btn ohx-btn--primary"
           onClick={() => onOpenCheckin(event, phase)}
         >
-          {phase === "live" ? "Check in & see teams" : "Open mentor check-in"}
+          {phase === "live" ? "Check in & see teams" : "Mentor page"}
         </Link>
         <Link href={eventHref} className="ohx-btn ohx-btn--ghost">
           Event page
