@@ -175,3 +175,28 @@ it("logged out after auth settles is logged_out and fires no mentor requests", a
   await waitFor(() => expect(result.current.gate).toBe("logged_out"));
   expect(axios).not.toHaveBeenCalled();
 });
+
+it("the uncached /status review status wins over a stale application copy", async () => {
+  // The application GET returns a stale "denied" copy; /status has the truth.
+  routeAxios({
+    application: { ...MENTOR, isSelected: false, status: "denied" },
+    status: { isCheckedIn: false, isSelected: false, status: "pending", window: WINDOW },
+  });
+  const gates = [];
+  const { result } = renderHook(() => {
+    const value = useMentorCheckin("fall-2026");
+    gates.push(value.gate);
+    return value;
+  });
+  await waitFor(() => expect(result.current.gate).toBe("pending"));
+  expect(gates).not.toContain("not_selected");
+});
+
+it("an older backend without status in /status keeps the application's", async () => {
+  routeAxios({
+    application: { ...MENTOR, isSelected: false, status: "denied" },
+    status: { isCheckedIn: false, isSelected: false, window: WINDOW },
+  });
+  const { result } = renderHook(() => useMentorCheckin("fall-2026"));
+  await waitFor(() => expect(result.current.gate).toBe("not_selected"));
+});
