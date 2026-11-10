@@ -50,14 +50,23 @@ const MENTOR_LOADING = {
   window: null,
 };
 
-// Fold a /status payload into the mentor state. `isSelected` from /status
-// wins (the status route reads the doc directly, so an approval that lands
-// while the tab is open shows on the next refresh).
+// Fold a /status payload into the mentor state. `/status` reads the volunteer
+// doc straight from Firestore (no cache), so its `isSelected` and review
+// `status` win over the application GET — that one goes through a backend
+// cache, and a stale copy once made refreshes alternate between "awaiting
+// confirmation" and "not selected" (Nov 2026). Older backends send no
+// `status` key; then the application's value stands.
 function applyStatus(prev, status) {
-  const mentor =
-    prev.mentor && typeof status.isSelected === "boolean"
-      ? { ...prev.mentor, isSelected: status.isSelected }
-      : prev.mentor;
+  let mentor = prev.mentor;
+  if (mentor) {
+    const fresh = {};
+    if (typeof status.isSelected === "boolean")
+      fresh.isSelected = status.isSelected;
+    if (Object.prototype.hasOwnProperty.call(status, "status")) {
+      fresh.status = status.status;
+    }
+    if (Object.keys(fresh).length) mentor = { ...mentor, ...fresh };
+  }
   return {
     ...prev,
     mentor,
