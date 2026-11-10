@@ -29,6 +29,9 @@ const AdminPageContainer = styled(Box)(({ theme }) => ({
 const AdminPageTitle = styled(Box)(({ theme, isMobile }) => ({
   marginBottom: theme.spacing(3),
   padding: isMobile ? theme.spacing(2) : theme.spacing(3),
+  // Extra top padding so the h1 ascenders don't clip against the NavBar/
+  // header edge on admin pages.
+  paddingTop: isMobile ? theme.spacing(2.5) : theme.spacing(4),
   background: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
   boxShadow: isMobile ? "none" : theme.shadows[1],
