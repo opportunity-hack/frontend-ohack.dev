@@ -774,7 +774,9 @@ const CheckInWorkbench = ({
                       key={`${person.id}-${person.volunteerType}`}
                       sx={{
                         mb: 1,
-                        cursor: "pointer",
+                        // Only full admins can open the volunteer record —
+                        // a checkin.admin helper has nowhere to go.
+                        cursor: isFullAdmin ? "pointer" : "default",
                         border: isCheckedInByCurrentUser ? "2px solid" : "none",
                         borderColor: isCheckedInByCurrentUser
                           ? "primary.main"
@@ -783,12 +785,15 @@ const CheckInWorkbench = ({
                           ? "primary.50"
                           : "background.paper",
                       }}
-                      onClick={() =>
-                        handleViewVolunteer(
-                          person.eventId,
-                          person.id,
-                          person.volunteerType,
-                        )
+                      onClick={
+                        isFullAdmin
+                          ? () =>
+                              handleViewVolunteer(
+                                person.eventId,
+                                person.id,
+                                person.volunteerType,
+                              )
+                          : undefined
                       }
                     >
                       <CardContent
@@ -824,7 +829,8 @@ const CheckInWorkbench = ({
                           {person.name || "Unknown"}
                         </Typography>
                         <Typography variant="caption" color="textSecondary">
-                          {person.volunteerType} • Click to view
+                          {person.volunteerType}
+                          {isFullAdmin ? " • Click to view" : ""}
                         </Typography>
 
                         {person.checkedInBy && !isCheckedInByCurrentUser && (
