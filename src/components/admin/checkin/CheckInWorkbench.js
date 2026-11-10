@@ -59,6 +59,14 @@ const VOLUNTEER_TYPES = [
 const rosterOptionLabel = (p) =>
   [p?.name || "(no name)", p?.email].filter(Boolean).join(" — ");
 
+// The /api/checkin routes write `checkedInBy: {userId, email, name}`; older
+// check-ins carry `firstName`/`lastName`.
+const checkedInByLabel = (by) =>
+  by?.name ||
+  [by?.firstName, by?.lastName].filter(Boolean).join(" ") ||
+  by?.email ||
+  "";
+
 const CHECKED_IN_CSV_COLUMNS = [
   { key: "name", label: "Name" },
   { key: "email", label: "Email" },
@@ -67,10 +75,7 @@ const CHECKED_IN_CSV_COLUMNS = [
   {
     key: "checkedInBy",
     label: "Checked in by",
-    get: (p) =>
-      [p?.checkedInBy?.firstName, p?.checkedInBy?.lastName]
-        .filter(Boolean)
-        .join(" "),
+    get: (p) => checkedInByLabel(p?.checkedInBy),
   },
   {
     key: "company",
@@ -125,6 +130,18 @@ const CheckInWorkbench = ({
     message: "",
     severity: "success",
   });
+  // The local Snackbar only renders through AdminPage (standalone mode). When
+  // embedded in the per-event admin page there is no Snackbar here, so every
+  // toast must also go to the host's onSnack or it is never seen.
+  const onSnackRef = React.useRef(onSnack);
+  onSnackRef.current = onSnack;
+  const notify = useCallback(
+    (message, severity = "success") => {
+      setSnackbar({ open: true, message, severity });
+      if (embedded) onSnackRef.current?.(message, severity);
+    },
+    [embedded],
+  );
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [manualEventId, setManualEventId] = useState("");
   const [manualVolunteerId, setManualVolunteerId] = useState("");
@@ -338,18 +355,16 @@ const CheckInWorkbench = ({
         setCheckInHistory((prev) => [checkInRecord, ...prev.slice(0, 9)]); // Keep last 10 records
         rosterCacheRef.current = {};
 
-        setSnackbar({
-          open: true,
-          message: alreadyCheckedIn
-            ? `${volunteer.name || "This person"} was already checked in${volunteer.checkedInAt ? ` at ${new Date(volunteer.checkedInAt).toLocaleTimeString()}` : ""}.`
-            : `Successfully checked in ${volunteer.name || "volunteer"}`,
-          severity: alreadyCheckedIn ? "info" : "success",
-        });
+        const message = alreadyCheckedIn
+          ? `${volunteer.name || "This person"} was already checked in${volunteer.checkedInAt ? ` at ${new Date(volunteer.checkedInAt).toLocaleTimeString()}` : ""}.`
+          : `Successfully checked in ${volunteer.name || "volunteer"}`;
+        notify(message, alreadyCheckedIn ? "info" : "success");
 
         // Refresh check-in counts and people list after successful check-in
         if (selectedEventId) {
           refreshCheckIns(selectedEventId);
         }
+        return { ok: true, alreadyCheckedIn, message };
       } catch (error) {
         console.error("Check-in error:", error);
 
@@ -366,16 +381,13 @@ const CheckInWorkbench = ({
 
         setCheckInHistory((prev) => [failedRecord, ...prev.slice(0, 9)]);
 
-        setSnackbar({
-          open: true,
-          message: `Check-in failed: ${error.message}`,
-          severity: "error",
-        });
+        notify(`Check-in failed: ${error.message}`, "error");
+        return { ok: false, error: error.message };
       } finally {
         setLoading(false);
       }
     },
-    [authHeaders, selectedEventId, refreshCheckIns],
+    [authHeaders, selectedEventId, refreshCheckIns, notify],
   );
 
   const handleScan = useCallback(
@@ -412,16 +424,31 @@ const CheckInWorkbench = ({
             throw new Error(`Invalid volunteer type: ${volunteerType}`);
           }
 
-          setScanResult({
+          // Process check-in. The result card reflects what the SERVER said —
+          // a readable QR code is not a check-in (wrong event, not found, 403).
+          setScanResult(null);
+          const outcome = await processCheckIn(
             eventId,
             volunteerId,
             volunteerType,
-            timestamp: new Date().toISOString(),
-            success: true,
-          });
-
-          // Process check-in
-          await processCheckIn(eventId, volunteerId, volunteerType);
+          );
+          setScanResult(
+            outcome?.ok
+              ? {
+                  eventId,
+                  volunteerId,
+                  volunteerType,
+                  message: outcome.message,
+                  alreadyCheckedIn: outcome.alreadyCheckedIn,
+                  timestamp: new Date().toISOString(),
+                  success: true,
+                }
+              : {
+                  error: outcome?.error || "Check-in failed",
+                  timestamp: new Date().toISOString(),
+                  success: false,
+                },
+          );
         } catch (error) {
           console.error("QR code processing error:", error);
           setScanResult({
@@ -429,25 +456,23 @@ const CheckInWorkbench = ({
             timestamp: new Date().toISOString(),
             success: false,
           });
-          setSnackbar({
-            open: true,
-            message: `Check-in failed: ${error.message}`,
-            severity: "error",
-          });
+          notify(`Check-in failed: ${error.message}`, "error");
         }
       }
     },
-    [lastScanned, processCheckIn],
+    [lastScanned, processCheckIn, notify],
   );
 
-  const handleError = useCallback((err) => {
-    console.error("QR Scanner error:", err);
-    setSnackbar({
-      open: true,
-      message: "Camera error. Please check camera permissions and try again.",
-      severity: "error",
-    });
-  }, []);
+  const handleError = useCallback(
+    (err) => {
+      console.error("QR Scanner error:", err);
+      notify(
+        "Camera error. Please check camera permissions and try again.",
+        "error",
+      );
+    },
+    [notify],
+  );
 
   const startScanning = () => {
     setScanning(true);
@@ -465,11 +490,7 @@ const CheckInWorkbench = ({
 
   const handleManualCheckIn = async () => {
     if (!manualEventId || !manualVolunteerId || !manualVolunteerType) {
-      setSnackbar({
-        open: true,
-        message: "Please fill in all fields",
-        severity: "error",
-      });
+      notify("Please fill in all fields", "error");
       return;
     }
 
@@ -700,14 +721,20 @@ const CheckInWorkbench = ({
             {/* Last Scan Result */}
             {scanResult && (
               <Alert
-                severity={scanResult.success ? "success" : "error"}
+                severity={
+                  !scanResult.success
+                    ? "error"
+                    : scanResult.alreadyCheckedIn
+                      ? "info"
+                      : "success"
+                }
                 sx={{ mt: 2 }}
                 icon={scanResult.success ? <CheckCircleIcon /> : <ErrorIcon />}
               >
                 {scanResult.success ? (
                   <Box>
                     <Typography variant="body2">
-                      <strong>Successfully scanned:</strong>
+                      <strong>{scanResult.message || "Checked in"}</strong>
                     </Typography>
                     <Typography variant="body2">
                       Event: {scanResult.eventId}
@@ -719,7 +746,7 @@ const CheckInWorkbench = ({
                   </Box>
                 ) : (
                   <Typography variant="body2">
-                    <strong>Scan Error:</strong> {scanResult.error}
+                    <strong>Not checked in:</strong> {scanResult.error}
                   </Typography>
                 )}
               </Alert>
@@ -839,8 +866,8 @@ const CheckInWorkbench = ({
                             color="textSecondary"
                             sx={{ display: "block", mt: 0.5 }}
                           >
-                            Checked in by: {person.checkedInBy.firstName}{" "}
-                            {person.checkedInBy.lastName}
+                            Checked in by:{" "}
+                            {checkedInByLabel(person.checkedInBy) || "staff"}
                           </Typography>
                         )}
 
