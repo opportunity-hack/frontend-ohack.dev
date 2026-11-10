@@ -56,6 +56,7 @@ import {
 import { isHackathonExpired } from "../../lib/dateUtils";
 import TeamJoinConfirmationModal from "../Teams/TeamJoinConfirmationModal";
 import {
+  isMembershipRefusal,
   joinTeam,
   leaveTeam,
   teamJoinBlockedReason,
@@ -927,6 +928,7 @@ const TeamCard = ({
   isHackathonExpired,
   teamJoinEnabled,
   hackerStatus,
+  refusal,
   nonprofitMap,
   accessToken,
   onCopyGithubUsername,
@@ -994,8 +996,13 @@ const TeamCard = ({
   // to a non-"approved" hackerStatus and are blocked from joining. null means the
   // status hasn't loaded yet — keep Join disabled until we know.
   const isApprovedHacker = hackerStatus === "approved";
-  const canJoin = canJoinLeave && !joiningDisabledByStatus && isApprovedHacker;
-  const canLeave = canJoinLeave; // Users can still leave teams with restricted statuses
+  // `refusal` = the server said no under its participant rules
+  // (api/teams/membership_rules.py) — show it as the blocked reason.
+  const joinRefusal = refusal?.action === "join" ? refusal.reason : null;
+  const leaveRefusal = refusal?.action === "leave" ? refusal.reason : null;
+  const canJoin =
+    canJoinLeave && !joiningDisabledByStatus && isApprovedHacker && !joinRefusal;
+  const canLeave = canJoinLeave && !leaveRefusal; // Users can still leave teams with restricted statuses
 
   // Map team members to their GitHub stats
   const getStatsForMember = (teamMember) => {
@@ -1347,7 +1354,9 @@ const TeamCard = ({
                     {teamLeaveBlockedReason({
                       eventEnded: isHackathonExpired,
                       teamJoinEnabled,
-                    }) || "Team changes are paused right now."}
+                    }) ||
+                      leaveRefusal ||
+                      "Team changes are paused right now."}
                   </Typography>
                 )}
               </>
@@ -1383,7 +1392,9 @@ const TeamCard = ({
                       teamJoinEnabled,
                       isActive: team.active === "True" || team.active === true,
                       status: team?.status,
-                    }) || "Team changes are paused right now."}
+                    }) ||
+                      joinRefusal ||
+                      "Team changes are paused right now."}
                   </Typography>
                 )}
               </>
@@ -1453,6 +1464,8 @@ const TeamList = ({
   // hit the hacker-scoped endpoint and get nothing back, so they can't join.
   // null = unknown/loading, "approved" | "pending" | "none" once resolved.
   const [hackerStatus, setHackerStatus] = useState(null);
+  // Server rule refusals per team: { [teamId]: { action, code, reason } }.
+  const [refusals, setRefusals] = useState({});
   const [nonprofitMap, setNonprofitMap] = useState({});
   // Clock for mentor-coverage freshness (null during SSR/hydration).
   const coverageNow = useCoverageNow({ endDate, timezone: eventTimezone });
@@ -1776,6 +1789,14 @@ const TeamList = ({
         severity: "success",
       });
     } catch (error) {
+      if (isMembershipRefusal(error)) {
+        // The server's rules said no — show it on the card, no error toast.
+        setRefusals((prev) => ({
+          ...prev,
+          [teamId]: { action: "join", code: error.code, reason: error.message },
+        }));
+        return;
+      }
       console.error("Error joining team:", error);
       setSnackbar({
         open: true,
@@ -1829,6 +1850,13 @@ const TeamList = ({
         severity: "success",
       });
     } catch (error) {
+      if (isMembershipRefusal(error)) {
+        setRefusals((prev) => ({
+          ...prev,
+          [teamId]: { action: "leave", code: error.code, reason: error.message },
+        }));
+        return;
+      }
       console.error("Error leaving team:", error);
       setSnackbar({
         open: true,
@@ -1926,6 +1954,7 @@ const TeamList = ({
                 isHackathonExpired={isHackathonExpired(endDate, eventTimezone)}
                 teamJoinEnabled={teamJoinEnabled}
                 hackerStatus={hackerStatus}
+                refusal={refusals[team?.id]}
                 nonprofitMap={nonprofitMap}
                 accessToken={accessToken}
                 onCopyGithubUsername={handleCopyGithubUsername}

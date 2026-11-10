@@ -15,6 +15,8 @@ import {
   userEntryMatchesProfile,
   humanizeMembershipError,
   TeamMembershipError,
+  TEAM_REFUSAL_COPY,
+  isMembershipRefusal,
 } from "../teamMembershipApi";
 
 const jsonResponse = (body, { ok = true, status = 200 } = {}) => ({
@@ -91,6 +93,61 @@ describe("teamMembershipApi join/leave", () => {
     );
     expect(err).toBeInstanceOf(TeamMembershipError);
     expect(err.status).toBe(500);
+  });
+
+  it("reads the legacy backend's real `text` field (vars(Message)), not just `message`", async () => {
+    // The legacy route returns {text, metadata}; checking only `message`
+    // missed every "Error: …" soft failure and every noop.
+    fetch.mockResolvedValue(jsonResponse({ text: "Error: User not found" }));
+    await expect(
+      joinTeam({ accessToken: "tok", teamId: "t1" }),
+    ).rejects.toMatchObject({ name: "TeamMembershipError", code: null });
+    expect(trackEvent).not.toHaveBeenCalled();
+
+    fetch.mockResolvedValue(jsonResponse({ text: "User was already in the team" }));
+    await expect(
+      joinTeam({ accessToken: "tok", teamId: "t1" }),
+    ).resolves.toEqual({ message: "User was already in the team", noop: true });
+  });
+
+  it.each([
+    ["event_ended", 409, /hackathon has ended/i],
+    ["team_join_disabled", 409, /paused/i],
+    ["team_inactive", 409, /isn't active/i],
+    ["team_not_joinable", 409, /isn't taking new members/i],
+    ["not_approved_hacker", 403, /approved hackers/i],
+    ["team_not_found", 404, /no longer exists/i],
+  ])("maps the server refusal %s (%i) to the blocked-reason copy", async (code, status, copy) => {
+    fetch.mockResolvedValue(
+      jsonResponse({ error: code, message: "server copy" }, { ok: false, status }),
+    );
+    const err = await joinTeam({ accessToken: "tok", teamId: "t1" }).catch((e) => e);
+    expect(err).toBeInstanceOf(TeamMembershipError);
+    expect(err.code).toBe(code);
+    expect(err.status).toBe(status);
+    expect(err.message).toMatch(copy);
+    expect(isMembershipRefusal(err)).toBe(true);
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it("refusal copy matches the client-side blocked reasons exactly", () => {
+    expect(TEAM_REFUSAL_COPY.event_ended).toBe(teamJoinBlockedReason({ eventEnded: true }));
+    expect(TEAM_REFUSAL_COPY.team_join_disabled).toBe(
+      teamLeaveBlockedReason({ teamJoinEnabled: false }),
+    );
+    expect(TEAM_REFUSAL_COPY.team_inactive).toBe(teamJoinBlockedReason({ isActive: false }));
+    expect(TEAM_REFUSAL_COPY.team_not_joinable).toBe(
+      teamJoinBlockedReason({ isActive: true, status: "DEPLOYED" }),
+    );
+  });
+
+  it("an unknown 4xx error code is a plain failure, not a refusal", async () => {
+    fetch.mockResolvedValue(
+      jsonResponse({ error: "something_else", message: "nope" }, { ok: false, status: 400 }),
+    );
+    const err = await joinTeam({ accessToken: "tok", teamId: "t1" }).catch((e) => e);
+    expect(err.code).toBeNull();
+    expect(isMembershipRefusal(err)).toBe(false);
   });
 
   it("rejects without a token and never calls fetch", async () => {
