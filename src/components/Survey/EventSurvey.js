@@ -3,11 +3,13 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
 import axios from "axios";
-import { useAuthInfo } from "@propelauth/react";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { RefinedRoot, RefinedFonts } from "../design/refined";
+import { RefinedRoot } from "../design/refined";
 import { useRecaptcha } from "../../hooks/use-recaptcha";
+import useAuthedResource, {
+  errorStatus,
+} from "../../hooks/use-authed-resource";
 import {
   ROLE_OPTIONS,
   getSurveyQuestions,
@@ -318,7 +320,6 @@ function Shell({ eventTitle, children }) {
         </title>
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <RefinedFonts />
       </Head>
       <div
         className="ohx-wrap"
@@ -338,12 +339,49 @@ function Shell({ eventTitle, children }) {
 export default function EventSurvey({ source = "survey" }) {
   const router = useRouter();
   const { event_id: eventId } = router.query;
-  const { isLoggedIn, accessToken } = useAuthInfo();
   const { getRecaptchaToken } = useRecaptcha();
 
-  const [ctx, setCtx] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  // Survey context (mode + the caller's eligible roles). A public route that
+  // recognises a logged-in volunteer, so `requireAuth: false`: the shared hook
+  // waits for PropelAuth to resolve before the first request (no anonymous
+  // "nonprofit only" flash for a volunteer), refetches when a token first
+  // appears, and — unlike the old effect keyed on the raw token — fires no
+  // request and shows no spinner on a refocus token rotation (Class C, Nov 2026).
+  const context = useAuthedResource(
+    ["survey-context", eventId],
+    async ({ token }) => {
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await axios.get(
+        `${apiServerUrl}/api/surveys/${eventId}/context`,
+        {
+          headers,
+        },
+      );
+      const data = res.data || {};
+      if (!data.success) {
+        const err = new Error(
+          data.error || "Could not load the feedback form.",
+        );
+        err.userMessage = err.message;
+        throw err;
+      }
+      return data;
+    },
+    { enabled: Boolean(eventId), requireAuth: false },
+  );
+  const ctx = context.status === "ready" ? context.data : null;
+  const setCtx = context.setData;
+  const loading = context.status === "loading" || context.status === "idle";
+  const loadError =
+    context.status === "error"
+      ? context.error?.userMessage ||
+        (errorStatus(context.error) === 404
+          ? "We couldn't find that event."
+          : "Could not load the feedback form. Please try again.")
+      : null;
+  const canRetryLoad =
+    context.status === "error" && errorStatus(context.error) !== 404;
 
   const [role, setRole] = useState("");
   const [answers, setAnswers] = useState({});
@@ -354,42 +392,6 @@ export default function EventSurvey({ source = "survey" }) {
   const mode = ctx?.mode;
   const requiresCaptcha = ctx ? ctx.requires_captcha : true;
   const eventTitle = ctx?.event?.title;
-
-  // Load survey context (mode + the caller's eligible roles). Re-runs when auth
-  // resolves so a logged-in volunteer is recognized after token hydration.
-  useEffect(() => {
-    if (!eventId) return undefined;
-    let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
-    const headers = {};
-    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-    axios
-      .get(`${apiServerUrl}/api/surveys/${eventId}/context`, { headers })
-      .then((res) => {
-        if (cancelled) return;
-        const data = res.data || {};
-        if (!data.success) {
-          setLoadError(data.error || "Could not load the feedback form.");
-        } else {
-          setCtx(data);
-        }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setLoadError(
-          err?.response?.status === 404
-            ? "We couldn't find that event."
-            : "Could not load the feedback form. Please try again.",
-        );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [eventId, isLoggedIn, accessToken]);
 
   // Keep the selected role within what the user is allowed to submit. A logged-in
   // volunteer can only choose a role they're isSelected for; everyone else → nonprofit.
@@ -450,6 +452,7 @@ export default function EventSurvey({ source = "survey" }) {
       }
 
       const headers = { "Content-Type": "application/json" };
+      const accessToken = context.tokenRef.current;
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
       await axios.post(
@@ -477,7 +480,8 @@ export default function EventSurvey({ source = "survey" }) {
     mode,
     requiresCaptcha,
     visibleQuestions,
-    accessToken,
+    context.tokenRef,
+    setCtx,
     eventId,
     source,
     getRecaptchaToken,
@@ -505,6 +509,16 @@ export default function EventSurvey({ source = "survey" }) {
           <p className="ohx-muted" style={{ marginTop: 12 }}>
             {loadError}
           </p>
+          {canRetryLoad && (
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              style={{ marginTop: 16 }}
+              onClick={() => context.reload()}
+            >
+              Try again
+            </button>
+          )}
         </Card>
       </Shell>
     );
