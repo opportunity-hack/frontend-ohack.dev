@@ -166,3 +166,123 @@ describe("CheckInWorkbench with checkin.admin only", () => {
     currentOrg = ORG("checkin.admin");
   });
 });
+
+describe("Reset check-ins (full admins only)", () => {
+  const MENTORS = [
+    {
+      id: "m-early",
+      name: "Early Mentor",
+      checkedIn: true,
+      isCheckedIn: true,
+      checkInTime: "2026-11-01T09:00:00-07:00",
+    },
+    {
+      id: "m-desk",
+      name: "Desk Mentor",
+      checkedIn: true,
+      checkedInAt: "2026-11-14T16:00:00Z",
+    },
+  ];
+  let mentorsCheckedIn;
+
+  beforeEach(() => {
+    mentorsCheckedIn = MENTORS;
+    const base = global.fetch;
+    global.fetch = jest.fn((url, opts = {}) => {
+      if (/\/api\/checkin\/fall-2026\/checkins\/mentor$/.test(url)) {
+        return jsonResponse({ data: mentorsCheckedIn, count: mentorsCheckedIn.length });
+      }
+      if (opts.method === "POST" && /\/api\/checkin\/fall-2026\/reset\/mentor$/.test(url)) {
+        const body = JSON.parse(opts.body);
+        const ids = body.all ? MENTORS.map((m) => m.id) : body.volunteer_ids;
+        mentorsCheckedIn = mentorsCheckedIn.filter((m) => !ids.includes(m.id));
+        return jsonResponse({ reset: ids.length, ids, skipped: [] });
+      }
+      return base(url, opts);
+    });
+  });
+
+  afterEach(() => {
+    currentOrg = ORG("checkin.admin");
+  });
+
+  it("is hidden for a checkin.admin-only helper", async () => {
+    currentOrg = ORG("checkin.admin");
+    renderEmbedded();
+    await screen.findByText("Ada Lovelace");
+    expect(screen.queryByRole("button", { name: /reset check-ins/i })).toBeNull();
+  });
+
+  it("posts the selected ids for the role, refetches and toasts via onSnack", async () => {
+    currentOrg = ORG("volunteer.admin");
+    const onSnack = jest.fn();
+    render(
+      <CheckInWorkbench
+        userClass={userClass}
+        embedded
+        externalEventId="fall-2026"
+        onSnack={onSnack}
+      />,
+    );
+    await screen.findByText("Early Mentor");
+    fireEvent.click(screen.getByRole("button", { name: /reset check-ins/i }));
+    const dialog = await screen.findByRole("dialog");
+
+    // Mentors is the default role; both are listed and selected.
+    expect(await screen.findByText("Online self check-in")).toBeInTheDocument();
+    expect(screen.getByText("Desk")).toBeInTheDocument();
+    const confirm = screen.getByRole("button", { name: /reset 2 mentor check-ins/i });
+
+    // Un-tick the desk mentor → only the early one is sent (as ids, not all).
+    fireEvent.click(screen.getByRole("checkbox", { name: "Desk Mentor" }));
+    expect(screen.getByRole("button", { name: /reset 1 mentor check-in$/i })).toBeInTheDocument();
+    global.fetch.mockClear();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /reset 1 mentor check-in$/i }));
+    });
+
+    const post = global.fetch.mock.calls.find(([, o]) => o && o.method === "POST");
+    expect(post[0]).toBe("http://api.test/api/checkin/fall-2026/reset/mentor");
+    expect(JSON.parse(post[1].body)).toEqual({ volunteer_ids: ["m-early"] });
+    expect(post[1].headers).toMatchObject({ "X-Org-Id": "org-1" });
+    await waitFor(() => expect(onSnack).toHaveBeenCalledWith("Reset 1 check-in", "success"));
+    // The list was refetched after the reset.
+    expect(
+      global.fetch.mock.calls.some(([u]) => /\/checkins\/mentor$/.test(u)),
+    ).toBe(true);
+    await waitFor(() => expect(screen.queryByText("Early Mentor")).toBeNull());
+    expect(screen.getAllByText("Desk Mentor").length).toBeGreaterThan(0);
+    expect(confirm).toBeTruthy();
+    expect(dialog).toBeTruthy();
+  });
+
+  it("sends {all: true} only when everyone listed is selected; 404 explains", async () => {
+    currentOrg = ORG("volunteer.admin");
+    const onSnack = jest.fn();
+    const base = global.fetch;
+    global.fetch = jest.fn((url, opts = {}) => {
+      if (opts.method === "POST" && /\/reset\/mentor$/.test(url)) {
+        return jsonResponse({ message: "not found" }, 404);
+      }
+      return base(url, opts);
+    });
+    render(
+      <CheckInWorkbench
+        userClass={userClass}
+        embedded
+        externalEventId="fall-2026"
+        onSnack={onSnack}
+      />,
+    );
+    await screen.findByText("Early Mentor");
+    fireEvent.click(screen.getByRole("button", { name: /reset check-ins/i }));
+    await act(async () => {
+      fireEvent.click(await screen.findByRole("button", { name: /reset 2 mentor check-ins/i }));
+    });
+    const post = global.fetch.mock.calls.find(([, o]) => o && o.method === "POST");
+    expect(JSON.parse(post[1].body)).toEqual({ all: true });
+    await waitFor(() =>
+      expect(onSnack).toHaveBeenCalledWith("Reset isn't available on this backend yet.", "error"),
+    );
+  });
+});

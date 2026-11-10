@@ -36,6 +36,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import useHackathonEvents from "../../../hooks/use-hackathon-events";
 import ExportCsvButton from "../ExportCsvButton";
 import { orgCanCheckIn, orgIsFullAdmin } from "../../../lib/adminPermissions";
+import * as ga from "../../../lib/ga";
+import ResetCheckInsDialog from "./ResetCheckInsDialog";
 
 const EMPTY_COUNTS = {
   mentor: 0,
@@ -141,6 +143,11 @@ const CheckInWorkbench = ({
   const [manualSelection, setManualSelection] = useState(null);
   const [manualIdFieldOpen, setManualIdFieldOpen] = useState(false);
   const rosterCacheRef = React.useRef({});
+  const [resetOpen, setResetOpen] = useState(false);
+  const selectedHackathon = Array.isArray(hackathons)
+    ? hackathons.find((h) => h?.event_id === selectedEventId)
+    : null;
+  const [resetBusy, setResetBusy] = useState(false);
 
   // Scanner settings
   const [facingMode, setFacingMode] = useState("environment"); // 'user' for front camera, 'environment' for back camera
@@ -193,6 +200,68 @@ const CheckInWorkbench = ({
       }
     },
     [authHeaders],
+  );
+
+  // Toast through the local snackbar AND the host page's (when embedded the
+  // AdminPage snackbar isn't mounted, so only onSnack reaches the admin).
+  const snack = useCallback(
+    (message, severity = "success") => {
+      setSnackbar({ open: true, message, severity });
+      if (embedded && typeof onSnack === "function") onSnack(message, severity);
+    },
+    [embedded, onSnack],
+  );
+
+  // Full admins only (the backend route is volunteer.admin-gated). Sends the
+  // chosen ids, or {all: true} only when every listed person was selected.
+  const resetCheckIns = useCallback(
+    async (eventId, volunteerType, ids, { all = false } = {}) => {
+      if (!eventId || !volunteerType) return;
+      setResetBusy(true);
+      try {
+        const response = await fetch(
+          `${CHECKIN_API}/${encodeURIComponent(eventId)}/reset/${encodeURIComponent(volunteerType)}`,
+          {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(all ? { all: true } : { volunteer_ids: ids }),
+          },
+        );
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+        if (!response.ok) {
+          const reason =
+            response.status === 404
+              ? "Reset isn't available on this backend yet."
+              : payload?.message ||
+                payload?.error ||
+                `Reset failed (${response.status})`;
+          throw new Error(reason);
+        }
+        const count = Number(payload?.reset) || 0;
+        delete rosterCacheRef.current[`${eventId}|${volunteerType}`];
+        await refreshCheckIns(eventId);
+        ga.trackStructuredEvent(
+          ga.EventCategory.ADMIN,
+          "admin_checkin_reset",
+          volunteerType,
+          count,
+          { event_id: eventId },
+        );
+        snack(`Reset ${count} check-in${count === 1 ? "" : "s"}`, "success");
+        setResetOpen(false);
+      } catch (error) {
+        console.error("Reset check-ins error:", error);
+        snack(error.message, "error");
+      } finally {
+        setResetBusy(false);
+      }
+    },
+    [authHeaders, refreshCheckIns, snack],
   );
 
   // Load one role's roster for the Manual Entry search (admin endpoint — the
@@ -748,6 +817,17 @@ const CheckInWorkbench = ({
                     variant="outlined"
                   />
                 )}
+                {isFullAdmin && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="warning"
+                    onClick={() => setResetOpen(true)}
+                    disabled={!selectedEventId}
+                  >
+                    Reset check-ins…
+                  </Button>
+                )}
                 <ExportCsvButton
                   rows={allCheckedInPeople}
                   columns={CHECKED_IN_CSV_COLUMNS}
@@ -816,8 +896,10 @@ const CheckInWorkbench = ({
                             sx={{ mr: 1 }}
                           />
                           <Typography variant="caption" color="textSecondary">
-                            {person.checkedInAt
-                              ? new Date(person.checkedInAt).toLocaleString()
+                            {person.checkedInAt || person.checkInTime
+                              ? new Date(
+                                  person.checkedInAt || person.checkInTime,
+                                ).toLocaleString()
                               : "Unknown time"}
                           </Typography>
                         </Box>
@@ -864,6 +946,20 @@ const CheckInWorkbench = ({
       </Grid>
 
       {/* Manual Entry Dialog — pick a role, search the roster by name/email */}
+      {isFullAdmin && (
+        <ResetCheckInsDialog
+          open={resetOpen}
+          onClose={() => setResetOpen(false)}
+          people={allCheckedInPeople}
+          eventStartDate={selectedHackathon?.start_date}
+          timezone={selectedHackathon?.timezone}
+          busy={resetBusy}
+          onConfirm={(type, ids, opts) =>
+            resetCheckIns(selectedEventId, type, ids, opts)
+          }
+        />
+      )}
+
       <Dialog
         open={manualEntryOpen}
         onClose={() => setManualEntryOpen(false)}
