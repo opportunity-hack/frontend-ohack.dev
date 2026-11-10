@@ -13,7 +13,7 @@ const key1Active = {
   key_alias: "fall26-t1",
   models: ["muse-spark"],
   max_budget: 15,
-  expires: "2026-11-16T07:00:00Z",
+  expires: "2026-11-16T01:00:00Z",
   status: "active",
 };
 
@@ -22,7 +22,7 @@ const key2Active = {
   key_alias: "fall26-t1-frontier",
   models: ["muse-wonder", "kimi-k3"],
   max_budget: 20,
-  expires: "2026-11-16T07:00:00Z",
+  expires: "2026-11-16T01:00:00Z",
   status: "active",
 };
 
