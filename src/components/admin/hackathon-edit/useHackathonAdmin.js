@@ -77,6 +77,10 @@ export function useHackathonAdmin({
   accessTokenRef.current = accessToken;
   const orgIdRef = useRef(orgId);
   orgIdRef.current = orgId;
+  // Read through a ref so pushPatch stays identity-stable (same reason as the
+  // token refs above).
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   const loadedEventIdRef = useRef(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_SERVER_URL;

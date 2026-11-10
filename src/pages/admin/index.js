@@ -5,6 +5,7 @@ import {
   RedirectToLogin,
 } from "@propelauth/react";
 import {
+  Alert,
   Box,
   Grid,
   Typography,
@@ -177,7 +178,7 @@ const AdminDashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   // Desk helpers go straight to the newest current event's check-in.
-  const { hackathons: currentEvents = [] } =
+  const { hackathons: currentEvents = [], loading: eventsLoading } =
     useHackathonEvents("current") || {};
   const checkInEventId = newestEventId(currentEvents);
   const visiblePages = adminPages
@@ -246,6 +247,15 @@ const AdminDashboard = () => {
             below to get started.
           </Typography>
         </Paper>
+
+        {/* A desk helper's only card needs a current event — without one
+            /admin/check-in sends them straight back here. Say why. */}
+        {!isAdmin && !eventsLoading && !checkInEventId && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            No hackathon is running right now, so check-in isn&apos;t open
+            yet. It opens on the first day of the event.
+          </Alert>
+        )}
 
         <Grid container spacing={isMobile ? 2 : 3}>
           {visiblePages.map((page) => (

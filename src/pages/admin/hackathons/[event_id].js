@@ -203,8 +203,10 @@ const AdminHackathonEditPage = () => {
       <AdminPage
         title={
           admin.hackathon?.title
-            ? `Edit · ${admin.hackathon.title}`
-            : "Edit Hackathon"
+            ? `${isAdmin ? "Edit" : "Check-in"} · ${admin.hackathon.title}`
+            : isAdmin
+              ? "Edit Hackathon"
+              : "Check-in"
         }
         snackbar={snackbar}
         onSnackbarClose={() => setSnackbar((s) => ({ ...s, open: false }))}
