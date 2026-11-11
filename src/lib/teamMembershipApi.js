@@ -4,11 +4,19 @@
  * `TeamList` and the team page's "Team members" section.
  *
  * Backend gotcha (`services/teams_service.py::join_team / unjoin_team`):
- * handled failures come back as HTTP 200 with `{ message: "Error: …" }` —
- * for example a login with no `users` doc yet resolves to
- * "Error: User not found". Checking `response.ok` alone reports those as a
- * success (the event page used to say "Successfully joined the team" while
- * nobody was added), so an Error-prefixed message is a failure here too.
+ * handled failures come back as HTTP 200 with `{ text: "Error: …" }` (the
+ * legacy `vars(Message)` shape — `text`, NOT `message`) — for example a login
+ * with no `users` doc yet resolves to "Error: User not found". Checking
+ * `response.ok` alone reports those as a success (the event page used to say
+ * "Successfully joined the team" while nobody was added), so an
+ * Error-prefixed answer is a failure here too.
+ *
+ * Server-side rules (Nov 2026): the backend now enforces the same join/leave
+ * rules as `teamJoinBlockedReason` / `teamLeaveBlockedReason` below — TWIN:
+ * backend `api/teams/membership_rules.py` (same checks, same order; change
+ * both together). A refusal is a 4xx `{ error: <code>, message }`; the error
+ * carries `code` + the blocked-reason copy as `message`, so callers render
+ * the blocked state instead of an error toast (`isMembershipRefusal`).
  */
 import { trackEvent, EventCategory } from "./ga";
 import { isJoiningDisabled } from "../constants/teamStatus";
@@ -16,13 +24,50 @@ import { isJoiningDisabled } from "../constants/teamStatus";
 const apiBase = () => process.env.NEXT_PUBLIC_API_SERVER_URL;
 
 export class TeamMembershipError extends Error {
-  constructor(message, { status = null, body = null } = {}) {
+  constructor(message, { status = null, body = null, code = null } = {}) {
     super(message);
     this.name = "TeamMembershipError";
     this.status = status;
     this.body = body;
+    // A server rule refusal code (see TEAM_REFUSAL_COPY), else null.
+    this.code = code;
   }
 }
+
+// Blocked-reason copy — shared by the client-side checks below and the
+// server refusal codes, so a refusal reads exactly like the page's own
+// blocked state.
+const BLOCKED_COPY = {
+  eventEnded: "This hackathon has ended, so its teams are closed.",
+  paused:
+    "Team changes are paused right now. Ask an organizer if you need to move.",
+  inactive: "This team isn't active right now.",
+  notJoinable: "This team isn't taking new members anymore.",
+  notApproved:
+    "Joining a team is for approved hackers. If you applied, your application may still be under review.",
+  notFound: "This team no longer exists.",
+};
+
+/** Backend refusal code → participant copy (api/teams/membership_rules.py). */
+export const TEAM_REFUSAL_COPY = {
+  event_ended: BLOCKED_COPY.eventEnded,
+  team_join_disabled: BLOCKED_COPY.paused,
+  team_inactive: BLOCKED_COPY.inactive,
+  team_not_joinable: BLOCKED_COPY.notJoinable,
+  not_approved_hacker: BLOCKED_COPY.notApproved,
+  team_not_found: BLOCKED_COPY.notFound,
+};
+
+/** True when `err` is a server rule refusal (render it as a blocked state). */
+export const isMembershipRefusal = (err) =>
+  Boolean(err && err.code && TEAM_REFUSAL_COPY[err.code]);
+
+/** The answer text of a legacy join/leave response (`text`, or `message`). */
+const answerText = (body) => {
+  if (typeof body?.message === "string") return body.message;
+  if (typeof body?.text === "string") return body.text;
+  return "";
+};
 
 const ERROR_MESSAGE_RE = /^\s*error\b/i;
 
@@ -80,13 +125,21 @@ async function mutateMembership({
   }
 
   if (!response.ok) {
+    const code = typeof body?.error === "string" ? body.error : null;
+    if (code && TEAM_REFUSAL_COPY[code]) {
+      throw new TeamMembershipError(TEAM_REFUSAL_COPY[code], {
+        status: response.status,
+        body,
+        code,
+      });
+    }
     throw new TeamMembershipError(
-      humanizeMembershipError(body?.message, action),
+      humanizeMembershipError(answerText(body), action),
       { status: response.status, body },
     );
   }
 
-  const message = typeof body?.message === "string" ? body.message : "";
+  const message = answerText(body);
   if (isErrorMessage(message)) {
     throw new TeamMembershipError(humanizeMembershipError(message, action), {
       status: response.status,
@@ -163,7 +216,8 @@ export async function fetchHackerStatus({ accessToken, eventId }) {
 /**
  * Why a non-member can't join right now, or null when joining is open.
  * Copy is shared by the event page cards and the team page so the two
- * never disagree.
+ * never disagree. TWIN: backend api/teams/membership_rules.py
+ * `team_membership_rules` enforces the same checks in the same order.
  */
 export function teamJoinBlockedReason({
   eventEnded,
@@ -171,20 +225,17 @@ export function teamJoinBlockedReason({
   isActive,
   status,
 }) {
-  if (eventEnded) return "This hackathon has ended, so its teams are closed.";
-  if (teamJoinEnabled === false)
-    return "Team changes are paused right now. Ask an organizer if you need to move.";
-  if (!isActive) return "This team isn't active right now.";
-  if (isJoiningDisabled(status))
-    return "This team isn't taking new members anymore.";
+  if (eventEnded) return BLOCKED_COPY.eventEnded;
+  if (teamJoinEnabled === false) return BLOCKED_COPY.paused;
+  if (!isActive) return BLOCKED_COPY.inactive;
+  if (isJoiningDisabled(status)) return BLOCKED_COPY.notJoinable;
   return null;
 }
 
 /** Why a member can't leave right now, or null. */
 export function teamLeaveBlockedReason({ eventEnded, teamJoinEnabled = true }) {
-  if (eventEnded) return "This hackathon has ended, so its teams are closed.";
-  if (teamJoinEnabled === false)
-    return "Team changes are paused right now. Ask an organizer if you need to move.";
+  if (eventEnded) return BLOCKED_COPY.eventEnded;
+  if (teamJoinEnabled === false) return BLOCKED_COPY.paused;
   return null;
 }
 

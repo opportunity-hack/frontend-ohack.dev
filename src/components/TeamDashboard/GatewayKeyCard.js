@@ -10,12 +10,18 @@ import {
   maskSnippet,
   GATEWAY_OPENAI_BASE,
   GUIDE_URL,
-  DEFAULT_MODEL,
+  GUIDE_PROMPTS_ANCHOR,
+  KEY1_MODELS,
+  KEY2_MODELS,
+  modelNote,
+  fastModelFor,
+  formatKeyExpiry,
+  earliestExpiry,
 } from "./gatewaySnippets";
 
 const GATEWAY_ENDPOINT = GATEWAY_OPENAI_BASE;
-const FALLBACK_MODELS = [DEFAULT_MODEL, "kimi-k2.7-code", "gpt-oss-120b"];
-const FRONTIER_MODELS = ["muse-wonder", "kimi-k3"];
+const FALLBACK_MODELS = KEY1_MODELS;
+const FRONTIER_MODELS = KEY2_MODELS;
 
 /** "Key 1" -> "key1", "Key 2" -> "key2": the slug used in GA labels and reveal state. */
 function keySlug(entry, index) {
@@ -145,12 +151,49 @@ function KeySection({
             Pick one — the setup below uses it.
           </Box>
         )}
+        {modelNote(model) && (
+          <Box
+            sx={{ fontSize: "0.85rem", color: "var(--ink, #16181D)", mt: 0.75 }}
+            aria-live="polite"
+          >
+            {modelNote(model)}
+          </Box>
+        )}
+        {model === "muse-spark" && (
+          <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mt: 0.75 }}>
+            Writing your own agent on muse-spark? Send max_tokens of 2000 or
+            more and use tool_choice &quot;auto&quot; —{" "}
+            <a
+              href={`${GUIDE_URL}#troubleshooting`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-link"
+            >
+              why ↗
+            </a>
+          </Box>
+        )}
+        {index === 0 && models.includes("muse-spark") && (
+          <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mt: 0.75 }}>
+            muse-spark uses Meta&apos;s Contributor tier, so your prompts and
+            generated code may be used to train Meta&apos;s models. If your team
+            would rather not, pick gpt-oss-120b.{" "}
+            <a
+              href={`${GUIDE_URL}${GUIDE_PROMPTS_ANCHOR}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-link"
+            >
+              Details ↗
+            </a>
+          </Box>
+        )}
       </Box>
 
       <SetupSnippets
         keyValue={entry.key}
         model={model}
-        fastModel={defaultModel}
+        fastModel={fastModelFor({ keyIndex: index, models, model })}
         revealed={revealed}
         onCopy={(text, label) => onCopy(text, `${label}_${slug}`)}
       />
@@ -489,7 +532,18 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
                 </Box>
               );
             }
-            return keys.map((entry, i) => {
+            const expiryLabel = formatKeyExpiry(earliestExpiry(keys));
+            return (
+              <>
+                {expiryLabel && (
+                  <Box sx={{ mb: 2.5 }}>
+                    <RowLabel>Keys work until</RowLabel>
+                    <Box sx={{ fontSize: "0.9rem" }}>
+                      {expiryLabel}. After that, your team&apos;s keys stop working.
+                    </Box>
+                  </Box>
+                )}
+                {keys.map((entry, i) => {
               const slug = keySlug(entry, i);
               return (
                 <KeySection
@@ -503,7 +557,9 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
                   onSelectModel={(m) => selectModel(slug, m)}
                 />
               );
-            });
+                })}
+              </>
+            );
           })()}
 
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
@@ -516,6 +572,19 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
             >
               Full setup guide ↗
             </a>
+          </Box>
+
+          <Box sx={{ fontSize: "0.85rem", color: "var(--muted)", mb: 1 }}>
+            Using Cline or Continue in VS Code? The{" "}
+            <a
+              href={`${GUIDE_URL}#cline`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ohx-link"
+            >
+              guide has their setup
+            </a>
+            .
           </Box>
 
           <Box sx={{ fontSize: "0.85rem", color: "var(--faint)" }}>

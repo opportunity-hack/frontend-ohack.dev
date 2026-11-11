@@ -15,7 +15,9 @@ export const TEAM_STATUS_OPTIONS = [
   { value: 'INACTIVE', label: 'Inactive', color: 'error' }
 ];
 
-// Statuses that prevent new members from joining
+// Statuses that prevent new members from joining.
+// TWIN: backend api/teams/membership_rules.py JOINING_DISABLED_STATUSES — the
+// server refuses joins on these too; keep the two lists identical.
 export const JOINING_DISABLED_STATUSES = [
   'ONBOARDED',
   'SWAG_RECEIVED',

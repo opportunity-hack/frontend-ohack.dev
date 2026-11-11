@@ -75,6 +75,12 @@ export default function useTeamProject({ team, accessToken, onTeamUpdated }) {
   const [saveState, setSaveState] = useState(IDLE_SAVE_STATE);
   const saveStateRef = useRef(saveState);
   const timerRef = useRef(null);
+  // Token-rotation pattern (Class C, Nov 2026): PropelAuth mints a fresh
+  // accessToken on refocus. Saves read it through a ref, so a debounced save
+  // scheduled before a rotation sends the CURRENT token and `doSave` keeps a
+  // stable identity.
+  const tokenRef = useRef(accessToken);
+  tokenRef.current = accessToken;
 
   useEffect(() => {
     draftRef.current = draft;
@@ -103,12 +109,12 @@ export default function useTeamProject({ team, accessToken, onTeamUpdated }) {
   }, [teamId]);
 
   const doSave = useCallback(async () => {
-    if (!teamId || !accessToken) return;
+    if (!teamId || !tokenRef.current) return;
     const changed = diffChanged(committedRef.current, draftRef.current);
     if (Object.keys(changed).length === 0) return;
     setSaveState((s) => ({ ...s, status: "saving", error: null }));
     try {
-      const res = await saveTeamProject(teamId, changed, accessToken);
+      const res = await saveTeamProject(teamId, changed, tokenRef.current);
       committedRef.current = { ...committedRef.current, ...changed };
       setSaveState({
         status: "saved",
@@ -148,7 +154,7 @@ export default function useTeamProject({ team, accessToken, onTeamUpdated }) {
         setSaveState((s) => ({ ...s, status: "error", error: null }));
       }
     }
-  }, [teamId, accessToken, onTeamUpdated, clearTimer]);
+  }, [teamId, onTeamUpdated, clearTimer]);
 
   const setField = useCallback(
     (key, value) => {
@@ -181,9 +187,9 @@ export default function useTeamProject({ team, accessToken, onTeamUpdated }) {
 
   const submit = useCallback(async () => {
     await flush();
-    if (!teamId || !accessToken) return { success: false };
+    if (!teamId || !tokenRef.current) return { success: false };
     try {
-      const res = await submitTeamProject(teamId, accessToken);
+      const res = await submitTeamProject(teamId, tokenRef.current);
       if (onTeamUpdated && res?.team) onTeamUpdated(teamId, res.team);
       return {
         success: true,
@@ -214,14 +220,13 @@ export default function useTeamProject({ team, accessToken, onTeamUpdated }) {
         error: err?.message || "Couldn't submit your project",
       };
     }
-  }, [flush, teamId, accessToken, onTeamUpdated]);
+  }, [flush, teamId, onTeamUpdated]);
 
   // Keep the latest `doSave` in a ref so the unmount effect below can call
   // it without depending on its identity — `doSave` is recreated whenever
-  // `accessToken` changes (PropelAuth rotates it on tab refocus), and an
-  // effect keyed on `[doSave]` would re-run its cleanup on every rotation,
-  // firing whatever save is mid-debounce right then instead of waiting the
-  // documented 1.5s.
+  // `onTeamUpdated` changes identity, and an effect keyed on `[doSave]` would
+  // re-run its cleanup each time, firing whatever save is mid-debounce right
+  // then instead of waiting the documented 1.5s.
   const doSaveRef = useRef(doSave);
   useEffect(() => {
     doSaveRef.current = doSave;

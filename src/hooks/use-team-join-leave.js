@@ -3,6 +3,7 @@ import { useAuthInfo } from "@propelauth/react";
 import useTeamMembership from "./use-team-membership";
 import {
   fetchHackerStatus,
+  isMembershipRefusal,
   joinTeam,
   leaveTeam,
 } from "../lib/teamMembershipApi";
@@ -19,6 +20,9 @@ import {
  *   (a token-rotation refetch), so the UI flips at once without a refetch.
  * - `pending` ("join" | "leave" | null), `error` (participant-readable),
  *   `result` ({ action, noop } for the last success), `clearFeedback()`.
+ * - `refusal`: `{ action, code, reason }` when the SERVER refused under its
+ *   participant rules (api/teams/membership_rules.py) — the page renders
+ *   `reason` as that action's blocked state, not as an error.
  *
  * Token-rotation pattern: the access token is read through a ref and the
  * status effect keys on token PRESENCE, so a PropelAuth refresh on refocus
@@ -42,6 +46,7 @@ export default function useTeamJoinLeave({
   const [pending, setPending] = useState(null);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [refusal, setRefusal] = useState(null); // { teamId, action, code, reason }
 
   const onJoinedRef = useRef(onJoined);
   const onLeftRef = useRef(onLeft);
@@ -94,9 +99,15 @@ export default function useTeamJoinLeave({
         const cb = action === "join" ? onJoinedRef.current : onLeftRef.current;
         if (cb) cb(res);
       } catch (err) {
-        setError(
-          err?.message || `Couldn't ${action} the team. Please try again.`,
-        );
+        if (isMembershipRefusal(err)) {
+          // The server's rules say no (event ended, team closed, not an
+          // approved hacker…): settle into the blocked state, no error strip.
+          setRefusal({ teamId, action, code: err.code, reason: err.message });
+        } else {
+          setError(
+            err?.message || `Couldn't ${action} the team. Please try again.`,
+          );
+        }
       } finally {
         setPending(null);
       }
@@ -126,6 +137,10 @@ export default function useTeamJoinLeave({
     pending,
     error,
     result,
+    refusal:
+      refusal && refusal.teamId === teamId
+        ? { action: refusal.action, code: refusal.code, reason: refusal.reason }
+        : null,
     join,
     leave,
     clearFeedback,

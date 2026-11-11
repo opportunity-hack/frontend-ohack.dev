@@ -54,7 +54,7 @@ describe("GatewayKeyCard", () => {
           key_alias: "fall26-team-1",
           models: ["muse-spark"],
           max_budget: 15,
-          expires: "2026-11-16T07:00:00Z",
+          expires: "2026-11-16T01:00:00Z",
           spend: 3.5,
           status: "active",
         },
@@ -169,7 +169,7 @@ describe("GatewayKeyCard two keys", () => {
         key_alias: "fall26-team-1",
         models: ["muse-spark", "kimi-k2.7-code", "gpt-oss-120b"],
         max_budget: 15,
-        expires: "2026-11-16T07:00:00Z",
+        expires: "2026-11-16T01:00:00Z",
         spend: 3.5,
         status: "active",
       },
@@ -179,7 +179,7 @@ describe("GatewayKeyCard two keys", () => {
         key_alias: "fall26-team-1-frontier",
         models: ["muse-wonder", "kimi-k3"],
         max_budget: 20,
-        expires: "2026-11-16T07:00:00Z",
+        expires: "2026-11-16T01:00:00Z",
         spend: 1,
         status: "active",
       },
@@ -317,7 +317,7 @@ describe("GatewayKeyCard two keys", () => {
           key_alias: "fall26-team-1-frontier",
           models: ["muse-wonder", "kimi-k3"],
           max_budget: 20,
-          expires: "2026-11-16T07:00:00Z",
+          expires: "2026-11-16T01:00:00Z",
           spend: null,
           status: "missing",
         },
@@ -347,6 +347,64 @@ describe("GatewayKeyCard two keys", () => {
       await screen.findByText(/Key 2 couldn't be read right now — ask an organizer/),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Key 2 API key hidden")).not.toBeInTheDocument();
+  });
+
+  it("Key 2 runs Claude Code's background calls on the picked model (no pricier default)", async () => {
+    const { fireEvent } = require("@testing-library/react");
+    fetchGatewayKey.mockResolvedValue(twoKeys);
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    await screen.findAllByRole("tabpanel", { name: "Claude Code setup" });
+    fireEvent.click(screen.getByRole("button", { name: "kimi-k3" }));
+    const panels = screen.getAllByRole("tabpanel", { name: "Claude Code setup" });
+    expect(panels[1].textContent).toContain('ANTHROPIC_MODEL="kimi-k3"');
+    expect(panels[1].textContent).toContain('ANTHROPIC_SMALL_FAST_MODEL="kimi-k3"');
+    expect(panels[1].textContent).toContain('ANTHROPIC_DEFAULT_HAIKU_MODEL="kimi-k3"');
+    expect(panels[1].textContent).not.toContain("muse-wonder");
+  });
+
+  it("shows when the keys stop working, in Arizona time", async () => {
+    fetchGatewayKey.mockResolvedValue(twoKeys);
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(
+      await screen.findByText(/Sun Nov 15, 6:00 PM Arizona time/),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the expiry line when the payload has no expires", async () => {
+    fetchGatewayKey.mockResolvedValue({
+      team_id: "team-1",
+      keys: twoKeys.keys.map((k) => ({ ...k, expires: null })),
+    });
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    await screen.findByLabelText("Key 1 API key hidden");
+    expect(screen.queryByText("Keys work until")).not.toBeInTheDocument();
+  });
+
+  it("shows a note for the picked model and the muse-spark training disclosure on Key 1", async () => {
+    const { fireEvent } = require("@testing-library/react");
+    fetchGatewayKey.mockResolvedValue(twoKeys);
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(await screen.findByText(/Muse Spark 1\.3 \(Meta\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Contributor tier/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Details/ })).toHaveAttribute(
+      "href",
+      "https://ai.ohack.dev/ui/guide/#where-prompts-go",
+    );
+    expect(screen.getByText(/Muse Wonder \(Meta\)/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "gpt-oss-120b" }));
+    expect(screen.getByText(/GPT-OSS 120B · free/)).toBeInTheDocument();
+  });
+
+  it("says the budget is used up when spend reaches the cap", async () => {
+    fetchGatewayKey.mockResolvedValue({
+      team_id: "team-1",
+      keys: [{ ...twoKeys.keys[0], spend: 15 }, twoKeys.keys[1]],
+    });
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(
+      await screen.findByText(/Key 1 has used its whole budget/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/has used its whole budget/)).toHaveLength(1);
   });
 });
 

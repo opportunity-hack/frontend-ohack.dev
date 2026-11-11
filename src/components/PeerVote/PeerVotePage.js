@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
-import { useAuthInfo } from "@propelauth/react";
 import {
   Box,
   Button,
@@ -26,6 +25,7 @@ import { togglePick, canSubmit, slateLinks } from "./peerVoteState";
 import { formatDeadline } from "../Teams/projectMeta";
 import { getEventTimezone } from "../../lib/timezoneUtils";
 import useCountdown from "../../hooks/use-countdown";
+import useAuthedResource from "../../hooks/use-authed-resource";
 import {
   getPeerVoteSlate,
   submitPeerVoteBallot,
@@ -341,10 +341,6 @@ function PickedProjectRow({ item, eventId }) {
 export default function PeerVotePage() {
   const router = useRouter();
   const { event_id: eventId } = router.query;
-  const { accessToken } = useAuthInfo();
-
-  const [phase, setPhase] = useState("loading"); // 'loading' | 'loaded' | 'error'
-  const [slateData, setSlateData] = useState(null);
   const [eventMeta, setEventMeta] = useState(null); // { title, timezone, slateSize }
   const [mode, setMode] = useState("edit"); // 'view' | 'edit'
   const [picks, setPicks] = useState([]);
@@ -363,15 +359,6 @@ export default function PeerVotePage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
-  // Token-rotation-stability pattern (see root CLAUDE.md): PropelAuth mints a
-  // fresh accessToken on tab refocus. loadSlate reads through refs and has a
-  // stable identity, so the mount effect keys on token *presence*, not
-  // value, and the visibilitychange listener below doesn't refire on every
-  // refocus — only while the page is showing the "upcoming" state.
-  const tokenRef = useRef(accessToken);
-  useEffect(() => {
-    tokenRef.current = accessToken;
-  }, [accessToken]);
   const eventIdRef = useRef(eventId);
   useEffect(() => {
     eventIdRef.current = eventId;
@@ -406,49 +393,57 @@ export default function PeerVotePage() {
     };
   }, []);
 
+  // The voter's slate (Part 3: GET /api/hackathons/<event_id>/peer-vote/slate)
+  // through the shared authed-resource hook (Class C, Nov 2026): it waits for
+  // PropelAuth, keys on token PRESENCE (a refocus rotation fires no request),
+  // drops stale runs, turns an older backend's 404 into the "disabled" state,
+  // and re-checks in the background on refocus only while voting is still
+  // "upcoming" (no throttle — the page always did this, and a spinner never
+  // flashes because refresh() is background-only).
+  const slate = useAuthedResource(
+    ["peer-vote-slate", eventId],
+    ({ token }) => getPeerVoteSlate(eventId, token),
+    {
+      enabled: Boolean(eventId),
+      treat404As: { status: "disabled" },
+      refreshOnFocus: (data) => data?.status === "upcoming",
+      refocusThrottleMs: 0,
+    },
+  );
+  const slateData = slate.data;
+  const tokenRef = slate.tokenRef;
+  const reloadSlateResource = slate.reload;
+  const phase =
+    slate.status === "ready"
+      ? "loaded"
+      : slate.status === "error"
+        ? "error"
+        : "loading";
+
+  // A ballot submit writes the slate locally (status "voted"); that object
+  // must not be re-applied as if it had been fetched — it would re-fire the
+  // view event and reset picks/mode.
+  const localSlateRef = useRef(null);
+
+  // Apply each FETCHED slate: picks, edit/view mode, and the once-per-status
+  // view event.
+  useEffect(() => {
+    if (slate.status !== "ready" || !slateData) return;
+    if (slateData === localSlateRef.current) return;
+    statusRef.current = slateData.status;
+    setPicks(Array.isArray(slateData.picks) ? slateData.picks : []);
+    setMode(
+      slateData.status === "voted" || slateData.status === "voided"
+        ? "view"
+        : "edit",
+    );
+    fireViewOnce(slateData.status, eventIdRef.current);
+  }, [slate.status, slateData, fireViewOnce]);
+
   const loadSlate = useCallback(async () => {
-    const evId = eventIdRef.current;
-    const token = tokenRef.current;
-    if (!evId || !token) return;
-    setPhase("loading");
     setSubmitError(null);
-    try {
-      const data = await getPeerVoteSlate(evId, token);
-      setSlateData(data);
-      statusRef.current = data.status;
-      setPicks(Array.isArray(data.picks) ? data.picks : []);
-      setMode(
-        data.status === "voted" || data.status === "voided" ? "view" : "edit",
-      );
-      setPhase("loaded");
-      fireViewOnce(data.status, evId);
-    } catch (err) {
-      if (isNotFound(err)) {
-        setSlateData({ status: "disabled" });
-        statusRef.current = "disabled";
-        setPhase("loaded");
-        fireViewOnce("disabled", evId);
-      } else {
-        setPhase("error");
-      }
-    }
-  }, [fireViewOnce]);
-
-  useEffect(() => {
-    // Deliberately keyed on token *presence*, not value — see the comment above.
-    if (accessToken && eventId) loadSlate();
-  }, [Boolean(accessToken), eventId, loadSlate]);
-
-  // Re-check once voting might have opened while the tab was backgrounded.
-  useEffect(() => {
-    function handleVisibility() {
-      if (typeof document === "undefined" || document.hidden) return;
-      if (statusRef.current === "upcoming") loadSlate();
-    }
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibility);
-  }, [loadSlate]);
+    await reloadSlateResource();
+  }, [reloadSlateResource]);
 
   // Best-effort event title/timezone/slate-size for the masthead + deadline
   // copy — the slate endpoint itself carries neither. Public endpoint, no
@@ -515,7 +510,9 @@ export default function PeerVotePage() {
     setSubmitError(null);
     try {
       await submitPeerVoteBallot(eventIdRef.current, picks, tokenRef.current);
-      setSlateData((prev) => ({ ...(prev || {}), status: "voted", picks }));
+      const votedSlate = { ...(slateData || {}), status: "voted", picks };
+      localSlateRef.current = votedSlate;
+      slate.setData(votedSlate);
       statusRef.current = "voted";
       setMode("view");
       setJustVoted(true);

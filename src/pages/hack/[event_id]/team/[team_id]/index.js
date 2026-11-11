@@ -421,16 +421,21 @@ export default function TeamDetailPage({
 
   // Same gates as the event page's team cards (Hackathon/TeamList).
   const teamJoinEnabled = event?.constraints?.team_join_enabled !== false;
-  const joinBlockedReason = teamJoinBlockedReason({
-    eventEnded,
-    teamJoinEnabled,
-    isActive,
-    status: team.status,
-  });
-  const leaveBlockedReason = teamLeaveBlockedReason({
-    eventEnded,
-    teamJoinEnabled,
-  });
+  // A server refusal (api/teams/membership_rules.py) — e.g. the page's data
+  // is stale and the team closed — settles into the same blocked state.
+  const serverRefusal = membership.refusal;
+  const joinBlockedReason =
+    teamJoinBlockedReason({
+      eventEnded,
+      teamJoinEnabled,
+      isActive,
+      status: team.status,
+    }) || (serverRefusal?.action === "join" ? serverRefusal.reason : null);
+  const leaveBlockedReason =
+    teamLeaveBlockedReason({
+      eventEnded,
+      teamJoinEnabled,
+    }) || (serverRefusal?.action === "leave" ? serverRefusal.reason : null);
 
   const missingStory = isOnTeam && isProjectStoryMissing(team);
   const missingDemo = isOnTeam && !team.demo_video_url;
