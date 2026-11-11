@@ -27,6 +27,7 @@ import {
   TeamCreationDisabledPanel,
 } from "../../../components/TeamDashboard/GatingPanels";
 import { trackEvent, EventCategory } from "../../../lib/ga";
+import useAuthedResource from "../../../hooks/use-authed-resource";
 
 const steps = [
   "Team Details",
@@ -84,7 +85,11 @@ const FindTeammatesCTA = ({ eventId, teamFindingEnabled, heading, body }) => (
 
 const ManageTeamComponent = () => {
   const authInfo = useAuthInfo();
-  const { accessToken } = useAuthInfo();
+  const { accessToken } = authInfo;
+  // Token-rotation pattern: lazy/imperative fetches read the token through a
+  // ref so a refocus rotation never re-runs them.
+  const tokenRef = useRef(accessToken);
+  tokenRef.current = accessToken;
   const [teamName, setTeamName] = useState("");
   const [slackChannel, setSlackChannel] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
@@ -94,7 +99,6 @@ const ManageTeamComponent = () => {
   const [selectedNonprofits, setSelectedNonprofits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
-  const [teamsError, setTeamsError] = useState("");
   const [progress, setProgress] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [event, setEvent] = useState(null);
@@ -102,11 +106,8 @@ const ManageTeamComponent = () => {
   const [memberInput, setMemberInput] = useState("");
   const [comments, setComments] = useState("");
   const [slackUsers, setSlackUsers] = useState([]);
-  const [myTeams, setMyTeams] = useState(null);
-  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [showNewTeamForm, setShowNewTeamForm] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState(null);
-  const [profile, setProfile] = useState(null);
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
   const [isGithubValid, setIsGithubValid] = useState(null);
@@ -116,24 +117,131 @@ const ManageTeamComponent = () => {
   const [isSlackValid, setIsSlackValid] = useState(null);
   const [slackError, setSlackError] = useState("");
 
-  const [hackerApplication, setHackerApplication] = useState(null);
-  const [isLoadingApplication, setIsLoadingApplication] = useState(true);
-
   const router = useRouter();
   const { event_id } = router.query;
+
+  // ---- authed resources (Class C, Nov 2026) ----
+  // These three used to load from one effect keyed on the RAW accessToken, so
+  // every tab refocus (PropelAuth rotates the token) re-fetched them: the team
+  // hub flipped to its skeleton and unmounted TeamDashboard (wiping in-progress
+  // editor drafts), and the profile refetch clobbered the GitHub username
+  // being typed into the create form. useAuthedResource keys on token
+  // PRESENCE, waits for auth, drops stale runs, and reports a failure as an
+  // error (Retry card) instead of an empty result.
+  const teamsResource = useAuthedResource(
+    ["manageteam-my-teams", event_id],
+    async ({ token }) => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${event_id}/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (!response || !response.data) {
+        throw new Error("Empty /me response");
+      }
+      return response.data.teams;
+    },
+    { enabled: Boolean(event_id) },
+  );
+  const applicationResource = useAuthedResource(
+    ["manageteam-hacker-application", event_id],
+    async ({ token }) => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-Org-Id": authInfo?.userClass?.getOrgByName(
+              "Opportunity Hack Org",
+            )?.orgId,
+          },
+        },
+      );
+      return response.data && response.data.data ? response.data.data : null;
+    },
+    // The route answers 200 + data:null for "no application"; an older
+    // backend's 404 means the same. Anything else is a real failure.
+    { enabled: Boolean(event_id), treat404As: null },
+  );
+  const profileResource = useAuthedResource(
+    ["manageteam-profile"],
+    async ({ token }) => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response?.data || null;
+    },
+  );
+
+  // Split error state (don't merge): teamsError comes ONLY from the /me fetch
+  // and drives the hub's error card; formError is the create-team flow's.
+  const isLoadingTeams =
+    teamsResource.status === "loading" || teamsResource.status === "idle";
+  const teamsError =
+    teamsResource.status === "error"
+      ? "Failed to fetch team details. Please try again later."
+      : "";
+  // During a reload (post-create, Retry) the hook keeps the last good list,
+  // so hasExistingTeam doesn't flicker the create-form layout.
+  const myTeams =
+    teamsResource.status === "error" ? [] : (teamsResource.data ?? null);
+  const setMyTeams = teamsResource.setData;
+  const reloadMyTeams = teamsResource.reload;
+  const fetchMyTeams = useCallback(() => reloadMyTeams(), [reloadMyTeams]);
+
+  const isLoadingApplication =
+    applicationResource.status === "loading" ||
+    applicationResource.status === "idle";
+  const applicationError = applicationResource.status === "error";
+  const hackerApplication =
+    applicationResource.status === "ready" ? applicationResource.data : null;
+
+  // Prefill GitHub username + keep the full profile payload for TeamRoster's
+  // "You" marker (own db id) — see Part 4 WS-B change #1. Applied once per
+  // fetched payload (never on a token rotation, so typing isn't clobbered).
+  const profile =
+    profileResource.status === "ready" ? profileResource.data : null;
+  useEffect(() => {
+    if (profile?.github) setGithubUsername(profile.github);
+  }, [profile]);
 
   // Refs to prevent double-fetching lazy data
   const slackFetchedRef = useRef(false);
   const nonprofitFetchedRef = useRef(false);
   const gaViewFiredRef = useRef(false);
 
+  // The event payload is public — keyed on the event only.
   useEffect(() => {
-    if (event_id && accessToken) {
-      fetchHackathonEvent();
-      fetchMyTeams();
-      fetchHackerApplication();
-    }
-  }, [event_id, accessToken]);
+    if (!event_id) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
+        );
+        if (!cancelled && response && response.data) {
+          setEvent(response.data);
+          // Nonprofit detail fetch is deferred to step 2 (see useEffect below)
+        }
+      } catch (err) {
+        console.error("Error fetching event details:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [event_id]);
 
   // findteam.js hands off starred favorites via sessionStorage['team_members']
   // (bug #9) — read it once on mount, prefill the member picker, then clear
@@ -170,7 +278,7 @@ const ManageTeamComponent = () => {
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=365`,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${tokenRef.current}`,
             "Content-Type": "application/json",
           },
         },
@@ -189,7 +297,7 @@ const ManageTeamComponent = () => {
       console.error("Error fetching active Slack users:", err);
       // Non-critical — member picker works in freeSolo mode without the list
     }
-  }, [accessToken]);
+  }, []);
 
   // Trigger Slack fetch lazily when step 2 is reached or accordion opened
   useEffect(() => {
@@ -201,7 +309,12 @@ const ManageTeamComponent = () => {
       slackFetchedRef.current = true;
       fetchActiveSlackUsers();
     }
-  }, [activeStep, showNewTeamForm, accessToken, fetchActiveSlackUsers]);
+  }, [
+    activeStep,
+    showNewTeamForm,
+    Boolean(accessToken),
+    fetchActiveSlackUsers,
+  ]);
 
   // Trigger nonprofit detail fetch lazily when step 2 is reached
   useEffect(() => {
@@ -215,76 +328,6 @@ const ManageTeamComponent = () => {
       fetchNonprofitDetails(event.nonprofits);
     }
   }, [activeStep, showNewTeamForm, event]);
-
-  const fetchMyTeams = async () => {
-    setIsLoadingTeams(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${event_id}/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      if (response && response.data) {
-        setMyTeams(response.data.teams);
-        setTeamsError("");
-      } else {
-        setTeamsError("Failed to fetch team details. Please try again later.");
-        setMyTeams([]);
-      }
-    } catch (err) {
-      console.error("Error fetching team details:", err);
-      setTeamsError("Failed to fetch team details. Please try again later.");
-      setMyTeams([]);
-    } finally {
-      setIsLoadingTeams(false);
-    }
-  };
-
-  const fetchHackerApplication = async () => {
-    setIsLoadingApplication(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": authInfo?.userClass?.getOrgByName(
-              "Opportunity Hack Org",
-            )?.orgId,
-          },
-        },
-      );
-      if (response.data && response.data.data) {
-        setHackerApplication(response.data.data);
-      } else {
-        setHackerApplication(null);
-      }
-    } catch (err) {
-      console.error("Error fetching hacker application:", err);
-      setHackerApplication(null);
-    } finally {
-      setIsLoadingApplication(false);
-    }
-  };
-
-  const fetchHackathonEvent = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
-      );
-      if (response && response.data) {
-        setEvent(response.data);
-        // Nonprofit detail fetch is deferred to step 2 (see useEffect above)
-      }
-    } catch (err) {
-      console.error("Error fetching event details:", err);
-    }
-  };
 
   const fetchNonprofitDetails = async (nonprofitIds) => {
     try {
@@ -346,33 +389,6 @@ const ManageTeamComponent = () => {
       // Non-critical — user can still use the search with partial data
     }
   };
-
-  // Prefill GitHub username + keep the full profile payload for TeamRoster's
-  // "You" marker (own db id) — see Part 4 WS-B change #1.
-  useEffect(() => {
-    if (!accessToken) return;
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-        if (response?.data) {
-          setProfile(response.data);
-          if (response.data.github) setGithubUsername(response.data.github);
-        }
-      } catch (err) {
-        console.error("Error fetching user profile:", err);
-        // Non-critical — user can type their own username
-      }
-    };
-    fetchUserProfile();
-  }, [accessToken]);
 
   const filterNonprofits = useCallback(
     (term) => {
@@ -679,7 +695,7 @@ const ManageTeamComponent = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${tokenRef.current}`,
           },
         },
       );
@@ -971,8 +987,28 @@ const ManageTeamComponent = () => {
           <ApplicationLoadingPanel eventTitle={event?.title} />
         )}
 
+        {/* Application status couldn't be read — never claim "apply first" */}
+        {!isLoadingApplication && applicationError && (
+          <Box
+            className="ohx-card"
+            role="alert"
+            sx={{ p: 4, mt: 4, textAlign: "center" }}
+          >
+            <Typography sx={{ color: "var(--muted)", mb: 2 }}>
+              We couldn&apos;t check your hacker application just now.
+            </Typography>
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              onClick={() => applicationResource.reload()}
+            >
+              Retry
+            </button>
+          </Box>
+        )}
+
         {/* No application */}
-        {!isLoadingApplication && !hackerApplication && (
+        {!isLoadingApplication && !applicationError && !hackerApplication && (
           <NoApplicationPanel eventId={event_id} eventTitle={event?.title} />
         )}
 

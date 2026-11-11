@@ -27,6 +27,7 @@ import {
 
 import { RefinedRoot, Eyebrow } from "../../../components/design/refined";
 import TeamBreadcrumbs from "../../../components/Teams/TeamBreadcrumbs";
+import useAuthedResource from "../../../hooks/use-authed-resource";
 import {
   ApplicationLoadingPanel,
   NoApplicationPanel,
@@ -690,19 +691,18 @@ function ContactDialog({
   );
 }
 
+// Stable empty list so derived state keeps its identity across renders.
+const NO_TEAMMATES = [];
+
 // ----------------------------------------------------------- main component
 const FindTeamPage = () => {
   // Authentication and routing
-  const { user, accessToken, userClass } = useAuthInfo();
+  const { user, userClass } = useAuthInfo();
   const router = useRouter();
   const { event_id } = router.query;
   const { slackSignupUrl } = useEnv();
 
   // State variables
-  const [loading, setLoading] = useState(true);
-  const [isCheckingApplication, setIsCheckingApplication] = useState(true);
-  const [myProfile, setMyProfile] = useState(null);
-  const [potentialTeammates, setPotentialTeammates] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
@@ -713,311 +713,327 @@ const FindTeamPage = () => {
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [eventDetails, setEventDetails] = useState(null);
-  const [error, setError] = useState("");
-  const [allInterests, setAllInterests] = useState([]);
-  const [allSkills, setAllSkills] = useState([]);
+  const [eventError, setEventError] = useState("");
 
   // Organization data for API calls
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const orgId = org?.orgId;
 
-  // Fetch current user's profile and application data
-  const fetchMyProfile = useCallback(async () => {
-    try {
-      setIsCheckingApplication(true);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
-          },
+  // Current user's profile + hacker application for this event. A loader
+  // for useAuthedResource (Class C, Nov 2026): returns the profile instead of
+  // setting state, so a stale run can't write and a failure is an error (Retry)
+  // — never the "Apply first" panel. Parsing is unchanged.
+  const loadMyProfile = async ({ token }) => {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/users/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-Org-Id": orgId,
         },
-      );
+      },
+    );
 
-      if (response.data) {
-        // Fetch my hacker application for this event
-        const applicationResponse = await axios.get(
+    if (response.data) {
+      // Fetch my hacker application for this event. The route answers
+      // 200 + data:null for "no application"; a 404 means the same.
+      let applicationResponse;
+      try {
+        applicationResponse = await axios.get(
           `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/application/${event_id}`,
           {
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
               "X-Org-Id": orgId,
             },
           },
         );
+      } catch (err) {
+        if (err?.response?.status !== 404) throw err;
+        applicationResponse = { data: null };
+      }
 
-        if (applicationResponse.data) {
-          // Process the application data to extract interests and skills
-          const appData = applicationResponse.data.data;
+      // `data.data` null = no application (it used to throw on
+      // `appData.isSelected` and show a "failed to fetch" warning).
+      if (applicationResponse.data && applicationResponse.data.data) {
+        // Process the application data to extract interests and skills
+        const appData = applicationResponse.data.data;
 
-          // If the application has not yet been confirmed, render the
-          // dedicated pending-confirmation panel below instead of an error.
-          // isSelected === false covers both "still under review" and
-          // "not selected after review" — don't prejudge here.
-          if (appData.isSelected === false) {
-            setMyProfile({
-              ...response.data,
-              application: appData,
-            });
-            setIsCheckingApplication(false);
-            return;
-          }
+        // If the application has not yet been confirmed, render the
+        // dedicated pending-confirmation panel below instead of an error.
+        // isSelected === false covers both "still under review" and
+        // "not selected after review" — don't prejudge here.
+        if (appData.isSelected === false) {
+          return {
+            ...response.data,
+            application: appData,
+          };
+        }
 
-          // Parse interests from social causes and preferred causes
-          const interests = [];
-          if (appData.socialCauses) {
-            interests.push(...appData.socialCauses.split(/,\s*/));
-          }
-          if (appData.teamMatchingPreferences?.preferredCauses) {
-            interests.push(...appData.teamMatchingPreferences.preferredCauses);
-          } else if (appData.teamMatchingPreferredCauses) {
-            interests.push(
-              ...appData.teamMatchingPreferredCauses.split(/,\s*/),
-            );
-          }
+        // Parse interests from social causes and preferred causes
+        const interests = [];
+        if (appData.socialCauses) {
+          interests.push(...appData.socialCauses.split(/,\s*/));
+        }
+        if (appData.teamMatchingPreferences?.preferredCauses) {
+          interests.push(...appData.teamMatchingPreferences.preferredCauses);
+        } else if (appData.teamMatchingPreferredCauses) {
+          interests.push(...appData.teamMatchingPreferredCauses.split(/,\s*/));
+        }
 
-          // Parse skills from primary roles and skills
-          const skills = [];
-          if (appData.primaryRoles) {
-            skills.push(...appData.primaryRoles.split(/,\s*/));
-          }
-          if (appData.skills) {
-            skills.push(...appData.skills.split(/,\s*/));
-          }
-          if (appData.teamMatchingPreferences?.preferredSkills) {
-            skills.push(...appData.teamMatchingPreferences.preferredSkills);
-          } else if (appData.teamMatchingPreferredSkills) {
-            skills.push(...appData.teamMatchingPreferredSkills.split(/,\s*/));
-          }
+        // Parse skills from primary roles and skills
+        const skills = [];
+        if (appData.primaryRoles) {
+          skills.push(...appData.primaryRoles.split(/,\s*/));
+        }
+        if (appData.skills) {
+          skills.push(...appData.skills.split(/,\s*/));
+        }
+        if (appData.teamMatchingPreferences?.preferredSkills) {
+          skills.push(...appData.teamMatchingPreferences.preferredSkills);
+        } else if (appData.teamMatchingPreferredSkills) {
+          skills.push(...appData.teamMatchingPreferredSkills.split(/,\s*/));
+        }
 
-          // Get team formation status
-          let teamFormation = "want_to_be_matched";
-          if (appData.teamStatus) {
-            if (appData.teamStatus.includes("looking for")) {
-              teamFormation = "looking_for_members";
-            } else if (appData.teamStatus.includes("already have")) {
-              teamFormation = "already_have_team";
-            }
+        // Get team formation status
+        let teamFormation = "want_to_be_matched";
+        if (appData.teamStatus) {
+          if (appData.teamStatus.includes("looking for")) {
+            teamFormation = "looking_for_members";
+          } else if (appData.teamStatus.includes("already have")) {
+            teamFormation = "already_have_team";
           }
+        }
 
-          // Create processed application object
-          const processedApp = {
+        // Create processed application object
+        const processedApp = {
+          ...appData,
+          interests: [...new Set(interests)], // Remove duplicates
+          skills: [...new Set(skills)], // Remove duplicates
+          background: appData.shortBio || appData.bio,
+          team_formation: teamFormation,
+        };
+
+        return {
+          ...response.data,
+          application: processedApp,
+        };
+      }
+      // No application yet — the dedicated panel below renders the
+      // submit-application CTA.
+      return response.data;
+    }
+    return null;
+  };
+
+  // Event details — public, keyed on the event only.
+  useEffect(() => {
+    if (!event_id) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
+        );
+        if (!cancelled && response.data) {
+          setEventDetails(response.data);
+        }
+      } catch (err) {
+        console.error("Error fetching event details:", err);
+        if (!cancelled) setEventError("Failed to fetch event details.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [event_id]);
+
+  // All hackers for the event → the "still looking" list (loader for
+  // useAuthedResource; parsing unchanged, returns instead of setting state).
+  const loadPotentialTeammates = async ({ token, userId: myUserId }) => {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/applications/${event_id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-Org-Id": orgId,
+        },
+      },
+    );
+
+    if (response.data.data && Array.isArray(response.data.data)) {
+      // Process each hacker's application data
+      const processedHackers = response.data.data.map((appData) => {
+        // Parse interests from social causes and preferred causes
+        const interests = [];
+        if (appData.socialCauses) {
+          interests.push(...appData.socialCauses.split(/,\s*/));
+        }
+        if (appData.teamMatchingPreferences?.preferredCauses) {
+          interests.push(...appData.teamMatchingPreferences.preferredCauses);
+        } else if (appData.teamMatchingPreferredCauses) {
+          interests.push(...appData.teamMatchingPreferredCauses.split(/,\s*/));
+        }
+
+        // Parse skills from primary roles and skills
+        const skills = [];
+        if (appData.primaryRoles) {
+          skills.push(...appData.primaryRoles.split(/,\s*/));
+        }
+        if (appData.skills) {
+          skills.push(...appData.skills.split(/,\s*/));
+        }
+        if (appData.teamMatchingPreferences?.preferredSkills) {
+          skills.push(...appData.teamMatchingPreferences.preferredSkills);
+        } else if (appData.teamMatchingPreferredSkills) {
+          skills.push(...appData.teamMatchingPreferredSkills.split(/,\s*/));
+        }
+
+        // Get team formation status
+        let teamFormation = "want_to_be_matched";
+        if (appData.teamStatus) {
+          if (appData.teamStatus.includes("looking for")) {
+            teamFormation = "looking_for_members";
+          } else if (appData.teamStatus.includes("already have")) {
+            teamFormation = "already_have_team";
+          }
+        }
+
+        // Parse preferred team size
+        let preferredSize = "";
+        if (appData.teamMatchingPreferences?.preferredSize) {
+          preferredSize = appData.teamMatchingPreferences.preferredSize;
+        } else if (appData.teamMatchingPreferredSize) {
+          preferredSize = appData.teamMatchingPreferredSize;
+        }
+
+        // Parse preferred skills for teammates
+        const preferredTeammateSkills = [];
+        if (appData.teamMatchingPreferences?.preferredSkills) {
+          preferredTeammateSkills.push(
+            ...appData.teamMatchingPreferences.preferredSkills,
+          );
+        } else if (appData.teamMatchingPreferredSkills) {
+          preferredTeammateSkills.push(
+            ...appData.teamMatchingPreferredSkills.split(/,\s*/),
+          );
+        }
+
+        // Parse preferred causes for the team
+        const preferredCauses = [];
+        if (appData.teamMatchingPreferences?.preferredCauses) {
+          preferredCauses.push(
+            ...appData.teamMatchingPreferences.preferredCauses,
+          );
+        } else if (appData.teamMatchingPreferredCauses) {
+          preferredCauses.push(
+            ...appData.teamMatchingPreferredCauses.split(/,\s*/),
+          );
+        }
+
+        return {
+          user_id: appData.user_id,
+          name: appData.name,
+          github: appData.github,
+          slack_user_id: appData.slack_user_id,
+          pronouns: appData.pronouns,
+          experienceLevel: appData.experienceLevel,
+          participationCount: appData.participationCount,
+          participantType: appData.participantType,
+          schoolOrganization: appData.schoolOrganization,
+          linkedin: appData.linkedin || appData.linkedinProfile,
+          photoUrl: appData.photoUrl || null,
+          portfolio: appData.portfolio,
+          willContinue: appData.willContinue,
+          inPerson: appData.inPerson === "Yes" || appData.isInPerson,
+          application: {
             ...appData,
             interests: [...new Set(interests)], // Remove duplicates
             skills: [...new Set(skills)], // Remove duplicates
             background: appData.shortBio || appData.bio,
             team_formation: teamFormation,
-          };
-
-          setMyProfile({
-            ...response.data,
-            application: processedApp,
-          });
-        } else {
-          // No application yet — the dedicated panel below renders the
-          // submit-application CTA.
-          setMyProfile(response.data);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-      setError("Failed to fetch your profile. Please try again later.");
-    } finally {
-      setIsCheckingApplication(false);
-    }
-  }, [accessToken, orgId, event_id]);
-
-  // Fetch event details
-  const fetchEventDetails = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/hackathon/${event_id}`,
-      );
-      if (response.data) {
-        setEventDetails(response.data);
-      }
-    } catch (err) {
-      console.error("Error fetching event details:", err);
-      setError("Failed to fetch event details.");
-    }
-  }, [event_id]);
-
-  // Fetch all hackers for the event
-  const fetchPotentialTeammates = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/hacker/applications/${event_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
-          },
-        },
-      );
-
-      if (response.data.data && Array.isArray(response.data.data)) {
-        // Process each hacker's application data
-        const processedHackers = response.data.data.map((appData) => {
-          // Parse interests from social causes and preferred causes
-          const interests = [];
-          if (appData.socialCauses) {
-            interests.push(...appData.socialCauses.split(/,\s*/));
-          }
-          if (appData.teamMatchingPreferences?.preferredCauses) {
-            interests.push(...appData.teamMatchingPreferences.preferredCauses);
-          } else if (appData.teamMatchingPreferredCauses) {
-            interests.push(
-              ...appData.teamMatchingPreferredCauses.split(/,\s*/),
-            );
-          }
-
-          // Parse skills from primary roles and skills
-          const skills = [];
-          if (appData.primaryRoles) {
-            skills.push(...appData.primaryRoles.split(/,\s*/));
-          }
-          if (appData.skills) {
-            skills.push(...appData.skills.split(/,\s*/));
-          }
-          if (appData.teamMatchingPreferences?.preferredSkills) {
-            skills.push(...appData.teamMatchingPreferences.preferredSkills);
-          } else if (appData.teamMatchingPreferredSkills) {
-            skills.push(...appData.teamMatchingPreferredSkills.split(/,\s*/));
-          }
-
-          // Get team formation status
-          let teamFormation = "want_to_be_matched";
-          if (appData.teamStatus) {
-            if (appData.teamStatus.includes("looking for")) {
-              teamFormation = "looking_for_members";
-            } else if (appData.teamStatus.includes("already have")) {
-              teamFormation = "already_have_team";
-            }
-          }
-
-          // Parse preferred team size
-          let preferredSize = "";
-          if (appData.teamMatchingPreferences?.preferredSize) {
-            preferredSize = appData.teamMatchingPreferences.preferredSize;
-          } else if (appData.teamMatchingPreferredSize) {
-            preferredSize = appData.teamMatchingPreferredSize;
-          }
-
-          // Parse preferred skills for teammates
-          const preferredTeammateSkills = [];
-          if (appData.teamMatchingPreferences?.preferredSkills) {
-            preferredTeammateSkills.push(
-              ...appData.teamMatchingPreferences.preferredSkills,
-            );
-          } else if (appData.teamMatchingPreferredSkills) {
-            preferredTeammateSkills.push(
-              ...appData.teamMatchingPreferredSkills.split(/,\s*/),
-            );
-          }
-
-          // Parse preferred causes for the team
-          const preferredCauses = [];
-          if (appData.teamMatchingPreferences?.preferredCauses) {
-            preferredCauses.push(
-              ...appData.teamMatchingPreferences.preferredCauses,
-            );
-          } else if (appData.teamMatchingPreferredCauses) {
-            preferredCauses.push(
-              ...appData.teamMatchingPreferredCauses.split(/,\s*/),
-            );
-          }
-
-          return {
-            user_id: appData.user_id,
-            name: appData.name,
-            github: appData.github,
-            slack_user_id: appData.slack_user_id,
-            pronouns: appData.pronouns,
-            experienceLevel: appData.experienceLevel,
-            participationCount: appData.participationCount,
-            participantType: appData.participantType,
-            schoolOrganization: appData.schoolOrganization,
-            linkedin: appData.linkedin || appData.linkedinProfile,
-            photoUrl: appData.photoUrl || null,
-            portfolio: appData.portfolio,
-            willContinue: appData.willContinue,
-            inPerson: appData.inPerson === "Yes" || appData.isInPerson,
-            application: {
-              ...appData,
-              interests: [...new Set(interests)], // Remove duplicates
-              skills: [...new Set(skills)], // Remove duplicates
-              background: appData.shortBio || appData.bio,
-              team_formation: teamFormation,
-              teamMatchingDetails: {
-                preferredSize,
-                teamNeededSkills: appData.teamNeededSkills || "",
-                preferredTeammateSkills: [...new Set(preferredTeammateSkills)],
-                preferredCauses: [...new Set(preferredCauses)],
-              },
+            teamMatchingDetails: {
+              preferredSize,
+              teamNeededSkills: appData.teamNeededSkills || "",
+              preferredTeammateSkills: [...new Set(preferredTeammateSkills)],
+              preferredCauses: [...new Set(preferredCauses)],
             },
-          };
-        });
-
-        // Only show users who are selected, looking for a team or want to be matched
-        const lookingForTeamHackers = processedHackers.filter(
-          (hacker) =>
-            hacker.application.isSelected === true && // Only show selected users
-            hacker.application.teamStatus &&
-            (hacker.application.teamStatus.includes("match") ||
-              hacker.application.teamStatus.includes("looking for")) &&
-            hacker.user_id !== user?.userId, // Don't show the current user
-        );
-
-        setPotentialTeammates(lookingForTeamHackers);
-        setFiltered(lookingForTeamHackers);
-
-        // Extract all unique interests and skills
-        const interests = new Set();
-        const skills = new Set();
-
-        lookingForTeamHackers.forEach((hacker) => {
-          if (hacker.application) {
-            hacker.application.interests?.forEach((interest) =>
-              interests.add(interest),
-            );
-            hacker.application.skills?.forEach((skill) => skills.add(skill));
-          }
-        });
-
-        setAllInterests(Array.from(interests).sort());
-        setAllSkills(Array.from(skills).sort());
-      }
-    } catch (err) {
-      console.error("Error fetching hackers:", err);
-      setError("Failed to fetch potential teammates. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId, event_id, user?.userId]);
-
-  // Load data on component mount
-  useEffect(() => {
-    if (accessToken && event_id) {
-      setLoading(true);
-      Promise.all([
-        fetchMyProfile(),
-        fetchEventDetails(),
-        fetchPotentialTeammates(),
-      ]).finally(() => {
-        setLoading(false);
+          },
+        };
       });
+
+      // Only show users who are selected, looking for a team or want to be matched
+      const lookingForTeamHackers = processedHackers.filter(
+        (hacker) =>
+          hacker.application.isSelected === true && // Only show selected users
+          hacker.application.teamStatus &&
+          (hacker.application.teamStatus.includes("match") ||
+            hacker.application.teamStatus.includes("looking for")) &&
+          hacker.user_id !== myUserId, // Don't show the current user
+      );
+
+      // Extract all unique interests and skills
+      const interests = new Set();
+      const skills = new Set();
+
+      lookingForTeamHackers.forEach((hacker) => {
+        if (hacker.application) {
+          hacker.application.interests?.forEach((interest) =>
+            interests.add(interest),
+          );
+          hacker.application.skills?.forEach((skill) => skills.add(skill));
+        }
+      });
+
+      return {
+        teammates: lookingForTeamHackers,
+        allInterests: Array.from(interests).sort(),
+        allSkills: Array.from(skills).sort(),
+      };
     }
-  }, [
-    accessToken,
-    event_id,
-    fetchMyProfile,
-    fetchEventDetails,
-    fetchPotentialTeammates,
-  ]);
+    return { teammates: [], allInterests: [], allSkills: [] };
+  };
+
+  // Both authed loads go through useAuthedResource: they wait for PropelAuth,
+  // key on token PRESENCE (a refocus rotation used to re-run all three
+  // fetches and swap the list for the "checking your application" panel),
+  // and drop stale runs.
+  const profileResource = useAuthedResource(
+    ["findteam-my-profile", event_id],
+    loadMyProfile,
+    { enabled: Boolean(event_id) },
+  );
+  const teammatesResource = useAuthedResource(
+    ["findteam-teammates", event_id],
+    loadPotentialTeammates,
+    { enabled: Boolean(event_id) },
+  );
+  const isCheckingApplication =
+    profileResource.status === "loading" || profileResource.status === "idle";
+  const profileFailed = profileResource.status === "error";
+  const myProfile =
+    profileResource.status === "ready" ? profileResource.data : null;
+  const loading =
+    teammatesResource.status === "loading" ||
+    teammatesResource.status === "idle";
+  const teammatesFailed = teammatesResource.status === "error";
+  const potentialTeammates = teammatesResource.data?.teammates || NO_TEAMMATES;
+  const allInterests = teammatesResource.data?.allInterests || NO_TEAMMATES;
+  const allSkills = teammatesResource.data?.allSkills || NO_TEAMMATES;
+  const error = profileFailed
+    ? "Failed to fetch your profile. Please try again later."
+    : teammatesFailed
+      ? "Failed to fetch potential teammates. Please try again later."
+      : eventError;
+  const reloadProfile = profileResource.reload;
+  const reloadTeammates = teammatesResource.reload;
+  const retryFailedLoads = useCallback(() => {
+    if (profileFailed) reloadProfile();
+    if (teammatesFailed) reloadTeammates();
+  }, [profileFailed, teammatesFailed, reloadProfile, reloadTeammates]);
 
   // Load saved favorites from localStorage
   useEffect(() => {
@@ -1285,7 +1301,17 @@ const FindTeamPage = () => {
         </Box>
 
         {error && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
+          <Alert
+            severity="warning"
+            sx={{ mb: 3 }}
+            action={
+              profileFailed || teammatesFailed ? (
+                <Button color="inherit" size="small" onClick={retryFailedLoads}>
+                  Retry
+                </Button>
+              ) : undefined
+            }
+          >
             {error}
           </Alert>
         )}
@@ -1294,14 +1320,16 @@ const FindTeamPage = () => {
         {isCheckingApplication && (
           <ApplicationLoadingPanel eventTitle={eventTitle} />
         )}
-        {!isCheckingApplication && !myProfile?.application && (
-          <NoApplicationPanel
-            eventId={event_id}
-            eventTitle={eventTitle}
-            title="Apply first to use the Team Finder"
-            feature="The Team Finder"
-          />
-        )}
+        {!isCheckingApplication &&
+          !profileFailed &&
+          !myProfile?.application && (
+            <NoApplicationPanel
+              eventId={event_id}
+              eventTitle={eventTitle}
+              title="Apply first to use the Team Finder"
+              feature="The Team Finder"
+            />
+          )}
         {!isCheckingApplication &&
           myProfile?.application &&
           myProfile.application.isSelected === false && (

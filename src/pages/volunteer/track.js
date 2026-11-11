@@ -116,6 +116,12 @@ const VolunteerTrackingPage = withAuthInfo(
     const [session, setSession] = useState(null); // { startEpoch, commitmentHours, reason }
     const [nowTs, setNowTs] = useState(() => Date.now());
     const endingRef = useRef(false);
+    // Token-rotation pattern (Class C, Nov 2026): PropelAuth mints a fresh
+    // accessToken on tab refocus. Requests read it through a ref so the
+    // callbacks below keep a stable identity and a rotation never re-runs
+    // an effect (the wall-clock session and its auto-finalize are untouched).
+    const tokenRef = useRef(accessToken);
+    tokenRef.current = accessToken;
 
     // --- Start-a-session form ---
     const [commitmentHours, setCommitmentHours] = useState(3);
@@ -165,7 +171,7 @@ const VolunteerTrackingPage = withAuthInfo(
     // --- Data fetch ---
     const fetchVolunteerData = useCallback(
       async (rangeStart, rangeEnd) => {
-        if (!isLoggedIn || !accessToken) return;
+        if (!isLoggedIn || !tokenRef.current) return;
         const from = typeof rangeStart === "string" ? rangeStart : startDate;
         const to = typeof rangeEnd === "string" ? rangeEnd : endDate;
         setStatsLoading(true);
@@ -178,7 +184,7 @@ const VolunteerTrackingPage = withAuthInfo(
             {
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `Bearer ${tokenRef.current}`,
               },
             },
           );
@@ -196,7 +202,7 @@ const VolunteerTrackingPage = withAuthInfo(
           setStatsLoading(false);
         }
       },
-      [isLoggedIn, accessToken, startDate, endDate],
+      [isLoggedIn, startDate, endDate],
     );
 
     // --- Init: pixel, restore session, initial fetch (once) ---
@@ -222,7 +228,7 @@ const VolunteerTrackingPage = withAuthInfo(
         localStorage.removeItem(SESSION_KEY);
       }
       fetchVolunteerData();
-    }, [isLoggedIn, accessToken, fetchVolunteerData]);
+    }, [isLoggedIn, Boolean(accessToken), fetchVolunteerData]);
 
     // --- 1s tick while volunteering (wall-clock; accurate across bg tabs) ---
     useEffect(() => {
@@ -257,7 +263,7 @@ const VolunteerTrackingPage = withAuthInfo(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${tokenRef.current}`,
             },
             body: JSON.stringify({ finalHours, reason: session.reason }),
           },
@@ -278,7 +284,7 @@ const VolunteerTrackingPage = withAuthInfo(
       } finally {
         setActionLoading(false);
       }
-    }, [session, accessToken, fetchVolunteerData, notify]);
+    }, [session, fetchVolunteerData, notify]);
 
     // --- Auto-finalize when the committed time is reached ---
     useEffect(() => {
@@ -300,7 +306,7 @@ const VolunteerTrackingPage = withAuthInfo(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${tokenRef.current}`,
             },
             body: JSON.stringify({ commitmentHours, reason }),
           },
@@ -349,7 +355,7 @@ const VolunteerTrackingPage = withAuthInfo(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${tokenRef.current}`,
             },
             body: JSON.stringify({
               commitmentHours: hours,
@@ -570,7 +576,6 @@ const VolunteerTrackingPage = withAuthInfo(
                         border: "1px solid var(--line)",
                       }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={PHOTOS[photoIndex]}
                         alt="Opportunity Hack volunteers"
