@@ -12,6 +12,7 @@ jest.mock("../use-team-membership", () => ({
 }));
 
 jest.mock("../../lib/teamMembershipApi", () => ({
+  isMembershipRefusal: (err) => Boolean(err && err.code),
   fetchHackerStatus: jest.fn(),
   joinTeam: jest.fn(),
   leaveTeam: jest.fn(),
@@ -149,6 +150,26 @@ describe("useTeamJoinLeave", () => {
 
     act(() => result.current.clearFeedback());
     expect(result.current.error).toBeNull();
+  });
+
+  it("a server rule refusal settles into `refusal`, not `error`", async () => {
+    const err = Object.assign(new Error("This team isn't active right now."), {
+      code: "team_inactive",
+    });
+    joinTeam.mockRejectedValue(err);
+    const { result } = renderHook(() =>
+      useTeamJoinLeave({ eventId: "fall-2026", teamId: "t1" }),
+    );
+    await act(async () => {
+      await result.current.join();
+    });
+    expect(result.current.error).toBeNull();
+    expect(result.current.refusal).toEqual({
+      action: "join",
+      code: "team_inactive",
+      reason: "This team isn't active right now.",
+    });
+    expect(result.current.isOnTeam).toBe(false);
   });
 
   it("ignores a second click while a request is in flight", async () => {
