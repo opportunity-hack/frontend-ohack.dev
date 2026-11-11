@@ -17,7 +17,6 @@ import {
   fastModelFor,
   formatKeyExpiry,
   earliestExpiry,
-  isBudgetSpent,
 } from "./gatewaySnippets";
 
 const GATEWAY_ENDPOINT = GATEWAY_OPENAI_BASE;
@@ -40,9 +39,11 @@ function keyDisplayLabel(entry, index) {
 }
 
 /**
- * One key's section: masked key with its own Reveal/Hide and Copy, budget
- * bar, model chips, and setup snippets built from that key and the model
- * chip the team picked (the key's first model until they pick another). An entry without usable key material (`status: "missing"` when the
+ * One key's section: masked key with its own Reveal/Hide and Copy, model
+ * chips (spend lives in the card-level UsageSummary), and setup snippets
+ * built from that key and the model chip the team picked (the key's first
+ * model until they pick another). An entry without usable key material
+ * (`status: "missing"` when the
  * mint failed, `"error"` when the backend couldn't decrypt it) renders a
  * short "ask an organizer" line instead — minting is admin-only, so a
  * team-side Retry could never fix it (it would only re-run the GET).
@@ -111,32 +112,6 @@ function KeySection({
           Copy
         </button>
       </Box>
-
-      {entry.spend != null && entry.max_budget > 0 && (
-        <Box sx={{ mb: 2.5 }}>
-          <RowLabel>Budget</RowLabel>
-          <Box sx={{ fontSize: "0.9rem", mb: 1 }}>
-            {formatMoney(entry.spend)} of {formatMoney(entry.max_budget)} used
-          </Box>
-          {isBudgetSpent(entry) && (
-            <Box
-              role="status"
-              sx={{ fontSize: "0.9rem", color: "var(--ink, #16181D)", mb: 1 }}
-            >
-              This key&apos;s budget is used up — find an organizer and
-              they&apos;ll help you keep going.
-            </Box>
-          )}
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(
-              100,
-              (Number(entry.spend) / Number(entry.max_budget)) * 100,
-            )}
-            sx={{ height: 6, borderRadius: 3 }}
-          />
-        </Box>
-      )}
 
       <Box sx={{ mb: 2.5 }}>
         <RowLabel>Models on this key</RowLabel>
@@ -230,6 +205,94 @@ function KeySection({
 function modelsForKey(entry, index) {
   if (entry?.models && entry.models.length > 0) return entry.models;
   return index === 1 ? FRONTIER_MODELS : FALLBACK_MODELS;
+}
+
+/**
+ * Spend vs budget for one key. `available` is false when the backend
+ * couldn't read spend from LiteLLM (`spend: null`) or the key has no budget.
+ */
+export function keyUsage(entry) {
+  const spent = Number(entry?.spend);
+  const budget = Number(entry?.max_budget);
+  const available =
+    entry?.spend != null && Number.isFinite(spent) && Number.isFinite(budget) && budget > 0;
+  if (!available) return { available: false, budget: Number.isFinite(budget) ? budget : null };
+  const left = Math.max(0, budget - spent);
+  const pct = Math.min(100, (spent / budget) * 100);
+  return { available: true, spent, budget, left, pct, exhausted: spent >= budget };
+}
+
+/**
+ * "Usage so far" — one row per usable key, right under the endpoint so a
+ * team sees what they've spent without scrolling past Key 1's snippets.
+ * Spend is read from LiteLLM when the card loads (it can lag a minute or two
+ * behind the latest request).
+ */
+function UsageSummary({ keys }) {
+  const rows = keys
+    .map((entry, i) => ({ entry, i }))
+    .filter(({ entry }) => entry?.status === "active" && entry?.key);
+  if (rows.length === 0) return null;
+  return (
+    <Box sx={{ mb: 2.5 }} aria-label="AI usage so far">
+      <RowLabel>Usage so far</RowLabel>
+      {rows.map(({ entry, i }) => {
+        const label = entry.label || `Key ${i + 1}`;
+        const u = keyUsage(entry);
+        return (
+          <Box key={entry.key_alias || label} sx={{ mb: 1.25 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 1,
+                flexWrap: "wrap",
+                fontSize: "0.9rem",
+                mb: 0.5,
+              }}
+            >
+              <span>
+                <strong>{label}</strong>{" "}
+                {u.available
+                  ? `${formatMoney(u.spent)} of ${formatMoney(u.budget)} used`
+                  : "usage isn't available right now"}
+              </span>
+              {u.available && (
+                <span style={{ color: "var(--muted)" }}>
+                  {formatMoney(u.left)} left
+                </span>
+              )}
+            </Box>
+            {u.available && (
+              <LinearProgress
+                variant="determinate"
+                value={u.pct}
+                aria-label={`${label} budget used`}
+                sx={{
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: "var(--surface-2, #F6F3EC)",
+                  "& .MuiLinearProgress-bar": {
+                    backgroundColor:
+                      u.pct >= 90 ? "var(--accent, #E2552E)" : "var(--brand, #1B3A6B)",
+                  },
+                }}
+              />
+            )}
+            {u.exhausted && (
+              <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mt: 0.5 }} role="status">
+                {label} has used its whole budget, so new requests will be
+                turned away. Ask an organizer in Slack if you need more.
+              </Box>
+            )}
+          </Box>
+        );
+      })}
+      <Box sx={{ fontSize: "0.8rem", color: "var(--faint)" }}>
+        As of when this page loaded — reload to see the latest.
+      </Box>
+    </Box>
+  );
 }
 
 function copyToClipboard(text) {
@@ -447,6 +510,8 @@ export default function GatewayKeyCard({ team, accessToken, onNotify }) {
               </button>
             </Box>
           </Box>
+
+          <UsageSummary keys={keyData?.keys || []} />
 
           {(() => {
             const keys = keyData?.keys || [];

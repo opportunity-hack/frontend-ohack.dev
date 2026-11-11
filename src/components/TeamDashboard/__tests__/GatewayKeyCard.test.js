@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import GatewayKeyCard from "../GatewayKeyCard";
+import GatewayKeyCard, { keyUsage } from "../GatewayKeyCard";
 import { fetchGatewayKey, ApiError } from "../../../lib/teamDashboardApi";
 
 jest.mock("../../../lib/teamDashboardApi", () => {
@@ -66,7 +66,7 @@ describe("GatewayKeyCard", () => {
     expect(screen.queryByText("sk-live-abc")).not.toBeInTheDocument();
   });
 
-  it("omits the budget meter when spend is unavailable, without crashing", async () => {
+  it("says usage is unavailable (no meter) when spend is null, without crashing", async () => {
     fetchGatewayKey.mockResolvedValue({
       team_id: "team-1",
       keys: [
@@ -86,6 +86,8 @@ describe("GatewayKeyCard", () => {
     await waitFor(() =>
       expect(screen.queryByText(/of \$15\.00/)).not.toBeInTheDocument(),
     );
+    expect(screen.getByText(/usage isn't available right now/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Key 1 budget used")).not.toBeInTheDocument();
   });
 
   it("shows the 'being prepared' copy with Retry when the keys list is empty", async () => {
@@ -198,6 +200,10 @@ describe("GatewayKeyCard two keys", () => {
     expect(screen.getByText("Key 2 - $20 frontier")).toBeInTheDocument();
     expect(screen.getByText(/\$3\.50 of \$15\.00/)).toBeInTheDocument();
     expect(screen.getByText(/\$1\.00 of \$20\.00/)).toBeInTheDocument();
+    expect(screen.getByText("$11.50 left")).toBeInTheDocument();
+    expect(screen.getByText("$19.00 left")).toBeInTheDocument();
+    expect(screen.getByLabelText("Key 1 budget used")).toBeInTheDocument();
+    expect(screen.getByLabelText("Key 2 budget used")).toBeInTheDocument();
     expect(screen.getByText("muse-wonder")).toBeInTheDocument();
     expect(screen.getByText("kimi-k3")).toBeInTheDocument();
     expect(screen.queryByText("sk-live-key1")).not.toBeInTheDocument();
@@ -396,8 +402,64 @@ describe("GatewayKeyCard two keys", () => {
     });
     render(<GatewayKeyCard team={team} accessToken="tok" />);
     expect(
-      await screen.findByText(/This key's budget is used up — find an organizer/),
+      await screen.findByText(/Key 1 has used its whole budget/),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/budget is used up/)).toHaveLength(1);
+    expect(screen.getAllByText(/has used its whole budget/)).toHaveLength(1);
+  });
+});
+
+describe("keyUsage", () => {
+  it("computes spent / left / percent", () => {
+    expect(keyUsage({ spend: 3.5, max_budget: 15 })).toEqual({
+      available: true,
+      spent: 3.5,
+      budget: 15,
+      left: 11.5,
+      pct: (3.5 / 15) * 100,
+      exhausted: false,
+    });
+  });
+
+  it("treats a zero spend as available (a fresh key shows $0.00 used)", () => {
+    expect(keyUsage({ spend: 0, max_budget: 20 }).available).toBe(true);
+  });
+
+  it("is unavailable when spend is null or the budget is missing", () => {
+    expect(keyUsage({ spend: null, max_budget: 15 }).available).toBe(false);
+    expect(keyUsage({ spend: 2, max_budget: 0 }).available).toBe(false);
+    expect(keyUsage(undefined).available).toBe(false);
+  });
+
+  it("caps at 100% and $0 left once the budget is used up", () => {
+    const u = keyUsage({ spend: 16.2, max_budget: 15 });
+    expect(u.pct).toBe(100);
+    expect(u.left).toBe(0);
+    expect(u.exhausted).toBe(true);
+  });
+});
+
+describe("GatewayKeyCard exhausted key", () => {
+  beforeEach(() => fetchGatewayKey.mockReset());
+
+  it("tells the team when a key has used its whole budget", async () => {
+    fetchGatewayKey.mockResolvedValue({
+      team_id: "team-1",
+      keys: [
+        {
+          label: "Key 1",
+          key: "sk-live-abc",
+          key_alias: "fall26-team-1",
+          models: ["muse-spark"],
+          max_budget: 15,
+          spend: 15.02,
+          status: "active",
+        },
+      ],
+    });
+    render(<GatewayKeyCard team={team} accessToken="tok" />);
+    expect(
+      await screen.findByText(/Key 1 has used its whole budget/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$0.00 left")).toBeInTheDocument();
   });
 });
