@@ -439,8 +439,16 @@ export default function MentorTeamPanel({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [isMentor, setIsMentor] = useState(false);
+  // Tri-state: true / false come ONLY from a successful /me response; null
+  // means "couldn't confirm" (non-2xx or network failure) — the panel stays
+  // read-only with a Retry, never "you're not a mentor".
+  const [isMentor, setIsMentor] = useState(null);
   const [mentorCheckLoading, setMentorCheckLoading] = useState(true);
+  const [mentorCheckAttempt, setMentorCheckAttempt] = useState(0);
+  const retryMentorCheck = useCallback(
+    () => setMentorCheckAttempt((n) => n + 1),
+    [],
+  );
 
   // Per-item in-flight markers + optimistic overlays (see mentorCoverage.js
   // applyOptimistic*). `busy` stays for the dialog/notes flows only.
@@ -492,7 +500,10 @@ export default function MentorTeamPanel({
     fetch(`${API}/api/volunteer/${eventId}/me?type=mentor`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-      .then((r) => (r.ok ? r.json() : { is_mentor: false }))
+      .then((r) => {
+        if (!r.ok) throw new Error(`mentor check failed: ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         if (cancelled) return;
         setIsMentor(!!data?.is_mentor);
@@ -500,13 +511,13 @@ export default function MentorTeamPanel({
       })
       .catch(() => {
         if (cancelled) return;
-        setIsMentor(false);
+        setIsMentor(null);
         setMentorCheckLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, accessToken, eventId]);
+  }, [isLoggedIn, accessToken, eventId, mentorCheckAttempt]);
 
   // -- derived state from team
   const myPropelId = user?.userId || null;
@@ -569,7 +580,9 @@ export default function MentorTeamPanel({
     return Math.floor(ms / 86400000);
   }, [event?.end_date]);
 
-  const canInteract = isMentor && !mentorCheckLoading;
+  const canInteract = isMentor === true && !mentorCheckLoading;
+  const mentorCheckFailed =
+    isLoggedIn && !!eventId && !mentorCheckLoading && isMentor === null;
 
   // -- network helpers
   const updateTeamFromResponse = useCallback(
@@ -1511,6 +1524,15 @@ export default function MentorTeamPanel({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <CircularProgress size={14} />
           <span>Checking mentor status…</span>
+        </Box>
+      ) : mentorCheckFailed ? (
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}
+        >
+          <span>Couldn't confirm mentor access.</span>
+          <Button size="small" onClick={retryMentorCheck}>
+            Retry
+          </Button>
         </Box>
       ) : (
         <>
