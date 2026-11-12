@@ -160,3 +160,60 @@ export function teamProblemStatementId(team) {
   if (typeof first === "string") return first;
   return first.id || null;
 }
+
+const PRE_APPROVAL_STATUSES = new Set(["IN_REVIEW", "APPROVING"]);
+
+/**
+ * Admin edit-dialog state right after "Approve Team" succeeds. The backend
+ * sets `active: "True"` on approval; the dialog was opened on the IN_REVIEW
+ * row (active false), so without `active: true` here a later "Save Changes"
+ * sent `active: "False"` and deactivated the team (joins refused, "Inactive"
+ * on the team page, hidden from the judging schedule).
+ */
+export function approvedTeamState(prev, projectId) {
+  return {
+    ...prev,
+    status: "NONPROFIT_SELECTED",
+    active: true,
+    ...(projectId ? { problem_statements: [projectId] } : {}),
+  };
+}
+
+/**
+ * Body for the admin "Save project" button. Sends the dialog's nonprofit too:
+ * the backend validates the project against the nonprofit in the same request,
+ * so after an unsaved nonprofit switch a bare problem_statement_id 400'd.
+ */
+export function saveProjectPayload(teamData, projectId) {
+  return {
+    id: teamData.id,
+    problem_statement_id: projectId,
+    selected_nonprofit_id: teamData.selected_nonprofit_id,
+  };
+}
+
+/**
+ * Body for the admin "Save Changes" button (full team PATCH).
+ * - `active` boolean → the backend's "True"/"False" strings.
+ * - A null `project_submission_status` is omitted (the backend allowlist 400s
+ *   on an explicit null).
+ * - When the nonprofit changed on an approved team, the project goes with it
+ *   (`problem_statement_id`, null clears) so the team never points at one
+ *   nonprofit and another nonprofit's project.
+ */
+export function teamSavePayload(teamData, originalTeam, selectedProjectId) {
+  const payload = {
+    ...teamData,
+    active: teamData.active ? "True" : "False",
+  };
+  if (payload.project_submission_status == null) {
+    delete payload.project_submission_status;
+  }
+  const nonprofitChanged =
+    (teamData.selected_nonprofit_id || null) !==
+    (originalTeam?.selected_nonprofit_id || null);
+  if (nonprofitChanged && !PRE_APPROVAL_STATUSES.has(teamData.status)) {
+    payload.problem_statement_id = selectedProjectId || null;
+  }
+  return payload;
+}

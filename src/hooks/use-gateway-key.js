@@ -13,6 +13,12 @@ import { fetchGatewayKey } from "../lib/teamDashboardApi";
  * a `status: "missing"` entry has `key: null`). See
  * `normalizeGatewayKeyResponse` in ../lib/teamDashboardApi — the hook
  * passes the normalized shape through unchanged.
+ *
+ * Token-rotation stable (Nov 2026): PropelAuth hands out a fresh accessToken
+ * on every tab refocus. The token is read through a ref and the fetch is keyed
+ * on the team + token PRESENCE, so coming back from the terminal no longer
+ * blanks the card, resets its tool tab and re-hits LiteLLM. The key is cleared
+ * only when the team changes, and a failed refetch keeps a working key.
  */
 export default function useGatewayKey({ teamId, accessToken, enabled }) {
   // Start as loading whenever the fetch will fire on mount: the first render
@@ -21,33 +27,51 @@ export default function useGatewayKey({ teamId, accessToken, enabled }) {
   const [loading, setLoading] = useState(Boolean(enabled));
   const [error, setError] = useState(null);
   const [keyData, setKeyData] = useState(null);
+  const tokenRef = useRef(accessToken);
+  tokenRef.current = accessToken;
+  // Mirrors keyData for the current team so load() can tell a first load
+  // (show the skeleton, report errors) from a refetch (stay quiet).
+  const dataRef = useRef(null);
+  const lastTeamRef = useRef(teamId);
   // Guards against a slow fetch for a previous team overwriting state after
-  // the team (or token) changed mid-flight.
+  // the team changed mid-flight.
   const attemptRef = useRef(0);
 
   const load = useCallback(async () => {
-    if (!teamId || !accessToken) return;
+    const token = tokenRef.current;
+    if (!teamId || !token) return;
     const attempt = ++attemptRef.current;
-    setLoading(true);
-    setError(null);
+    const hasData = Boolean(dataRef.current);
+    if (!hasData) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      const data = await fetchGatewayKey(teamId, accessToken);
+      const data = await fetchGatewayKey(teamId, token);
       if (attemptRef.current !== attempt) return;
+      dataRef.current = data;
       setKeyData(data);
+      setError(null);
     } catch (err) {
       if (attemptRef.current !== attempt) return;
-      setError(err);
+      // Keep showing a working key; only report errors when there's nothing.
+      if (!dataRef.current) setError(err);
     } finally {
       if (attemptRef.current === attempt) setLoading(false);
     }
-  }, [teamId, accessToken]);
+  }, [teamId]);
 
+  const hasToken = Boolean(accessToken);
   useEffect(() => {
-    if (!enabled) return;
-    setKeyData(null);
-    setError(null);
+    if (lastTeamRef.current !== teamId) {
+      lastTeamRef.current = teamId;
+      dataRef.current = null;
+      setKeyData(null);
+      setError(null);
+    }
+    if (!enabled || !hasToken) return;
     load();
-  }, [enabled, load]);
+  }, [enabled, teamId, hasToken, load]);
 
   const retry = useCallback(() => {
     load();
