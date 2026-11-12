@@ -1,4 +1,9 @@
 // profileFields.js
+// The profile fields that earn giveaway entries (5 each). The BACKEND computes
+// the real count from its twin, GIVEAWAY_PROFILE_FIELDS in
+// backend-ohack.dev/api/giveaways/giveaways_service.py — keep the two lists in
+// sync. The frontend only uses this list for the "still open on your profile"
+// hint in the Giveaways tab.
 export const profileFields = [
   { name: "role", label: "Role", type: "select" },
   { name: "github", label: "GitHub Username", type: "text" },
