@@ -158,7 +158,7 @@ Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — 
 | Event Name | Description | Parameters | Business Value |
 |------------|-------------|------------|---------------|
 | `team_join` | Hacker joined a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Which surface forms teams; join volume per event |
-| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Churn between teams before/during the event |
+| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page" \| "team_dashboard", event_id, team_id }` | Churn between teams before/during the event |
 
 ### Hackers' Choice peer vote (`/hack/[event_id]/vote` + CTAs)
 
