@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Snackbar, Alert } from "@mui/material";
 import TeamStatusHero from "./TeamStatusHero";
+import { isPendingReview } from "../../constants/teamStatus";
 import DeadlineStrip from "./DeadlineStrip";
 import DeliverablesChecklist from "./DeliverablesChecklist";
 import HackersChoiceCard from "./HackersChoiceCard";
@@ -97,7 +98,8 @@ export default function TeamDashboard({
     slackConfirmed,
   });
 
-  const isInReview = team?.status === "IN_REVIEW";
+  // APPROVING (a few seconds mid-approval) renders like IN_REVIEW.
+  const isInReview = Boolean(team) && isPendingReview(team.status);
 
   return (
     <Box>

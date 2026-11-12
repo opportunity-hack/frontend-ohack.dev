@@ -31,15 +31,13 @@ const StateCard = ({ children, onRetry, role = "status" }) => (
 
 const ProjectSelectionStep = memo(
   ({ options, ranked, limits, onToggle, onMove, onRemove }) => {
-    const { status, nonprofits, unavailable, reload } = options;
+    const { status, nonprofits, reload } = options;
 
     let body;
     if (status === "error") {
       body = (
         <StateCard role="alert" onRetry={reload}>
-          {unavailable
-            ? "Project choices aren't available on this site yet. Please try again in a few minutes."
-            : "We couldn't load this hackathon's projects just now."}
+          We couldn&apos;t load this hackathon&apos;s projects just now.
         </StateCard>
       );
     } else if (status !== "ready" || !nonprofits) {

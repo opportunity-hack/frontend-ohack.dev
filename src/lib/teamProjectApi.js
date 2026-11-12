@@ -35,6 +35,17 @@ const CODE_COPY = {
   invalid_problem_statement:
     "That project doesn't belong to the selected nonprofit.",
   already_approved: "This team was already approved (maybe by another admin).",
+  not_in_review: "This team isn't waiting for approval anymore.",
+  nonprofit_not_found: "That nonprofit couldn't be found.",
+  no_problem_statements: "That nonprofit has no projects to assign.",
+  team_has_no_members: "This team has no members yet, so it can't be approved.",
+  github_org_missing:
+    "This hackathon has no GitHub organization set (Overview section).",
+  github_repo_failed:
+    "GitHub didn't create the team's repo. Please try again in a minute.",
+  team_not_found: "This team couldn't be found.",
+  not_approved_hacker:
+    "Only approved hackers can create a team for this event.",
   invalid_rankings:
     "Your project ranking is out of date — a project may have been removed. Please review your choices.",
   invalid_github_username:

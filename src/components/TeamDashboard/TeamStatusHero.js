@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
+import { isPendingReview } from "../../constants/teamStatus";
 
 const WAITING_VIDEOS = [
   "a_cat_that_is_waiting_to_pounce.mp4",
@@ -21,7 +22,7 @@ export default function TeamStatusHero({ team }) {
     () => WAITING_VIDEOS[Math.floor(Math.random() * WAITING_VIDEOS.length)],
   );
 
-  if (team?.status !== "IN_REVIEW") return null;
+  if (!team || !isPendingReview(team.status)) return null;
 
   return (
     <Box

@@ -1343,7 +1343,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       // 400 problem_statement_required / invalid_problem_statement,
       // 409 already_approved, or a handled 200 {success:false, message}.
       notify(error.message || "Failed to approve team", "error");
-      if (error.code === "already_approved") {
+      if (error.code === "already_approved" || error.code === "not_in_review") {
         setApprovalDialogOpen(false);
         fetchTeams(selectedHackathon);
       }

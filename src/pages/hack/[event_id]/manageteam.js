@@ -39,6 +39,7 @@ import {
   toggleProject,
 } from "../../../lib/projectRanking";
 import { queueTeam } from "../../../lib/teamProjectApi";
+import { isPendingReview } from "../../../constants/teamStatus";
 
 const steps = [
   "Team details",
@@ -761,9 +762,7 @@ const ManageTeamComponent = () => {
   // neither of which exists in TEAM_STATUS_OPTIONS, so it was always false.
   const hasApprovedTeam =
     myTeams &&
-    myTeams.some(
-      (t) => t.status && t.status !== "IN_REVIEW" && t.status !== "INACTIVE",
-    );
+    myTeams.some((t) => !isPendingReview(t.status) && t.status !== "INACTIVE");
   const teamCreationEnabled =
     event?.constraints?.team_creation_enabled !== false;
   const teamFindingEnabled =

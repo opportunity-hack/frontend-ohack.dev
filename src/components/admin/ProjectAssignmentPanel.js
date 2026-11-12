@@ -118,6 +118,8 @@ export default function ProjectAssignmentPanel({
   const hasOptions = asArray(nonprofitOptions).length > 0;
   const nonprofitId = team.selected_nonprofit_id || "";
   const isInReview = (team.status || "IN_REVIEW") === "IN_REVIEW";
+  // Transient claim while an approval runs (this admin or another).
+  const isApproving = team.status === "APPROVING";
   const projects = projectsForNonprofit(projectOptions, nonprofitId);
   const projectTitle = (id) => {
     for (const np of asArray(projectOptions?.nonprofits)) {
@@ -135,6 +137,7 @@ export default function ProjectAssignmentPanel({
     projectOptions?.status === "loading" || projectOptions?.status === "idle";
   const projectChanged =
     !isInReview &&
+    !isApproving &&
     Boolean(selectedProjectId) &&
     selectedProjectId !== assignedProjectId;
 
@@ -253,7 +256,12 @@ export default function ProjectAssignmentPanel({
           </FormControl>
         </Box>
 
-        {isInReview ? (
+        {isApproving ? (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            This team is being approved right now. Refresh the list in a few
+            seconds to see the result.
+          </Alert>
+        ) : isInReview ? (
           <Box
             sx={{
               mb: 3,
