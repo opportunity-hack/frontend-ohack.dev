@@ -113,8 +113,9 @@ it("without auto-approve, capacity is decided at the door, not by apply order", 
   renderPage();
   const statement = await screen.findByTestId("hacker-capacity-statement");
   expect(statement).toHaveTextContent("This event has room for 90 hackers");
-  expect(statement).toHaveTextContent("first 90 hackers who check in when the doors open");
-  expect(statement).toHaveTextContent("doesn't reserve a seat");
+  expect(statement).toHaveTextContent("You need an application to hack");
+  expect(statement).toHaveTextContent("first 90 applicants who check in when the doors open");
+  expect(statement).toHaveTextContent("applying doesn't hold a seat");
   expect(statement).not.toHaveTextContent("first come, first served");
 });
 
