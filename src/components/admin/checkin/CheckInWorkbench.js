@@ -47,6 +47,7 @@ const EMPTY_COUNTS = {
   sponsor: 0,
 };
 const CHECKIN_API = `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/checkin`;
+const WRONG_EVENT_MESSAGE = "This QR code is for a different event or role.";
 
 const VOLUNTEER_TYPES = [
   { value: "hacker", label: "Hacker" },
@@ -391,7 +392,7 @@ const CheckInWorkbench = ({
         if (!response.ok) {
           const reason =
             payload?.error === "wrong_event"
-              ? "This QR code is for a different event or role."
+              ? WRONG_EVENT_MESSAGE
               : payload?.message ||
                 payload?.error ||
                 `Check-in failed (${response.status})`;
@@ -472,6 +473,13 @@ const CheckInWorkbench = ({
             throw new Error("Missing required information in QR code");
           }
 
+          // The backend checks the doc's event against the event IN THE QR,
+          // so last season's QR would pass there and check the person in on
+          // the old event. Only the event this desk is running counts.
+          if (selectedEventId && eventId !== selectedEventId) {
+            throw new Error(WRONG_EVENT_MESSAGE);
+          }
+
           const validTypes = [
             "mentor",
             "judge",
@@ -519,7 +527,7 @@ const CheckInWorkbench = ({
         }
       }
     },
-    [lastScanned, processCheckIn, notify],
+    [lastScanned, processCheckIn, notify, selectedEventId],
   );
 
   const handleError = useCallback(
