@@ -12,6 +12,9 @@ describe("slackLinks", () => {
       introductions: "C01EY49JV8U",
       askAMentor: "C01E5CGDQ74",
       random: "C06BRHRS5BQ",
+      // Resolved by name, like the code: `app_redirect` accepts a channel
+      // name as well as an ID.
+      help: "help",
     });
   });
 
