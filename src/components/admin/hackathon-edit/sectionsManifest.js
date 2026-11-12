@@ -20,7 +20,16 @@ import {
   Balance as JudgingIcon,
   QrCodeScanner as CheckInIcon,
 } from "@mui/icons-material";
+import {
+  ADMIN_PERMISSION,
+  CHECKIN_PERMISSIONS,
+  hasAnyPermission,
+} from "../../../lib/adminPermissions";
 
+// `permissions` (optional, any-of) lists the PropelAuth permissions that may
+// open a section; the default is `volunteer.admin` only. Check-in also admits
+// `checkin.admin` (registration-desk helpers) — see lib/adminPermissions.js.
+//
 // Sections are split into two groups visually (config vs. operations) but
 // share a flat slug namespace. The "ops" sections (volunteer/teams/judging/
 // check-in) replace the old standalone /admin/{slug} pages — those routes now
@@ -130,9 +139,28 @@ export const SECTIONS = [
     icon: CheckInIcon,
     hint: "QR scan and manual check-in at the event",
     group: "ops",
+    permissions: CHECKIN_PERMISSIONS,
   },
 ];
 
 export const DEFAULT_SECTION = "overview";
 
-export const isValidSection = (slug) => SECTIONS.some((s) => s.slug === slug);
+export const sectionPermissions = (section) =>
+  section.permissions || [ADMIN_PERMISSION];
+
+/** The sections this org membership may open, in manifest order. */
+export const sectionsForOrg = (org) =>
+  SECTIONS.filter((s) => hasAnyPermission(org, sectionPermissions(s)));
+
+/** First section the user may open (falls back to the manifest default). */
+export const defaultSectionForOrg = (org) => {
+  const allowed = sectionsForOrg(org);
+  return allowed.some((s) => s.slug === DEFAULT_SECTION)
+    ? DEFAULT_SECTION
+    : allowed[0]?.slug || DEFAULT_SECTION;
+};
+
+export const isValidSection = (slug, org) =>
+  (org === undefined ? SECTIONS : sectionsForOrg(org)).some(
+    (s) => s.slug === slug,
+  );

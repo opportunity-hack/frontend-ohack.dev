@@ -19,7 +19,12 @@ jest.mock("next/router", () => ({
   useRouter: () => ({ query: { event_id: "2026_fall" } }),
 }));
 
-const mockAuth = { accessToken: "test-token" };
+const mockAuth = {
+  loading: false,
+  isLoggedIn: true,
+  user: { userId: "voter-1" },
+  accessToken: "test-token",
+};
 jest.mock("@propelauth/react", () => ({
   useAuthInfo: () => mockAuth,
 }));

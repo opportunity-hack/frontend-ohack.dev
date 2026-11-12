@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parseAvailabilitySlots legacy bare day names fall back to the comma split 1`] = `
+[
+  {
+    "date": "Friday",
+    "dayName": "Friday",
+    "displayText": "Friday",
+    "isCurrent": false,
+    "time": "",
+    "timePeriod": "",
+  },
+  {
+    "date": "Saturday",
+    "dayName": "Saturday",
+    "displayText": "Saturday",
+    "isCurrent": false,
+    "time": "",
+    "timePeriod": "",
+  },
+]
+`;
+
+exports[`parseAvailabilitySlots shifts across two days in mixed order 1`] = `
+[
+  {
+    "date": "Saturday Oct 11",
+    "dayName": "Saturday",
+    "displayText": "Saturday Oct 11: ☀️ Morning (9am - 12pm MST)",
+    "isCurrent": false,
+    "time": "9am - 12pm MST",
+    "timePeriod": "☀️ Morning (9am - 12pm MST)",
+  },
+  {
+    "date": "Saturday Oct 11",
+    "dayName": "Saturday",
+    "displayText": "Saturday Oct 11: 🌆 Evening (5pm - 8pm MST)",
+    "isCurrent": false,
+    "time": "5pm - 8pm MST",
+    "timePeriod": "🌆 Evening (5pm - 8pm MST)",
+  },
+  {
+    "date": "Sunday Oct 12",
+    "dayName": "Sunday",
+    "displayText": "Sunday Oct 12: 🌅 Early Morning (7am - 9am MST)",
+    "isCurrent": false,
+    "time": "7am - 9am MST",
+    "timePeriod": "🌅 Early Morning (7am - 9am MST)",
+  },
+]
+`;
+
+exports[`parseAvailabilitySlots two shifts on one day (mentor.test.js fixture) 1`] = `
+[
+  {
+    "date": "Saturday Oct 11",
+    "dayName": "Saturday",
+    "displayText": "Saturday Oct 11: ☀️ Morning (9am - 12pm MST)",
+    "isCurrent": false,
+    "time": "9am - 12pm MST",
+    "timePeriod": "☀️ Morning (9am - 12pm MST)",
+  },
+  {
+    "date": "Saturday Oct 11",
+    "dayName": "Saturday",
+    "displayText": "Saturday Oct 11: 🏙️ Afternoon (1pm - 5pm MST)",
+    "isCurrent": false,
+    "time": "1pm - 5pm MST",
+    "timePeriod": "🏙️ Afternoon (1pm - 5pm MST)",
+  },
+]
+`;

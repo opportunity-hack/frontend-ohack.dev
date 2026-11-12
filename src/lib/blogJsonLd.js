@@ -21,7 +21,10 @@ function publishedDate(post) {
   return undefined;
 }
 
-export function buildBlogPostingJsonLd(post, { canonicalUrl, ogImage, ogDescription, title } = {}) {
+export function buildBlogPostingJsonLd(
+  post,
+  { canonicalUrl, ogImage, ogDescription, title } = {},
+) {
   const datePublished = publishedDate(post);
   const dateModified = post?.last_updated || datePublished;
   return {
@@ -38,5 +41,44 @@ export function buildBlogPostingJsonLd(post, { canonicalUrl, ogImage, ogDescript
       : {}),
     publisher: PUBLISHER,
     mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+  };
+}
+
+const BLOG_URL = "https://www.ohack.dev/blog";
+
+const absoluteImage = (post) => {
+  const url = post?.featured_image || post?.image;
+  return typeof url === "string" && /^https?:\/\//.test(url) ? url : undefined;
+};
+
+/**
+ * The /blog index's ONE JSON-LD node: the `Blog` plus a lean `blogPost[]`
+ * (headline, www URL, datePublished when known, image when absolute). No
+ * fake fallback images, no non-www hosts.
+ */
+export function buildBlogIndexJsonLd(posts = []) {
+  const blogPost = (Array.isArray(posts) ? posts : [])
+    .filter((post) => post && post.id && post.title)
+    .map((post) => {
+      const datePublished = publishedDate(post);
+      const image = absoluteImage(post);
+      return {
+        "@type": "BlogPosting",
+        headline: String(post.title),
+        url: `${BLOG_URL}/${encodeURIComponent(String(post.id))}`,
+        ...(datePublished ? { datePublished } : {}),
+        ...(image ? { image } : {}),
+      };
+    });
+  return {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "Opportunity Hack Blog",
+    description:
+      "Technology insights, success stories, and updates from Opportunity Hack's mission to create tech solutions for nonprofits.",
+    url: BLOG_URL,
+    mainEntityOfPage: { "@type": "WebPage", "@id": BLOG_URL },
+    publisher: PUBLISHER,
+    ...(blogPost.length ? { blogPost } : {}),
   };
 }

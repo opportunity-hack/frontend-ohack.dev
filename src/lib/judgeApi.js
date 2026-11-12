@@ -178,6 +178,24 @@ const judgeApi = {
     }
   },
 
+  /**
+   * Public judging schedule (panels, rooms, judges, assigned teams) for the
+   * /hack/<event>/judging page. No auth. Resolves null on 404 (older backend
+   * or unknown event) so callers can hide the feature; throws otherwise.
+   */
+  async getPublicSchedule(eventId) {
+    try {
+      const response = await axios.get(
+        `${baseURL()}/api/judge/schedule/${enc(eventId)}`,
+      );
+      return response.data;
+    } catch (error) {
+      const err = toApiError(error, "Couldn't load the judging schedule");
+      if (isNotFound(err)) return null;
+      throw err;
+    }
+  },
+
   // ---- Admin --------------------------------------------------------------
 
   /** Judge × team progress for a round (see backend README). Null on 404. */

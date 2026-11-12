@@ -1,6 +1,11 @@
 import React, { useState } from "react";
-import { useAuthInfo, RequiredAuthProvider, RedirectToLogin } from "@propelauth/react";
 import {
+  useAuthInfo,
+  RequiredAuthProvider,
+  RedirectToLogin,
+} from "@propelauth/react";
+import {
+  Alert,
   Box,
   Grid,
   Typography,
@@ -33,104 +38,118 @@ import {
   SmartToy as SmartToyIcon,
   WorkOutline as WorkOutlineIcon,
 } from "@mui/icons-material";
-import HandshakeIcon from '@mui/icons-material/Handshake';
+import HandshakeIcon from "@mui/icons-material/Handshake";
+import {
+  ADMIN_PERMISSION,
+  CHECKIN_PERMISSIONS,
+  hasAnyPermission,
+  orgCanCheckIn,
+  orgIsFullAdmin,
+} from "../../lib/adminPermissions";
+import useHackathonEvents from "../../hooks/use-hackathon-events";
+import { newestEventId } from "../../lib/newestEvent";
+
+// Cards are filtered by `permissions` (any-of; default = volunteer.admin).
+// A `checkin.admin`-only desk helper therefore lands on a one-card dashboard.
 
 const adminPages = [
-  { 
-    path: "/admin/check-in", 
-    label: "Check In", 
-    description: "Manage check-in process",
-    icon: <HandshakeIcon fontSize="large" color="primary" />
+  {
+    path: "/admin/check-in",
+    label: "Check In",
+    description: "Scan QR codes at the registration desk",
+    icon: <HandshakeIcon fontSize="large" color="primary" />,
+    permissions: CHECKIN_PERMISSIONS,
   },
-  { 
-    path: "/admin/certificates", 
-    label: "Certificates", 
+  {
+    path: "/admin/certificates",
+    label: "Certificates",
     description: "Generate hearts and GitHub certificates",
-    icon: <CertificateIcon fontSize="large" color="secondary" />
+    icon: <CertificateIcon fontSize="large" color="secondary" />,
   },
-  { 
-    path: "/admin/nonprofit", 
-    label: "Nonprofit", 
+  {
+    path: "/admin/nonprofit",
+    label: "Nonprofit",
     description: "Manage nonprofit organizations",
-    icon: <BusinessIcon fontSize="large" color="primary" />
+    icon: <BusinessIcon fontSize="large" color="primary" />,
   },
-  { 
-    path: "/admin/problems", 
-    label: "Problems", 
+  {
+    path: "/admin/problems",
+    label: "Problems",
     description: "Manage problem statements",
-    icon: <AssignmentIcon fontSize="large" color="success" />
+    icon: <AssignmentIcon fontSize="large" color="success" />,
   },
-  { 
-    path: "/admin/nonprofit/application", 
-    label: "Nonprofit Applications", 
+  {
+    path: "/admin/nonprofit/application",
+    label: "Nonprofit Applications",
     description: "Review nonprofit applications",
-    icon: <BusinessIcon fontSize="large" style={{ color: "#f57c00" }} />
+    icon: <BusinessIcon fontSize="large" style={{ color: "#f57c00" }} />,
   },
-  { 
-    path: "/admin/profile", 
-    label: "Profile", 
+  {
+    path: "/admin/profile",
+    label: "Profile",
     description: "Manage user profiles",
-    icon: <ProfileIcon fontSize="large" color="primary" />
+    icon: <ProfileIcon fontSize="large" color="primary" />,
   },
-  { 
-    path: "/admin/volunteer", 
-    label: "Volunteer", 
+  {
+    path: "/admin/volunteer",
+    label: "Volunteer",
     description: "Manage volunteers",
-    icon: <HandshakeIcon fontSize="large" color="secondary" />
+    icon: <HandshakeIcon fontSize="large" color="secondary" />,
   },
-  { 
-    path: "/admin/teams", 
-    label: "Teams", 
+  {
+    path: "/admin/teams",
+    label: "Teams",
     description: "Manage teams and assignments",
-    icon: <TeamsIcon fontSize="large" color="info" />
+    icon: <TeamsIcon fontSize="large" color="info" />,
   },
-  { 
-    path: "/admin/time-tracking", 
-    label: "Time Tracking", 
+  {
+    path: "/admin/time-tracking",
+    label: "Time Tracking",
     description: "View and manage volunteer hours",
-    icon: <TimeIcon fontSize="large" style={{ color: "#9c27b0" }} />
+    icon: <TimeIcon fontSize="large" style={{ color: "#9c27b0" }} />,
   },
-  { 
-    path: "/admin/hackathons", 
-    label: "Hackathons", 
+  {
+    path: "/admin/hackathons",
+    label: "Hackathons",
     description: "Manage hackathon events",
-    icon: <EventIcon fontSize="large" color="error" />
+    icon: <EventIcon fontSize="large" color="error" />,
   },
-  { 
-    path: "/admin/giveaways", 
-    label: "Giveaways", 
+  {
+    path: "/admin/giveaways",
+    label: "Giveaways",
     description: "Manage prizes and giveaways",
-    icon: <GiftIcon fontSize="large" style={{ color: "#ff9800" }} />
+    icon: <GiftIcon fontSize="large" style={{ color: "#ff9800" }} />,
   },
   {
     path: "/admin/communication",
     label: "Communication",
     description: "Email templates with version history + social media posting",
-    icon: <ShareIcon fontSize="large" style={{ color: "#1DA1F2" }} />
+    icon: <ShareIcon fontSize="large" style={{ color: "#1DA1F2" }} />,
   },
   {
     path: "/admin/blog",
     label: "Blog",
     description: "Write, edit, and manage blog posts with markdown + SEO",
-    icon: <ArticleIcon fontSize="large" style={{ color: "#093170" }} />
+    icon: <ArticleIcon fontSize="large" style={{ color: "#093170" }} />,
   },
   {
     path: "/admin/jobs",
     label: "Volunteer Jobs",
     description: "Manage /jobs listings and review organizer applications",
-    icon: <WorkOutlineIcon fontSize="large" style={{ color: "#093170" }} />
+    icon: <WorkOutlineIcon fontSize="large" style={{ color: "#093170" }} />,
   },
   {
     path: "/admin/feedback",
     label: "Feedback",
     description: "Review event surveys, peer feedback, and onboarding feedback",
-    icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />
+    icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />,
   },
   {
     path: "/admin/praise-bot",
     label: "Praise Bot",
-    description: "Configure GitHub digests, mentor rollups, calendar reminders, and community features for the Slack bot",
-    icon: <SmartToyIcon fontSize="large" style={{ color: "#611f69" }} />
+    description:
+      "Configure GitHub digests, mentor rollups, calendar reminders, and community features for the Slack bot",
+    icon: <SmartToyIcon fontSize="large" style={{ color: "#611f69" }} />,
   },
 ];
 
@@ -154,15 +173,38 @@ const IconWrapper = styled(Box)(({ theme }) => ({
 const AdminDashboard = () => {
   const { isLoggedIn, userClass } = useAuthInfo();
   const org = userClass?.getOrgByName("Opportunity Hack Org");
-  const isAdmin = org?.hasPermission("volunteer.admin");
+  const isAdmin = orgIsFullAdmin(org);
+  const canView = orgCanCheckIn(org);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // Desk helpers go straight to the newest current event's check-in.
+  const { hackathons: currentEvents = [], loading: eventsLoading } =
+    useHackathonEvents("current") || {};
+  const checkInEventId = newestEventId(currentEvents);
+  const visiblePages = adminPages
+    .filter((page) =>
+      hasAnyPermission(org, page.permissions || [ADMIN_PERMISSION]),
+    )
+    .map((page) =>
+      page.path === "/admin/check-in" && checkInEventId
+        ? {
+            ...page,
+            path: `/admin/check-in?event_id=${encodeURIComponent(checkInEventId)}`,
+          }
+        : page,
+    );
 
-  if (!isAdmin) {
+  if (!canView) {
     return (
       <RequiredAuthProvider
         authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-        displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
+        displayIfLoggedOut={
+          <RedirectToLogin
+            postLoginRedirectUrl={
+              typeof window !== "undefined" ? window.location.href : ""
+            }
+          />
+        }
       >
         <AdminPage title="Admin Dashboard" isAdmin={false}>
           <Typography>You do not have permission to view this page.</Typography>
@@ -174,17 +216,23 @@ const AdminDashboard = () => {
   return (
     <RequiredAuthProvider
       authUrl={process.env.NEXT_PUBLIC_REACT_APP_AUTH_URL}
-      displayIfLoggedOut={<RedirectToLogin postLoginRedirectUrl={typeof window !== 'undefined' ? window.location.href : ''} />}
+      displayIfLoggedOut={
+        <RedirectToLogin
+          postLoginRedirectUrl={
+            typeof window !== "undefined" ? window.location.href : ""
+          }
+        />
+      }
     >
       <AdminPage title="Admin Dashboard" isAdmin={isAdmin}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 3, 
-            mb: 4, 
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
             borderRadius: 2,
             bgcolor: "#f9f9f9",
-            border: "1px solid #e0e0e0"
+            border: "1px solid #e0e0e0",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -194,40 +242,75 @@ const AdminDashboard = () => {
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" paragraph>
-            Welcome to the admin dashboard. Manage the Opportunity Hack platform from this central location.
-            Select one of the management sections below to get started.
+            Welcome to the admin dashboard. Manage the Opportunity Hack platform
+            from this central location. Select one of the management sections
+            below to get started.
           </Typography>
         </Paper>
 
+        {/* A desk helper's only card needs a current event — without one
+            /admin/check-in sends them straight back here. Say why. */}
+        {!isAdmin && !eventsLoading && !checkInEventId && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            No hackathon is running right now, so check-in isn&apos;t open
+            yet. It opens on the first day of the event.
+          </Alert>
+        )}
+
         <Grid container spacing={isMobile ? 2 : 3}>
-          {adminPages.map((page) => (
+          {visiblePages.map((page) => (
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={page.path}>
               <NextLink href={page.path} passHref legacyBehavior>
-                <Box component="a" sx={{ textDecoration: "none", display: "block" }}>
+                <Box
+                  component="a"
+                  sx={{ textDecoration: "none", display: "block" }}
+                >
                   <StyledCard>
-                  <CardActionArea sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch" }}>
-                    <IconWrapper>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: "white", 
-                          width: 60, 
-                          height: 60,
-                          boxShadow: 1
+                    <CardActionArea
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                      }}
+                    >
+                      <IconWrapper>
+                        <Avatar
+                          sx={{
+                            bgcolor: "white",
+                            width: 60,
+                            height: 60,
+                            boxShadow: 1,
+                          }}
+                        >
+                          {page.icon}
+                        </Avatar>
+                      </IconWrapper>
+                      <CardContent
+                        sx={{
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
                         }}
                       >
-                        {page.icon}
-                      </Avatar>
-                    </IconWrapper>
-                    <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                      <Typography gutterBottom variant="h6" component="h2" align="center">
-                        {page.label}
-                      </Typography>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="body2" color="text.secondary" align="center">
-                        {page.description}
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
+                        <Typography
+                          gutterBottom
+                          variant="h6"
+                          component="h2"
+                          align="center"
+                        >
+                          {page.label}
+                        </Typography>
+                        <Divider sx={{ my: 1 }} />
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          align="center"
+                        >
+                          {page.description}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
                   </StyledCard>
                 </Box>
               </NextLink>

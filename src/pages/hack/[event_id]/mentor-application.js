@@ -123,7 +123,8 @@ const RemoteCheckInNote = ({ eventId, isVirtual, sx = {} }) => (
         : "Joining virtually instead? Check in online so teams know you're available — "}
       <Link href={`/hack/${eventId}/mentor-checkin`} sx={refinedInlineLinkSx}>
         open mentor check-in →
-      </Link>
+      </Link>{" "}
+      Check-in opens when the event starts.
     </Typography>
   </Box>
 );

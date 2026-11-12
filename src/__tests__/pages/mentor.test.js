@@ -186,6 +186,22 @@ describe("/mentor", () => {
     );
   });
 
+  it("an approved upcoming card says when check-in opens", () => {
+    const approvedUpcoming = {
+      ...UPCOMING_PENDING,
+      application: { isSelected: true, inPerson: "Yes!" },
+    };
+    useMentorEvents.mockReturnValue(ready([approvedUpcoming]));
+    render(<MentorPage />);
+    const card = screen.getByTestId("mentor-event-spring-2027");
+    expect(within(card).getByRole("link", { name: "Mentor page" })).toHaveAttribute(
+      "href",
+      "/hack/spring-2027/mentor-checkin",
+    );
+    expect(within(card).queryByRole("link", { name: /open mentor check-in/i })).toBeNull();
+    expect(within(card).getByText(/check-in opens .*when the event starts/i)).toBeInTheDocument();
+  });
+
   it("offers an apply row for current events the mentor hasn't applied to", () => {
     useMentorEvents.mockReturnValue(ready([LIVE]));
     useHackathonEvents.mockReturnValue({

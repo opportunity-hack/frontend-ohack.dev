@@ -19,6 +19,8 @@ import {
   Arrow,
 } from "../components/design/refined";
 import { DonateLink } from "../components/design/DonateNudge";
+import FromTheBlog from "../components/Home/FromTheBlog";
+import { pickHomeBlogPosts, HOME_BLOG_LIMIT } from "../lib/homeBlog";
 
 // Newsletter form is kept (it's a real conversion surface) but rendered inside
 // a calm band rather than competing with the hero.
@@ -96,7 +98,7 @@ function EventCardRefined({ event, delay = 0 }) {
   );
 }
 
-export default function Home() {
+export default function Home({ blogPosts = [] }) {
   const { isLoggedIn } = useAuthInfo();
   const { slackSignupUrl } = useEnv();
   const { hackathons, loading } = useHackathonEvents("current");
@@ -323,6 +325,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ---------------- FROM THE BLOG (SSG; hidden when the fetch failed) ---------------- */}
+        <FromTheBlog posts={blogPosts} onTrack={track} />
+
         {/* ---------------- NEWSLETTER ---------------- */}
         <section className="ohx-wrap" style={{ paddingTop: "clamp(48px, 8vh, 88px)", paddingBottom: "clamp(40px, 6vh, 72px)" }}>
           <div className="ohx-narrow" style={{ marginInline: "auto", textAlign: "center" }}>
@@ -388,9 +393,31 @@ export async function getStaticProps() {
   const metaDescription =
     "Since 2013, Opportunity Hack has connected 3,000+ developers with 200+ nonprofits to build free software for social good. Join our annual hackathon at ASU.";
 
+  // The homepage builds at deploy time: this fetch MUST NEVER THROW (a throw
+  // fails the whole Vercel build). Any failure hides the blog band and retries
+  // in 60s; success revalidates hourly.
+  let blogPosts = [];
+  let revalidate = 3600;
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/news?limit=${HOME_BLOG_LIMIT}`,
+      { signal: AbortSignal.timeout(15000) }
+    );
+    if (!res.ok) throw new Error(`Upstream ${res.status} for /api/messages/news`);
+    const data = await res.json();
+    if (!Array.isArray(data?.text)) throw new Error("news payload missing text[]");
+    blogPosts = pickHomeBlogPosts(data, HOME_BLOG_LIMIT);
+  } catch (error) {
+    console.error("Homepage: failed to fetch blog posts:", error);
+    blogPosts = [];
+    revalidate = 60;
+  }
+
   return {
+    revalidate,
     props: {
       title,
+      blogPosts,
       openGraphData: [
         { name: "title", content: title, key: "title" },
         { property: "og:title", content: title, key: "ogtitle" },

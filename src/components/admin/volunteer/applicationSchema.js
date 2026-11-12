@@ -344,7 +344,15 @@ export const SYSTEM_KEYS = [
   "profile_image",
   "selected", // dead legacy approval flag — nothing reads it
   "recaptchaToken",
+  // Stamped by the backend's hacker auto-approve hook (Nov 2026).
+  "auto_approved",
+  "auto_approved_at",
 ];
+
+const SYSTEM_LABELS = {
+  auto_approved: "Auto-approved",
+  auto_approved_at: "Auto-approved at",
+};
 
 export const DECISION_KEYS = ["status", "isSelected"];
 
@@ -352,7 +360,7 @@ const SYSTEM_SECTION = {
   id: "system",
   title: "System",
   fields: SYSTEM_KEYS.map((k) =>
-    f(k, humanize(k), "readonly", { review: null, search: false })
+    f(k, SYSTEM_LABELS[k] || humanize(k), "readonly", { review: null, search: false })
   ),
 };
 

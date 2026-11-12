@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/router";
-import { useAuthInfo } from "@propelauth/react";
 import {
   Box,
   CircularProgress,
@@ -16,538 +15,487 @@ import {
 } from "@mui/material";
 import Head from "next/head";
 import NextLink from "next/link";
+import axios from "axios";
 import { useEnv } from "../../../context/env.context";
 import LoginOrRegister from "../../../components/LoginOrRegister/LoginOrRegister2";
-import axios from "axios";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import HourglassFullIcon from "@mui/icons-material/HourglassFull";
 import SlackIcon from "@mui/icons-material/Chat";
 import InfoIcon from "@mui/icons-material/Info";
-import {
-  RefinedFonts,
-  RefinedRoot,
-  Eyebrow,
-} from "../../../components/design/refined";
+import { RefinedRoot, Eyebrow } from "../../../components/design/refined";
 import TeamBreadcrumbs from "../../../components/Teams/TeamBreadcrumbs";
 import MentorTeamsTable from "../../../components/Mentor/MentorTeamsTable";
 import SurveyCTA from "../../../components/Survey/SurveyCTA";
+import useMentorCheckin from "../../../hooks/use-mentor-checkin";
+import {
+  effectiveWindowState,
+  isCheckinRefusal,
+  relativeOpening,
+} from "../../../lib/mentorCheckinGate";
+import {
+  parseAvailabilitySlots,
+  findCurrentSlot,
+  isDateInThePast,
+} from "../../../lib/mentorAvailabilitySlots";
+import { applicationState } from "../../../lib/mentorEvents";
+import { formatDeadlineMoment } from "../../../lib/timezoneUtils";
+import { isHackathonExpired } from "../../../lib/dateUtils";
+import { KEY_CHANNELS, slackChannelUrl } from "../../../lib/slackLinks";
+import { trackEvent } from "../../../lib/ga";
+
+// The clock that drives the check-in window + "current shift" highlight.
+// Null until mount so nothing time-dependent renders during SSR (hydration).
+const CLOCK_TICK_MS = 30000;
+
+const displaySx = { mt: 1.5, mb: 2, fontSize: "clamp(2.2rem, 5vw, 3.4rem)" };
+const panelHeadingSx = {
+  fontSize: "clamp(1.4rem, 2.6vw, 1.8rem)",
+  color: "var(--ink)",
+  m: 0,
+  mb: 1.25,
+};
+const panelBodySx = {
+  color: "var(--muted)",
+  maxWidth: "62ch",
+  lineHeight: 1.6,
+  mb: 2.5,
+};
+const actionRowSx = {
+  display: "flex",
+  gap: 1.5,
+  flexWrap: "wrap",
+  alignItems: "center",
+};
+
+function formatEventDay(iso, timezone) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      timeZone: timezone || "America/Phoenix",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (e) {
+    return "";
+  }
+}
+
+// ---- Refined shell for the simple gate states (module scope: a component
+// defined inside the page was a new type every render and remounted its
+// children). <Head> renders in every branch. ----
+function Shell({ head, children, maxWidth = 1200 }) {
+  return (
+    <RefinedRoot>
+      <Head>
+        <title>{head.title}</title>
+        <meta name="description" content={head.description} />
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href={head.canonical} />
+      </Head>
+      <Box
+        className="ohx-wrap"
+        sx={{ maxWidth, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
+      >
+        {children}
+      </Box>
+    </RefinedRoot>
+  );
+}
+
+function GateMasthead({ eventId, eventName, eyebrow = "Mentors" }) {
+  return (
+    <>
+      {eventName && (
+        <TeamBreadcrumbs
+          items={[{ name: eventName, href: `/hack/${eventId}` }]}
+          current="Mentor check-in"
+        />
+      )}
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <Box component="h1" className="ohx-display" sx={displaySx}>
+        Mentor check-in
+      </Box>
+    </>
+  );
+}
+
+function LoadingPanel() {
+  return (
+    <Box
+      role="status"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
+        minHeight: "40vh",
+      }}
+    >
+      <CircularProgress sx={{ color: "var(--brand)" }} />
+      <Box sx={{ color: "var(--muted)" }}>Loading mentor check-in…</Box>
+    </Box>
+  );
+}
+
+function ErrorPanel({ onRetry }) {
+  return (
+    <Box
+      className="ohx-card"
+      role="alert"
+      sx={{
+        p: { xs: 2.5, md: 3 },
+        borderLeft: "3px solid var(--accent)",
+      }}
+    >
+      <Box component="h2" className="ohx-display" sx={panelHeadingSx}>
+        We couldn&apos;t load your mentor details
+      </Box>
+      <Box sx={panelBodySx}>
+        Something went wrong on our side — your application is safe. Give it
+        another try in a moment.
+      </Box>
+      <Box sx={actionRowSx}>
+        <Box
+          component="button"
+          type="button"
+          onClick={onRetry}
+          className="ohx-btn ohx-btn--primary"
+        >
+          Retry
+        </Box>
+        <NextLink href="/mentor" className="ohx-link">
+          Your mentor dashboard →
+        </NextLink>
+      </Box>
+    </Box>
+  );
+}
+
+function PendingPanel({ eventId, waitlisted, slackSignupUrl }) {
+  return (
+    <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
+      <Box className="ohx-eyebrow" sx={{ mb: 1.25 }}>
+        Application received
+      </Box>
+      <Box component="h2" className="ohx-display" sx={panelHeadingSx}>
+        Your mentor application is awaiting confirmation
+      </Box>
+      <Box sx={panelBodySx}>
+        {waitlisted
+          ? "Thanks for offering your time. You're on the waitlist — we'll email you if a mentor spot opens up."
+          : "Thanks for offering your time. We review mentor applications by hand, usually within about a week, and we'll email you as soon as you're confirmed. Check-in appears here once you are."}
+      </Box>
+      <Box sx={actionRowSx}>
+        <NextLink
+          href={`/hack/${eventId}/mentor-application`}
+          className="ohx-btn ohx-btn--primary"
+        >
+          Review your application
+        </NextLink>
+        <NextLink href="/mentor" className="ohx-link">
+          Your mentor dashboard
+        </NextLink>
+        {slackSignupUrl && (
+          <a
+            href={slackSignupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ohx-link"
+          >
+            Join us on Slack
+          </a>
+        )}
+      </Box>
+      <Box sx={{ mt: 2.5, fontSize: 14, color: "var(--faint)" }}>
+        Just got your confirmation email? Refresh this page.
+      </Box>
+    </Box>
+  );
+}
+
+function NotSelectedPanel({ eventId, eventName, eventOver }) {
+  return (
+    <Box className="ohx-card" sx={{ p: { xs: 2.5, md: 3.5 } }}>
+      <Box className="ohx-eyebrow" sx={{ mb: 1.25 }}>
+        Mentoring · {eventName}
+      </Box>
+      <Box component="h2" className="ohx-display" sx={panelHeadingSx}>
+        We couldn&apos;t offer you a mentor spot this time
+      </Box>
+      <Box sx={panelBodySx}>
+        Thank you for applying — we had more mentors than spots for this event,
+        and this isn&apos;t a reflection on you. We&apos;d still love your help:
+      </Box>
+      <Box sx={actionRowSx}>
+        <NextLink href="/projects" className="ohx-btn ohx-btn--primary">
+          Help on a year-round project
+        </NextLink>
+        {!eventOver && (
+          <NextLink
+            href={`/hack/${eventId}/volunteer-application`}
+            className="ohx-btn ohx-btn--ghost"
+          >
+            Volunteer at this event
+          </NextLink>
+        )}
+        <NextLink href="/hack" className="ohx-btn ohx-btn--ghost">
+          See upcoming hackathons
+        </NextLink>
+      </Box>
+      <Box sx={{ mt: 2.5, fontSize: 15 }}>
+        <NextLink href="/contact" className="ohx-link">
+          Questions? Contact us
+        </NextLink>
+      </Box>
+    </Box>
+  );
+}
+
+// State A — approved, event hasn't started. Sits in the check-in band's slot
+// so nothing jumps when the button replaces it.
+function UpcomingCheckinCard({ checkinWindow, timezone, firstSlot, now }) {
+  const opensAt = checkinWindow?.opens_at;
+  const day = formatEventDay(opensAt, timezone);
+  const relative = now != null ? relativeOpening(opensAt, now) : null;
+  const moment = opensAt ? formatDeadlineMoment(opensAt, timezone) : "";
+  return (
+    <Box
+      className="ohx-card"
+      data-testid="checkin-upcoming"
+      sx={{
+        p: { xs: 2.5, md: 3 },
+        mb: { xs: 4, md: 5 },
+        borderLeft: "3px solid var(--brand)",
+      }}
+    >
+      <Box className="ohx-eyebrow" sx={{ mb: 1 }}>
+        You&apos;re confirmed
+      </Box>
+      <Box component="h2" className="ohx-display" sx={panelHeadingSx}>
+        {day ? `Check-in opens ${day}` : "Check-in opens when the event starts"}
+        {relative ? (
+          <Box component="span" sx={{ color: "var(--muted)" }}>
+            {" "}
+            · {relative}
+          </Box>
+        ) : null}
+      </Box>
+      <Box sx={{ ...panelBodySx, mb: 1.5 }}>
+        You&apos;re all set — there&apos;s nothing to do until the event starts.
+        Check-in opens at the start of day one so teams only see mentors who are
+        available right now.
+      </Box>
+      {moment && (
+        <Box sx={{ color: "var(--muted)", fontSize: 14.5, mb: 1 }}>
+          Opens {moment}
+        </Box>
+      )}
+      {firstSlot && (
+        <Box sx={{ color: "var(--ink)", fontSize: 15, mb: 2 }}>
+          Your first shift: {firstSlot.date}
+          {firstSlot.time ? ` · ${firstSlot.time}` : ""}
+        </Box>
+      )}
+      <Box sx={{ ...actionRowSx, mt: 1 }}>
+        <Box sx={{ color: "var(--faint)", fontSize: 14, mr: 0.5 }}>
+          While you wait:
+        </Box>
+        <NextLink href="/about/mentors/overview" className="ohx-link">
+          Read the mentor guide
+        </NextLink>
+        <a
+          href={slackChannelUrl(KEY_CHANNELS.askAMentor)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-link"
+        >
+          Join #ask-a-mentor
+        </a>
+        <a href="#teams" className="ohx-link">
+          Meet the teams ↓
+        </a>
+      </Box>
+    </Box>
+  );
+}
+
+// State C — approved, event over, not checked in.
+function EventCompleteCard({ eventId, eventName }) {
+  return (
+    <Box
+      className="ohx-card"
+      sx={{ p: { xs: 2.5, md: 3 }, mb: { xs: 4, md: 5 } }}
+    >
+      <Box className="ohx-eyebrow" sx={{ mb: 1 }}>
+        Event complete
+      </Box>
+      <Box component="h2" className="ohx-display" sx={panelHeadingSx}>
+        Thanks for mentoring {eventName}.
+      </Box>
+      <Box sx={actionRowSx}>
+        <NextLink
+          href={`/hack/${eventId}/results`}
+          className="ohx-btn ohx-btn--primary"
+        >
+          See the results
+        </NextLink>
+        <NextLink href={`/hack/${eventId}/survey`} className="ohx-link">
+          Share your feedback
+        </NextLink>
+      </Box>
+    </Box>
+  );
+}
+
+// Refined mentor profile card
+function MentorProfileCard({ mentor }) {
+  if (!mentor) return null;
+
+  return (
+    <Box className="ohx-card" sx={{ p: { xs: 2, md: 2.5 } }}>
+      <Box className="ohx-eyebrow" sx={{ mb: 1.5 }}>
+        Your profile
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 1.5 }}>
+        <Box sx={{ fontWeight: 600, color: "var(--ink)" }}>{mentor.name}</Box>
+        <Box sx={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+          {mentor.email}
+        </Box>
+        {mentor.company && (
+          <Box sx={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+            {mentor.company}
+          </Box>
+        )}
+      </Box>
+
+      {mentor.expertise && (
+        <>
+          <Box
+            sx={{
+              fontSize: "0.72rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              fontWeight: 600,
+              color: "var(--faint)",
+              mb: 0.75,
+            }}
+          >
+            Expertise
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.75,
+              mb: mentor.engineeringSpecifics ? 1.5 : 0,
+            }}
+          >
+            {String(mentor.expertise)
+              .split(", ")
+              .map((skill, index) => (
+                <span key={index} className="ohx-tag">
+                  {skill}
+                </span>
+              ))}
+          </Box>
+        </>
+      )}
+
+      {Array.isArray(mentor.engineeringSpecifics) &&
+        mentor.engineeringSpecifics.length > 0 && (
+          <>
+            <Box
+              sx={{
+                fontSize: "0.72rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                fontWeight: 600,
+                color: "var(--faint)",
+                mb: 0.75,
+              }}
+            >
+              Software specialties
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+              {mentor.engineeringSpecifics.map((specialty, index) => (
+                <span key={index} className="ohx-tag ohx-tag--accent">
+                  {specialty}
+                </span>
+              ))}
+            </Box>
+          </>
+        )}
+    </Box>
+  );
+}
 
 const MentorCheckinPage = () => {
   const router = useRouter();
   const { event_id } = router.query;
-  const { isLoggedIn, user, accessToken } = useAuthInfo();
   const { apiServerUrl, slackSignupUrl } = useEnv();
+  const {
+    gate,
+    event: eventData,
+    teams,
+    nonprofits,
+    mentor: mentorData,
+    checkedIn,
+    checkinWindow,
+    refreshStatus,
+    retry,
+    setCheckedIn,
+    tokenRef,
+  } = useMentorCheckin(event_id);
 
-  // State variables
-  const [isLoading, setIsLoading] = useState(true);
+  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [eventData, setEventData] = useState(null);
-  const [mentorData, setMentorData] = useState(null);
-  const [checkedIn, setCheckedIn] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [slackNotificationSent, setSlackNotificationSent] = useState(null);
-  const [availabilitySlots, setAvailabilitySlots] = useState([]);
-  const [currentActiveSlot, setCurrentActiveSlot] = useState(null);
   const [showPreviousSlots, setShowPreviousSlots] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmCheckoutDialogOpen, setConfirmCheckoutDialogOpen] =
     useState(false);
-  // One-stop-shop: all teams for this event (from the single-event endpoint,
-  // which returns full team docs incl. mentor_* fields + enriched users[]).
-  const [teams, setTeams] = useState([]);
-  const [nonprofits, setNonprofits] = useState([]);
 
-  // Helper function to check if a time slot is current
-  const isCurrentTimeSlot = (slot) => {
-    if (!slot || !slot.time) return false;
-
-    const now = new Date();
-    const month = slot.date.split(" ")[0];
-    const day = parseInt(slot.date.split(" ")[1], 10);
-
-    // Parse the time range directly from the time property
-    const timeRange = slot.time;
-    const [startTimeStr, endTimeStr] = timeRange.split(" - ");
-
-    // Remove timezone from end time if present
-    const cleanEndTimeStr = endTimeStr.replace(/\s+[A-Z]+$/, "");
-
-    // Convert time strings to Date objects
-    const startTime = parseTimeString(startTimeStr, month, day);
-    const endTime = parseTimeString(cleanEndTimeStr, month, day);
-
-    if (!startTime || !endTime) return false;
-
-    return now >= startTime && now <= endTime;
-  };
-
-  // Helper function to parse time strings
-  const parseTimeString = (timeStr, month, day) => {
-    // Handle if timeStr is undefined, return nothing
-    if (!timeStr) return null;
-
-    const [hours, minutes] = timeStr.split(":").map((num) => parseInt(num));
-    const isPM = timeStr.includes("pm");
-
-    const date = new Date();
-    date.setMonth(getMonthNumber(month));
-    date.setDate(day);
-    date.setHours(isPM && hours !== 12 ? hours + 12 : hours);
-    date.setMinutes(minutes || 0);
-    date.setSeconds(0);
-
-    return date;
-  };
-
-  // Convert month name to month number (0-based)
-  const getMonthNumber = (monthName) => {
-    const months = {
-      Jan: 0,
-      Feb: 1,
-      Mar: 2,
-      Apr: 3,
-      May: 4,
-      Jun: 5,
-      Jul: 6,
-      Aug: 7,
-      Sep: 8,
-      Oct: 9,
-      Nov: 10,
-      Dec: 11,
-    };
-    return months[monthName] || 0;
-  };
-
-  // Helper function to compare Month/Day only
-  const compareDatesDayMonthOnly = (date1, date2) => {
-    const month1 = date1.getMonth();
-    const day1 = date1.getDate();
-    const month2 = date2.getMonth();
-    const day2 = date2.getDate();
-
-    if (month1 === month2 && day1 === day2) {
-      return 0;
-    } else if (month1 < month2 || (month1 === month2 && day1 < day2)) {
-      return -1;
-    } else {
-      return 1;
-    }
-  };
-
-  // Compare month and day of Date to current time
-  const isDateInThePast = (date1) => {
-    const currDate = new Date();
-    return compareDatesDayMonthOnly(date1, currDate) >= 0;
-  };
-
-  // Fetch event data and mentor data
+  // Mount-gated clock (hydration) that also flips "Check-in opens …" to the
+  // button when opens_at passes while the tab is open.
+  const [now, setNow] = useState(null);
   useEffect(() => {
-    if (!event_id || !apiServerUrl) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
 
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
+  const availabilitySlots = useMemo(
+    () => parseAvailabilitySlots(mentorData?.availability),
+    [mentorData?.availability],
+  );
+  const currentActiveSlot = useMemo(
+    () =>
+      now == null ? null : findCurrentSlot(availabilitySlots, new Date(now)),
+    [availabilitySlots, now],
+  );
+  const windowState =
+    now == null ? null : effectiveWindowState(checkinWindow, now);
 
-        // Fetch event data
-        const eventResponse = await fetch(
-          `${apiServerUrl}/api/messages/hackathon/${event_id}`,
-        );
-
-        if (!eventResponse.ok) {
-          throw new Error(
-            `Failed to fetch event data: ${eventResponse.status}`,
-          );
-        }
-
-        const eventData = await eventResponse.json();
-
-        if (!eventData || !eventData.start_date || !eventData.end_date) {
-          throw new Error("Invalid event data received");
-        }
-
-        // Format dates for display
-        const startDate = new Date(eventData.start_date);
-        const endDate = new Date(eventData.end_date);
-        const formattedStartDate = startDate.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-        const formattedEndDate = endDate.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        setEventData({
-          id: event_id,
-          name: eventData.title || `Opportunity Hack - ${event_id}`,
-          description:
-            eventData.description || "Annual hackathon for nonprofits",
-          date: new Date(eventData.start_date).getFullYear().toString(),
-          startDate: eventData.start_date,
-          endDate: eventData.end_date,
-          timezone: eventData.timezone,
-          formattedStartDate,
-          formattedEndDate,
-          location: eventData.location || "Tempe, Arizona",
-          image:
-            eventData.image_url ||
-            "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp",
-        });
-
-        // Capture all teams + nonprofits for the one-stop-shop table.
-        setTeams(Array.isArray(eventData.teams) ? eventData.teams : []);
-        setNonprofits(
-          Array.isArray(eventData.nonprofits) ? eventData.nonprofits : [],
-        );
-
-        // If user is logged in, fetch mentor data
-        if (isLoggedIn && user && accessToken) {
-          try {
-            // Fetch mentor application data
-            const mentorResponse = await axios({
-              url: `${apiServerUrl}/api/mentor/application/${event_id}`,
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-            });
-
-            // Extract mentor data to a constant to simplify access
-            const mentor = mentorResponse.data?.data;
-
-            if (mentor) {
-              setMentorData(mentor);
-
-              // Parse availability slots from the mentor data
-              if (mentor.availability) {
-                const availabilityText = mentor.availability;
-
-                // Use the same regex pattern from MentorAvailability.js
-                const availabilityPattern =
-                  /([A-Za-z]+\s+[A-Za-z]+\s+\d+:\s+[^,]+)/g;
-
-                // Try to match with regex first
-                const matches = availabilityText.match(availabilityPattern);
-
-                // If regex doesn't work, fall back to comma split
-                const availabilityArray =
-                  matches || availabilityText.split(", ");
-
-                // Create slots and prepare for sorting
-                const slots = availabilityArray.map((slotText) => {
-                  // Make sure slotText is properly cleaned and formatted
-                  const cleanSlotText = slotText.trim();
-
-                  // Initialize with defaults
-                  let dayName = "";
-                  let datePart = "";
-                  let timePart = "";
-                  let timeRange = "";
-
-                  // Check if the format is like "Oct 11: ☀️ Morning (9am - 12pm PST)"
-                  if (cleanSlotText.includes(":")) {
-                    [datePart, timePart] = cleanSlotText
-                      .split(":")
-                      .map((part) => part?.trim());
-
-                    // Extract the time range from parentheses if available
-                    const timeMatch = timePart
-                      ? timePart.match(/\((.*?)\)/)
-                      : null;
-                    timeRange = timeMatch ? timeMatch[1] : "";
-
-                    // If datePart contains month and day (e.g., "Oct 11")
-                    if (/[A-Za-z]+\s+\d+/.test(datePart)) {
-                      // Try to extract the day of week from this date
-                      const dateObj = new Date();
-                      const monthName = datePart.split(" ")[0];
-                      const day = parseInt(datePart.split(" ")[1], 10);
-
-                      // Set the month
-                      const months = {
-                        Jan: 0,
-                        Feb: 1,
-                        Mar: 2,
-                        Apr: 3,
-                        May: 4,
-                        Jun: 5,
-                        Jul: 6,
-                        Aug: 7,
-                        Sep: 8,
-                        Oct: 9,
-                        Nov: 10,
-                        Dec: 11,
-                      };
-
-                      dateObj.setMonth(months[monthName] || 0);
-                      dateObj.setDate(day);
-
-                      // Get the day of week
-                      const days = [
-                        "Sunday",
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                      ];
-                      dayName = days[dateObj.getDay()];
-                    }
-                  } else {
-                    // Format is likely just a day name like "Friday" or "Saturday"
-                    datePart = cleanSlotText;
-                    dayName = cleanSlotText;
-                  }
-
-                  // If we still don't have a dayName but have a datePart, try to extract dayName
-                  if (!dayName && datePart) {
-                    const dayNames = [
-                      "Sunday",
-                      "Monday",
-                      "Tuesday",
-                      "Wednesday",
-                      "Thursday",
-                      "Friday",
-                      "Saturday",
-                    ];
-                    if (dayNames.includes(datePart)) {
-                      dayName = datePart;
-                    } else {
-                      dayName = datePart.split(" ")[0];
-                    }
-                  }
-
-                  return {
-                    id: `slot-${Math.random().toString(36).substr(2, 9)}`,
-                    displayText: cleanSlotText,
-                    date: datePart || "",
-                    dayName: dayName || "",
-                    time: timeRange || "",
-                    timePeriod: timePart || "",
-                    isCurrent: false,
-                  };
-                });
-
-                // Filter out any potentially empty slots
-                const validSlots = slots.filter(
-                  (slot) => slot.displayText && slot.date,
-                );
-
-                // Sort slots similar to MentorAvailability.js
-                const sortedSlots = validSlots.sort((a, b) => {
-                  const dayOrder = {
-                    Sunday: 0,
-                    Monday: 1,
-                    Tuesday: 2,
-                    Wednesday: 3,
-                    Thursday: 4,
-                    Friday: 5,
-                    Saturday: 6,
-                  };
-
-                  const datePatternA = a.date.match(/([A-Za-z]+)\s+(\d+)/);
-                  const datePatternB = b.date.match(/([A-Za-z]+)\s+(\d+)/);
-
-                  if (datePatternA && datePatternB) {
-                    const monthOrder = {
-                      Jan: 1,
-                      Feb: 2,
-                      Mar: 3,
-                      Apr: 4,
-                      May: 5,
-                      Jun: 6,
-                      Jul: 7,
-                      Aug: 8,
-                      Sep: 9,
-                      Oct: 10,
-                      Nov: 11,
-                      Dec: 12,
-                    };
-
-                    const monthOrderA = monthOrder[datePatternA[1]] || 0;
-                    const monthOrderB = monthOrder[datePatternB[1]] || 0;
-
-                    if (monthOrderA !== monthOrderB) {
-                      return monthOrderA - monthOrderB;
-                    }
-
-                    const dayA = parseInt(datePatternA[2], 10);
-                    const dayB = parseInt(datePatternB[2], 10);
-
-                    if (dayA !== dayB) {
-                      return dayA - dayB;
-                    }
-                  } else {
-                    const dayOrderA = dayOrder[a.dayName] || 99;
-                    const dayOrderB = dayOrder[b.dayName] || 99;
-
-                    if (dayOrderA !== dayOrderB) {
-                      return dayOrderA - dayOrderB;
-                    }
-                  }
-
-                  const timeOrderMap = {
-                    "Early Morning": 1,
-                    Morning: 2,
-                    Afternoon: 3,
-                    Evening: 4,
-                    Night: 5,
-                    "Late Night": 6,
-                  };
-
-                  const timeA = a.timePeriod.match(
-                    /(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/,
-                  );
-                  const timeB = b.timePeriod.match(
-                    /(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/,
-                  );
-
-                  const timePeriodA = timeA ? timeA[1] : "";
-                  const timePeriodB = timeB ? timeB[1] : "";
-
-                  const timeOrderA = timeOrderMap[timePeriodA] || 99;
-                  const timeOrderB = timeOrderMap[timePeriodB] || 99;
-
-                  return timeOrderA - timeOrderB;
-                });
-
-                // Filter out general day entries (like "Friday") if we have more specific entries for the same day
-                const filteredSlots = (() => {
-                  const slotsByDay = {};
-                  sortedSlots.forEach((slot) => {
-                    if (!slotsByDay[slot.dayName]) {
-                      slotsByDay[slot.dayName] = [];
-                    }
-                    slotsByDay[slot.dayName].push(slot);
-                  });
-
-                  const result = [];
-                  Object.entries(slotsByDay).forEach(([dayName, daySlots]) => {
-                    const hasSpecificTimeSlots = daySlots.some(
-                      (slot) => slot.time && slot.time.trim() !== "",
-                    );
-
-                    if (hasSpecificTimeSlots) {
-                      daySlots.forEach((slot) => {
-                        if (slot.time && slot.time.trim() !== "") {
-                          result.push(slot);
-                        }
-                      });
-                    } else {
-                      result.push(daySlots[0]);
-                    }
-                  });
-
-                  return result.sort((a, b) => {
-                    const dayOrder = {
-                      Sunday: 0,
-                      Monday: 1,
-                      Tuesday: 2,
-                      Wednesday: 3,
-                      Thursday: 4,
-                      Friday: 5,
-                      Saturday: 6,
-                    };
-
-                    const dayOrderA = dayOrder[a.dayName] || 99;
-                    const dayOrderB = dayOrder[b.dayName] || 99;
-
-                    if (dayOrderA !== dayOrderB) {
-                      return dayOrderA - dayOrderB;
-                    }
-
-                    if (a.time && !b.time) return -1;
-                    if (!a.time && b.time) return 1;
-
-                    if (a.time && b.time) {
-                      const timeOrderMap = {
-                        "Early Morning": 1,
-                        Morning: 2,
-                        Afternoon: 3,
-                        Evening: 4,
-                        Night: 5,
-                        "Late Night": 6,
-                      };
-
-                      const timeA = a.timePeriod.match(
-                        /(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/,
-                      );
-                      const timeB = b.timePeriod.match(
-                        /(?:🌅|☀️|🏙️|🌆|🌃|🌙)\s*(Early Morning|Morning|Afternoon|Evening|Night|Late Night)/,
-                      );
-
-                      const timePeriodA = timeA ? timeA[1] : "";
-                      const timePeriodB = timeB ? timeB[1] : "";
-
-                      const timeOrderA = timeOrderMap[timePeriodA] || 99;
-                      const timeOrderB = timeOrderMap[timePeriodB] || 99;
-
-                      return timeOrderA - timeOrderB;
-                    }
-
-                    return 0;
-                  });
-                })();
-
-                setAvailabilitySlots(filteredSlots);
-
-                // Check if any slot is current
-                const currentSlot = filteredSlots.find((slot) =>
-                  isCurrentTimeSlot(slot),
-                );
-                if (currentSlot) {
-                  setCurrentActiveSlot(currentSlot);
-                }
-              }
-
-              // Check if mentor is already checked in
-              const checkinStatusResponse = await axios({
-                url: `${apiServerUrl}/api/mentor/checkin/${event_id}/status`,
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`,
-                },
-              });
-
-              if (
-                checkinStatusResponse.data &&
-                checkinStatusResponse.data.data.isCheckedIn
-              ) {
-                setCheckedIn(true);
-              }
-            }
-          } catch (err) {
-            console.error("Error fetching mentor data:", err);
-            // If 404, user is not a mentor
-            if (err.response && err.response.status === 404) {
-              setMentorData(null);
-            } else {
-              setError("Failed to load mentor data. Please try again later.");
-            }
-          }
-        }
-
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load event data. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [event_id, isLoggedIn, user, accessToken, apiServerUrl]);
+  // GA: once per distinct state per visit — how many mentors arrive early.
+  const seenGateRef = useRef(new Set());
+  const gateLabel =
+    gate === "ready" ? (windowState ? `ready_${windowState}` : null) : gate;
+  useEffect(() => {
+    if (!gateLabel || gateLabel === "loading") return;
+    if (seenGateRef.current.has(gateLabel)) return;
+    seenGateRef.current.add(gateLabel);
+    trackEvent({
+      action: "mentor_checkin_gate_view",
+      params: { page: "mentor_checkin", event_label: gateLabel, event_id },
+    });
+  }, [gateLabel, event_id]);
 
   // Group slots by date for better display
   const groupedAvailabilitySlots = useMemo(() => {
@@ -605,6 +553,21 @@ const MentorCheckinPage = () => {
     return sortedGroups;
   }, [availabilitySlots]);
 
+  // A backend refusal (not approved / not open yet / closed) means this tab
+  // is stale: re-read /status and let the page settle into that state
+  // instead of showing an error.
+  const settleOnRefusal = (err) => {
+    if (!isCheckinRefusal(err)) return false;
+    refreshStatus();
+    return true;
+  };
+
+  const backendMessage = (err, fallback) => {
+    const status = err?.response?.status;
+    const message = err?.response?.data?.message;
+    return status >= 400 && status < 500 && message ? message : fallback;
+  };
+
   // Handle check-in confirmation
   const handleCheckinClick = () => {
     setConfirmDialogOpen(true);
@@ -613,20 +576,21 @@ const MentorCheckinPage = () => {
   const handleConfirmCheckin = async () => {
     setConfirmDialogOpen(false);
 
-    if (!isLoggedIn || !mentorData) {
+    if (!mentorData) {
       setError("You must be logged in as a registered mentor to check in.");
       return;
     }
 
     try {
       setIsSubmitting(true);
+      setError("");
 
       const response = await axios({
         url: `${apiServerUrl}/api/mentor/checkin/${event_id}/in`,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${tokenRef.current}`,
         },
         data: {
           timeSlot: currentActiveSlot
@@ -653,7 +617,9 @@ const MentorCheckinPage = () => {
       }
     } catch (err) {
       console.error("Error checking in:", err);
-      setError("Failed to check in. Please try again.");
+      if (!settleOnRefusal(err)) {
+        setError(backendMessage(err, "Failed to check in. Please try again."));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -671,20 +637,21 @@ const MentorCheckinPage = () => {
   const handleConfirmCheckout = async () => {
     setConfirmCheckoutDialogOpen(false);
 
-    if (!isLoggedIn || !mentorData) {
+    if (!mentorData) {
       setError("You must be logged in as a registered mentor to check out.");
       return;
     }
 
     try {
       setIsSubmitting(true);
+      setError("");
 
       const response = await axios({
         url: `${apiServerUrl}/api/mentor/checkin/${event_id}/out`,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${tokenRef.current}`,
         },
       });
 
@@ -698,7 +665,11 @@ const MentorCheckinPage = () => {
       }
     } catch (err) {
       console.error("Error checking out:", err);
-      setError("Failed to check out. Please try again.");
+      if (err?.response?.status === 400) {
+        // "Mentor is not checked in" — e.g. an admin reset it meanwhile.
+        refreshStatus();
+      }
+      setError(backendMessage(err, "Failed to check out. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -721,116 +692,28 @@ const MentorCheckinPage = () => {
     ? `Check in as a mentor for ${eventData.name} in ${eventData.location}. Help teams of technologists create solutions for nonprofits and make a real impact.`
     : "Check in as a mentor for our social good hackathon. Help teams of technologists create solutions for nonprofits and make a real impact.";
   const canonicalUrl = `https://www.ohack.dev/hack/${event_id}/mentor-checkin`;
-
-  // Refined mentor profile card
-  const renderMentorProfile = (mentor) => {
-    if (!mentor) return null;
-
-    return (
-      <Box className="ohx-card" sx={{ p: { xs: 2, md: 2.5 } }}>
-        <Box className="ohx-eyebrow" sx={{ mb: 1.5 }}>
-          Your profile
-        </Box>
-        <Box
-          sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 1.5 }}
-        >
-          <Box sx={{ fontWeight: 600, color: "var(--ink)" }}>{mentor.name}</Box>
-          <Box sx={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-            {mentor.email}
-          </Box>
-          {mentor.company && (
-            <Box sx={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-              {mentor.company}
-            </Box>
-          )}
-        </Box>
-
-        {mentor.expertise && (
-          <>
-            <Box
-              sx={{
-                fontSize: "0.72rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                fontWeight: 600,
-                color: "var(--faint)",
-                mb: 0.75,
-              }}
-            >
-              Expertise
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 0.75,
-                mb: mentor.engineeringSpecifics ? 1.5 : 0,
-              }}
-            >
-              {mentor.expertise.split(", ").map((skill, index) => (
-                <span key={index} className="ohx-tag">
-                  {skill}
-                </span>
-              ))}
-            </Box>
-          </>
-        )}
-
-        {mentor.engineeringSpecifics && (
-          <>
-            <Box
-              sx={{
-                fontSize: "0.72rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                fontWeight: 600,
-                color: "var(--faint)",
-                mb: 0.75,
-              }}
-            >
-              Software specialties
-            </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-              {mentor.engineeringSpecifics.map((specialty, index) => (
-                <span key={index} className="ohx-tag ohx-tag--accent">
-                  {specialty}
-                </span>
-              ))}
-            </Box>
-          </>
-        )}
-      </Box>
-    );
+  const head = {
+    title: pageTitle,
+    description: pageDescription,
+    canonical: canonicalUrl,
   };
+  const eventName = eventData?.name || event_id;
 
-  // ---- Refined shell wrapper for the simple gate states ----
-  const Shell = ({ children, maxWidth = 1200 }) => (
-    <RefinedRoot>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        <RefinedFonts />
-      </Head>
-      <Box
-        className="ohx-wrap"
-        sx={{ maxWidth, pt: "clamp(96px, 12vh, 150px)", pb: { xs: 8, md: 12 } }}
-      >
-        {children}
-      </Box>
-    </RefinedRoot>
-  );
-
-  // If user is not logged in, show login prompt
-  if (!isLoggedIn) {
+  // ---- One ladder, in this order. Nothing below renders until the gate for
+  // the CURRENT identity has settled. ----
+  if (gate === "loading") {
     return (
-      <Shell maxWidth={760}>
+      <Shell head={head} maxWidth={760}>
+        <LoadingPanel />
+      </Shell>
+    );
+  }
+
+  if (gate === "logged_out") {
+    return (
+      <Shell head={head} maxWidth={760}>
         <Eyebrow>Mentors</Eyebrow>
-        <Box
-          component="h1"
-          className="ohx-display"
-          sx={{ mt: 1.5, mb: 2, fontSize: "clamp(2.2rem, 5vw, 3.4rem)" }}
-        >
+        <Box component="h1" className="ohx-display" sx={displaySx}>
           Mentor check-in
         </Box>
         <Box className="ohx-lead" sx={{ mb: 3 }}>
@@ -845,45 +728,22 @@ const MentorCheckinPage = () => {
     );
   }
 
-  // If loading, show loading state
-  if (isLoading) {
+  if (gate === "event_error" || gate === "mentor_error") {
     return (
-      <Shell maxWidth={760}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-            minHeight: "40vh",
-          }}
-        >
-          <CircularProgress sx={{ color: "var(--brand)" }} />
-          <Box sx={{ color: "var(--muted)" }}>Loading mentor check-in…</Box>
-        </Box>
+      <Shell head={head} maxWidth={760}>
+        <GateMasthead
+          eventId={event_id}
+          eventName={eventData ? eventName : null}
+        />
+        <ErrorPanel onRetry={retry} />
       </Shell>
     );
   }
 
-  // If user is not a registered mentor, show application prompt
-  if (!mentorData) {
+  if (gate === "not_applied") {
     return (
-      <Shell maxWidth={760}>
-        <TeamBreadcrumbs
-          items={[
-            { name: eventData?.name || event_id, href: `/hack/${event_id}` },
-          ]}
-          current="Mentor check-in"
-        />
-        <Eyebrow>Mentors</Eyebrow>
-        <Box
-          component="h1"
-          className="ohx-display"
-          sx={{ mt: 1.5, mb: 2, fontSize: "clamp(2.2rem, 5vw, 3.4rem)" }}
-        >
-          Mentor check-in
-        </Box>
+      <Shell head={head} maxWidth={760}>
+        <GateMasthead eventId={event_id} eventName={eventName} />
         <Alert severity="warning" sx={{ mb: 3 }}>
           You are not registered as a mentor for this event.
         </Alert>
@@ -910,13 +770,47 @@ const MentorCheckinPage = () => {
     );
   }
 
-  const eventName = eventData?.name || event_id;
+  if (gate === "pending") {
+    return (
+      <Shell head={head} maxWidth={760}>
+        <GateMasthead eventId={event_id} eventName={eventName} />
+        <PendingPanel
+          eventId={event_id}
+          waitlisted={applicationState(mentorData) === "waitlisted"}
+          slackSignupUrl={slackSignupUrl}
+        />
+      </Shell>
+    );
+  }
+
+  if (gate === "not_selected") {
+    const eventOver = checkinWindow
+      ? effectiveWindowState(checkinWindow, now ?? Date.now()) === "closed"
+      : isHackathonExpired(eventData?.endDate, eventData?.timezone);
+    return (
+      <Shell head={head} maxWidth={760}>
+        <GateMasthead eventId={event_id} eventName={eventName} />
+        <NotSelectedPanel
+          eventId={event_id}
+          eventName={eventName}
+          eventOver={eventOver}
+        />
+      </Shell>
+    );
+  }
+
+  // gate === "ready": an approved mentor. The band shows the check-in button
+  // only while the window is open (or to check OUT anyone still checked in);
+  // otherwise its slot holds a calm status card.
+  const showCheckinBand = checkedIn || windowState === "open";
+  const firstSlot = availabilitySlots[0] || null;
 
   return (
     <RefinedRoot>
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="robots" content="noindex,follow" />
         <meta
           name="keywords"
           content="hackathon mentor, mentor check-in, tech for good, nonprofit hackathon, opportunity hack, mentorship, volunteer, tech mentoring"
@@ -933,7 +827,6 @@ const MentorCheckinPage = () => {
             "https://cdn.ohack.dev/ohack.dev/2023_hackathon_2.webp"
           }
         />
-        <RefinedFonts />
       </Head>
 
       <Box
@@ -1004,75 +897,97 @@ const MentorCheckinPage = () => {
           </Alert>
         )}
 
-        {/* Check-in band — the primary action */}
-        <Box
-          className="ohx-card"
-          sx={{
-            p: { xs: 2.5, md: 3 },
-            mb: { xs: 4, md: 5 },
-            borderLeft: `3px solid ${checkedIn ? "#3a7d44" : "var(--brand)"}`,
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: { md: "center" },
-            justifyContent: "space-between",
-            gap: 2,
-          }}
-        >
+        {/* Check-in band — the primary action (or the status card in its slot) */}
+        {windowState === null && !checkedIn ? (
+          <Box sx={{ minHeight: 120, mb: { xs: 4, md: 5 } }} />
+        ) : !showCheckinBand && windowState === "upcoming" ? (
+          <UpcomingCheckinCard
+            checkinWindow={checkinWindow}
+            timezone={eventData?.timezone}
+            firstSlot={firstSlot}
+            now={now}
+          />
+        ) : !showCheckinBand && windowState === "closed" ? (
+          <EventCompleteCard eventId={event_id} eventName={eventName} />
+        ) : (
           <Box
+            className="ohx-card"
+            data-testid="checkin-band"
             sx={{
+              p: { xs: 2.5, md: 3 },
+              mb: { xs: 4, md: 5 },
+              borderLeft: `3px solid ${checkedIn ? "#3a7d44" : "var(--brand)"}`,
               display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              minWidth: 0,
+              flexDirection: { xs: "column", md: "row" },
+              alignItems: { md: "center" },
+              justifyContent: "space-between",
+              gap: 2,
             }}
           >
-            {checkedIn ? (
-              <CheckCircleOutlineIcon sx={{ fontSize: 38, color: "#3a7d44" }} />
-            ) : (
-              <CancelOutlinedIcon
-                sx={{ fontSize: 38, color: "var(--faint)" }}
-              />
-            )}
-            <Box>
-              <Box
-                className="ohx-display"
-                sx={{ fontSize: "1.3rem", color: "var(--ink)" }}
-              >
-                {checkedIn ? "You are checked in" : "You are not checked in"}
-              </Box>
-              <Box
-                sx={{
-                  color: "var(--muted)",
-                  fontSize: "0.92rem",
-                  mt: 0.25,
-                  maxWidth: "52ch",
-                }}
-              >
-                {checkedIn
-                  ? "Teams have been notified in #ask-a-mentor that you are available."
-                  : "Checking in posts to #ask-a-mentor so teams know you can help."}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                minWidth: 0,
+              }}
+            >
+              {checkedIn ? (
+                <CheckCircleOutlineIcon
+                  sx={{ fontSize: 38, color: "#3a7d44" }}
+                />
+              ) : (
+                <CancelOutlinedIcon
+                  sx={{ fontSize: 38, color: "var(--faint)" }}
+                />
+              )}
+              <Box>
+                <Box
+                  className="ohx-display"
+                  sx={{ fontSize: "1.3rem", color: "var(--ink)" }}
+                >
+                  {checkedIn ? "You are checked in" : "You are not checked in"}
+                </Box>
+                <Box
+                  sx={{
+                    color: "var(--muted)",
+                    fontSize: "0.92rem",
+                    mt: 0.25,
+                    maxWidth: "52ch",
+                  }}
+                >
+                  {checkedIn
+                    ? "Teams have been notified in #ask-a-mentor that you are available."
+                    : "Checking in posts to #ask-a-mentor so teams know you can help."}
+                </Box>
               </Box>
             </Box>
+            <Box
+              component="button"
+              type="button"
+              onClick={checkedIn ? handleCheckoutClick : handleCheckinClick}
+              disabled={isSubmitting}
+              className={`ohx-btn ${checkedIn ? "ohx-btn--ghost" : "ohx-btn--primary"}`}
+              sx={{ flexShrink: 0, opacity: isSubmitting ? 0.7 : 1 }}
+            >
+              {isSubmitting ? (
+                <CircularProgress size={18} sx={{ color: "inherit" }} />
+              ) : (
+                <SlackIcon sx={{ fontSize: 18 }} />
+              )}
+              {checkedIn
+                ? "Check out & notify teams"
+                : "Check in & notify teams"}
+            </Box>
           </Box>
-          <Box
-            component="button"
-            type="button"
-            onClick={checkedIn ? handleCheckoutClick : handleCheckinClick}
-            disabled={isSubmitting}
-            className={`ohx-btn ${checkedIn ? "ohx-btn--ghost" : "ohx-btn--primary"}`}
-            sx={{ flexShrink: 0, opacity: isSubmitting ? 0.7 : 1 }}
-          >
-            {isSubmitting ? (
-              <CircularProgress size={18} sx={{ color: "inherit" }} />
-            ) : (
-              <SlackIcon sx={{ fontSize: 18 }} />
-            )}
-            {checkedIn ? "Check out & notify teams" : "Check in & notify teams"}
-          </Box>
-        </Box>
+        )}
 
         {/* ===== The one-stop-shop: all teams ===== */}
-        <Box component="section" sx={{ mb: { xs: 5, md: 6 } }}>
+        <Box
+          component="section"
+          id="teams"
+          sx={{ mb: { xs: 5, md: 6 }, scrollMarginTop: 96 }}
+        >
           <Box
             sx={{
               display: "flex",
@@ -1226,19 +1141,21 @@ const MentorCheckinPage = () => {
                       </Box>
                     </Box>
                   ))}
-                {!currentActiveSlot && (
-                  <Alert severity="info" sx={{ mt: 1 }}>
+                {!currentActiveSlot && windowState === "open" && (
+                  <Box
+                    sx={{ mt: 1, color: "var(--muted)", fontSize: "0.92rem" }}
+                  >
                     None of your registered time slots are active right now. You
                     can still check in if you're available outside your
                     scheduled times.
-                  </Alert>
+                  </Box>
                 )}
               </Box>
             ) : (
-              <Alert severity="warning">
-                No availability slots found. Please update your mentor
-                application with your availability.
-              </Alert>
+              <Box sx={{ color: "var(--muted)", fontSize: "0.95rem" }}>
+                No availability slots found yet. You can add your shifts on your
+                mentor application.
+              </Box>
             )}
 
             <Box sx={{ mt: 2.5 }}>
@@ -1259,7 +1176,7 @@ const MentorCheckinPage = () => {
             >
               You
             </Box>
-            {renderMentorProfile(mentorData)}
+            <MentorProfileCard mentor={mentorData} />
           </Box>
         </Box>
 

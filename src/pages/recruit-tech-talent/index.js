@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
 import Head from "next/head";
+import { Box } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
 import { initFacebookPixel, trackEvent } from "../../lib/ga";
-import { RefinedRoot, RefinedFonts, Eyebrow, Stat, Arrow } from "../../components/design/refined";
+import { RefinedRoot, Eyebrow, Stat, Arrow } from "../../components/design/refined";
 
 import {
   VerifiedRounded,
@@ -26,7 +27,7 @@ const trackClick = (button) => {
 };
 
 // Single source of truth: rendered as accordions AND emitted as FAQPage JSON-LD.
-const FAQ_ITEMS = [
+export const FAQ_ITEMS = [
   {
     q: "What kind of candidates will I meet at Opportunity Hack?",
     a: "A mix of experienced professionals and high-potential students and early-career builders across software engineering, product management, technical program management, design, and data. Every one of them has volunteered nights and weekends to ship real software for a nonprofit, so you're meeting people who build for reasons beyond a paycheck.",
@@ -65,26 +66,22 @@ const VALUE_HOOKS = [
   {
     icon: <VerifiedRounded fontSize="inherit" />,
     title: "Proof over résumés",
-    body:
-      "Every candidate has shipped real, open-source software you can inspect: GitHub repos, live demos, and project write-ups. Evaluate how they actually build before the first interview.",
+    body: "Every candidate has shipped real, open-source software you can inspect: GitHub repos, live demos, and project write-ups. Evaluate how they actually build before the first interview.",
   },
   {
     icon: <FavoriteRounded fontSize="inherit" />,
     title: "Mission-driven, higher retention",
-    body:
-      "These are people who give up weekends to code for social good. Values-aligned hires signal culture fit and tend to stick. You're hiring intrinsic motivation, not just skills.",
+    body: "These are people who give up weekends to code for social good. Values-aligned hires signal culture fit and tend to stick. You're hiring intrinsic motivation, not just skills.",
   },
   {
     icon: <VisibilityRounded fontSize="inherit" />,
     title: "See candidates in action",
-    body:
-      "Sponsor to judge, mentor, and watch teams work under deadline. Review résumés, run interviews, and pitch your company directly. It's a working interview, not a 30-minute screen.",
+    body: "Sponsor to judge, mentor, and watch teams work under deadline. Review résumés, run interviews, and pitch your company directly. It's a working interview, not a 30-minute screen.",
   },
   {
     icon: <BoltRounded fontSize="inherit" />,
     title: "Grit and determination",
-    body:
-      "Every hackathon starts with the curious and ends with a small group who push all the way through. The people who reach the finish line share the traits we look for in high-performing engineers: grit, iteration, leadership, and the drive to land real impact.",
+    body: "Every hackathon starts with the curious and ends with a small group who push all the way through. The people who reach the finish line share the traits we look for in high-performing engineers: grit, iteration, leadership, and the drive to land real impact.",
   },
 ];
 
@@ -100,20 +97,17 @@ const STEPS = [
   {
     n: "01",
     title: "Tell us who you're hiring",
-    body:
-      "Submit the contact form and pick 'Recruiting / Hiring Talent.' Share the roles, levels, and skills you're after so we can point you at the right candidates.",
+    body: "Submit the contact form and pick 'Recruiting / Hiring Talent.' Share the roles, levels, and skills you're after so we can point you at the right candidates.",
   },
   {
     n: "02",
     title: "Sponsor the next hackathon",
-    body:
-      "Choose a sponsorship level. Résumé access and active recruiting start at the Transformer tier; every tier gets you in the room with builders and your brand in front of them.",
+    body: "Choose a sponsorship level. Résumé access and active recruiting start at the Transformer tier; every tier gets you in the room with builders and your brand in front of them.",
   },
   {
     n: "03",
     title: "Meet and recruit candidates",
-    body:
-      "Review résumés, judge and mentor, run a workshop, and interview on-site. Then follow up with the people whose work and grit impressed you.",
+    body: "Review résumés, judge and mentor, run a workshop, and interview on-site. Then follow up with the people whose work and grit impressed you.",
   },
 ];
 
@@ -131,6 +125,42 @@ const iconWrap = {
   marginBottom: 14,
 };
 
+// Column counts are chosen to divide each set's item count, so a section
+// never ends in a lone orphan card floating over empty space. Every plain
+// `div` grid on this page uses one of these — not `auto-fit minmax(...)`,
+// whose columns stretch to the content width and orphan the remainder.
+const twoUpGrid = {
+  display: "grid",
+  gap: 20,
+  gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+};
+
+const rolesGrid = {
+  display: "grid",
+  gap: 16,
+  gridTemplateColumns: {
+    xs: "1fr",
+    sm: "repeat(2, 1fr)",
+    md: "repeat(3, 1fr)",
+    lg: "repeat(6, 1fr)",
+  },
+  "& > *": {
+    gridColumn: { lg: "span 2" },
+  },
+  "& > *:nth-of-type(4)": {
+    gridColumn: { lg: "2 / span 2" },
+  },
+  "& > *:nth-of-type(5)": {
+    gridColumn: { lg: "4 / span 2" },
+  },
+};
+
+const threeUpGrid = {
+  display: "grid",
+  gap: 20,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+};
+
 const RecruitTechTalent = () => {
   useEffect(() => {
     initFacebookPixel();
@@ -140,45 +170,28 @@ const RecruitTechTalent = () => {
     <>
       <Head>
         <meta name="robots" content="index, follow" />
-        <RefinedFonts />
       </Head>
 
       <RefinedRoot>
         {/* ---------------- HERO ---------------- */}
-        <section
-          className="ohx-wrap"
-          style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}
-        >
+        <section className="ohx-wrap" style={{ paddingTop: "clamp(104px, 13vh, 156px)", paddingBottom: "clamp(28px, 5vh, 48px)" }}>
           <Eyebrow>
             <span className="rise" style={{ display: "inline-block" }}>
               For recruiters &amp; talent teams
             </span>
           </Eyebrow>
           <h1 className="ohx-display rise" style={{ marginTop: 18, maxWidth: "18ch", animationDelay: "60ms" }}>
-            Recruit tech talent that has{" "}
-            <span className="ohx-italic">already shipped real software.</span>
+            Recruit tech talent that has <span className="ohx-italic">already shipped real software.</span>
           </h1>
           <p className="ohx-lead rise" style={{ marginTop: 22, animationDelay: "150ms", maxWidth: "62ch" }}>
-            Opportunity Hack is a 501(c)(3) where 3,000+ developers, designers, and product people build
-            free software for nonprofits. Every candidate has public proof of work: code, demos, and
-            teamwork under deadline. Meet them by sponsoring our next hackathon.
+            Opportunity Hack is a 501(c)(3) where 3,000+ developers, designers, and product people build free software for nonprofits. Every
+            candidate has public proof of work: code, demos, and teamwork under deadline. Meet them by sponsoring our next hackathon.
           </p>
-          <div
-            className="rise"
-            style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 14, animationDelay: "230ms" }}
-          >
-            <Link
-              href="/contact?type=recruit"
-              className="ohx-btn ohx-btn--primary"
-              onClick={() => trackClick("hero_contact")}
-            >
+          <div className="rise" style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 14, animationDelay: "230ms" }}>
+            <Link href="/contact?type=recruit" className="ohx-btn ohx-btn--primary" onClick={() => trackClick("hero_contact")}>
               Talk to us about hiring <Arrow />
             </Link>
-            <Link
-              href="/sponsor"
-              className="ohx-btn ohx-btn--ghost"
-              onClick={() => trackClick("hero_sponsor")}
-            >
+            <Link href="/sponsor" className="ohx-btn ohx-btn--ghost" onClick={() => trackClick("hero_sponsor")}>
               Sponsor &amp; access résumés
             </Link>
           </div>
@@ -203,10 +216,7 @@ const RecruitTechTalent = () => {
 
         {/* ---------------- SOCIAL-PROOF PHOTO ---------------- */}
         <section className="ohx-wrap" style={{ paddingBottom: "clamp(8px, 3vh, 24px)" }}>
-          <figure
-            className="rise"
-            style={{ margin: 0, animationDelay: "420ms" }}
-          >
+          <figure className="rise" style={{ margin: 0, animationDelay: "420ms" }}>
             <div
               style={{
                 position: "relative",
@@ -251,16 +261,10 @@ const RecruitTechTalent = () => {
               A signal you can&apos;t get from a résumé
             </h2>
             <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 32, maxWidth: "64ch" }}>
-              Sourcing is noisy. Opportunity Hack hands you something rarer: people whose work, values, and
-              follow-through are already on the table.
+              Sourcing is noisy. Opportunity Hack hands you something rarer: people whose work, values, and follow-through are already on
+              the table.
             </p>
-            <div
-              style={{
-                display: "grid",
-                gap: 20,
-                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              }}
-            >
+            <Box sx={twoUpGrid}>
               {VALUE_HOOKS.map((h) => (
                 <div key={h.title} style={card}>
                   <span style={iconWrap}>{h.icon}</span>
@@ -272,14 +276,19 @@ const RecruitTechTalent = () => {
                   </p>
                 </div>
               ))}
-            </div>
+            </Box>
             <p className="ohx-muted" style={{ marginTop: 26, fontSize: "0.95rem" }}>
               See the proof for yourself:{" "}
               <Link href="/projects" className="ohx-link" onClick={() => trackClick("browse_projects")}>
                 browse what teams have shipped <Arrow />
               </Link>
               {"  "}
-              <Link href="/about/success-stories" className="ohx-link" onClick={() => trackClick("success_stories")} style={{ marginLeft: 18 }}>
+              <Link
+                href="/about/success-stories"
+                className="ohx-link"
+                onClick={() => trackClick("success_stories")}
+                style={{ marginLeft: 18 }}
+              >
                 read success stories <Arrow />
               </Link>
             </p>
@@ -293,16 +302,10 @@ const RecruitTechTalent = () => {
             One event, five disciplines
           </h2>
           <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 32, maxWidth: "62ch" }}>
-            Hackathon teams ship like real product teams, which means you meet the full cast you&apos;re
-            hiring for, working together in one room.
+            Hackathon teams ship like real product teams, which means you meet the full cast you&apos;re hiring for, working together in one
+            room.
           </p>
-          <div
-            style={{
-              display: "grid",
-              gap: 16,
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            }}
-          >
+          <Box sx={rolesGrid}>
             {ROLES.map((r) => (
               <div key={r.label} style={{ ...card, padding: "22px 20px" }}>
                 <span style={{ ...iconWrap, marginBottom: 10 }}>{r.icon}</span>
@@ -314,7 +317,7 @@ const RecruitTechTalent = () => {
                 </p>
               </div>
             ))}
-          </div>
+          </Box>
         </section>
 
         {/* ---------------- SPONSOR = HIRING ACCESS ---------------- */}
@@ -331,40 +334,37 @@ const RecruitTechTalent = () => {
               Get in the room, then get the hire
             </h2>
             <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 28, maxWidth: "64ch" }}>
-              Sponsorship is how recruiters access candidates at Opportunity Hack. Each level unlocks more
-              ways to meet, evaluate, and recruit. Support counts whether it&apos;s a check or your
-              engineers&apos; volunteer hours ($100/hour).
+              Sponsorship is how recruiters access candidates at Opportunity Hack. Each level unlocks more ways to meet, evaluate, and
+              recruit. Support counts whether it&apos;s a check or your engineers&apos; volunteer hours ($100/hour).
             </p>
-            <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            <Box sx={twoUpGrid}>
               <div style={card}>
                 <span className="ohx-tag">Innovator · $1,000</span>
                 <p className="ohx-muted" style={{ margin: "14px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>
-                  Brand presence, unlimited mentor seats, and a judging seat that gets your engineers next to
-                  candidates while they build.
+                  Brand presence, unlimited mentor seats, and a judging seat that gets your engineers next to candidates while they build.
                 </p>
               </div>
               <div style={card}>
                 <span className="ohx-tag">Changemaker · $2,500</span>
                 <p className="ohx-muted" style={{ margin: "14px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>
-                  Everything in Innovator plus a booth at the Sponsor Fair and post-event recruiting
-                  touchpoints.
+                  Everything in Innovator plus a booth at the Sponsor Fair and post-event recruiting touchpoints.
                 </p>
               </div>
               <div style={{ ...card, borderColor: "var(--brand)" }}>
                 <span className="ohx-tag ohx-tag--accent">Transformer · $5,000 · résumé access</span>
                 <p className="ohx-muted" style={{ margin: "14px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>
-                  <strong>Participant résumé access</strong>, recruiting and interviews during and after the
-                  event, and a sponsored workshop or tech talk to pitch your company and stack.
+                  <strong>Participant résumé access</strong>, recruiting and interviews during and after the event, and a sponsored workshop
+                  or tech talk to pitch your company and stack.
                 </p>
               </div>
               <div style={card}>
                 <span className="ohx-tag ohx-tag--accent">Visionary · $10,000 · full access</span>
                 <p className="ohx-muted" style={{ margin: "14px 0 0", fontSize: "0.95rem", lineHeight: 1.55 }}>
-                  Résumé access plus recruiting before, during, and after the event, with first look at the
-                  strongest candidates and maximum face time.
+                  Résumé access plus recruiting before, during, and after the event, with first look at the strongest candidates and maximum
+                  face time.
                 </p>
               </div>
-            </div>
+            </Box>
             <div style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 14 }}>
               <Link href="/sponsor" className="ohx-btn ohx-btn--primary" onClick={() => trackClick("benefits_sponsor")}>
                 See full levels &amp; benefits <Arrow />
@@ -382,13 +382,10 @@ const RecruitTechTalent = () => {
           <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 32 }}>
             From &ldquo;we&apos;re hiring&rdquo; to a signed offer
           </h2>
-          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+          <Box sx={threeUpGrid}>
             {STEPS.map((s) => (
               <div key={s.n} style={card}>
-                <div
-                  className="ohx-display"
-                  style={{ fontSize: "2rem", color: "var(--accent)", lineHeight: 1, marginBottom: 12 }}
-                >
+                <div className="ohx-display" style={{ fontSize: "2rem", color: "var(--accent)", lineHeight: 1, marginBottom: 12 }}>
                   {s.n}
                 </div>
                 <h3 className="ohx-display" style={{ fontSize: "1.15rem", margin: "0 0 8px" }}>
@@ -399,7 +396,7 @@ const RecruitTechTalent = () => {
                 </p>
               </div>
             ))}
-          </div>
+          </Box>
         </section>
 
         {/* ---------------- FAQ ---------------- */}
@@ -410,7 +407,10 @@ const RecruitTechTalent = () => {
             borderBottom: "1px solid var(--line)",
           }}
         >
-          <div className="ohx-narrow ohx-wrap" style={{ marginInline: "auto", paddingTop: "clamp(48px, 8vh, 88px)", paddingBottom: "clamp(48px, 8vh, 88px)" }}>
+          <div
+            className="ohx-narrow ohx-wrap"
+            style={{ marginInline: "auto", paddingTop: "clamp(48px, 8vh, 88px)", paddingBottom: "clamp(48px, 8vh, 88px)" }}
+          >
             <Eyebrow>Recruiter FAQ</Eyebrow>
             <h2 className="ohx-display" style={{ marginTop: 8, marginBottom: 28 }}>
               Questions talent teams ask
@@ -446,13 +446,16 @@ const RecruitTechTalent = () => {
         </section>
 
         {/* ---------------- FINAL CTA ---------------- */}
-        <section className="ohx-wrap" style={{ paddingTop: "clamp(56px, 9vh, 104px)", paddingBottom: "clamp(56px, 9vh, 104px)", textAlign: "center" }}>
+        <section
+          className="ohx-wrap"
+          style={{ paddingTop: "clamp(56px, 9vh, 104px)", paddingBottom: "clamp(56px, 9vh, 104px)", textAlign: "center" }}
+        >
           <h2 className="ohx-display" style={{ marginBottom: 14, maxWidth: "22ch", marginInline: "auto" }}>
             Hire people who&apos;ve already <span className="ohx-italic">proven it.</span>
           </h2>
           <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 28, maxWidth: "56ch", marginInline: "auto" }}>
-            Tell us who you&apos;re hiring and we&apos;ll get you in front of candidates at the next
-            Opportunity Hack, with résumés, interviews, and a stage to pitch your company.
+            Tell us who you&apos;re hiring and we&apos;ll get you in front of candidates at the next Opportunity Hack, with résumés,
+            interviews, and a stage to pitch your company.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
             <Link href="/contact?type=recruit" className="ohx-btn ohx-btn--primary" onClick={() => trackClick("footer_contact")}>
@@ -471,8 +474,7 @@ const RecruitTechTalent = () => {
 export default RecruitTechTalent;
 
 export const getStaticProps = async () => {
-  const title =
-    "Recruit Tech Talent: Hire Engineers, PMs & Designers Who Ship Real Software | Opportunity Hack";
+  const title = "Recruit Tech Talent: Hire Engineers, PMs & Designers Who Ship Real Software | Opportunity Hack";
   const description =
     "Recruit software engineers, product managers, TPMs, designers, and data talent who have shipped real, open-source software for nonprofits. Sponsor an Opportunity Hack hackathon for résumé access, on-site recruiting, and a direct line to mission-driven candidates.";
 

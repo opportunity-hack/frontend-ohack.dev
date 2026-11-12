@@ -31,6 +31,10 @@ export const trackEvent = ({ action, params }) => {
 | `button_donate` | User clicks donation link | `{ action_name: "donate" }` | Track donation conversion funnel |
 | `button_request` | User requests a hackathon | `{ action_name: "request_hackathon" }` | Measure demand for organized events |
 | `button_see_all` | User clicks to see all projects | `{ action_name: "see_all_nonprofit_projects" }` | Track project discovery behavior |
+| `home_blog_post` | Homepage "From the blog" band: user clicks a post (featured card = position 1, rows = 2–3). Structured NAVIGATION/CLICK event via the homepage `track()` | `{ button_text: <post title>, post_id, position }` | Measure whether the homepage drives blog readership |
+| `home_blog_all_posts` | Homepage "From the blog" band: "All posts →" link to `/blog` | `{ button_text: "All posts" }` | Track blog index discovery from the landing page |
+| `navigation_click` (`event_label: "blog_list_post"`) | `/blog` index: a post title / "Read the post" click, via `trackStructuredEvent(NAVIGATION, CLICK, "blog_list_post")` | `{ post_id, position }` (1-based; cards are 1–8, rows 9+) | Which positions on the index actually get read; whether rows below the cards earn their place |
+| `content_search` (`event_label: "blog_content"`) | `/blog` search — **debounced 500ms** since Nov 2026 (was one event per keystroke) | `{ search_term }` | What readers look for |
 
 ### Authentication Events
 
@@ -131,6 +135,22 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_devpost_saved` | `TeamDashboard/DevPostEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /devpost` (DevPost is optional now — expect this to trend down). |
 | `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
 | `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
+| `team_gateway_model_select` | `TeamDashboard/GatewayKeyCard.js` | `{ event_category, event_label: "<key slug>_<model>" }` | A model chip was picked; the setup snippets switch to that model. Fired only on a change. |
+
+### "Your teams" card on `/profile` (Nov 2026, `event_category: "engagement"`)
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `profile_my_teams_click` | Click on a link in the profile's "Your teams" card | `{ event_label: "manage" \| "team_page" \| "find_team" \| "create_team" \| "browse_events", event_id? }` | Does the profile actually route people to their team dashboard / team formation |
+
+### Team membership (`/hack/[event_id]#teams` cards + `/hack/[event_id]/team/[team_id]#members`, Nov 2026, `event_category: "engagement"`)
+
+Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — only after the backend confirmed the change (never on a 200 + "Error: …" soft failure).
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `team_join` | Hacker joined a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Which surface forms teams; join volume per event |
+| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Churn between teams before/during the event |
 
 ### Hackers' Choice peer vote (`/hack/[event_id]/vote` + CTAs)
 
@@ -151,6 +171,7 @@ The mentor counterpart of `/judge`. Events fire via `trackEvent({ action, params
 | `mentor_dash_edit_application` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Review your application" on a pending/waitlisted card. |
 | `mentor_dash_apply_click` | `pages/mentor/index.js` | `{ event_label: <event_id> }` | "Apply to mentor" on a current event the mentor hasn't applied to (empty state or "Also happening" rows). |
 | `mentor_dash_guide_click` | `pages/mentor/index.js` | `{ event_label: "about" \| "overview" \| "slack" }` | Guide band / quick-reference links to `/about/mentors`, the overview video, or #ask-a-mentor. |
+| `mentor_checkin_gate_view` | `pages/hack/[event_id]/mentor-checkin.js` | `{ page: "mentor_checkin", event_label: "logged_out" \| "event_error" \| "mentor_error" \| "not_applied" \| "pending" \| "not_selected" \| "ready_upcoming" \| "ready_open" \| "ready_closed", event_id }` | Once per distinct state per visit on the mentor check-in page (Nov 2026) — `ready_upcoming` counts approved mentors who arrive before check-in opens. |
 
 ### Share cards (`/hack/[event_id]/share/[type]/[volunteer_id]`, Nov 2026)
 
@@ -169,6 +190,24 @@ Participant share cards (branded PNG + landing page + share kit). All fire via `
 | `share_card_band_click` | `components/ShareCard/RosterShareBand.js` | `{ event_label: <type>, event_id, page: "hackathon_event" }` | "Get your share card →" on the event page's roster band. |
 | `share_card_promo_click` | `components/ShareCard/ShareCardPromo.js`, `pages/mentor/index.js` | `{ event_label: <type>, event_id, page: "<type>_application" \| "mentor_dashboard" }` | The "you're in — share the news" promo beside the check-in QR, or the `/mentor` card link. |
 
+### Hacker application lock + auto-approve (`/hack/[event_id]/hacker-application`, Nov 2026)
+
+Fire via `trackEvent({ action, params })` with `page: "hacker_application"` and `event_id`.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `hacker_app_unlocked` | `pages/hack/[event_id]/hacker-application.js` | `{ event_label: "locked" \| "event_ended", event_id }` | The organizer-shared access code (`constraints.application_hacker_enabled_code`) unlocked a locked or ended form. |
+| `hacker_app_auto_approved` | same page | `{ event_label: "approved" \| "waitlisted", event_id }` | Success screen after a submit the backend auto-decided (`hacker_auto_approve` on): straight onto the roster, or waitlisted at `hacker_capacity`. Not fired for manually approved hackers who update. |
+
+### Event volunteer guide (`/about/volunteers`, Nov 2026)
+
+The volunteer counterpart of `/about/mentors` + `/about/judges`. One action, `click_volunteers`, fired via `trackEvent({ action, params })`; `button` says what was clicked.
+
+| Event Name | Source | Parameters | Notes |
+|------------|--------|------------|-------|
+| `click_volunteers` | `pages/about/volunteers/index.js` | `{ button: "find_events_hero" \| "checkin_guide_hero" \| "volunteer_apply_upcoming" \| "event_details" \| "all_hackathons" \| "explore_roles" \| "cta_hackathons" \| "cta_all_roles" \| "cta_jobs", event_id? }` | Hero CTAs, the upcoming-events cards (`event_id` set), and the closing CTA band. |
+| `click_volunteers` | `components/About/Volunteering/VolunteerChecklist.js` | `{ button: "checklist_toggle", item: <checklist item id> }` / `{ button: "checklist_reset" }` | The before/during/after checklist (ticks persist in `localStorage["ohack.volunteerChecklist.v1"]`, never sent to the server). |
+
 ### Judging (Oct 2026)
 
 Judge-side events fire via `trackEvent({ action, params })` from the refined judge dashboard; admin events via `trackStructuredEvent(EventCategory.ADMIN, …)`.
@@ -180,6 +219,19 @@ Judge-side events fire via `trackEvent({ action, params })` from the refined jud
 | `judge_inline_adjust_saved` | `pages/judge/[event_id].js` | `{ event_id, round, page: "judge_event" }` | Inline "Save changes" succeeded (`POST /api/judge/score` re-submit). Ratio to `_open` = how often judges actually change their mind after a demo. |
 | `judge_score_submitted` | `pages/judge/[event_id]/team/[team_id].js` | `{ event_id, round, event_label: "submit" \| "update", page: "judge_team" }` | Full scoring page submit succeeded; `update` = re-submitting an already-submitted score. |
 
+### Judging schedule (`/hack/[event_id]/judging`, Nov 2026, `event_category: "engagement"`)
+
+All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_category: "engagement", event_label: <event_id> }`.
+
+| Event Name | Extra parameters | Notes |
+|------------|------------------|-------|
+| `judging_schedule_view` | `{ state: ready\|unpublished\|empty\|unavailable }` | Once per page visit, after the schedule state resolves. `unavailable` also covers a 404 from an older backend. |
+| `judging_schedule_team_click` | — | A team name (panel table or "not on a panel yet" list) was clicked. |
+| `judging_schedule_video_play` | — | A demo thumbnail opened the page-level video dialog. |
+| `judging_schedule_video_present` | — | The video dialog entered Present (full-screen) mode via the button or the F key. |
+| `judging_schedule_print` | — | "Print" pressed (`window.print()`). |
+| `judging_schedule_search` | — | Debounced 1.5 s after typing in "Find your team". The query text is never sent. |
+
 ### Admin (`event_category: "admin"`)
 
 | Event Name | Source | Parameters | Notes |
@@ -188,7 +240,10 @@ Judge-side events fire via `trackEvent({ action, params })` from the refined jud
 | `admin_peer_vote_void_ballot` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | A ballot was voided. |
 | `admin_peer_vote_publish` | `admin/PeerVoteResults.js` | `{ event_category: "admin", event_label: <event_id> }` | Hackers' Choice published (award appended + public summary written). |
 | `admin_judging_lock` / `admin_judging_unlock` | `admin/judging/JudgeProgressPanel.js` | `{ event_category: "admin", event_label: "round1" \| "round2", event_id }` | Scoring for a round locked/unlocked from the Round 1 / Round 2 admin tabs (`POST /api/judge/admin/locks/<event>/<round>`). |
+| `admin_hacker_auto_approve_toggle` | `admin/hackathon-edit/sections/ParticipantsSection.js` | `{ event_category: "admin", event_label: "on" \| "off", event_id }` | "Auto-approve hacker applications" switch in the Participants section's Roster & capacity card. |
+| `admin_judging_schedule_publish` | `admin/hackathon-edit/sections/JudgingSection.js` | `{ event_category: "admin", event_label: <event_id>, value: 1\|0 }` | "Publish the judging schedule" switch flipped on (1) / off (0) — writes `constraints.judging_schedule_published` (autosave). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
+| `admin_checkin_reset` | `admin/checkin/CheckInWorkbench.js` | `{ event_category: "admin", event_label: <volunteer_type>, value: <people reset>, event_id }` | "Reset check-ins…" confirmed in the Check-in section (full admins only). |
 | `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
 ## Business Intelligence Applications

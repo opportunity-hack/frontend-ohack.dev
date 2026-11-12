@@ -23,6 +23,8 @@ import HackathonsSection from "./Sections/HackathonsSection";
 import FeedbackSection from "./Sections/FeedbackSection";
 import HeartsRewardsTab from "./Sections/HeartsRewardsTab";
 import HeartsStatusStrip from "./HeartsStatusStrip";
+import MyTeamsCard from "./MyTeamsCard";
+import useMyTeams from "../../hooks/use-my-teams";
 import PrivacyToggle from "../../components/PrivacyToggle/PrivacyToggle";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LoginOrRegister from '../LoginOrRegister/LoginOrRegister2';
@@ -112,6 +114,7 @@ export default function Profile() {
   const { badges, hackathons, profile, feedback_url, update_profile_metadata, isLoading } =
     useProfileApi({});
   const { privacySettings, togglePrivacySetting, isLoading: privacyLoading } = usePrivacySettings();
+  const myTeams = useMyTeams();
   const theme = useTheme();
   const [githubHistory, setGithubHistory] = useState([]);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
@@ -488,6 +491,15 @@ export default function Profile() {
                 </Box>
               </>
             )}
+
+            {/* Your teams — the live/upcoming hackathon's team first */}
+            <MyTeamsCard
+              teams={myTeams.teams}
+              loading={myTeams.loading}
+              available={myTeams.available}
+              error={myTeams.error}
+              hackathons={hackathons}
+            />
           </section>
 
           {/* Sticky tab bar */}

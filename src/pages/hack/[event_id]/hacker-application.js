@@ -41,6 +41,11 @@ import Script from "next/script";
 import { useEnv } from "../../../context/env.context";
 import VolunteerCheckInQR from "../../../components/VolunteerCheckInQR";
 import ShareCardPromo from "../../../components/ShareCard/ShareCardPromo";
+import AccessCodeForm from "../../../components/ApplicationForm/AccessCodeForm";
+import {
+  deriveHackerApplicationGates,
+  parseHackerSubmitResponse,
+} from "../../../lib/hackerApplicationGates";
 import ApplicationNav from "../../../components/ApplicationNav/ApplicationNav";
 import SearchIcon from "@mui/icons-material/Search";
 import FormPersistenceControls from "../../../components/FormPersistenceControls";
@@ -223,6 +228,10 @@ const getRefinedAlertSx = (tone = "info") => {
   };
 };
 
+// A rejection the server explained (400 {message}) — shown to the applicant
+// verbatim instead of the generic "please try again".
+class SubmitError extends Error {}
+
 const HackerApplicationComponent = () => {
   const router = useRouter();
   const { event_id } = router.query;
@@ -240,6 +249,29 @@ const HackerApplicationComponent = () => {
   // Store volunteer ID for QR code generation
   const [volunteerId, setVolunteerId] = useState(null);
   const [isSelected, setIsSelected] = useState(false);
+  // "approved" | "waitlisted" | null — what hacker auto-approve decided for
+  // this submit (drives the success screen).
+  const [rosterOutcome, setRosterOutcome] = useState(null);
+  // Access code (application_hacker_enabled_code) entered on the closed panel.
+  const [unlocked, setUnlocked] = useState(false);
+  const isClosed = Boolean(
+    eventData && (eventData.isLocked || eventData.isEventPast) && !unlocked,
+  );
+  const closedMessage = eventData?.isEventPast
+    ? "This event has already ended and applications are no longer accepted."
+    : "Applications are closed for this event. If the organizers gave you an access code, enter it at the top of the page.";
+  const handleUnlock = () => {
+    setUnlocked(true);
+    setError("");
+    trackEvent({
+      action: "hacker_app_unlocked",
+      params: {
+        event_label: eventData?.isEventPast ? "event_ended" : "locked",
+        event_id,
+        page: "hacker_application",
+      },
+    });
+  };
   const [profileAutofilled, setProfileAutofilled] = useState(false);
   const [eventTeams, setEventTeams] = useState([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
@@ -583,25 +615,25 @@ const HackerApplicationComponent = () => {
         const formattedStartDate = startDate.format("dddd, MMMM Do, YYYY");
         const formattedEndDate = endDate.format("dddd, MMMM Do, YYYY");
 
-        // Calculate application deadline: 3 days before start date at 8pm event time
-        const applicationDeadline = startDate
-          .clone()
-          .subtract(3, "days")
-          .hour(20) // 8 PM
-          .minute(0)
-          .second(0)
-          .millisecond(0);
-
-        // Check if event is in the past (with 1-day buffer for end date)
+        // Deadline (a nudge), manual lock, access code, capacity — see
+        // src/lib/hackerApplicationGates.js (shared with the admin section).
         const now = Moment().tz(eventTz);
-        const forceOpen =
-          eventData.constraints?.application_hacker_force_open === true;
-        const isEventPast =
-          !forceOpen && endDate.clone().add(1, "day").isBefore(now);
-
-        // Check if applications are closed (deadline has passed)
-        const isApplicationsClosed =
-          !forceOpen && now.isAfter(applicationDeadline);
+        const {
+          applicationDeadline,
+          deadlinePassed,
+          isEventPast,
+          closedByDeadline,
+          isLocked,
+          passcode,
+          hackerCapacity,
+          autoApproveOn,
+        } = deriveHackerApplicationGates({
+          constraints: eventData.constraints,
+          startDate: eventData.start_date,
+          endDate: eventData.end_date,
+          timezone: eventTz,
+          now: now.toDate(),
+        });
 
         // Check if event is online/virtual
         const isOnlineEvent = ["Virtual", "Global", "Online"].some((term) =>
@@ -635,7 +667,12 @@ const HackerApplicationComponent = () => {
             eventData.image_url ||
             "https://cdn.ohack.dev/ohack.dev/2024_hackathon_1.webp",
           isEventPast,
-          isApplicationsClosed,
+          isLocked,
+          closedByDeadline,
+          deadlinePassed,
+          passcode,
+          hackerCapacity,
+          autoApproveOn,
           isOnlineEvent,
           applicationDeadline: applicationDeadline.toISOString(),
           formattedApplicationDeadline,
@@ -1202,19 +1239,9 @@ const HackerApplicationComponent = () => {
   };
 
   const handleNext = () => {
-    // Check if applications are closed before allowing progression
-    if (eventData && eventData.isApplicationsClosed) {
-      setErrorAndScroll(
-        "Applications are closed. The hackathon has already started.",
-      );
-      return;
-    }
-
-    // Check if event has ended
-    if (eventData && eventData.isEventPast) {
-      setErrorAndScroll(
-        "This event has already ended and applications are no longer accepted.",
-      );
+    // Locked / ended forms only proceed after the access code was entered.
+    if (isClosed) {
+      setErrorAndScroll(closedMessage);
       return;
     }
 
@@ -1357,17 +1384,8 @@ const HackerApplicationComponent = () => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
-    // Check if applications are closed
-    if (eventData && eventData.isApplicationsClosed) {
-      setError("Applications are closed. The hackathon has already started.");
-      return;
-    }
-
-    // Check if event has ended
-    if (eventData && eventData.isEventPast) {
-      setError(
-        "This event has already ended and applications are no longer accepted.",
-      );
+    if (isClosed) {
+      setError(closedMessage);
       return;
     }
 
@@ -1482,21 +1500,42 @@ const HackerApplicationComponent = () => {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          if (errorData?.error?.includes("recaptcha")) {
-            throw new Error(
+          // The backend answers {success:false, message} (400) when it rejects
+          // the application — a failed reCAPTCHA or an eligibility answer.
+          const serverMessage = errorData?.message || errorData?.error || "";
+          if (/recaptcha/i.test(serverMessage)) {
+            throw new SubmitError(
               "reCAPTCHA verification failed. Please refresh the page and try again.",
             );
+          }
+          if (response.status === 400 && serverMessage) {
+            throw new SubmitError(serverMessage);
           }
           throw new Error(`Failed to submit application: ${response.status}`);
         }
 
-        // Extract volunteer ID from response for QR code generation
+        // The backend wraps the saved doc in `data` ({success, message, data}).
+        // Reading the top level always missed the id and fell back to the
+        // login id, so the check-in QR pointed at the wrong record.
         const responseData = await response.json().catch(() => null);
-        if (responseData?.volunteer_id || responseData?.id) {
-          setVolunteerId(responseData.volunteer_id || responseData.id);
-        } else {
-          // Fallback: use user ID if no specific volunteer ID is returned
-          setVolunteerId(user?.userId);
+        const {
+          volunteerId: savedId,
+          isSelected: savedSelected,
+          rosterOutcome: outcome,
+          autoApproved,
+        } = parseHackerSubmitResponse(responseData, user?.userId);
+        setVolunteerId(savedId);
+        setIsSelected(savedSelected);
+        setRosterOutcome(outcome);
+        if (outcome === "waitlisted" || autoApproved) {
+          trackEvent({
+            action: "hacker_app_auto_approved",
+            params: {
+              event_label: outcome,
+              event_id,
+              page: "hacker_application",
+            },
+          });
         }
       } else {
         // In a test environment, log the data and simulate API delay
@@ -1538,7 +1577,11 @@ const HackerApplicationComponent = () => {
           page: "hacker_application",
         },
       });
-      setError("Failed to submit your application. Please try again.");
+      setError(
+        err instanceof SubmitError
+          ? err.message
+          : "Failed to submit your application. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1848,33 +1891,111 @@ const HackerApplicationComponent = () => {
 
         <section className="ohx-wrap" style={formSectionStyle}>
           <Box sx={{ maxWidth: 760, mx: "auto", textAlign: "center", mb: 4 }}>
-            <Eyebrow>Application received</Eyebrow>
-            <h1 className="ohx-display" style={{ marginTop: 8 }}>
-              Hacker application <span className="ohx-italic">submitted.</span>
-            </h1>
-            <Typography
-              component="p"
-              className="ohx-lead"
-              sx={{ mt: 2, mx: "auto" }}
-            >
-              Thanks for applying to {eventData?.name || "Opportunity Hack"}. We
-              have your information and will follow up by email with next steps.
-            </Typography>
+            {rosterOutcome === "approved" ? (
+              <>
+                <Eyebrow>You&apos;re confirmed</Eyebrow>
+                <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                  You&apos;re <span className="ohx-italic">in.</span>
+                </h1>
+                <Typography
+                  component="p"
+                  className="ohx-lead"
+                  sx={{ mt: 2, mx: "auto" }}
+                >
+                  Welcome to {eventData?.name || "Opportunity Hack"}. We
+                  can&apos;t wait to build with you.
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Eyebrow>Application received</Eyebrow>
+                <h1 className="ohx-display" style={{ marginTop: 8 }}>
+                  Hacker application{" "}
+                  <span className="ohx-italic">submitted.</span>
+                </h1>
+                <Typography
+                  component="p"
+                  className="ohx-lead"
+                  sx={{ mt: 2, mx: "auto" }}
+                >
+                  Thanks for applying to {eventData?.name || "Opportunity Hack"}
+                  . We have your information and will follow up by email with
+                  next steps.
+                </Typography>
+              </>
+            )}
           </Box>
 
           <Box
             className="ohx-card"
             sx={{ ...refinedPanelSx, maxWidth: 820, mx: "auto" }}
           >
-            <Alert
-              severity="success"
-              sx={{ ...getRefinedAlertSx("success"), mb: 3 }}
-            >
-              <Typography variant="body1">
-                Your application is in. Watch your inbox for review updates,
-                acceptance details, and team-matching information.
-              </Typography>
-            </Alert>
+            {rosterOutcome === "approved" ? (
+              <Alert
+                severity="success"
+                sx={{ ...getRefinedAlertSx("success"), mb: 3 }}
+              >
+                <Typography variant="body1">
+                  You&apos;re on the roster for{" "}
+                  {eventData?.name || "this event"}. Save your check-in QR code
+                  below — have it ready on your phone when you arrive. Next, set
+                  up or join your team.
+                </Typography>
+              </Alert>
+            ) : rosterOutcome === "waitlisted" ? (
+              <Alert
+                severity="info"
+                sx={{ ...getRefinedAlertSx("info"), mb: 3 }}
+              >
+                <Typography variant="body1">
+                  The event is at capacity, so you&apos;re on the waitlist.
+                  We&apos;ve saved your application, and we&apos;ll email you
+                  right away if a spot opens up.
+                </Typography>
+              </Alert>
+            ) : (
+              <Alert
+                severity="success"
+                sx={{ ...getRefinedAlertSx("success"), mb: 3 }}
+              >
+                <Typography variant="body1">
+                  Your application is in. Watch your inbox for review updates,
+                  acceptance details, and team-matching information.
+                  {eventData?.hackerCapacity
+                    ? ` This event has room for ${eventData.hackerCapacity} hackers, and spots are confirmed first come, first served.`
+                    : ""}
+                </Typography>
+              </Alert>
+            )}
+
+            {Boolean(volunteerId) && isSelected && (
+              <>
+                <VolunteerCheckInQR
+                  eventId={event_id}
+                  volunteerId={volunteerId}
+                  isSelected={isSelected}
+                  volunteerType="hacker"
+                  name={formData.name}
+                  isSubmitted={true}
+                  qrSize={200}
+                  sx={{ mx: "auto", maxWidth: 560, mb: 3 }}
+                />
+                <ShareCardPromo
+                  eventId={event_id}
+                  type="hacker"
+                  volunteerId={volunteerId}
+                  event={{ title: eventData?.name }}
+                  page="hacker_application"
+                  style={{
+                    marginBottom: 24,
+                    width: "100%",
+                    maxWidth: 560,
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                />
+              </>
+            )}
 
             <Box sx={{ mb: 4, display: "flex", justifyContent: "center" }}>
               <GiveButterWidget
@@ -1896,10 +2017,19 @@ const HackerApplicationComponent = () => {
                 justifyContent: "center",
               }}
             >
+              {isSelected ? (
+                <Button
+                  variant="contained"
+                  href={`/hack/${event_id}/manageteam`}
+                  sx={refinedPrimaryButtonSx}
+                >
+                  Set up your team →
+                </Button>
+              ) : null}
               <Button
-                variant="contained"
+                variant={isSelected ? "outlined" : "contained"}
                 onClick={() => router.push(`/hack/${event_id}`)}
-                sx={refinedPrimaryButtonSx}
+                sx={isSelected ? refinedGhostButtonSx : refinedPrimaryButtonSx}
               >
                 Return to event
               </Button>
@@ -2042,7 +2172,9 @@ const HackerApplicationComponent = () => {
                   )}
                   {eventData?.formattedApplicationDeadline && (
                     <Box component="span" sx={refinedTagSx}>
-                      Apply by {eventData.formattedApplicationDeadline}
+                      {eventData.deadlinePassed && !isClosed
+                        ? "Still accepting applications"
+                        : `Apply by ${eventData.formattedApplicationDeadline}`}
                     </Box>
                   )}
                   <Box component="span" sx={refinedAccentTagSx}>
@@ -2098,7 +2230,13 @@ const HackerApplicationComponent = () => {
               volunteerId={volunteerId}
               event={{ title: eventData?.name }}
               page="hacker_application"
-              style={{ marginBottom: 24, width: "100%", maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
+              style={{
+                marginBottom: 24,
+                width: "100%",
+                maxWidth: 560,
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
             />
           )}
 
@@ -2122,117 +2260,172 @@ const HackerApplicationComponent = () => {
             </Box>
           ) : (
             <Box sx={{ mt: 3, mb: 4 }}>
-              {eventData && eventData.isEventPast ? (
+              {isClosed ? (
                 <Box className="ohx-card" sx={refinedPanelSx}>
-                  <Alert
-                    severity="warning"
-                    sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
-                  >
-                    <Typography
-                      component="h2"
-                      sx={{
-                        fontFamily: FONT_DISPLAY,
-                        fontSize: "24px",
-                        fontWeight: 500,
-                        mb: 1,
-                      }}
-                    >
-                      This event has already ended
-                    </Typography>
-                    <Typography variant="body1">
-                      Applications are no longer being accepted for this
-                      hackathon. Head back to the events page to find the next
-                      chance to build with a nonprofit.
-                    </Typography>
-                  </Alert>
+                  {eventData.passcode && (
+                    <Box sx={{ mb: 3 }}>
+                      <Alert
+                        severity="info"
+                        sx={{ ...getRefinedAlertSx("info"), mb: 3 }}
+                      >
+                        <Typography
+                          component="p"
+                          sx={{
+                            fontFamily: FONT_DISPLAY,
+                            fontSize: "22px",
+                            fontWeight: 500,
+                            mb: 1,
+                          }}
+                        >
+                          Access code required
+                        </Typography>
+                        <Typography variant="body1">
+                          {eventData.isEventPast
+                            ? "This event has wrapped up, but if the organizers gave you an access code you can still apply or update your application."
+                            : "Applications are paused for this event, but if the organizers gave you an access code you can still apply or update your application."}
+                        </Typography>
+                      </Alert>
+                      <AccessCodeForm
+                        passcode={eventData.passcode}
+                        onUnlock={handleUnlock}
+                      />
+                    </Box>
+                  )}
 
-                  <Box
-                    sx={{ mb: 4, display: "flex", justifyContent: "center" }}
-                  >
-                    <GiveButterWidget
-                      context="event-ended"
-                      userId={user?.userId}
-                      applicationType="hacker"
-                      size="large"
-                      onDonationEvent={(eventData) => {
-                        console.log(
-                          "Event ended hacker donation event:",
-                          eventData,
-                        );
-                      }}
-                    />
-                  </Box>
+                  {eventData.isEventPast ? (
+                    <>
+                      <Alert
+                        severity="warning"
+                        sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
+                      >
+                        <Typography
+                          component="h2"
+                          sx={{
+                            fontFamily: FONT_DISPLAY,
+                            fontSize: "24px",
+                            fontWeight: 500,
+                            mb: 1,
+                          }}
+                        >
+                          This event has already ended
+                        </Typography>
+                        <Typography variant="body1">
+                          Applications are no longer being accepted for this
+                          hackathon. Head back to the events page to find the
+                          next chance to build with a nonprofit.
+                        </Typography>
+                      </Alert>
 
-                  <Box textAlign="center">
-                    <Button
-                      variant="contained"
-                      onClick={() => router.push("/hack")}
-                      sx={refinedPrimaryButtonSx}
-                    >
-                      View upcoming events
-                    </Button>
-                  </Box>
-                </Box>
-              ) : eventData && eventData.isApplicationsClosed ? (
-                <Box className="ohx-card" sx={refinedPanelSx}>
-                  <Alert
-                    severity="warning"
-                    sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
-                  >
-                    <Typography
-                      component="h2"
-                      sx={{
-                        fontFamily: FONT_DISPLAY,
-                        fontSize: "24px",
-                        fontWeight: 500,
-                        mb: 1,
-                      }}
-                    >
-                      Applications are now closed
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      The deadline passed on{" "}
-                      <strong>{eventData.formattedApplicationDeadline}</strong>{" "}
-                      so we have time to review submissions and send decisions
-                      before the event starts.
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: RX.muted }}>
-                      The hackathon begins on {eventData.formattedStartDate}. If
-                      you believe this is an error or have special
-                      circumstances, please{" "}
-                      <Link href="/contact" underline="hover">
-                        contact the organizers
-                      </Link>{" "}
-                      right away.
-                    </Typography>
-                  </Alert>
+                      <Box
+                        sx={{
+                          mb: 4,
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <GiveButterWidget
+                          context="event-ended"
+                          userId={user?.userId}
+                          applicationType="hacker"
+                          size="large"
+                          onDonationEvent={(eventData) => {
+                            console.log(
+                              "Event ended hacker donation event:",
+                              eventData,
+                            );
+                          }}
+                        />
+                      </Box>
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      justifyContent: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      onClick={() => router.push(`/hack/${event_id}`)}
-                      sx={refinedPrimaryButtonSx}
-                    >
-                      View event details
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => router.push("/hack")}
-                      sx={refinedGhostButtonSx}
-                    >
-                      View other events
-                    </Button>
-                  </Box>
+                      <Box textAlign="center">
+                        <Button
+                          variant="contained"
+                          onClick={() => router.push("/hack")}
+                          sx={refinedPrimaryButtonSx}
+                        >
+                          View upcoming events
+                        </Button>
+                      </Box>
+                    </>
+                  ) : (
+                    <>
+                      <Alert
+                        severity="warning"
+                        sx={{ ...getRefinedAlertSx("warning"), mb: 3 }}
+                      >
+                        <Typography
+                          component="h2"
+                          sx={{
+                            fontFamily: FONT_DISPLAY,
+                            fontSize: "24px",
+                            fontWeight: 500,
+                            mb: 1,
+                          }}
+                        >
+                          Applications are closed for this event
+                        </Typography>
+                        {eventData.closedByDeadline && (
+                          <Typography variant="body1" sx={{ mb: 2 }}>
+                            The deadline passed on{" "}
+                            <strong>
+                              {eventData.formattedApplicationDeadline}
+                            </strong>{" "}
+                            so we have time to review submissions and send
+                            decisions before the event starts.
+                          </Typography>
+                        )}
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {eventData.passcode
+                            ? "If the organizers gave you an access code, enter it above to apply or update your application."
+                            : "Thank you for your interest — the organizers have stopped taking new applications for now."}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: RX.muted }}>
+                          The hackathon begins on {eventData.formattedStartDate}
+                          . Have special circumstances? Please{" "}
+                          <Link href="/contact" underline="hover">
+                            contact the organizers
+                          </Link>{" "}
+                          — we&apos;re happy to help.
+                        </Typography>
+                      </Alert>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 2,
+                          justifyContent: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Button
+                          variant="contained"
+                          onClick={() => router.push(`/hack/${event_id}`)}
+                          sx={refinedPrimaryButtonSx}
+                        >
+                          View event details
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={() => router.push("/hack")}
+                          sx={refinedGhostButtonSx}
+                        >
+                          View other events
+                        </Button>
+                      </Box>
+                    </>
+                  )}
                 </Box>
               ) : (
                 <>
+                  {unlocked && (
+                    <Alert
+                      severity="success"
+                      role="status"
+                      sx={{ ...getRefinedAlertSx("success"), mb: 2 }}
+                    >
+                      Access code accepted — the application is open for you.
+                    </Alert>
+                  )}
                   {/* Save/restore controls live beside the form they act on
                       (mt: 0 — the section provides the NavBar clearance) */}
                   <FormPersistenceControls
@@ -2431,12 +2624,23 @@ const HackerApplicationComponent = () => {
                               mb: 1,
                             }}
                           >
-                            Apply before kickoff
+                            {eventData.deadlinePassed
+                              ? "Still open — apply now"
+                              : "Apply before kickoff"}
                           </Typography>
-                          <Typography sx={{ color: RX.muted, mb: 1.5 }}>
-                            Applications close on{" "}
-                            {eventData.formattedApplicationDeadline}.
-                          </Typography>
+                          {eventData.deadlinePassed ? (
+                            <Typography sx={{ color: RX.muted, mb: 1.5 }}>
+                              Our priority deadline was{" "}
+                              {eventData.formattedApplicationDeadline}.
+                              Applications are still being accepted, so get
+                              yours in as soon as you can.
+                            </Typography>
+                          ) : (
+                            <Typography sx={{ color: RX.muted, mb: 1.5 }}>
+                              Applications close on{" "}
+                              {eventData.formattedApplicationDeadline}.
+                            </Typography>
+                          )}
                           {eventData.hoursUntilDeadline > 0 && (
                             <Box
                               component="span"
@@ -2453,22 +2657,41 @@ const HackerApplicationComponent = () => {
                                 : `${eventData.hoursUntilDeadline} hour${eventData.hoursUntilDeadline !== 1 ? "s" : ""} remaining`}
                             </Box>
                           )}
-                          <Typography sx={{ color: RX.muted }}>
-                            We close applications ahead of kickoff so we can
-                            review submissions and send decisions before the
-                            hackathon begins on {eventData.formattedStartDate}.
-                          </Typography>
-                          {eventData.daysUntilDeadline <= 1 && (
-                            <Typography
-                              sx={{
-                                mt: 1.5,
-                                color: RX.ink,
-                                fontWeight: 600,
-                              }}
-                            >
-                              Deadline is close. Submit as early as you can.
+                          {!eventData.deadlinePassed && (
+                            <Typography sx={{ color: RX.muted }}>
+                              We close applications ahead of kickoff so we can
+                              review submissions and send decisions before the
+                              hackathon begins on {eventData.formattedStartDate}
+                              .
                             </Typography>
                           )}
+                          {eventData.hackerCapacity && (
+                            <Typography
+                              data-testid="hacker-capacity-statement"
+                              sx={{ color: RX.ink, mt: 1.5 }}
+                            >
+                              This event has room for{" "}
+                              <strong>
+                                {eventData.hackerCapacity} hackers
+                              </strong>
+                              . Spots are confirmed first come, first served —
+                              applying early is the best way to secure yours.
+                              {eventData.autoApproveOn &&
+                                " Applications are being confirmed as they come in right now."}
+                            </Typography>
+                          )}
+                          {!eventData.deadlinePassed &&
+                            eventData.daysUntilDeadline <= 1 && (
+                              <Typography
+                                sx={{
+                                  mt: 1.5,
+                                  color: RX.ink,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Deadline is close. Submit as early as you can.
+                              </Typography>
+                            )}
                         </Box>
                       )}
                     </Box>
@@ -2518,13 +2741,7 @@ const HackerApplicationComponent = () => {
                         <Button
                           variant="contained"
                           onClick={handleNext}
-                          disabled={
-                            submitting ||
-                            recaptchaLoading ||
-                            (eventData &&
-                              (eventData.isApplicationsClosed ||
-                                eventData.isEventPast))
-                          }
+                          disabled={submitting || recaptchaLoading || isClosed}
                           endIcon={
                             !(submitting || recaptchaLoading) ? (
                               <Arrow />

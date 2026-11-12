@@ -46,7 +46,16 @@ const buildHeaders = (accessToken, orgId) => ({
  *     touched in any explicit-save section currently marked dirty.
  *   - Explicit-save sections call commitSection(name) to flush.
  */
-export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
+// `readOnly`: the caller may VIEW the event (e.g. a `checkin.admin` desk
+// helper opening the Check-in section) but holds no write permission — the
+// load still runs (the list endpoint is public) and every PATCH is skipped.
+export function useHackathonAdmin({
+  eventId,
+  accessToken,
+  orgId,
+  isAdmin,
+  readOnly = false,
+}) {
   const [draft, setDraft] = useState(null);
   const [committed, setCommitted] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +77,10 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   accessTokenRef.current = accessToken;
   const orgIdRef = useRef(orgId);
   orgIdRef.current = orgId;
+  // Read through a ref so pushPatch stays identity-stable (same reason as the
+  // token refs above).
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   const loadedEventIdRef = useRef(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_SERVER_URL;
@@ -147,6 +160,7 @@ export function useHackathonAdmin({ eventId, accessToken, orgId, isAdmin }) {
   // Push a PATCH with the given payload. Returns the saved hackathon.
   const pushPatch = useCallback(
     async (payload) => {
+      if (readOnlyRef.current) return null;
       // Cancel any in-flight to avoid stale overwrites; fetch doesn't natively
       // cancel but we can ignore the response.
       const myToken = Symbol("save");
