@@ -41,3 +41,17 @@ export function isHackathonExpired(endDate, eventTimezone) {
   const endInTz = new Date(year, month - 1, day, 23, 59, 59, 999);
   return nowInTz > endInTz;
 }
+
+/**
+ * True once "now" is past 23:59:59 local time on `endDate` — the rule the
+ * team page and the team dashboard use to close team join/leave (the backend
+ * twin is api/teams/membership_rules.py, which uses the event timezone). A
+ * missing or unparseable date never counts as ended.
+ */
+export function isEventEnded(endDate, now = new Date()) {
+  if (!endDate) return false;
+  const end = parseLocalDate(endDate);
+  if (Number.isNaN(end.getTime())) return false;
+  end.setHours(23, 59, 59, 999);
+  return end < now;
+}

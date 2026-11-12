@@ -108,6 +108,9 @@ const ManageTeamComponent = () => {
   const [slackUsers, setSlackUsers] = useState([]);
   const [showNewTeamForm, setShowNewTeamForm] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState(null);
+  // "You've left …" — lives on the page because leaving unmounts the
+  // dashboard that triggered it.
+  const [leftNotice, setLeftNotice] = useState("");
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
   const [isGithubValid, setIsGithubValid] = useState(null);
@@ -198,6 +201,7 @@ const ManageTeamComponent = () => {
     teamsResource.status === "error" ? [] : (teamsResource.data ?? null);
   const setMyTeams = teamsResource.setData;
   const reloadMyTeams = teamsResource.reload;
+  const refreshMyTeams = teamsResource.refresh;
   const fetchMyTeams = useCallback(() => reloadMyTeams(), [reloadMyTeams]);
 
   const isLoadingApplication =
@@ -841,6 +845,25 @@ const ManageTeamComponent = () => {
     );
   }, []);
 
+  // Leave from the dashboard roster: drop the team locally (the dashboard
+  // unmounts), switch to the next team, then let a background /me refresh
+  // confirm it — refresh() keeps the data if that call fails.
+  const handleLeftTeam = useCallback(
+    (teamId, result) => {
+      const left = (myTeams || []).find((t) => t.id === teamId);
+      const remaining = (myTeams || []).filter((t) => t.id !== teamId);
+      setMyTeams(remaining);
+      setActiveTeamId(remaining[0]?.id ?? null);
+      setLeftNotice(
+        result?.noop
+          ? "You weren't on that team anymore."
+          : `You've left ${left?.name || "the team"}.`,
+      );
+      refreshMyTeams();
+    },
+    [myTeams, setMyTeams, refreshMyTeams],
+  );
+
   const hasExistingTeam = myTeams && myTeams.length > 0;
   // Bug #8: the old check compared against "APPROVED"/"PROJECT_COMPLETE",
   // neither of which exists in TEAM_STATUS_OPTIONS, so it was always false.
@@ -919,6 +942,38 @@ const ManageTeamComponent = () => {
           timezone={event?.timezone}
         />
 
+        {leftNotice && (
+          <Box
+            role="status"
+            className="ohx-card"
+            sx={{
+              p: 2,
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 1.5,
+              borderLeft: "3px solid var(--accent)",
+            }}
+          >
+            <span>{leftNotice}</span>
+            <button
+              type="button"
+              className="ohx-link"
+              onClick={() => setLeftNotice("")}
+              style={{
+                background: "none",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+          </Box>
+        )}
+
         {/* Team dashboard */}
         <div id="team-hub">
           {isLoadingTeams ? (
@@ -965,6 +1020,7 @@ const ManageTeamComponent = () => {
                 accessToken={accessToken}
                 profile={profile}
                 onTeamUpdated={handleTeamUpdated}
+                onLeftTeam={handleLeftTeam}
                 teamFindingEnabled={teamFindingEnabled}
               />
             </>
