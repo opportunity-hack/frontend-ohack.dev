@@ -1962,7 +1962,9 @@ const HackerApplicationComponent = () => {
                   Your application is in. Watch your inbox for review updates,
                   acceptance details, and team-matching information.
                   {eventData?.hackerCapacity
-                    ? ` This event has room for ${eventData.hackerCapacity} hackers, and spots are confirmed first come, first served.`
+                    ? eventData.autoApproveOn
+                      ? ` This event has room for ${eventData.hackerCapacity} hackers, and spots are confirmed first come, first served.`
+                      : ` This event has room for ${eventData.hackerCapacity} hackers. Seats go to the first ${eventData.hackerCapacity} hackers who check in when the doors open, so plan to arrive early.`
                     : ""}
                 </Typography>
               </Alert>
@@ -2674,10 +2676,10 @@ const HackerApplicationComponent = () => {
                               <strong>
                                 {eventData.hackerCapacity} hackers
                               </strong>
-                              . Spots are confirmed first come, first served —
-                              applying early is the best way to secure yours.
-                              {eventData.autoApproveOn &&
-                                " Applications are being confirmed as they come in right now."}
+                              .{" "}
+                              {eventData.autoApproveOn
+                                ? "Spots are confirmed first come, first served — applying early is the best way to secure yours. Applications are being confirmed as they come in right now."
+                                : `Seats go to the first ${eventData.hackerCapacity} hackers who check in when the doors open on ${eventData.formattedStartDate}, so plan to arrive early. Applying now doesn't reserve a seat, but it gets your details in so check-in is quick.`}
                             </Typography>
                           )}
                           {!eventData.deadlinePassed &&
