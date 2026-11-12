@@ -18,6 +18,7 @@ import {
 } from "../components/Teams/projectMeta";
 import { normalizeRepoLink, repoEntriesFromTeam } from "./githubLinks";
 import { DEFAULT_EVENT_TIMEZONE } from "./timezoneUtils";
+import { isPendingReview } from "../constants/teamStatus";
 
 export const SCHEDULE_ROUNDS = ["round1", "round2"];
 
@@ -183,7 +184,7 @@ export function mergeSchedule(schedule, eventData, activityByTeam) {
 }
 
 /**
- * Active, non-IN_REVIEW teams on the event with no assignment in `round` —
+ * Active teams that are past review (not IN_REVIEW / APPROVING) on the event with no assignment in `round` —
  * the organizer heads-up ("N teams aren't on a Round 1 panel yet").
  * Sorted by name.
  */
@@ -197,7 +198,7 @@ export function unassignedActiveTeams(schedule, eventData, round = "round1") {
       (t) =>
         t?.id &&
         isTeamActive(t) &&
-        t.status !== "IN_REVIEW" &&
+        !isPendingReview(t.status) &&
         !assigned.has(t.id),
     )
     .sort((a, b) =>
