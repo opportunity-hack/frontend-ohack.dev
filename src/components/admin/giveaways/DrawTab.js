@@ -22,6 +22,7 @@ import { DragIndicator as DragIcon, PlayArrow as PlayIcon } from "@mui/icons-mat
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useAuthInfo } from "@propelauth/react";
 import {
+  getAdminGiveawayEntries,
   giveawayErrorMessage,
   resetGiveawayDraw,
   sortedPrizes,
@@ -64,8 +65,14 @@ const WINNER_COLUMNS = [
   { key: "profile", label: "Profile" },
 ];
 
-export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }) {
+export default function DrawTab({ giveaway, entries: pageEntries, orgId, onUpdated, onEntriesLoaded, onSnack }) {
   const { accessToken } = useAuthInfo();
+  // The stage draws from a list fetched AFTER the server has closed entries,
+  // never the one from page load: late entrants, re-saved weights and
+  // withdrawals would otherwise be ignored, and a mid-draw reload would switch
+  // pools (same seed, different winners).
+  const [stageEntries, setStageEntries] = useState(null);
+  const entries = stageEntries || pageEntries;
   const prizes = useMemo(() => sortedPrizes(giveaway), [giveaway]);
   const prizesById = useMemo(() => Object.fromEntries(prizes.map((p) => [p.id, p])), [prizes]);
   const byId = useMemo(() => Object.fromEntries((entries || []).map((e) => [e.user_id, e])), [entries]);
@@ -84,6 +91,7 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
 
   const [stageOpen, setStageOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loadingEntries, setLoadingEntries] = useState(false);
   const [error, setError] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
   const [resetText, setResetText] = useState("");
@@ -113,6 +121,28 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
     saveOrder(next);
   };
 
+  /** Fetch the current entry list; true when the stage may open with it. */
+  const loadStageEntries = async () => {
+    setLoadingEntries(true);
+    try {
+      const list = await getAdminGiveawayEntries(giveaway.id, opts);
+      const fresh = list?.entries || [];
+      setStageEntries(fresh);
+      onEntriesLoaded?.(fresh);
+      return true;
+    } catch (err) {
+      setError(
+        giveawayErrorMessage(
+          err,
+          "Couldn't load the latest entries, so the draw stage stays closed. Try \"Resume the draw\" again.",
+        ),
+      );
+      return false;
+    } finally {
+      setLoadingEntries(false);
+    }
+  };
+
   const start = async () => {
     setBusy(true);
     setError("");
@@ -123,12 +153,17 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
         action: "admin_giveaway_draw_start",
         params: { event_category: EventCategory.ADMIN, event_label: giveaway.id, value: people.length },
       });
-      setStageOpen(true);
+      if (await loadStageEntries()) setStageOpen(true);
     } catch (err) {
       setError(giveawayErrorMessage(err, "Couldn't start the draw."));
     } finally {
       setBusy(false);
     }
+  };
+
+  const resume = async () => {
+    setError("");
+    if (await loadStageEntries()) setStageOpen(true);
   };
 
   const undo = async (resultId) => {
@@ -149,6 +184,7 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
     setError("");
     try {
       onUpdated(await resetGiveawayDraw(giveaway.id, opts));
+      setStageEntries(null);
       setResetOpen(false);
       setResetText("");
       onSnack?.("Draw reset. Pick a seed and start again.");
@@ -264,8 +300,14 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
           {started ? (
-            <Button variant="contained" size="large" startIcon={<PlayIcon />} onClick={() => setStageOpen(true)}>
-              {giveaway.status === "drawn" ? "Show the winners" : "Resume the draw"}
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<PlayIcon />}
+              onClick={resume}
+              disabled={busy || loadingEntries}
+            >
+              {loadingEntries ? "Loading entries…" : giveaway.status === "drawn" ? "Show the winners" : "Resume the draw"}
             </Button>
           ) : (
             <Button
@@ -275,7 +317,7 @@ export default function DrawTab({ giveaway, entries, orgId, onUpdated, onSnack }
               onClick={start}
               disabled={busy || !seedValid || isDraft || people.length === 0}
             >
-              {busy ? "Starting…" : "Start the draw"}
+              {loadingEntries ? "Loading entries…" : busy ? "Starting…" : "Start the draw"}
             </Button>
           )}
           {started && (
@@ -382,5 +424,7 @@ DrawTab.propTypes = {
   entries: PropTypes.arrayOf(PropTypes.object).isRequired,
   orgId: PropTypes.string,
   onUpdated: PropTypes.func.isRequired,
+  /** Called with the entry list fetched when the stage opens. */
+  onEntriesLoaded: PropTypes.func,
   onSnack: PropTypes.func,
 };
