@@ -137,6 +137,15 @@ export function maskKey(key) {
 }
 
 /**
+ * Claude Code assumes a 200k context window and only auto-compacts near it.
+ * Models with a smaller window need Claude Code told to compact sooner, or a
+ * long session fails with "Please reduce the length of the messages"
+ * (gpt-oss-120b: 131k on Groq and Cerebras, and that includes the reply).
+ * 100k is the lowest value Claude Code accepts and leaves room for the reply.
+ */
+export const CLAUDE_COMPACT_WINDOW = { "gpt-oss-120b": "100000" };
+
+/**
  * `model` is the model the team picked on the card; every block uses it.
  * `fastModel` is what Claude Code runs its background/small tasks on
  * (ANTHROPIC_SMALL_FAST_MODEL + ANTHROPIC_DEFAULT_HAIKU_MODEL) — see
@@ -148,6 +157,7 @@ export function buildSetupSnippets({ key, model = DEFAULT_MODEL, fastModel }) {
   const k = String(key || "");
   const m = model || DEFAULT_MODEL;
   const f = fastModel || m;
+  const compactWindow = CLAUDE_COMPACT_WINDOW[m];
   return [
     {
       id: "claude-code",
@@ -160,6 +170,9 @@ export function buildSetupSnippets({ key, model = DEFAULT_MODEL, fastModel }) {
         `export ANTHROPIC_MODEL="${m}"`,
         `export ANTHROPIC_SMALL_FAST_MODEL="${f}"`,
         `export ANTHROPIC_DEFAULT_HAIKU_MODEL="${f}"`,
+        ...(compactWindow
+          ? [`export CLAUDE_CODE_AUTO_COMPACT_WINDOW="${compactWindow}"`]
+          : []),
         "claude",
       ].join("\n"),
     },
@@ -176,6 +189,9 @@ export function buildSetupSnippets({ key, model = DEFAULT_MODEL, fastModel }) {
             ANTHROPIC_MODEL: m,
             ANTHROPIC_SMALL_FAST_MODEL: f,
             ANTHROPIC_DEFAULT_HAIKU_MODEL: f,
+            ...(compactWindow
+              ? { CLAUDE_CODE_AUTO_COMPACT_WINDOW: compactWindow }
+              : {}),
           },
         },
         null,

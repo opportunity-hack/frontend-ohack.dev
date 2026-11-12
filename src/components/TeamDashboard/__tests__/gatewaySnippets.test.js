@@ -37,6 +37,21 @@ describe("gatewaySnippets", () => {
     }
   });
 
+  it("tells Claude Code to compact sooner only for the 131k gpt-oss-120b model", () => {
+    expect(byId["claude-code"].text).not.toContain("CLAUDE_CODE_AUTO_COMPACT_WINDOW");
+    expect(byId["claude-settings"].text).not.toContain("CLAUDE_CODE_AUTO_COMPACT_WINDOW");
+    const oss = Object.fromEntries(
+      buildSetupSnippets({ key: KEY, model: "gpt-oss-120b" }).map((s) => [s.id, s]),
+    );
+    expect(oss["claude-code"].text).toContain(
+      'export CLAUDE_CODE_AUTO_COMPACT_WINDOW="100000"',
+    );
+    expect(oss["claude-code"].text.trim().endsWith("\nclaude")).toBe(true);
+    expect(JSON.parse(oss["claude-settings"].text).env.CLAUDE_CODE_AUTO_COMPACT_WINDOW).toBe(
+      "100000",
+    );
+  });
+
   it("Claude Code uses the bare host, OpenAI clients use /v1 (matches the guide)", () => {
     expect(byId["claude-code"].text).toContain(
       `export ANTHROPIC_BASE_URL="${GATEWAY_HOST}"`,
