@@ -205,6 +205,15 @@ describe("fetchHackerStatus", () => {
 });
 
 describe("blocked reasons", () => {
+  it.each(["IN_REVIEW", "APPROVING"])(
+    "keeps a team waiting for review joinable even though it's saved inactive (%s)",
+    (status) => {
+      expect(
+        teamJoinBlockedReason({ isActive: false, teamJoinEnabled: true, status }),
+      ).toBeNull();
+    },
+  );
+
   it("orders event ended → joining paused → inactive → status", () => {
     expect(
       teamJoinBlockedReason({

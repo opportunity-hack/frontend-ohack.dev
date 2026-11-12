@@ -1,6 +1,9 @@
 // Team status constants - centralized definition
 export const TEAM_STATUS_OPTIONS = [
   { value: 'IN_REVIEW', label: 'In Review', color: 'default' },
+  // Transient: set by the backend's approve_team claim for a few seconds
+  // while an approval runs (restored to IN_REVIEW if it fails).
+  { value: 'APPROVING', label: 'Being approved', color: 'default' },
   { value: 'NONPROFIT_SELECTED', label: 'Nonprofit Selected', color: 'primary' },
   { value: 'ONBOARDED', label: 'Onboarded', color: 'info' },
   { value: 'SWAG_RECEIVED', label: 'Swag Received', color: 'success' },
@@ -31,6 +34,15 @@ export const JOINING_DISABLED_STATUSES = [
   'NONPROFIT_SIGNOFF',
   'INACTIVE'
 ];
+
+// Not approved yet: in review, or mid-approval (APPROVING). Dashboards and
+// "has an approved team" checks treat both the same way (a missing status
+// counts as pending here). Joining: both stay joinable even though queued
+// teams are saved inactive — teamJoinBlockedReason checks the list exactly,
+// like backend membership_rules.PENDING_REVIEW_STATUSES.
+export const PENDING_REVIEW_STATUSES = ['IN_REVIEW', 'APPROVING'];
+export const isPendingReview = (status) =>
+  !status || PENDING_REVIEW_STATUSES.includes(status);
 
 // Helper function to get status option by value
 export const getStatusOption = (status) => {

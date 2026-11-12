@@ -25,12 +25,15 @@ const GitHubInfoForm = memo(({
   return (
     <StyledTextField
       fullWidth
-      label="Your GitHub Username - we will create a repo and make you the owner"
+      label="Your GitHub username"
       value={githubUsername}
       onChange={(e) => setGithubUsername(e.target.value)}
       required
       error={isGithubValid === false}
-      helperText={githubError}
+      helperText={
+        githubError ||
+        "When organizers approve your team, we create its GitHub repo and add you as an admin."
+      }
       InputProps={{
         startAdornment: <FaGithub style={{ marginRight: 8 }} />,
         endAdornment: (
