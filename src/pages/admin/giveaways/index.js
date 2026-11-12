@@ -145,6 +145,12 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
     [setDetailData, refreshList],
   );
 
+  /** The Draw tab re-fetches entries when the stage opens; keep the page in step. */
+  const onEntriesLoaded = useCallback(
+    (fresh) => setDetailData((d) => ({ ...(d || {}), entries: fresh })),
+    [setDetailData],
+  );
+
   const onCreate = async ({ id, title }) => {
     await createAdminGiveaway({ id, title, status: "draft" }, { token: accessToken, orgId });
     setNewOpen(false);
@@ -215,6 +221,7 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
           entries={entries}
           orgId={orgId}
           onUpdated={onUpdated}
+          onEntriesLoaded={onEntriesLoaded}
           onSnack={onSnack}
         />
       );
