@@ -108,6 +108,16 @@ it("shows the capacity statement (and the auto-approve line when on)", async () 
   expect(statement).toHaveTextContent("being confirmed as they come in");
 });
 
+it("without auto-approve, capacity is decided at the door, not by apply order", async () => {
+  mockEvent({ startInDays: 10, constraints: { hacker_capacity: 90 } });
+  renderPage();
+  const statement = await screen.findByTestId("hacker-capacity-statement");
+  expect(statement).toHaveTextContent("This event has room for 90 hackers");
+  expect(statement).toHaveTextContent("first 90 hackers who check in when the doors open");
+  expect(statement).toHaveTextContent("doesn't reserve a seat");
+  expect(statement).not.toHaveTextContent("first come, first served");
+});
+
 it("locks the form when the admin turns applications off and there is no code", async () => {
   mockEvent({ startInDays: 10, constraints: { application_hacker_enabled: false } });
   renderPage();
