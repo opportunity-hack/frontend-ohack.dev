@@ -40,6 +40,11 @@ import {
 } from "../../../lib/projectRanking";
 import { queueTeam } from "../../../lib/teamProjectApi";
 import { isPendingReview } from "../../../constants/teamStatus";
+import {
+  savePendingTeammates,
+  splitTeammates,
+  teammateName,
+} from "../../../lib/teamInvite";
 
 const steps = [
   "Team details",
@@ -122,9 +127,11 @@ const ManageTeamComponent = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [event, setEvent] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
-  const [memberInput, setMemberInput] = useState("");
   const [comments, setComments] = useState("");
   const [slackUsers, setSlackUsers] = useState([]);
+  // "idle" | "loading" | "ready" | "error" — the picker says when the Slack
+  // directory couldn't load instead of looking empty.
+  const [slackUsersStatus, setSlackUsersStatus] = useState("idle");
   const [showNewTeamForm, setShowNewTeamForm] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState(null);
   // "You've left …" — lives on the page because leaving unmounts the
@@ -326,6 +333,7 @@ const ManageTeamComponent = () => {
 
   // Lazy Slack user fetch — only when user reaches the team-member step
   const fetchActiveSlackUsers = useCallback(async () => {
+    setSlackUsersStatus("loading");
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=365`,
@@ -346,9 +354,11 @@ const ManageTeamComponent = () => {
           })),
         );
       }
+      setSlackUsersStatus("ready");
     } catch (err) {
       console.error("Error fetching active Slack users:", err);
-      // Non-critical — member picker works in freeSolo mode without the list
+      // Non-critical — teammates can still be added to the invite list.
+      setSlackUsersStatus("error");
     }
   }, []);
 
@@ -381,34 +391,25 @@ const ManageTeamComponent = () => {
     [],
   );
 
-  const handleAddTeamMember = useCallback(() => {
-    if (!memberInput) return;
-    const memberName =
-      typeof memberInput === "string"
-        ? memberInput.trim()
-        : (memberInput.real_name || memberInput.name || "").trim();
-    if (!memberName) return;
-
-    const isDuplicate = teamMembers.some((member) => {
-      if (typeof member === "string" && typeof memberInput === "string")
-        return member === memberName;
-      if (typeof member === "object" && typeof memberInput === "object")
-        return member.id === memberInput.id;
-      if (typeof member === "string" && typeof memberInput === "object")
-        return member === memberInput.real_name || member === memberInput.name;
-      if (typeof member === "object" && typeof memberInput === "string")
-        return member.real_name === memberInput || member.name === memberInput;
-      return false;
-    });
-
-    if (isDuplicate) {
-      setFormError("This team member has already been added");
-      return;
-    }
-    setTeamMembers((prev) => [...prev, memberInput]);
-    setMemberInput("");
-    setFormError("");
-  }, [memberInput, teamMembers]);
+  // Adds a Slack user object (on the team at creation) or a typed name (an
+  // invite-list reminder — joins later from the team page). Returns an error
+  // message for the field, or null.
+  const handleAddTeamMember = useCallback(
+    (member) => {
+      const name = teammateName(member);
+      if (!name) return null;
+      const value = typeof member === "string" ? name : member;
+      const duplicate = teamMembers.some((existing) =>
+        typeof existing === "object" && typeof value === "object"
+          ? existing.id === value.id
+          : teammateName(existing).toLowerCase() === name.toLowerCase(),
+      );
+      if (duplicate) return `${name} is already on your list.`;
+      setTeamMembers((prev) => [...prev, value]);
+      return null;
+    },
+    [teamMembers],
+  );
 
   const handleRemoveTeamMember = useCallback((index) => {
     setTeamMembers((prev) => {
@@ -595,7 +596,6 @@ const ManageTeamComponent = () => {
     setGithubError("");
     setRankedProjects([]);
     setTeamMembers([]);
-    setMemberInput("");
     setComments("");
     setShowNewTeamForm(false);
   };
@@ -624,6 +624,9 @@ const ManageTeamComponent = () => {
         },
         { token: tokenRef.current },
       );
+      // Typed names become the dashboard's "Still to join" reminder (local
+      // only; keyed by the new team's Slack channel).
+      savePendingTeammates(slackChannel, splitTeammates(teamMembers).joinLater);
       // Refetch teams so the dashboard shows the new IN_REVIEW team, THEN
       // reset — the button stays disabled until both are done.
       await fetchMyTeams();
@@ -724,15 +727,14 @@ const ManageTeamComponent = () => {
         return (
           <TeammatesStep
             teamMembers={teamMembers}
-            memberInput={memberInput}
-            setMemberInput={setMemberInput}
-            handleAddTeamMember={handleAddTeamMember}
-            handleRemoveTeamMember={handleRemoveTeamMember}
+            onAddMember={handleAddTeamMember}
+            onRemoveMember={handleRemoveTeamMember}
             slackUsers={slackUsers}
+            slackUsersStatus={slackUsersStatus}
             slackChannel={slackChannel}
+            eventId={event_id}
             comments={comments}
             setComments={setComments}
-            error={formError}
           />
         );
       case STEP_CONFIRM:
@@ -781,6 +783,9 @@ const ManageTeamComponent = () => {
   );
 
   const hasExistingTeam = myTeams && myTeams.length > 0;
+  // Hidden while teams load (no flash) and whenever the create-team flow is
+  // showing: no team yet, or the "Create another team" form is open.
+  const showSurvey = !isLoadingTeams && hasExistingTeam && !showNewTeamForm;
   // Bug #8: the old check compared against "APPROVED"/"PROJECT_COMPLETE",
   // neither of which exists in TEAM_STATUS_OPTIONS, so it was always false.
   const hasApprovedTeam =
@@ -849,12 +854,16 @@ const ManageTeamComponent = () => {
           hasTeam={hasExistingTeam}
         />
 
-        <SurveyCTA
-          eventId={event_id}
-          startDate={event?.start_date}
-          endDate={event?.end_date}
-          timezone={event?.timezone}
-        />
+        {/* The live/post-event survey only makes sense once you're on a
+            team — never while the create-team flow is on screen. */}
+        {showSurvey && (
+          <SurveyCTA
+            eventId={event_id}
+            startDate={event?.start_date}
+            endDate={event?.end_date}
+            timezone={event?.timezone}
+          />
+        )}
 
         {leftNotice && (
           <Box

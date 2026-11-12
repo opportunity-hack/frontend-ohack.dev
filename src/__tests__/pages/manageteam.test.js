@@ -44,7 +44,9 @@ jest.mock("../../lib/ga", () => ({
   trackEvent: jest.fn(),
   EventCategory: { ENGAGEMENT: "engagement" },
 }));
-jest.mock("../../components/Survey/SurveyCTA", () => () => null);
+jest.mock("../../components/Survey/SurveyCTA", () => () => (
+  <div data-testid="survey-cta" />
+));
 // Pass-through dnd (jsdom can't drag; ↑/↓ is the tested reorder path).
 jest.mock("@hello-pangea/dnd", () => ({
   DragDropContext: ({ children }) => children,
@@ -435,5 +437,66 @@ it("leaving one of two teams switches the dashboard to the other team", async ()
   fireEvent.click(screen.getByRole("button", { name: "stub-leave" }));
   expect(await screen.findByTestId("team-dashboard")).toHaveTextContent(
     "Null Pointers",
+  );
+});
+
+// ---- teammates not on Slack + the survey card (Nov 2026) -----------------
+
+it("the live-survey card never shows during team creation, only with a team", async () => {
+  mockCreateFlowBackend();
+  render(<ManageTeam />);
+  await screen.findByLabelText(/Team Name/);
+  expect(screen.queryByTestId("survey-cta")).toBeNull();
+});
+
+it("shows the survey card to someone who already has a team", async () => {
+  mockBackend();
+  render(<ManageTeam />);
+  await screen.findByTestId("team-dashboard");
+  expect(screen.getByTestId("survey-cta")).toBeInTheDocument();
+});
+
+it("typed teammates are sent as names, listed as 'joining later', and saved as the dashboard reminder", async () => {
+  mockCreateFlowBackend();
+  axios.post.mockResolvedValue({ data: { success: true } });
+  localStorage.clear();
+  await goToProjectsStep();
+  const adds = await screen.findAllByRole("button", {
+    name: "Add to my ranking",
+  });
+  fireEvent.click(adds[0]);
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Add to my ranking" })[1],
+  );
+  await waitEnabled(nextButton);
+  fireEvent.click(nextButton()); // → Teammates
+  await screen.findByRole("heading", { name: "Who's on your team?" });
+  expect(
+    screen.getByText(
+      /Everyone on your team needs to be on the Opportunity Hack Slack/,
+    ),
+  ).toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText(/Teammate's name/), {
+    target: { value: "Priya" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Add to invite list" }));
+  expect(
+    screen.getByRole("list", { name: /joining later/i }),
+  ).toHaveTextContent("Priya");
+
+  fireEvent.click(nextButton()); // → Confirm
+  await screen.findByRole("heading", { name: "Check your team details" });
+  expect(
+    screen.getByText("Joining later from your team page"),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Create team" }));
+  await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(1));
+  expect(axios.post.mock.calls[0][1].teamMembers).toEqual(["Priya"]);
+  await waitFor(() =>
+    expect(
+      JSON.parse(localStorage.getItem("ohx.team.pendingTeammates.byte-club")),
+    ).toEqual(["Priya"]),
   );
 });

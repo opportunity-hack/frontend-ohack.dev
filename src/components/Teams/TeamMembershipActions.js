@@ -3,7 +3,10 @@ import NextLink from "next/link";
 import { Box, CircularProgress } from "@mui/material";
 import { FaSlack } from "react-icons/fa";
 import TeamJoinConfirmationModal from "./TeamJoinConfirmationModal";
+import JoinTeamSteps from "./JoinTeamSteps";
+import TeamInviteKit from "./TeamInviteKit";
 import { slackChannelUrl } from "../../lib/slackLinks";
+import { SLACK_SIGNUP_PATH } from "../../lib/teamInvite";
 
 // Only ever rendered inside a RefinedRoot (the team page), so `.ohx-*`
 // classes and `var(--x)` are safe here. The confirmation modal is a Portal
@@ -47,9 +50,121 @@ const Spinner = () => (
  * through the shared three-ack confirmation modal. Leaving is a two-step
  * inline confirm (it posts to the team's Slack channel) — no browser dialog.
  */
+/**
+ * The four join steps with the viewer's live progress (team page, non-members).
+ * The Slack step can't be checked directly — it's "done" only when the viewer
+ * logged in with Slack; otherwise it stays a neutral reminder.
+ */
+function joinChecklist({
+  eventId,
+  slackLabel,
+  isLoggedIn,
+  isSlackLogin,
+  hackerStatus,
+  joining,
+  onLogin,
+  onOpenJoin,
+}) {
+  const approved = isLoggedIn && hackerStatus === "approved";
+  const items = [
+    {
+      key: "slack",
+      title: "Join the Opportunity Hack Slack",
+      state: isSlackLogin ? "done" : undefined,
+      body: isSlackLogin ? (
+        "You're on Slack."
+      ) : (
+        <>
+          Everyone on a team is on Slack — your team channel, mentors and
+          organizers are there. Already on it? You're set.{" "}
+          <NextLink
+            href={SLACK_SIGNUP_PATH}
+            className="ohx-link"
+            target="_blank"
+          >
+            How to join Slack
+          </NextLink>
+        </>
+      ),
+    },
+    {
+      key: "login",
+      title: "Log in to ohack.dev with Slack",
+      state: isLoggedIn ? "done" : "current",
+      body: !isLoggedIn
+        ? `Choose “Sign in with Slack” so you're added to ${slackLabel} automatically when you join.`
+        : isSlackLogin === false
+          ? `You're logged in without Slack. You can still join — afterwards, open ${slackLabel} in Slack and click “Join channel”.`
+          : null,
+      action: !isLoggedIn ? (
+        <button
+          type="button"
+          className="ohx-btn ohx-btn--primary"
+          onClick={onLogin}
+        >
+          Log in to join
+        </button>
+      ) : null,
+    },
+    {
+      key: "application",
+      title: "Get your hacker application approved",
+      state: !isLoggedIn
+        ? "todo"
+        : hackerStatus === "approved"
+          ? "done"
+          : "current",
+      body: !isLoggedIn ? (
+        "Everyone on a team applies as a hacker for this event."
+      ) : hackerStatus === "approved" ? (
+        "You're approved."
+      ) : hackerStatus === "pending" ? (
+        "Your application is awaiting confirmation — usually within a week. You can join as soon as it's approved."
+      ) : hackerStatus === "none" ? (
+        <>
+          Everyone on a team applies as a hacker.{" "}
+          <NextLink
+            href={`/hack/${eventId}/hacker-application`}
+            className="ohx-link"
+          >
+            Apply as a hacker
+          </NextLink>
+        </>
+      ) : (
+        "Checking your application…"
+      ),
+    },
+    {
+      key: "join",
+      title: "Join the team",
+      state: approved ? "current" : "todo",
+      body: approved
+        ? null
+        : "Available once the steps above are done. Teams still in review can be joined too.",
+      action: approved ? (
+        <button
+          type="button"
+          className="ohx-btn ohx-btn--primary"
+          onClick={onOpenJoin}
+          disabled={joining}
+          style={joining ? disabledStyle : undefined}
+        >
+          {joining && <Spinner />}
+          {joining ? "Joining…" : "Join team"}
+        </button>
+      ) : null,
+    },
+  ];
+  return items;
+}
+
 export default function TeamMembershipActions({
   eventId,
+  teamId,
   teamName,
+  eventTitle,
+  users,
+  isSlackLogin = null,
   slackChannel,
   isLoggedIn,
   isOnTeam,
@@ -92,136 +207,110 @@ export default function TeamMembershipActions({
         Checking your team status…
       </Box>
     );
-  } else if (!isLoggedIn) {
-    body = joinBlockedReason ? (
-      <Box component="p" sx={mutedSx}>
-        {joinBlockedReason}
-      </Box>
-    ) : (
-      <Box
-        sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2 }}
-      >
-        <Box component="p" sx={mutedSx}>
-          Hacking with this team? Log in to join it from here.
-        </Box>
-        <button
-          type="button"
-          className="ohx-btn ohx-btn--ghost"
-          onClick={onLogin}
-        >
-          Log in to join
-        </button>
-      </Box>
-    );
-  } else if (isOnTeam) {
+  } else if (isLoggedIn && isOnTeam) {
     body = (
-      <Box
-        sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2 }}
-      >
-        <span className="ohx-tag ohx-tag--accent">You're on this team</span>
-        {leaveBlockedReason ? (
-          <Box component="p" sx={mutedSx}>
-            {leaveBlockedReason}
-          </Box>
-        ) : confirmLeave ? (
-          <Box
-            role="group"
-            aria-label={`Leave ${teamName || "this team"}?`}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 1.5,
-            }}
-          >
-            <Box component="p" sx={{ ...mutedSx, color: "var(--ink)" }}>
-              Leave {teamName || "this team"}? Your teammates will see a note in{" "}
-              {slackLabel}.
+      <>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+            mb: 2.5,
+          }}
+        >
+          <span className="ohx-tag ohx-tag--accent">You're on this team</span>
+          {leaveBlockedReason ? (
+            <Box component="p" sx={mutedSx}>
+              {leaveBlockedReason}
             </Box>
+          ) : confirmLeave ? (
+            <Box
+              role="group"
+              aria-label={`Leave ${teamName || "this team"}?`}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 1.5,
+              }}
+            >
+              <Box component="p" sx={{ ...mutedSx, color: "var(--ink)" }}>
+                Leave {teamName || "this team"}? Your teammates will see a note
+                in {slackLabel}.
+              </Box>
+              <button
+                type="button"
+                className="ohx-btn ohx-btn--primary"
+                onClick={handleLeave}
+                disabled={leaving}
+                style={leaving ? disabledStyle : undefined}
+              >
+                {leaving && <Spinner />}
+                {leaving ? "Leaving…" : "Yes, leave the team"}
+              </button>
+              <button
+                type="button"
+                className="ohx-btn ohx-btn--ghost"
+                onClick={() => setConfirmLeave(false)}
+                disabled={leaving}
+              >
+                Stay on the team
+              </button>
+            </Box>
+          ) : (
             <button
               type="button"
-              className="ohx-btn ohx-btn--primary"
-              onClick={handleLeave}
+              className="ohx-btn ohx-btn--ghost"
+              onClick={() => setConfirmLeave(true)}
               disabled={leaving}
               style={leaving ? disabledStyle : undefined}
             >
               {leaving && <Spinner />}
-              {leaving ? "Leaving…" : "Yes, leave the team"}
+              {leaving ? "Leaving…" : "Leave team"}
             </button>
-            <button
-              type="button"
-              className="ohx-btn ohx-btn--ghost"
-              onClick={() => setConfirmLeave(false)}
-              disabled={leaving}
-            >
-              Stay on the team
-            </button>
-          </Box>
-        ) : (
-          <button
-            type="button"
-            className="ohx-btn ohx-btn--ghost"
-            onClick={() => setConfirmLeave(true)}
-            disabled={leaving}
-            style={leaving ? disabledStyle : undefined}
-          >
-            {leaving && <Spinner />}
-            {leaving ? "Leaving…" : "Leave team"}
-          </button>
-        )}
-      </Box>
+          )}
+        </Box>
+        <TeamInviteKit
+          eventId={eventId}
+          teamId={teamId}
+          teamName={teamName}
+          eventTitle={eventTitle}
+          slackChannel={slackChannel}
+          users={users}
+          source="team_page"
+        />
+      </>
     );
-  } else if (joinBlockedReason) {
+  } else if (!isOnTeam && joinBlockedReason) {
     body = (
       <Box component="p" sx={mutedSx}>
         {joinBlockedReason}
       </Box>
     );
-  } else if (hackerStatus === "approved") {
-    body = (
-      <Box
-        sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2 }}
-      >
-        <button
-          type="button"
-          className="ohx-btn ohx-btn--primary"
-          onClick={() => setModalOpen(true)}
-          disabled={joining}
-          style={joining ? disabledStyle : undefined}
-        >
-          {joining && <Spinner />}
-          {joining ? "Joining…" : "Join team"}
-        </button>
-        <Box component="p" sx={mutedSx}>
-          You'll be added to the team and invited to {slackLabel}.
-        </Box>
-      </Box>
-    );
-  } else if (hackerStatus === "pending") {
-    body = (
-      <Box component="p" sx={mutedSx}>
-        Your hacker application is awaiting confirmation. You can join a team
-        once it's approved — usually within a week.
-      </Box>
-    );
-  } else if (hackerStatus === "none") {
-    body = (
-      <Box component="p" sx={mutedSx}>
-        Joining a team is for approved hackers.{" "}
-        <NextLink
-          href={`/hack/${eventId}/hacker-application`}
-          className="ohx-link"
-        >
-          Apply as a hacker
-        </NextLink>{" "}
-        to get started.
-      </Box>
-    );
   } else {
     body = (
-      <Box component="p" sx={mutedSx} role="status">
-        Checking your application…
-      </Box>
+      <>
+        <Box
+          component="p"
+          sx={{ ...mutedSx, color: "var(--ink)", fontWeight: 600, mb: 1.5 }}
+        >
+          Joining {teamName || "this team"}? Here&apos;s how.
+        </Box>
+        <JoinTeamSteps
+          ariaLabel={`How to join ${teamName || "this team"}`}
+          items={joinChecklist({
+            eventId,
+            slackLabel,
+            isLoggedIn,
+            isSlackLogin,
+            hackerStatus,
+            joining,
+            onLogin,
+            onOpenJoin: () => setModalOpen(true),
+          })}
+        />
+      </>
     );
   }
 
@@ -267,7 +356,9 @@ export default function TeamMembershipActions({
               rel="noopener noreferrer"
             >
               <FaSlack aria-hidden style={{ marginRight: 6 }} />
-              Say hello in {slackLabel}
+              {isSlackLogin === false
+                ? `Open ${slackLabel} and click “Join channel”`
+                : `Say hello in ${slackLabel}`}
             </a>
           )}
         </Box>
@@ -290,6 +381,7 @@ export default function TeamMembershipActions({
         onConfirm={handleConfirmJoin}
         teamName={teamName}
         loading={joining}
+        slackInvite={isSlackLogin !== false}
       />
     </Box>
   );

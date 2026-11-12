@@ -3,6 +3,7 @@ import { Box, CircularProgress, Skeleton } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import { ROSTER_TITLE } from "./copy";
 import { isMembershipRefusal } from "../../lib/teamMembershipApi";
+import TeamInviteKit from "../Teams/TeamInviteKit";
 
 function memberName(member) {
   return member?.nickname || member?.name || "Teammate";
@@ -143,10 +144,16 @@ export function LeaveTeamControl({
             className="ohx-btn ohx-btn--primary"
             onClick={handleLeave}
             disabled={leaving}
-            style={leaving ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+            style={
+              leaving ? { opacity: 0.6, cursor: "not-allowed" } : undefined
+            }
           >
             {leaving && (
-              <CircularProgress size={14} sx={{ color: "inherit" }} aria-hidden />
+              <CircularProgress
+                size={14}
+                sx={{ color: "inherit" }}
+                aria-hidden
+              />
             )}
             {leaving ? "Leaving…" : "Yes, leave the team"}
           </button>
@@ -211,26 +218,11 @@ export default function TeamRoster({
   teamId,
   teamFindingEnabled,
   teamName,
+  eventTitle,
   slackChannel,
   leaveBlockedReason,
   onLeave,
 }) {
-  const [copied, setCopied] = useState(false);
-
-  const inviteLink = () => {
-    if (typeof window === "undefined") return "";
-    return `${window.location.origin}/hack/${eventId}/team/${teamId}`;
-  };
-
-  const handleInvite = () => {
-    const link = inviteLink();
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(link).catch(() => {});
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <DashboardSection id="roster" eyebrow="Your teammates" title={ROSTER_TITLE}>
       {loading ? (
@@ -245,7 +237,7 @@ export default function TeamRoster({
           ))}
         </Box>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2.5 }}>
           {(users || []).map((member) => (
             <Box
               key={member.id || member.user_id}
@@ -269,30 +261,21 @@ export default function TeamRoster({
         </Box>
       )}
 
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1.5,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <button
-          type="button"
-          className="ohx-btn ohx-btn--ghost"
-          onClick={handleInvite}
-        >
-          {copied ? "Link copied ✓" : "Invite a teammate"}
-        </button>
-        {teamFindingEnabled && (
+      <TeamInviteKit
+        eventId={eventId}
+        teamId={teamId}
+        teamName={teamName}
+        eventTitle={eventTitle}
+        slackChannel={slackChannel}
+        users={loading ? [] : users}
+        showPending={!loading}
+        source="team_dashboard"
+      />
+      {teamFindingEnabled && (
+        <Box sx={{ mt: 1.5 }}>
           <a href={`/hack/${eventId}/findteam`} className="ohx-link">
-            Find teammates →
+            Looking for more teammates? Find teammates →
           </a>
-        )}
-      </Box>
-      {copied && (
-        <Box sx={{ fontSize: "0.8rem", color: "var(--muted)", mt: 0.5 }}>
-          Send them this link — they click Join on your public team page.
         </Box>
       )}
 

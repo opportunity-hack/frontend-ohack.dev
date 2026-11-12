@@ -131,6 +131,7 @@ export default function TeamDashboard({
     teamId: team?.id,
     teamFindingEnabled,
     teamName: team?.name,
+    eventTitle: event?.title,
     slackChannel: team?.slack_channel,
     leaveBlockedReason,
     onLeave: onLeftTeam ? handleLeave : undefined,

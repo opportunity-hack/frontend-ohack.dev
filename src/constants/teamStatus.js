@@ -36,8 +36,10 @@ export const JOINING_DISABLED_STATUSES = [
 ];
 
 // Not approved yet: in review, or mid-approval (APPROVING). Dashboards and
-// "has an approved team" checks treat both the same way. Joining is NOT
-// affected — APPROVING stays joinable like IN_REVIEW.
+// "has an approved team" checks treat both the same way (a missing status
+// counts as pending here). Joining: both stay joinable even though queued
+// teams are saved inactive — teamJoinBlockedReason checks the list exactly,
+// like backend membership_rules.PENDING_REVIEW_STATUSES.
 export const PENDING_REVIEW_STATUSES = ['IN_REVIEW', 'APPROVING'];
 export const isPendingReview = (status) =>
   !status || PENDING_REVIEW_STATUSES.includes(status);

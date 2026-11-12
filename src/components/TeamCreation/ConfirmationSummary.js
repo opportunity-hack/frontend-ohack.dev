@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { Box } from "@mui/material";
 import { FaSlack, FaGithub } from "react-icons/fa";
+import { splitTeammates, teammateName } from "../../lib/teamInvite";
 
 /**
  * Last step before creating the team: everything the team entered, including
@@ -27,13 +28,64 @@ const SectionTitle = ({ children }) => (
   </h3>
 );
 
-const memberLabel = (member) =>
-  typeof member === "string" ? member : member.real_name || member.name || "";
+const groupTitleStyle = { ...labelStyle, margin: "4px 0 6px" };
 
-const memberKey = (member) =>
-  typeof member === "string"
-    ? `name:${member}`
-    : `slack:${member.id || member.name}`;
+/**
+ * Who is on the team at creation vs. who joins later — the distinction the
+ * team needs to understand before it creates (typed names are reminders,
+ * not members).
+ */
+function TeamGroups({ teamMembers }) {
+  const { onSlack, joinLater } = splitTeammates(teamMembers);
+  return (
+    <>
+      <SectionTitle>Your team</SectionTitle>
+      <div style={groupTitleStyle}>On the team when you create it</div>
+      <div
+        style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}
+      >
+        <span className="ohx-tag">You</span>
+        {onSlack.map((m) => (
+          <span key={`slack:${m.id}`} className="ohx-tag">
+            {teammateName(m)}
+          </span>
+        ))}
+      </div>
+      {joinLater.length > 0 && (
+        <>
+          <div style={groupTitleStyle}>Joining later from your team page</div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 6,
+              marginBottom: 8,
+            }}
+          >
+            {joinLater.map((name) => (
+              <span key={`later:${name}`} className="ohx-tag">
+                {name}
+              </span>
+            ))}
+          </div>
+          <p
+            style={{
+              margin: "0 0 16px",
+              color: "var(--muted)",
+              fontSize: "0.92rem",
+              maxWidth: "42em",
+            }}
+          >
+            They&apos;ll need to join the Opportunity Hack Slack, log in with
+            Slack and click “Join team” on your team page. You&apos;ll get an
+            invite message to send them right after you create the team.
+          </p>
+        </>
+      )}
+      {joinLater.length === 0 && <div style={{ marginBottom: 16 }} />}
+    </>
+  );
+}
 
 const ConfirmationSummary = memo(
   ({
@@ -119,25 +171,7 @@ const ConfirmationSummary = memo(
           </p>
         )}
 
-        {teamMembers.length > 0 && (
-          <>
-            <SectionTitle>Teammates</SectionTitle>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginBottom: 16,
-              }}
-            >
-              {teamMembers.map((member) => (
-                <span key={memberKey(member)} className="ohx-tag">
-                  {memberLabel(member)}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
+        <TeamGroups teamMembers={teamMembers} />
 
         {comments && (
           <>
@@ -157,8 +191,8 @@ const ConfirmationSummary = memo(
         }}
       >
         Your team goes to organizers for review (usually within a day).
-        You&apos;ll get your Slack channel now; your GitHub repo is created when
-        you&apos;re approved.
+        You&apos;ll get #{slackChannel} on Slack now — everyone on your team
+        should be in it. Your GitHub repo is created when you&apos;re approved.
       </Box>
     </Box>
   ),

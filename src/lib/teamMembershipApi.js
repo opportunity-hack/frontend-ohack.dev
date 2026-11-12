@@ -19,7 +19,10 @@
  * the blocked state instead of an error toast (`isMembershipRefusal`).
  */
 import { trackEvent, EventCategory } from "./ga";
-import { isJoiningDisabled } from "../constants/teamStatus";
+import {
+  isJoiningDisabled,
+  PENDING_REVIEW_STATUSES,
+} from "../constants/teamStatus";
 
 const apiBase = () => process.env.NEXT_PUBLIC_API_SERVER_URL;
 
@@ -227,7 +230,12 @@ export function teamJoinBlockedReason({
 }) {
   if (eventEnded) return BLOCKED_COPY.eventEnded;
   if (teamJoinEnabled === false) return BLOCKED_COPY.paused;
-  if (!isActive) return BLOCKED_COPY.inactive;
+  // Teams waiting for review are saved inactive but stay joinable, so
+  // teammates who weren't on Slack at creation can join (twin:
+  // PENDING_REVIEW_STATUSES in api/teams/membership_rules.py).
+  if (!isActive && !PENDING_REVIEW_STATUSES.includes(status)) {
+    return BLOCKED_COPY.inactive;
+  }
   if (isJoiningDisabled(status)) return BLOCKED_COPY.notJoinable;
   return null;
 }

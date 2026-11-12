@@ -1,24 +1,26 @@
 import React, { memo } from "react";
+import NextLink from "next/link";
 import { Box } from "@mui/material";
 import TeamMemberManager from "./TeamMemberManager";
 import CommentsSection from "./CommentsSection";
+import { SLACK_SIGNUP_PATH } from "../../lib/teamInvite";
 
 /**
- * "Teammates & notes" step — split out of the old nonprofit step, where the
- * teammate picker sat below a long list and was easy to miss.
+ * "Teammates & notes" step. Leads with the rule — everyone on the team is on
+ * the Opportunity Hack Slack — and that it's fine to create the team before
+ * everyone is there (they join later from the team page).
  */
 const TeammatesStep = memo(
   ({
     teamMembers,
-    memberInput,
-    setMemberInput,
-    handleAddTeamMember,
-    handleRemoveTeamMember,
+    onAddMember,
+    onRemoveMember,
     slackUsers,
+    slackUsersStatus,
     slackChannel,
+    eventId,
     comments,
     setComments,
-    error,
   }) => (
     <Box>
       <h2
@@ -31,22 +33,30 @@ const TeammatesStep = memo(
       >
         Who&apos;s on your team?
       </h2>
+      <p style={{ color: "var(--muted)", margin: "0 0 8px", maxWidth: "40em" }}>
+        <strong style={{ color: "var(--ink)" }}>
+          Everyone on your team needs to be on the Opportunity Hack Slack
+        </strong>{" "}
+        — your team channel, mentors and organizers are all there. New to it?{" "}
+        <NextLink href={SLACK_SIGNUP_PATH} className="ohx-link" target="_blank">
+          Here&apos;s how to join
+        </NextLink>
+        .
+      </p>
       <p
         style={{ color: "var(--muted)", margin: "0 0 20px", maxWidth: "40em" }}
       >
-        Add teammates you already know — others can join later from your
-        team&apos;s page. Notes help organizers when they match your team to a
-        project.
+        You don&apos;t have to wait for everyone: create the team now, and
+        anyone not on Slack yet joins from your team page later.
       </p>
       <TeamMemberManager
         teamMembers={teamMembers}
-        memberInput={memberInput}
-        setMemberInput={setMemberInput}
-        handleAddTeamMember={handleAddTeamMember}
-        handleRemoveTeamMember={handleRemoveTeamMember}
+        onAddMember={onAddMember}
+        onRemoveMember={onRemoveMember}
         slackUsers={slackUsers}
+        slackUsersStatus={slackUsersStatus}
         slackChannel={slackChannel}
-        error={error}
+        eventId={eventId}
       />
       <CommentsSection comments={comments} setComments={setComments} />
     </Box>

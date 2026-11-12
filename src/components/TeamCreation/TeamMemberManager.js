@@ -1,166 +1,255 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
+import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
+import { FaSlack, FaTimes } from "react-icons/fa";
+import JoinTeamSteps, { teammateJoinSteps } from "../Teams/JoinTeamSteps";
 import {
-  Box,
-  Typography,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Autocomplete,
-  TextField,
-} from "@mui/material";
-import { FaUserAlt, FaPlus, FaTrash } from "react-icons/fa";
+  channelLabel,
+  splitTeammates,
+  teammateName,
+} from "../../lib/teamInvite";
+
+const panelSx = {
+  border: "1px solid var(--line, #E7E1D4)",
+  borderRadius: 2,
+  p: { xs: 2, sm: 2.5 },
+  mb: 2,
+  background: "var(--paper, #fff)",
+};
+
+const headingStyle = {
+  fontWeight: 600,
+  fontSize: "1.02rem",
+  margin: "0 0 4px",
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+};
+
+const leadStyle = {
+  color: "var(--muted)",
+  fontSize: "0.92rem",
+  lineHeight: 1.55,
+  margin: "0 0 14px",
+  maxWidth: "42em",
+};
+
+function MemberRow({ label, tag, onRemove }) {
+  return (
+    <Box
+      component="li"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        minHeight: 44,
+        borderBottom: "1px solid var(--line, #E7E1D4)",
+        "&:last-of-type": { borderBottom: 0 },
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      {tag && <span className="ohx-tag">{tag}</span>}
+      <IconButton
+        type="button"
+        size="small"
+        aria-label={`Remove ${label}`}
+        onClick={onRemove}
+        sx={{ ml: "auto" }}
+      >
+        <FaTimes />
+      </IconButton>
+    </Box>
+  );
+}
 
 /**
- * Component for managing team members
+ * Teammates for a new team, in two explicit groups:
+ * - Already on Slack → picked from the Slack directory, added to the team at
+ *   creation and invited to its channel (backend queue_team).
+ * - Not on Slack yet → a typed name is only a reminder; they join later from
+ *   the team page (lib/teamInvite.js). Two separate inputs, so nobody believes
+ *   a typed name was added to the team (the old freeSolo picker mixed both).
+ * `teamMembers` stays the mixed object/string array the backend expects.
  */
 const TeamMemberManager = memo(
   ({
     teamMembers,
-    memberInput,
-    handleAddTeamMember,
-    handleRemoveTeamMember,
-    setMemberInput,
+    onAddMember,
+    onRemoveMember,
     slackUsers,
+    slackUsersStatus,
     slackChannel,
-    error,
+    eventId,
   }) => {
+    const [pickerInput, setPickerInput] = useState("");
+    const [laterName, setLaterName] = useState("");
+    const [error, setError] = useState({ slack: "", later: "" });
+
+    const { onSlack, joinLater } = splitTeammates(teamMembers);
+    const channel = channelLabel(slackChannel);
+
+    const addSlack = (user) => {
+      if (!user || typeof user !== "object") return;
+      const message = onAddMember(user);
+      setError((e) => ({ ...e, slack: message || "" }));
+      setPickerInput("");
+    };
+
+    const addLater = () => {
+      const name = laterName.trim();
+      if (!name) return;
+      const message = onAddMember(name);
+      setError((e) => ({ ...e, later: message || "" }));
+      if (!message) setLaterName("");
+    };
+
+    const slackLoading = slackUsersStatus === "loading";
+    const slackFailed = slackUsersStatus === "error";
+
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Team Members
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          Add the other members of your team. People you pick from the list get
-          an invite to your team&apos;s Slack channel.
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {slackUsers?.length
-            ? `${slackUsers.length} active Slack users available for selection`
-            : "Loading Slack users..."}
-        </Typography>
-
-        <Box display="flex" alignItems="center" mb={2}>
+        {/* Path 1 — already on Slack */}
+        <Box sx={panelSx}>
+          <h3 style={headingStyle}>
+            <FaSlack aria-hidden /> Already on Slack
+          </h3>
+          <p style={leadStyle}>
+            Search the Opportunity Hack Slack and add them. They&apos;re on the
+            team as soon as you create it, and invited to {channel}. You&apos;re
+            added automatically.
+          </p>
           <Autocomplete
-            freeSolo
             options={slackUsers || []}
-            getOptionLabel={(option) =>
-              typeof option === "string"
-                ? option
-                : option.real_name || option.name || ""
+            loading={slackLoading}
+            value={null}
+            inputValue={pickerInput}
+            onInputChange={(_, v, reason) => {
+              if (reason !== "reset") setPickerInput(v);
+            }}
+            onChange={(_, user) => addSlack(user)}
+            getOptionLabel={(o) => teammateName(o)}
+            isOptionEqualToValue={(a, b) => a?.id === b?.id}
+            blurOnSelect
+            noOptionsText={
+              pickerInput
+                ? "No one on Slack by that name — add them under “Not on Slack yet?”"
+                : "Start typing a name"
             }
-            value={memberInput}
-            onChange={(_, newValue) => {
-              setMemberInput(newValue);
+            renderOption={(props, option) => {
+              // MUI passes `key` inside props; React wants it set directly.
+              const rest = { ...props };
+              delete rest.key;
+              return (
+                <li key={option.id} {...rest}>
+                  <span>
+                    {teammateName(option)}
+                    {option.name && option.real_name && (
+                      <span style={{ color: "var(--muted)", marginLeft: 6 }}>
+                        @{option.name}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
             }}
-            onInputChange={(_, newInputValue) => {
-              setMemberInput(newInputValue);
-            }}
-            fullWidth
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Team member's name or Slack handle"
-                variant="outlined"
+                label="Search Slack by name"
                 size="small"
-                error={!!error && error.includes("team member")}
-                helperText={error && error.includes("team member") ? error : ""}
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <FaUserAlt style={{ marginRight: 8 }} />
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTeamMember();
-                  }
-                }}
+                error={Boolean(error.slack)}
+                helperText={
+                  error.slack ||
+                  (slackFailed
+                    ? "We couldn't load the Slack directory. Add their names under “Not on Slack yet?” — they'll join from your team page."
+                    : "")
+                }
               />
             )}
           />
-          <Button
-            // Explicit "button" — this renders inside CreateTeamFlow's
-            // <form onSubmit={handleSubmit}>, and `handleAddTeamMember`
-            // doesn't call preventDefault, so an implicit-submit button
-            // here would also trigger the whole team-creation submit
-            // handler on every "Add Member" click (see CreateTeamFlow.js).
-            type="button"
-            variant="contained"
-            color="primary"
-            onClick={handleAddTeamMember}
-            startIcon={<FaPlus />}
-            sx={{ ml: 2, whiteSpace: "nowrap" }}
-          >
-            Add Member
-          </Button>
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Names you type (not picked from the list) won&apos;t get a Slack
-          invite — ask them to join{" "}
-          {slackChannel ? `#${slackChannel}` : "your team's channel"}.
-        </Typography>
-
-        {teamMembers.length > 0 ? (
-          <List>
-            {teamMembers.map((member, index) => (
-              <ListItem
-                // Stable key: Slack users by id, typed names by text
-                // (handleAddTeamMember rejects duplicates of either).
-                key={
-                  typeof member === "string"
-                    ? `name:${member}`
-                    : `slack:${member.id || member.name}`
-                }
-                secondaryAction={
-                  <IconButton
-                    type="button"
-                    edge="end"
-                    aria-label={`Remove ${
-                      typeof member === "string"
-                        ? member
-                        : member.real_name || member.name || "teammate"
-                    }`}
-                    onClick={() => handleRemoveTeamMember(index)}
-                    color="error"
-                    size="small"
-                  >
-                    <FaTrash />
-                  </IconButton>
-                }
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  mb: 1,
-                }}
-              >
-                <ListItemText
-                  primary={
-                    typeof member === "string"
-                      ? member
-                      : member.real_name || member.name || ""
-                  }
-                  secondary="Team Member"
+          {onSlack.length > 0 && (
+            <Box
+              component="ul"
+              aria-label="Added to the team now"
+              sx={{ listStyle: "none", p: 0, m: "12px 0 0" }}
+            >
+              {onSlack.map((m) => (
+                <MemberRow
+                  key={`slack:${m.id}`}
+                  label={teammateName(m)}
+                  tag={`Added now · ${channel}`}
+                  onRemove={() => onRemoveMember(teamMembers.indexOf(m))}
                 />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontStyle: "italic", mt: 1 }}
-          >
-            No team members added yet.
-          </Typography>
-        )}
+              ))}
+            </Box>
+          )}
+        </Box>
+
+        {/* Path 2 — not on Slack yet */}
+        <Box sx={panelSx}>
+          <h3 style={headingStyle}>Not on Slack yet?</h3>
+          <p style={leadStyle}>
+            That&apos;s okay — create your team now. Add their names so you
+            remember who to invite. They aren&apos;t on the team until they join
+            from your team page; once it&apos;s created, you&apos;ll get an
+            invite message to send them.
+          </p>
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+            <TextField
+              label="Teammate's name"
+              size="small"
+              fullWidth
+              value={laterName}
+              onChange={(e) => setLaterName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addLater();
+                }
+              }}
+              error={Boolean(error.later)}
+              helperText={error.later || ""}
+            />
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              onClick={addLater}
+              disabled={!laterName.trim()}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              Add to invite list
+            </button>
+          </Box>
+          {joinLater.length > 0 && (
+            <Box
+              component="ul"
+              aria-label="Joining later from the team page"
+              sx={{ listStyle: "none", p: 0, m: "12px 0 0" }}
+            >
+              {joinLater.map((name) => (
+                <MemberRow
+                  key={`later:${name}`}
+                  label={name}
+                  tag="Joins later"
+                  onRemove={() => onRemoveMember(teamMembers.indexOf(name))}
+                />
+              ))}
+            </Box>
+          )}
+          <details style={{ marginTop: 16 }}>
+            <summary
+              className="ohx-link"
+              style={{ cursor: "pointer", fontWeight: 600 }}
+            >
+              What they&apos;ll do to join
+            </summary>
+            <Box sx={{ mt: 2 }}>
+              <JoinTeamSteps
+                items={teammateJoinSteps({ slackChannel, eventId })}
+                ariaLabel="How a teammate joins"
+              />
+            </Box>
+          </details>
+        </Box>
       </Box>
     );
   },
