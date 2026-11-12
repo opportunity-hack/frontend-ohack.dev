@@ -289,7 +289,7 @@ function UsageSummary({ keys }) {
         );
       })}
       <Box sx={{ fontSize: "0.8rem", color: "var(--faint)" }}>
-        As of when this page loaded — reload to see the latest.
+        Totals from when this page loaded — reload the page for the latest numbers.
       </Box>
     </Box>
   );
