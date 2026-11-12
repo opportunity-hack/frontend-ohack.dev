@@ -112,8 +112,11 @@ import ProjectAssignmentPanel, {
 } from "./ProjectAssignmentPanel";
 import {
   approveTeamProject,
+  approvedTeamState,
   fetchTeamProjectOptions,
+  saveProjectPayload,
   teamProblemStatementId,
+  teamSavePayload,
   toTeamProjectError,
 } from "../../lib/teamProjectApi";
 import { normalizeProjectOptions } from "../../lib/projectRanking";
@@ -1142,19 +1145,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   const handleSaveTeam = async () => {
     setLoading(true);
     try {
-      const payload = {
-        ...teamData,
-        active: teamData.active ? "True" : "False",
-      };
-      // "Not submitted (legacy/draft)" clears the field locally to null so
-      // the Select can show the empty option, but the backend's
-      // PROJECT_SUBMISSION_STATUSES allowlist 400s on an explicit null —
-      // omit the key entirely so it's a no-op (leaves any prior value
-      // untouched) rather than failing the whole team save.
-      if (payload.project_submission_status == null) {
-        delete payload.project_submission_status;
-      }
-      await patchTeam(payload);
+      // teamSavePayload: active → "True"/"False", a null submission status is
+      // omitted (the backend allowlist 400s on it), and a nonprofit change on
+      // an approved team carries the dialog's project with it.
+      await patchTeam(teamSavePayload(teamData, selectedTeam, selectedProjectId));
       enqueueSnackbar("Team updated successfully", { variant: "success" });
       setEditDialogOpen(false);
       fetchTeams(selectedHackathon);
@@ -1330,13 +1324,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       );
       notify("Team approved successfully", "success");
       setApprovalDialogOpen(false);
-      setTeamData((prev) => ({
-        ...prev,
-        status: "NONPROFIT_SELECTED",
-        ...(selectedProjectId
-          ? { problem_statements: [selectedProjectId] }
-          : {}),
-      }));
+      // Includes active: true — the backend activates the team on approval,
+      // and a stale active:false here made a later "Save Changes" deactivate it.
+      setTeamData((prev) => approvedTeamState(prev, selectedProjectId));
       fetchTeams(selectedHackathon);
     } catch (error) {
       console.error("Error approving team:", error);
@@ -1357,10 +1347,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     if (!teamData?.id || !selectedProjectId) return;
     setSavingProject(true);
     try {
-      await patchTeam({
-        id: teamData.id,
-        problem_statement_id: selectedProjectId,
-      });
+      await patchTeam(saveProjectPayload(teamData, selectedProjectId));
       const problemStatements = [selectedProjectId];
       setTeamData((prev) => ({
         ...prev,
