@@ -190,7 +190,7 @@ const ConfirmationSummary = memo(
           mb: 1,
         }}
       >
-        Your team goes to organizers for review (usually within a day).
+        Your team goes to organizers for review (usually within 10–20 minutes).
         You&apos;ll get #{slackChannel} on Slack now — everyone on your team
         should be in it. Your GitHub repo is created when you&apos;re approved.
       </Box>
