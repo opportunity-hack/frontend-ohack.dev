@@ -105,6 +105,18 @@ import {
   provisionGatewayKey,
   gatewayErrorMessage,
 } from "../../lib/adminTeamApi";
+import ProjectAssignmentPanel, {
+  approvalBlockedReason,
+  defaultProjectFor,
+  projectsForNonprofit,
+} from "./ProjectAssignmentPanel";
+import {
+  approveTeamProject,
+  fetchTeamProjectOptions,
+  teamProblemStatementId,
+  toTeamProjectError,
+} from "../../lib/teamProjectApi";
+import { normalizeProjectOptions } from "../../lib/projectRanking";
 import GatewayKeyAdminPopover, {
   GATEWAY_STATUS_CHIP,
   gatewayStatusFor,
@@ -401,6 +413,56 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [teamData, setTeamData] = useState(null);
   const [nonprofitOptions, setNonprofitOptions] = useState([]);
+  // Selectable projects for the team's event (GET .../project-options) —
+  // ONE request per dialog open, ONE setState per outcome.
+  const [projectOptions, setProjectOptions] = useState({
+    status: "idle",
+    eventId: null,
+    nonprofits: [],
+  });
+  // The project chosen in the Nonprofit Assignment tab. Kept OUT of
+  // teamData so "Save Changes" never sends it — approval and the explicit
+  // "Save project" are the only writers.
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [savingProject, setSavingProject] = useState(false);
+  const assignedProjectId = teamProblemStatementId(teamData);
+  const approvalBlocked = approvalBlockedReason({
+    nonprofitId: teamData?.selected_nonprofit_id,
+    projectId: selectedProjectId,
+    projectOptions,
+  });
+  const selectedProjectTitle =
+    projectsForNonprofit(projectOptions, teamData?.selected_nonprofit_id).find(
+      (p) => p.id === selectedProjectId,
+    )?.title || null;
+
+  // Preselect the project once options load and whenever the nonprofit
+  // changes: keep a still-valid choice, else the assigned project / the
+  // team's highest-ranked project for that nonprofit / its only project.
+  useEffect(() => {
+    if (!editDialogOpen || !teamData || projectOptions.status !== "ready") {
+      return;
+    }
+    const projects = projectsForNonprofit(
+      projectOptions,
+      teamData.selected_nonprofit_id,
+    );
+    setSelectedProjectId((prev) =>
+      prev && projects.some((p) => p.id === prev)
+        ? prev
+        : defaultProjectFor(
+            teamData,
+            teamData.selected_nonprofit_id,
+            projects,
+            teamProblemStatementId(teamData),
+          ),
+    );
+  }, [
+    editDialogOpen,
+    teamData?.id,
+    teamData?.selected_nonprofit_id,
+    projectOptions,
+  ]);
   const [activeTab, setActiveTab] = useState(0);
   // Whether the read-only story preview in the edit Dialog has been switched
   // to an editable textarea. Reset per-team so opening a different team
@@ -742,7 +804,12 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   const handleBulkProvision = async () => {
     const targets = teamsMissingGatewayKey;
     if (targets.length === 0) return;
-    setBulkProvision({ running: true, done: 0, total: targets.length, failed: [] });
+    setBulkProvision({
+      running: true,
+      done: 0,
+      total: targets.length,
+      failed: [],
+    });
     const patches = {};
     const failed = [];
     for (let i = 0; i < targets.length; i += 1) {
@@ -765,7 +832,12 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       setBulkProvision((prev) => prev && { ...prev, done: i + 1 });
     }
     setGatewayKeyStatuses((prev) => ({ ...prev, ...patches }));
-    setBulkProvision({ running: false, done: targets.length, total: targets.length, failed });
+    setBulkProvision({
+      running: false,
+      done: targets.length,
+      total: targets.length,
+      failed,
+    });
     ga.trackStructuredEvent(
       ga.EventCategory.ADMIN,
       "admin_gateway_key_bulk_provision",
@@ -902,6 +974,40 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     }
   };
 
+  const loadProjectOptions = async (eventSlug, { force = false } = {}) => {
+    if (!eventSlug) return;
+    if (
+      !force &&
+      projectOptions.eventId === eventSlug &&
+      projectOptions.status === "ready"
+    ) {
+      return;
+    }
+    setProjectOptions({
+      status: "loading",
+      eventId: eventSlug,
+      nonprofits: [],
+    });
+    try {
+      const data = await fetchTeamProjectOptions(eventSlug, {
+        token: accessToken,
+        orgId,
+      });
+      setProjectOptions({
+        status: "ready",
+        eventId: eventSlug,
+        nonprofits: normalizeProjectOptions(data),
+      });
+    } catch (error) {
+      console.error("Error fetching project options:", error);
+      setProjectOptions({
+        status: "error",
+        eventId: eventSlug,
+        nonprofits: [],
+      });
+    }
+  };
+
   // Load team details for editing - improve data handling
   const loadTeamDetails = async (teamId) => {
     setTableLoading(true); // Use the table-specific loading state
@@ -990,6 +1096,8 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     }
 
     fetchNonprofits(selectedHackathon);
+    setSelectedProjectId(teamProblemStatementId(team) || "");
+    loadProjectOptions(selectedEventSlug);
     // Reset message dialog state when switching teams
     setSelectedTemplate(null);
     setCustomMessage(false);
@@ -1198,62 +1306,83 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     setMessageText("");
   };
 
-  // Handle team approval and nonprofit assignment
+  // Handle team approval — nonprofit AND the exact project.
   const handleApproveTeam = async () => {
-    if (!teamData || !teamData.id || !teamData.selected_nonprofit_id) {
-      enqueueSnackbar("Please select a nonprofit before approving the team", {
-        variant: "error",
-      });
+    const blocked = approvalBlockedReason({
+      nonprofitId: teamData?.selected_nonprofit_id,
+      projectId: selectedProjectId,
+      projectOptions,
+    });
+    if (!teamData || !teamData.id || blocked) {
+      notify(blocked || "Select a nonprofit before approving", "error");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/approve`,
+      await approveTeamProject(
         {
           teamId: teamData.id,
           nonprofitId: teamData.selected_nonprofit_id,
+          problemStatementId: selectedProjectId || null,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "X-Org-Id": orgId,
-          },
-        },
+        { token: accessToken, orgId },
       );
-
-      if (response.data && response.data.success) {
-        enqueueSnackbar("Team approved successfully", { variant: "success" });
-        setApprovalDialogOpen(false);
-
-        // Update team status to reflect approval
-        const updatedTeamData = {
-          ...teamData,
-          status: "NONPROFIT_SELECTED",
-        };
-        setTeamData(updatedTeamData);
-
-        // Refresh the teams list
-        fetchTeams(selectedHackathon);
-      } else {
-        // The backend answers 200 with { success: false, message } for
-        // handled failures (e.g. the event's GitHub org is missing or isn't a
-        // valid org slug). Surface that message instead of failing silently.
-        enqueueSnackbar(response.data?.message || "Failed to approve team", {
-          variant: "error",
-          autoHideDuration: 8000,
-        });
-      }
+      notify("Team approved successfully", "success");
+      setApprovalDialogOpen(false);
+      setTeamData((prev) => ({
+        ...prev,
+        status: "NONPROFIT_SELECTED",
+        ...(selectedProjectId
+          ? { problem_statements: [selectedProjectId] }
+          : {}),
+      }));
+      fetchTeams(selectedHackathon);
     } catch (error) {
       console.error("Error approving team:", error);
-      enqueueSnackbar(
-        error.response?.data?.message || "Failed to approve team",
-        { variant: "error" },
-      );
+      // 400 problem_statement_required / invalid_problem_statement,
+      // 409 already_approved, or a handled 200 {success:false, message}.
+      notify(error.message || "Failed to approve team", "error");
+      if (error.code === "already_approved") {
+        setApprovalDialogOpen(false);
+        fetchTeams(selectedHackathon);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Approved team: move it to another project of its nonprofit.
+  const handleSaveProject = async () => {
+    if (!teamData?.id || !selectedProjectId) return;
+    setSavingProject(true);
+    try {
+      await patchTeam({
+        id: teamData.id,
+        problem_statement_id: selectedProjectId,
+      });
+      const problemStatements = [selectedProjectId];
+      setTeamData((prev) => ({
+        ...prev,
+        problem_statements: problemStatements,
+      }));
+      setTeams((prev) =>
+        prev.map((t) =>
+          t.id === teamData.id
+            ? { ...t, problem_statements: problemStatements }
+            : t,
+        ),
+      );
+      notify("Project updated", "success");
+    } catch (error) {
+      console.error("Error updating team project:", error);
+      notify(
+        toTeamProjectError(error, "Failed to update the team's project")
+          .message,
+        "error",
+      );
+    } finally {
+      setSavingProject(false);
     }
   };
 
@@ -1581,197 +1710,32 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     );
   };
 
-  // Render selected nonprofit with history
-  const renderNonprofitSelection = () => {
-    if (!teamData) return null;
-
-    const rankings = Array.isArray(teamData.nonprofit_rankings)
-      ? teamData.nonprofit_rankings
-      : [];
-    const hasRankings = rankings.length > 0;
-    const hasOptions = nonprofitOptions.length > 0;
-
-    return (
-      <Card elevation={1} sx={{ mb: 3 }}>
-        <CardHeader
-          title="Nonprofit Assignment"
-          subheader={
-            hasRankings
-              ? "Current selection and ranking history"
-              : "Manually assign a nonprofit to this team"
-          }
-        />
-        <Divider />
-        <CardContent>
-          {!hasRankings && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              This team has no nonprofit rankings on file — the team creation /
-              nonprofit matching flow was not completed for this hackathon. You
-              can still manually assign a nonprofit below.
-            </Alert>
-          )}
-          {!hasOptions && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              No nonprofits are attached to this hackathon, and the global
-              fallback returned no nonprofits either. Add nonprofits to the
-              hackathon (Admin → Hackathons → this event → Nonprofits) and
-              reopen this dialog.
-            </Alert>
-          )}
-          {hasOptions && nonprofitSource === "all" && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Showing all nonprofits as a fallback because none are attached to
-              this hackathon.
-            </Alert>
-          )}
-
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Current Assignment
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="nonprofit-select-label">
-                Assigned Nonprofit
-              </InputLabel>
-              <Select
-                labelId="nonprofit-select-label"
-                value={teamData.selected_nonprofit_id || ""}
-                onChange={(e) =>
-                  handleTeamDataChange("selected_nonprofit_id", e.target.value)
-                }
-                label="Assigned Nonprofit"
-                disabled={!hasOptions}
-              >
-                <MenuItem value="">
-                  <em>Not assigned yet</em>
-                </MenuItem>
-                {nonprofitOptions.map((nonprofit) => (
-                  <MenuItem key={nonprofit.id} value={nonprofit.id}>
-                    {nonprofit.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          {(teamData.status || "IN_REVIEW") === "IN_REVIEW" ? (
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                borderRadius: 1,
-                bgcolor: "#e8f5e9",
-                border: 1,
-                borderColor: "success.light",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {teamData.selected_nonprofit_id
-                    ? "Ready to approve"
-                    : "Pick a nonprofit to approve this team"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {teamData.selected_nonprofit_id
-                    ? `Approving notifies the team and assigns them to ${getNonprofitName(
-                        teamData.selected_nonprofit_id,
-                      )}.`
-                    : "Choose a nonprofit above, then approve — this notifies the team and sets their status to Nonprofit Selected."}
-                </Typography>
-              </Box>
-              <Tooltip
-                title={
-                  teamData.selected_nonprofit_id
-                    ? ""
-                    : "Select a nonprofit first"
-                }
-              >
-                <span>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    startIcon={<FaCheckCircle />}
-                    disabled={!teamData.selected_nonprofit_id}
-                    onClick={() => setApprovalDialogOpen(true)}
-                  >
-                    Approve Team
-                  </Button>
-                </span>
-              </Tooltip>
-            </Box>
-          ) : (
-            <Alert severity="success" icon={<FaCheckCircle />} sx={{ mb: 3 }}>
-              This team has been approved
-              {teamData.selected_nonprofit_id
-                ? ` and assigned to ${getNonprofitName(
-                    teamData.selected_nonprofit_id,
-                  )}`
-                : ""}
-              .
-            </Alert>
-          )}
-
-          {hasRankings && (
-            <>
-              <Typography variant="subtitle2" gutterBottom>
-                Team's Nonprofit Rankings
-              </Typography>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Rank</TableCell>
-                      <TableCell>Nonprofit</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rankings.map((ranking, index) => {
-                      const nonprofit = nonprofitOptions.find(
-                        (n) => n.id === ranking.nonprofit_id,
-                      );
-                      const isSelected =
-                        teamData.selected_nonprofit_id === ranking.nonprofit_id;
-
-                      return (
-                        <TableRow key={index} selected={isSelected}>
-                          <TableCell>{ranking.rank}</TableCell>
-                          <TableCell>
-                            {nonprofit ? nonprofit.name : "Unknown Nonprofit"}
-                          </TableCell>
-                          <TableCell>
-                            {isSelected ? (
-                              <Chip
-                                size="small"
-                                color="primary"
-                                label="Selected"
-                                icon={<FaCheck />}
-                              />
-                            ) : (
-                              <Chip
-                                size="small"
-                                variant="outlined"
-                                label="Not Selected"
-                              />
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+  // Render the nonprofit + project assignment tab
+  const renderNonprofitSelection = () => (
+    <ProjectAssignmentPanel
+      team={teamData}
+      nonprofitOptions={nonprofitOptions}
+      nonprofitSource={nonprofitSource}
+      getNonprofitName={getNonprofitName}
+      projectOptions={projectOptions}
+      selectedProjectId={selectedProjectId}
+      assignedProjectId={assignedProjectId}
+      savingProject={savingProject}
+      onNonprofitChange={(id) =>
+        handleTeamDataChange("selected_nonprofit_id", id)
+      }
+      onProjectChange={setSelectedProjectId}
+      onAssignRanking={({ nonprofitId, projectId }) => {
+        handleTeamDataChange("selected_nonprofit_id", nonprofitId);
+        setSelectedProjectId(projectId);
+      }}
+      onApproveClick={() => setApprovalDialogOpen(true)}
+      onSaveProject={handleSaveProject}
+      onRetryProjects={() =>
+        loadProjectOptions(selectedEventSlug, { force: true })
+      }
+    />
+  );
 
   // Render team member management
   const renderTeamMembers = () => {
@@ -3006,7 +2970,11 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
             <ExportCsvButton
               rows={filteredTeams}
               columns={teamCsvColumns}
-              filenameParts={[selectedEventSlug, "teams", activeFilter !== "all" ? activeFilter : ""]}
+              filenameParts={[
+                selectedEventSlug,
+                "teams",
+                activeFilter !== "all" ? activeFilter : "",
+              ]}
               table="teams"
               eventId={selectedEventSlug}
               label="Export teams CSV"
@@ -3025,18 +2993,21 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
         )}
       </Paper>
 
-      {bulkProvision && !bulkProvision.running && bulkProvision.failed.length > 0 && (
-        <Alert
-          severity="warning"
-          sx={{ my: 2 }}
-          onClose={() => setBulkProvision(null)}
-        >
-          {bulkProvision.failed.length} key{bulkProvision.failed.length === 1 ? "" : "s"} could not be minted:{" "}
-          {bulkProvision.failed
-            .map((f) => `${f.team.name} (${f.message})`)
-            .join("; ")}
-        </Alert>
-      )}
+      {bulkProvision &&
+        !bulkProvision.running &&
+        bulkProvision.failed.length > 0 && (
+          <Alert
+            severity="warning"
+            sx={{ my: 2 }}
+            onClose={() => setBulkProvision(null)}
+          >
+            {bulkProvision.failed.length} key
+            {bulkProvision.failed.length === 1 ? "" : "s"} could not be minted:{" "}
+            {bulkProvision.failed
+              .map((f) => `${f.team.name} (${f.message})`)
+              .join("; ")}
+          </Alert>
+        )}
 
       {loading && !editDialogOpen ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
@@ -3260,24 +3231,37 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                         {gatewayKeysSupported && (
                           <TableCell>
                             {(() => {
-                              const st = gatewayStatusFor(team, gatewayKeyStatuses);
+                              const st = gatewayStatusFor(
+                                team,
+                                gatewayKeyStatuses,
+                              );
                               if (st === "not_approved") {
                                 return (
                                   <Tooltip title="Keys are minted when the team is approved.">
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
                                       —
                                     </Typography>
                                   </Tooltip>
                                 );
                               }
-                              const cfg = GATEWAY_STATUS_CHIP[st] || GATEWAY_STATUS_CHIP.missing;
+                              const cfg =
+                                GATEWAY_STATUS_CHIP[st] ||
+                                GATEWAY_STATUS_CHIP.missing;
                               const entry = gatewayKeyStatuses[team.id] || {};
                               const key2 = entry.keys?.[1] || null;
                               const key2Cfg = key2
-                                ? GATEWAY_STATUS_CHIP[key2.status] || GATEWAY_STATUS_CHIP.missing
+                                ? GATEWAY_STATUS_CHIP[key2.status] ||
+                                  GATEWAY_STATUS_CHIP.missing
                                 : null;
                               return (
-                                <Stack direction="column" spacing={0.5} alignItems="flex-start">
+                                <Stack
+                                  direction="column"
+                                  spacing={0.5}
+                                  alignItems="flex-start"
+                                >
                                   <Chip
                                     size="small"
                                     icon={<FaKey size={10} />}
@@ -3297,7 +3281,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                                       variant="outlined"
                                       clickable
                                       aria-label={`AI Key 2: ${key2Cfg.label} — manage`}
-                                      onClick={(e) => openGatewayPopover(e, team)}
+                                      onClick={(e) =>
+                                        openGatewayPopover(e, team)
+                                      }
                                     />
                                   )}
                                 </Stack>
@@ -3406,7 +3392,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
           <Box sx={{ flex: 1 }} />
           {(teamData?.status || "IN_REVIEW") === "IN_REVIEW" &&
-            (teamData?.selected_nonprofit_id ? (
+            (!approvalBlocked ? (
               <Button
                 onClick={() => setApprovalDialogOpen(true)}
                 variant="contained"
@@ -3417,14 +3403,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                 Approve Team
               </Button>
             ) : (
-              <Tooltip title="Select a nonprofit, then approve">
+              <Tooltip title={`${approvalBlocked}, then approve`}>
                 <Button
                   onClick={() => setActiveTab(1)}
                   variant="outlined"
                   color="success"
                   startIcon={<FaCheckCircle />}
                 >
-                  Assign nonprofit to approve
+                  Assign nonprofit &amp; project to approve
                 </Button>
               </Tooltip>
             ))}
@@ -3651,6 +3637,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                   ? getNonprofitName(teamData.selected_nonprofit_id)
                   : "No nonprofit selected"}
               </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Project: {selectedProjectTitle || "none selected"}
+              </Typography>
             </Box>
 
             <Typography variant="body2" color="text.secondary">
@@ -3658,9 +3647,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
               Selected".
             </Typography>
 
-            {!teamData?.selected_nonprofit_id && (
+            {approvalBlocked && (
               <Alert severity="warning" sx={{ mt: 2 }}>
-                Please select a nonprofit before approving the team.
+                {approvalBlocked} before approving the team.
               </Alert>
             )}
           </Box>
@@ -3671,7 +3660,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
             onClick={handleApproveTeam}
             variant="contained"
             color="success"
-            disabled={loading || !teamData?.selected_nonprofit_id}
+            disabled={loading || Boolean(approvalBlocked)}
             startIcon={
               loading ? <CircularProgress size={16} /> : <FaCheckCircle />
             }
@@ -3940,7 +3929,11 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
         anchorEl={gatewayPopover.anchorEl}
         onClose={closeGatewayPopover}
         team={gatewayPopover.team}
-        status={gatewayPopover.team ? gatewayKeyStatuses[gatewayPopover.team.id] : undefined}
+        status={
+          gatewayPopover.team
+            ? gatewayKeyStatuses[gatewayPopover.team.id]
+            : undefined
+        }
         api={gatewayApi}
         onStatusChange={handleGatewayStatusChange}
       />
