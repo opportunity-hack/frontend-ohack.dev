@@ -216,7 +216,6 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
           orgId={orgId}
           onUpdated={onUpdated}
           onSnack={onSnack}
-          onReload={detail.reload}
         />
       );
     }
