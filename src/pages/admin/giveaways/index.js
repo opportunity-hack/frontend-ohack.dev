@@ -1,402 +1,270 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
-  Typography,
-  Button,
+  Alert,
   Box,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Button,
   CircularProgress,
-  TextField,
-  TableSortLabel,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  Avatar,
-  Card,
-  CardContent,
-  Chip,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { styled } from "@mui/system";
+import { Add as AddIcon } from "@mui/icons-material";
 import AdminPage from "../../../components/admin/AdminPage";
-import DramaticGiveawaySelector from "../../../components/admin/DramaticGiveawaySelector";
+import SetupTab from "../../../components/admin/giveaways/SetupTab";
+import EntriesTab from "../../../components/admin/giveaways/EntriesTab";
+import DrawTab from "../../../components/admin/giveaways/DrawTab";
+import {
+  useAdminGiveaway,
+  useAdminGiveaways,
+} from "../../../hooks/use-admin-giveaway";
+import { createAdminGiveaway, giveawayErrorMessage } from "../../../lib/giveawayApi";
+import {
+  GIVEAWAY_ID_RE,
+  defaultGiveawayId,
+  slugifyGiveawayId,
+} from "../../../components/admin/giveaways/giveawaySetup";
 
-const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
-  width: "100%",
-  overflowX: "auto",
-  "& .MuiTable-root": {
-    minWidth: "100%",
-  },
-}));
+const TAB_SLUGS = ["setup", "entries", "draw"];
+const STATUS_LABEL = { draft: "Draft", open: "Open", closed: "Closed", drawn: "Drawn" };
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [theme.breakpoints.down("sm")]: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    borderBottom: "none",
-    padding: "8px 16px",
-    "&:before": {
-      content: "attr(data-label)",
-      fontWeight: "bold",
-      marginBottom: "4px",
-    },
-  },
-}));
+function NewGiveawayDialog({ open, onClose, onCreate }) {
+  const [title, setTitle] = useState("");
+  const [id, setId] = useState("");
+  const [idTouched, setIdTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const effectiveId = idTouched ? id : slugifyGiveawayId(title);
+  const valid = Boolean(title.trim()) && GIVEAWAY_ID_RE.test(effectiveId);
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  [theme.breakpoints.down("sm")]: {
-    display: "flex",
-    flexDirection: "column",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
-}));
+  const submit = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await onCreate({ id: effectiveId, title: title.trim() });
+      setTitle("");
+      setId("");
+      setIdTouched(false);
+    } catch (err) {
+      setError(giveawayErrorMessage(err, "Couldn't create the giveaway."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle>New giveaway</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          fullWidth
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          sx={{ mt: 1, mb: 2 }}
+        />
+        <TextField
+          fullWidth
+          label="Id (in links; can't change later)"
+          value={effectiveId}
+          onChange={(e) => {
+            setIdTouched(true);
+            setId(e.target.value.toLowerCase());
+          }}
+          error={Boolean(effectiveId) && !GIVEAWAY_ID_RE.test(effectiveId)}
+          helperText="Lowercase letters, digits and dashes — e.g. fall-2026"
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          It starts as a draft. Add prizes, then set it to Open so people can enter.
+        </Typography>
+        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button variant="contained" onClick={submit} disabled={!valid || busy}>
+          {busy ? "Creating…" : "Create"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
+  const router = useRouter();
   const { accessToken } = useAuthInfo();
-  const [giveaways, setGiveaways] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [orderBy, setOrderBy] = useState("entries");
-  const [order, setOrder] = useState("desc");
-  const [filter, setFilter] = useState("");
-  const [randomSeed, setRandomSeed] = useState("");
-  const [selectedWinner, setSelectedWinner] = useState(null);
-  const [winnerDialogOpen, setWinnerDialogOpen] = useState(false);
+  const org = userClass?.getOrgByName("Opportunity Hack Org");
+  const orgId = org?.orgId;
+  const isAdmin = Boolean(org?.hasPermission("volunteer.admin"));
 
-  const org = userClass.getOrgByName("Opportunity Hack Org");
-  const orgId = org.orgId;
-  const isAdmin = org.hasPermission("volunteer.admin");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [newOpen, setNewOpen] = useState(false);
+  const onSnack = useCallback((message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
 
-  const fetchGiveaways = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/giveaway/admin`,
-        {
-          method: "GET",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            "content-type": "application/json",
-            "X-Org-Id": orgId,
-          },
-        }
+  const list = useAdminGiveaways(orgId, { enabled: isAdmin });
+  const giveaways = useMemo(() => list.data?.giveaways || [], [list.data]);
+  const queryId = typeof router.query.g === "string" ? router.query.g : null;
+  const selectedId = queryId || defaultGiveawayId(giveaways);
+  const tabIndex = Math.max(0, TAB_SLUGS.indexOf(router.query.tab));
+
+  const detail = useAdminGiveaway(selectedId, orgId, { enabled: isAdmin && Boolean(selectedId) });
+  const giveaway = detail.data?.giveaway?.id === selectedId ? detail.data.giveaway : null;
+  const entries = useMemo(() => detail.data?.entries || [], [detail.data]);
+  const { setData: setDetailData } = detail;
+  const { refresh: refreshList, reload: reloadList } = list;
+
+  const setQuery = useCallback(
+    (next) => {
+      router.replace(
+        { pathname: router.pathname, query: { ...router.query, ...next } },
+        undefined,
+        { shallow: true, scroll: false },
       );
+    },
+    [router],
+  );
 
-      if (response.ok) {
-        const data = await response.json();
-        setGiveaways(data.giveaways);
-      } else {
-        throw new Error("Failed to fetch giveaways");
-      }
-    } catch (error) {
-      console.error("Error fetching giveaways:", error);
-      setSnackbar({
-        open: true,
-        message: "Failed to fetch giveaways. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, orgId]);
+  /** Merge a saved/updated campaign into the page state (no refetch). */
+  const onUpdated = useCallback(
+    (updated) => {
+      setDetailData((d) => ({ ...(d || {}), giveaway: { ...(d?.giveaway || {}), ...updated } }));
+      refreshList();
+    },
+    [setDetailData, refreshList],
+  );
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchGiveaways();
-    }
-  }, [isAdmin, fetchGiveaways]);
-
-  const handleRequestSort = (property) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
+  const onCreate = async ({ id, title }) => {
+    await createAdminGiveaway({ id, title, status: "draft" }, { token: accessToken, orgId });
+    setNewOpen(false);
+    await reloadList();
+    setQuery({ g: id, tab: "setup" });
+    onSnack("Giveaway created. Add prizes, then open it.");
   };
-
-  const sortedGiveaways = giveaways
-    .sort((a, b) => {
-      if (orderBy === "entries") {
-        return order === "asc" ? a.entries - b.entries : b.entries - a.entries;
-      } else if (orderBy === "name") {
-        return order === "asc"
-          ? (a.user?.name || "").localeCompare(b.user?.name || "")
-          : (b.user?.name || "").localeCompare(a.user?.name || "");
-      } else {
-        return order === "asc"
-          ? (a.user_id || "").localeCompare(b.user_id || "")
-          : (b.user_id || "").localeCompare(a.user_id || "");
-      }
-    })
-    .filter((giveaway) => {
-      const searchTerm = filter.toLowerCase();
-      return (
-        (giveaway.user?.name || "").toLowerCase().includes(searchTerm) ||
-        (giveaway.user?.nickname || "").toLowerCase().includes(searchTerm) ||
-        (giveaway.user?.github || "").toLowerCase().includes(searchTerm)
-      );
-    });
-
-  const handleSnackbarClose = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const handleWinnerSelected = (winner) => {
-    setSelectedWinner(winner);
-    // Keep the simple dialog as a backup/alternative view
-    // setWinnerDialogOpen(true);
-  };
-
-  // Calculate statistics
-  const totalParticipants = sortedGiveaways.length;
-  const totalEntries = sortedGiveaways.reduce((sum, g) => sum + g.entries, 0);
-  const avgEntriesPerParticipant = totalParticipants > 0 ? (totalEntries / totalParticipants).toFixed(1) : 0;
-  const maxEntries = Math.max(...sortedGiveaways.map(g => g.entries), 0);
-  const topParticipant = sortedGiveaways.find(g => g.entries === maxEntries);
 
   if (!isAdmin) {
     return (
-      <AdminPage title="Giveaway Management" isAdmin={false}>
+      <AdminPage title="Giveaways" isAdmin={false}>
         <Typography>You do not have permission to view this page.</Typography>
       </AdminPage>
     );
   }
 
+  const spinner = (
+    <Box sx={{ display: "flex", justifyContent: "center", py: 6, minHeight: 320 }}>
+      <CircularProgress />
+    </Box>
+  );
+
+  let body;
+  if (list.status === "loading" || list.status === "idle") {
+    body = spinner;
+  } else if (list.status === "error") {
+    body = (
+      <Alert severity="error" action={<Button onClick={reloadList}>Retry</Button>}>
+        Couldn't load giveaways.
+      </Alert>
+    );
+  } else if (list.data?.unavailable) {
+    body = <Alert severity="info">Giveaways aren't available on this backend yet.</Alert>;
+  } else if (!giveaways.length) {
+    body = (
+      <Alert severity="info" action={<Button onClick={() => setNewOpen(true)}>New giveaway</Button>}>
+        No giveaways yet.
+      </Alert>
+    );
+  } else {
+    let tabBody;
+    if (detail.status === "error") {
+      tabBody = (
+        <Alert severity="error" action={<Button onClick={detail.reload}>Retry</Button>}>
+          {giveawayErrorMessage(detail.error, "Couldn't load this giveaway.")}
+        </Alert>
+      );
+    } else if (!giveaway) {
+      tabBody = spinner;
+    } else if (tabIndex === 0) {
+      tabBody = (
+        <SetupTab
+          key={giveaway.id}
+          giveaway={giveaway}
+          orgId={orgId}
+          entriesCount={entries.length}
+          onSaved={onUpdated}
+          onSnack={onSnack}
+        />
+      );
+    } else if (tabIndex === 1) {
+      tabBody = <EntriesTab key={giveaway.id} giveaway={giveaway} entries={entries} />;
+    } else {
+      tabBody = (
+        <DrawTab
+          key={giveaway.id}
+          giveaway={giveaway}
+          entries={entries}
+          orgId={orgId}
+          onUpdated={onUpdated}
+          onSnack={onSnack}
+        />
+      );
+    }
+
+    body = (
+      <>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mb: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 280 }}>
+            <InputLabel id="giveaway-select-label">Giveaway</InputLabel>
+            <Select
+              labelId="giveaway-select-label"
+              label="Giveaway"
+              value={giveaways.some((g) => g.id === selectedId) ? selectedId : ""}
+              onChange={(e) => setQuery({ g: e.target.value })}
+            >
+              {giveaways.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.title} · {STATUS_LABEL[g.status] || g.status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button startIcon={<AddIcon />} onClick={() => setNewOpen(true)}>
+            New giveaway
+          </Button>
+        </Box>
+        <Tabs
+          value={tabIndex}
+          onChange={(_, i) => setQuery({ tab: TAB_SLUGS[i] })}
+          sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+        >
+          <Tab label="Setup" />
+          <Tab label={`Entries${giveaway ? ` (${entries.length})` : ""}`} />
+          <Tab label="Draw" />
+        </Tabs>
+        {tabBody}
+      </>
+    );
+  }
+
   return (
     <AdminPage
-      title="Giveaway Management"
+      title="Giveaways"
       isAdmin={isAdmin}
       snackbar={snackbar}
-      onSnackbarClose={handleSnackbarClose}
+      onSnackbarClose={() => setSnackbar((s) => ({ ...s, open: false }))}
     >
-      <Box sx={{ mb: 3, width: "100%" }}>
-        <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          🎁 Giveaway Entries
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 2, color: "text.secondary" }}>
-          Manage and conduct fair, transparent giveaway selections. The dramatic selection process shows exactly how winners are chosen using a seeded random number generator for full transparency.
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid>
-            <Button onClick={fetchGiveaways} variant="outlined">
-              Refresh Data
-            </Button>
-          </Grid>
-          <Grid size={{ xs: true }}>
-            <TextField
-              fullWidth
-              label="Filter by Name, Nickname, or GitHub"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Participants
-              </Typography>
-              <Typography variant="h4" component="div">
-                {totalParticipants}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Entries
-              </Typography>
-              <Typography variant="h4" component="div">
-                {totalEntries}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Avg. Entries/Person
-              </Typography>
-              <Typography variant="h4" component="div">
-                {avgEntriesPerParticipant}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Top Contributor
-              </Typography>
-              <Typography variant="h6" component="div" noWrap>
-                {topParticipant ? topParticipant.user.name : 'N/A'}
-              </Typography>
-              <Chip 
-                label={`${maxEntries} entries`} 
-                size="small" 
-                color="primary"
-                sx={{ mt: 1 }}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ mb: 3, width: "100%" }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField
-              fullWidth
-              label="Random Seed (for fair & transparent selection)"
-              value={randomSeed}
-              onChange={(e) => setRandomSeed(e.target.value)}
-              type="number"
-              helperText="Enter any number for reproducible random selection"
-              placeholder="e.g., 12345"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Button
-              variant="outlined"
-              onClick={() => setRandomSeed(Date.now().toString())}
-              sx={{ height: '56px' }}
-            >
-              Generate Random Seed
-            </Button>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <DramaticGiveawaySelector
-              giveaways={sortedGiveaways}
-              randomSeed={randomSeed}
-              onWinnerSelected={handleWinnerSelected}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <StyledTableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>Avatar</StyledTableCell>
-                <StyledTableCell>
-                  <TableSortLabel
-                    active={orderBy === "name"}
-                    direction={orderBy === "name" ? order : "asc"}
-                    onClick={() => handleRequestSort("name")}
-                  >
-                    Name
-                  </TableSortLabel>
-                </StyledTableCell>
-                <StyledTableCell>Nickname</StyledTableCell>
-                <StyledTableCell>GitHub</StyledTableCell>
-                <StyledTableCell>
-                  <TableSortLabel
-                    active={orderBy === "entries"}
-                    direction={orderBy === "entries" ? order : "asc"}
-                    onClick={() => handleRequestSort("entries")}
-                  >
-                    Total Entries
-                  </TableSortLabel>
-                </StyledTableCell>
-                <StyledTableCell>GitHub Entries</StyledTableCell>
-                <StyledTableCell>Profile Entries</StyledTableCell>
-                <StyledTableCell>Timestamp</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedGiveaways.map((giveaway) => (
-                <StyledTableRow key={giveaway.user_id}>
-                  <StyledTableCell data-label="Avatar">
-                    <Avatar
-                      src={giveaway.user.profile_image}
-                      alt={giveaway.user.name}
-                    />
-                  </StyledTableCell>
-                  <StyledTableCell data-label="Name">
-                    {giveaway.user.name}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="Nickname">
-                    {giveaway.user.nickname}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="GitHub">
-                    {giveaway.user.github}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="Total Entries">
-                    {giveaway.entries}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="GitHub Entries">
-                    {giveaway.giveaway_data.githubEntries}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="Profile Entries">
-                    {giveaway.giveaway_data.profileEntries}
-                  </StyledTableCell>
-                  <StyledTableCell data-label="Timestamp">
-                    {new Date(giveaway.timestamp).toLocaleString()}
-                  </StyledTableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </StyledTableContainer>
-      )}
-
-      <Dialog
-        open={winnerDialogOpen}
-        onClose={() => setWinnerDialogOpen(false)}
-      >
-        <DialogTitle>Random Winner Selected</DialogTitle>
-        <DialogContent>
-          {selectedWinner && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Avatar
-                src={selectedWinner.user.profile_image}
-                alt={selectedWinner.user.name}
-                sx={{ width: 64, height: 64 }}
-              />
-              <Typography>
-                Winner: {selectedWinner.user.name} (
-                {selectedWinner.user.nickname})
-                <br />
-                GitHub: {selectedWinner.user.github}
-                <br />
-                Total Entries: {selectedWinner.entries}
-                <br />
-                GitHub Entries: {selectedWinner.giveaway_data.githubEntries}
-                <br />
-                Profile Entries: {selectedWinner.giveaway_data.profileEntries}
-                <br />
-                Timestamp: {new Date(selectedWinner.timestamp).toLocaleString()}
-              </Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setWinnerDialogOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {body}
+      <NewGiveawayDialog open={newOpen} onClose={() => setNewOpen(false)} onCreate={onCreate} />
     </AdminPage>
   );
 });

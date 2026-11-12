@@ -37,7 +37,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LanguageIcon from '@mui/icons-material/Language';
 import PortfolioTab from './Portfolio/PortfolioTab';
 import ShareableGitHubContributions from './ShareableGitHubContributions';
-import RaffleEntries from './RaffleEntries';
+import GiveawaysTab from './Giveaways/GiveawaysTab';
 import CertificatesSection from './Sections/CertificatesSection';
 import CustomSelect from './CustomSelect';
 import HelpUsBuildOHack from "../HelpUsBuildOHack/HelpUsBuildOHack";
@@ -851,27 +851,27 @@ export default function Profile() {
 
             {/* Tab 5 — Giveaway Entries */}
             <TabPanel value={activeTab} index={5}>
-              <PanelHeader eyebrow="Giveaways" title="Giveaway Entries" />
+              <PanelHeader eyebrow="Giveaways" title="Giveaways">
+                Pick the prizes you'd like and we'll put you in the drawing. Your entries come from
+                your profile and your GitHub work on Opportunity Hack projects.
+              </PanelHeader>
 
-              <div className="ohx-card" style={{ padding: 24, marginBottom: 24 }}>
-                <h3 className="ohx-display" style={{ fontSize: "clamp(1.3rem,2.2vw,1.7rem)", marginBottom: 16 }}>
-                  Your Entries
-                </h3>
-                {isLoading ? (
-                  <Skeleton variant="rectangular" height={180} />
-                ) : (
-                  <RaffleEntries profile={profile} githubHistory={githubHistory} />
-                )}
-              </div>
+              <GiveawaysTab
+                profile={profile}
+                onOpenBasic={() => {
+                  setActiveTab(0);
+                  router.push('/profile#basic', undefined, { shallow: true });
+                  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
 
               <h3 className="ohx-display" style={{ fontSize: "clamp(1.3rem,2.2vw,1.7rem)", margin: "0 0 16px" }}>
                 How to Earn More Entries
               </h3>
               <Box component="ul" sx={{ pl: 2, color: 'var(--muted)' }}>
-                <Box component="li" sx={{ mb: 1 }}>Contribute to Opportunity Hack projects on GitHub</Box>
-                <Box component="li" sx={{ mb: 1 }}>Participate in hackathons as a hacker, mentor, or judge</Box>
-                <Box component="li" sx={{ mb: 1 }}>Complete your profile information</Box>
-                <Box component="li">Refer other volunteers to join Opportunity Hack</Box>
+                <Box component="li" sx={{ mb: 1 }}>Complete your profile — 5 entries for each field you fill in</Box>
+                <Box component="li" sx={{ mb: 1 }}>Contribute to Opportunity Hack projects on GitHub — 1 entry per commit, pull request, issue, or review, up to 45</Box>
+                <Box component="li">Save your entry again after you update your profile so the new count is used</Box>
               </Box>
             </TabPanel>
 

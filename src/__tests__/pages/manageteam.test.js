@@ -58,11 +58,18 @@ jest.mock("@hello-pangea/dnd", () => ({
 let mockDashboardMounts = 0;
 jest.mock("../../components/TeamDashboard/TeamDashboard", () => {
   const ReactInner = require("react");
-  return function TeamDashboardStub({ team }) {
+  return function TeamDashboardStub({ team, onLeftTeam }) {
     ReactInner.useEffect(() => {
       mockDashboardMounts += 1;
     }, []);
-    return <div data-testid="team-dashboard">{team.name}</div>;
+    return (
+      <div data-testid="team-dashboard">
+        {team.name}
+        <button type="button" onClick={() => onLeftTeam(team.id, {})}>
+          stub-leave
+        </button>
+      </div>
+    );
   };
 });
 
@@ -389,4 +396,44 @@ it("a project-options 500 shows a Retry card, never a 'no projects' claim", asyn
   expect(
     await screen.findAllByRole("button", { name: "Add to my ranking" }),
   ).toHaveLength(3);
+});
+
+it("leaving from the dashboard drops the team, shows the notice, and a /me refresh confirms it", async () => {
+  let left = false;
+  mockBackend({
+    [`${API}/api/team/fall-2026/me`]: () =>
+      Promise.resolve({ data: { teams: left ? [] : [TEAM] } }),
+  });
+  render(<ManageTeam />);
+  await screen.findByTestId("team-dashboard");
+
+  left = true;
+  fireEvent.click(screen.getByRole("button", { name: "stub-leave" }));
+
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "You've left Byte Club.",
+  );
+  expect(screen.queryByTestId("team-dashboard")).toBeNull();
+  expect(screen.getByText(/You don.t have a team yet/)).toBeInTheDocument();
+  await waitFor(() => expect(callsTo("/me")).toBe(2));
+  expect(screen.queryByTestId("team-dashboard")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+  expect(screen.queryByText("You've left Byte Club.")).toBeNull();
+});
+
+it("leaving one of two teams switches the dashboard to the other team", async () => {
+  const OTHER = { id: "t2", name: "Null Pointers", status: "IN_REVIEW" };
+  mockBackend({
+    [`${API}/api/team/fall-2026/me`]: () =>
+      Promise.resolve({ data: { teams: [TEAM, OTHER] } }),
+  });
+  render(<ManageTeam />);
+  expect(await screen.findByTestId("team-dashboard")).toHaveTextContent(
+    "Byte Club",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "stub-leave" }));
+  expect(await screen.findByTestId("team-dashboard")).toHaveTextContent(
+    "Null Pointers",
+  );
 });
