@@ -23,6 +23,7 @@ const TeamMemberManager = memo(
     handleRemoveTeamMember,
     setMemberInput,
     slackUsers,
+    slackChannel,
     error,
   }) => {
     return (
@@ -31,8 +32,8 @@ const TeamMemberManager = memo(
           Team Members
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Add the other members of your team. This will help us track who is
-          working together.
+          Add the other members of your team. People you pick from the list get
+          an invite to your team&apos;s Slack channel.
         </Typography>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -100,17 +101,32 @@ const TeamMemberManager = memo(
             Add Member
           </Button>
         </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Names you type (not picked from the list) won&apos;t get a Slack
+          invite — ask them to join{" "}
+          {slackChannel ? `#${slackChannel}` : "your team's channel"}.
+        </Typography>
 
         {teamMembers.length > 0 ? (
           <List>
             {teamMembers.map((member, index) => (
               <ListItem
-                key={index}
+                // Stable key: Slack users by id, typed names by text
+                // (handleAddTeamMember rejects duplicates of either).
+                key={
+                  typeof member === "string"
+                    ? `name:${member}`
+                    : `slack:${member.id || member.name}`
+                }
                 secondaryAction={
                   <IconButton
                     type="button"
                     edge="end"
-                    aria-label="remove"
+                    aria-label={`Remove ${
+                      typeof member === "string"
+                        ? member
+                        : member.real_name || member.name || "teammate"
+                    }`}
                     onClick={() => handleRemoveTeamMember(index)}
                     color="error"
                     size="small"

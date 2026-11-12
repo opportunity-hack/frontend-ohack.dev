@@ -41,14 +41,14 @@ const TeamDetailsForm = memo(({
       />
       <StyledTextField
         fullWidth
-        label="Slack Channel (without #) - we will create it if it doesn't exist"
+        label="New Slack channel name (without #)"
         value={slackChannel}
         onChange={(e) => setSlackChannel(e.target.value.toLowerCase())}
         required
         error={isSlackValid === false}
         helperText={
           slackError ||
-          "Use lowercase letters, numbers, hyphens, and underscores only"
+          "We create this channel for your team, so pick a name nobody is using yet. Lowercase letters, numbers, hyphens and underscores only."
         }
         InputProps={{
           startAdornment: <FaSlack style={{ marginRight: 8 }} />,

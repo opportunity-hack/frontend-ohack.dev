@@ -45,6 +45,14 @@ jest.mock("../../lib/ga", () => ({
   EventCategory: { ENGAGEMENT: "engagement" },
 }));
 jest.mock("../../components/Survey/SurveyCTA", () => () => null);
+// Pass-through dnd (jsdom can't drag; ↑/↓ is the tested reorder path).
+jest.mock("@hello-pangea/dnd", () => ({
+  DragDropContext: ({ children }) => children,
+  Droppable: ({ children }) =>
+    children({ innerRef: () => {}, droppableProps: {}, placeholder: null }),
+  Draggable: ({ children }) =>
+    children({ innerRef: () => {}, draggableProps: {}, dragHandleProps: {} }),
+}));
 
 // TeamDashboard stub counts mounts — a remount on token rotation is the bug.
 let mockDashboardMounts = 0;
@@ -206,4 +214,179 @@ it("no application (200 + data:null) still shows 'Apply first'", async () => {
   expect(
     await screen.findByText("Apply first to manage a team"),
   ).toBeInTheDocument();
+});
+
+// ---- create flow (project ranking, Nov 2026) ----------------------------
+// jsdom has no scrollIntoView; step navigation scrolls the new step in.
+beforeAll(() => {
+  Element.prototype.scrollIntoView = jest.fn();
+});
+const OPTIONS_URL = `${API}/api/team/fall-2026/project-options`;
+const PROJECT_OPTIONS = {
+  nonprofits: [
+    {
+      id: "np1",
+      name: "Food Bank",
+      projects: [
+        { id: "p1", title: "Scheduler", skills: ["React"] },
+        { id: "p2", title: "Inventory", skills: [] },
+      ],
+    },
+    {
+      id: "np2",
+      name: "Animal Rescue",
+      projects: [{ id: "p3", title: "Adoptions", skills: [] }],
+    },
+  ],
+};
+
+function mockCreateFlowBackend(overrides = {}) {
+  mockBackend({
+    [`${API}/api/team/fall-2026/me`]: () =>
+      Promise.resolve({ data: { teams: [] } }),
+    [`${API}/api/validate/slack/byte-club`]: () =>
+      Promise.resolve({ data: { valid: true, exists: false } }),
+    [`${API}/api/validate/github/me`]: () =>
+      Promise.resolve({ data: { valid: true } }),
+    [`${API}/api/slack/users/active?active_days=365`]: () =>
+      Promise.resolve({ data: { users: [] } }),
+    [OPTIONS_URL]: () => Promise.resolve({ data: PROJECT_OPTIONS }),
+    ...overrides,
+  });
+}
+
+const nextButton = () => screen.getByRole("button", { name: "Next" });
+const waitEnabled = (getter) =>
+  waitFor(() => expect(getter()).not.toBeDisabled(), { timeout: 3000 });
+
+async function fillDetailsAndGithub() {
+  render(<ManageTeam />);
+  fireEvent.change(await screen.findByLabelText(/Team Name/), {
+    target: { value: "Byte Club" },
+  });
+  fireEvent.change(screen.getByLabelText(/New Slack channel name/), {
+    target: { value: "byte-club" },
+  });
+  await waitEnabled(nextButton);
+  fireEvent.click(nextButton());
+  // GitHub step: prefilled from the profile ("me") and validated.
+  await screen.findByDisplayValue("me");
+  await waitEnabled(nextButton);
+}
+
+async function goToProjectsStep() {
+  await fillDetailsAndGithub();
+  fireEvent.click(nextButton());
+  return screen.findByRole("heading", {
+    name: "Choose the projects you want to build",
+  });
+}
+
+it("Enter on the GitHub step only advances — it never creates the team", async () => {
+  mockCreateFlowBackend();
+  await fillDetailsAndGithub();
+  const githubInput = screen.getByDisplayValue("me");
+  fireEvent.submit(githubInput.closest("form"));
+  expect(
+    await screen.findByRole("heading", {
+      name: "Choose the projects you want to build",
+    }),
+  ).toBeInTheDocument();
+  expect(axios.post).not.toHaveBeenCalled();
+});
+
+it("posts the ranked projects as [{nonprofit_id, problem_statement_id, rank}]", async () => {
+  mockCreateFlowBackend();
+  axios.post.mockResolvedValue({ data: { success: true } });
+  await goToProjectsStep();
+  expect(nextButton()).toBeDisabled(); // nothing ranked yet
+
+  const adds = await screen.findAllByRole("button", {
+    name: "Add to my ranking",
+  });
+  fireEvent.click(adds[2]); // Adoptions → #1
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Add to my ranking" })[0],
+  ); // Scheduler → #2
+  await waitEnabled(nextButton);
+  fireEvent.click(nextButton()); // → Teammates
+  await screen.findByRole("heading", { name: "Who's on your team?" });
+  fireEvent.click(nextButton()); // → Confirm
+  await screen.findByRole("heading", { name: "Check your team details" });
+
+  const create = screen.getByRole("button", { name: "Create team" });
+  fireEvent.click(create);
+  fireEvent.click(create); // double-click must not double-submit
+
+  await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(1));
+  const [url, body] = axios.post.mock.calls[0];
+  expect(url).toBe(`${API}/api/team/queue`);
+  expect(body).toMatchObject({
+    name: "Byte Club",
+    slackChannel: "byte-club",
+    eventId: "fall-2026",
+    githubUsername: "me",
+    nonprofitRankings: [
+      { nonprofit_id: "np2", problem_statement_id: "p3", rank: 1 },
+      { nonprofit_id: "np1", problem_statement_id: "p1", rank: 2 },
+    ],
+  });
+});
+
+it("a 400 refusal shows the server's message and returns to the right step", async () => {
+  mockCreateFlowBackend();
+  const refusal = new Error("HTTP 400");
+  refusal.response = {
+    status: 400,
+    data: {
+      error: "invalid_rankings",
+      message: "One of your projects is no longer available.",
+    },
+  };
+  axios.post.mockRejectedValue(refusal);
+  await goToProjectsStep();
+  const adds = await screen.findAllByRole("button", {
+    name: "Add to my ranking",
+  });
+  fireEvent.click(adds[0]);
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Add to my ranking" })[0],
+  );
+  await waitEnabled(nextButton);
+  fireEvent.click(nextButton());
+  fireEvent.click(nextButton());
+  fireEvent.click(await screen.findByRole("button", { name: "Create team" }));
+
+  expect(
+    await screen.findByText("One of your projects is no longer available."),
+  ).toBeInTheDocument();
+  // invalid_rankings → options re-fetched and back on the projects step
+  expect(
+    await screen.findByRole("heading", {
+      name: "Choose the projects you want to build",
+    }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(callsTo("/project-options")).toBe(2));
+});
+
+it("a project-options 500 shows a Retry card, never a 'no projects' claim", async () => {
+  let fail = true;
+  mockCreateFlowBackend({
+    [OPTIONS_URL]: () =>
+      fail
+        ? Promise.reject(http(500))
+        : Promise.resolve({ data: PROJECT_OPTIONS }),
+  });
+  await goToProjectsStep();
+  expect(
+    await screen.findByText(/couldn.t load this hackathon.s projects/),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/No projects are open/)).toBeNull();
+  expect(nextButton()).toBeDisabled();
+
+  fail = false;
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(
+    await screen.findAllByRole("button", { name: "Add to my ranking" }),
+  ).toHaveLength(3);
 });
