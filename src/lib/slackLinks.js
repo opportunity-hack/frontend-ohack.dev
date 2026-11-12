@@ -21,6 +21,8 @@ export const KEY_CHANNELS = {
   introductions: "C01EY49JV8U",
   askAMentor: "C01E5CGDQ74",
   random: "C06BRHRS5BQ",
+  // Resolved by name — `app_redirect` accepts a channel name as well as an ID.
+  help: "help",
 };
 
 /**

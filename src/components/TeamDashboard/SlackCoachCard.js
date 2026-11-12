@@ -6,6 +6,16 @@ import { useEnv } from "../../context/env.context";
 import { trackEvent, EventCategory } from "../../lib/ga";
 import { SLACK_TITLE } from "./copy";
 
+const PIN_VIDEO_URL = "https://youtu.be/9GUfV7Z4B4E";
+const THREADS_VIDEO_URL = "https://www.youtube.com/watch?v=afagxo_TcKo&t=26s";
+
+function trackTip(tip) {
+  trackEvent({
+    action: "team_slack_tip_click",
+    params: { event_category: EventCategory.ENGAGEMENT, event_label: tip },
+  });
+}
+
 function copyToClipboard(text) {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -22,13 +32,7 @@ function TipButton({ tip, label, onClick, feedbackLabel = "Copied ✓" }) {
         onClick();
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
-        trackEvent({
-          action: "team_slack_tip_click",
-          params: {
-            event_category: EventCategory.ENGAGEMENT,
-            event_label: tip,
-          },
-        });
+        trackTip(tip);
       }}
       style={{ marginRight: 8, marginBottom: 8 }}
     >
@@ -50,6 +54,21 @@ function TipButton({ tip, label, onClick, feedbackLabel = "Copied ✓" }) {
         {copied ? feedbackLabel : ""}
       </span>
     </button>
+  );
+}
+
+function TipLink({ tip, label, href }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ohx-btn ohx-btn--ghost"
+      onClick={() => trackTip(tip)}
+      style={{ marginRight: 8, marginBottom: 8 }}
+    >
+      {label}
+    </a>
   );
 }
 
@@ -96,18 +115,23 @@ export default function SlackCoachCard({ team, eventId }) {
             copyToClipboard("**Yesterday:** \n**Today:** \n**Blockers:** ")
           }
         />
-        <TipButton
+        <TipLink
           tip="ask_a_mentor"
-          label="Ask in #ask-a-mentor"
-          feedbackLabel="Opened ✓"
-          onClick={() =>
-            window.open(
-              slackChannelUrl(KEY_CHANNELS.askAMentor),
-              "_blank",
-              "noopener",
-            )
-          }
+          label="Technical Questions: #ask-a-mentor"
+          href={slackChannelUrl(KEY_CHANNELS.askAMentor)}
         />
+        <TipLink
+          tip="ask_help"
+          label="General Questions: #help"
+          href={slackChannelUrl(KEY_CHANNELS.help)}
+        />
+        {eventId ? (
+          <TipLink
+            tip="see_mentors"
+            label="See mentors"
+            href={`/hack/${eventId}#mentor`}
+          />
+        ) : null}
         <TipButton
           tip="pin_links"
           label="Pin your repo + demo link"
@@ -119,11 +143,15 @@ export default function SlackCoachCard({ team, eventId }) {
             );
           }}
         />
-        <TipButton
+        <TipLink
+          tip="pin_links_video"
+          label="▶ Watch: how to pin"
+          href={PIN_VIDEO_URL}
+        />
+        <TipLink
           tip="reply_in_threads"
-          label="Reply in threads"
-          feedbackLabel="Got it ✓"
-          onClick={() => {}}
+          label="▶ Watch: reply in threads"
+          href={THREADS_VIDEO_URL}
         />
       </Box>
 
