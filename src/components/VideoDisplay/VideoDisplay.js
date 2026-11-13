@@ -2,6 +2,7 @@ import React from 'react';
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { parseVideoUrl } from "../../lib/videoLinks";
 
 const VideoWrapper = styled("div")({
   position: "relative",
@@ -18,65 +19,25 @@ const VideoWrapper = styled("div")({
   },
 });
 
-// Raw video files (e.g. bio videos uploaded to cdn.ohack.dev)
-const RAW_VIDEO_REGEX = /\.(mp4|webm|mov)(\?|#|$)/i;
+const IFRAME_ALLOW = {
+  youtube:
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+  vimeo: "autoplay; fullscreen; picture-in-picture",
+  loom: "autoplay; fullscreen; picture-in-picture",
+  drive: "autoplay",
+};
 
 // `fill`: take the parent's full width (no 600px cap, no margin) and keep
 // the title for the iframe only — for callers that frame the video themselves.
 const VideoDisplay = ({ url, title, fill = false }) => {
   const getVideoConfig = (url) => {
-    if (!url) return null;
-
-    // YouTube
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const youtubeMatch = url.match(youtubeRegex);
-    if (youtubeMatch) {
-      return {
-        type: 'youtube',
-        embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`,
-        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      };
+    const parsed = parseVideoUrl(url);
+    if (!parsed) return null;
+    if (parsed.provider === "file") {
+      // Raw video file — play with a native <video> (no iframe)
+      return { type: "file", embedUrl: parsed.embedUrl };
     }
-
-    // Vimeo
-    const vimeoRegex = /(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|))(\d+)(?:[a-zA-Z0-9_\-]+)?/;
-    const vimeoMatch = url.match(vimeoRegex);
-    if (vimeoMatch) {
-      return {
-        type: 'vimeo',
-        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
-        allow: "autoplay; fullscreen; picture-in-picture"
-      };
-    }
-
-    // Loom
-    const loomRegex = /(?:loom\.com\/(?:share|embed)\/)([a-zA-Z0-9]+)/;
-    const loomMatch = url.match(loomRegex);
-    if (loomMatch) {
-      return {
-        type: 'loom',
-        embedUrl: `https://www.loom.com/embed/${loomMatch[1]}`,
-        allow: "autoplay; fullscreen; picture-in-picture"
-      };
-    }
-
-    // Google Drive videos
-    const driveRegex = /drive\.google\.com\/file\/d\/([^/]+)/;
-    const driveMatch = url.match(driveRegex);
-    if (driveMatch) {
-      return {
-        type: 'google-drive',
-        embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
-        allow: "autoplay"
-      };
-    }
-
-    // Raw video file — play with a native <video> (no iframe)
-    if (RAW_VIDEO_REGEX.test(url)) {
-      return { type: 'file', embedUrl: url };
-    }
-
-    return null;
+    return { type: parsed.provider, embedUrl: parsed.embedUrl, allow: IFRAME_ALLOW[parsed.provider] };
   };
 
   const videoConfig = getVideoConfig(url);

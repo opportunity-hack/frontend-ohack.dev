@@ -120,6 +120,10 @@ import {
   toTeamProjectError,
 } from "../../lib/teamProjectApi";
 import { normalizeProjectOptions } from "../../lib/projectRanking";
+import {
+  isSupportedVideoUrl,
+  describeVideoUrlProblem,
+} from "../../lib/videoLinks";
 import GatewayKeyAdminPopover, {
   GATEWAY_STATUS_CHIP,
   gatewayStatusFor,
@@ -1184,13 +1188,9 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     if (!value) return null; // empty = clear (allowed)
     const trimmed = value.trim();
     if (trimmed.length > 500) return "URL too long (500 char max).";
-    const valid =
-      /youtube\.com\/.+v=[\w-]{11}/i.test(trimmed) ||
-      /youtu\.be\/[\w-]{11}/i.test(trimmed) ||
-      /vimeo\.com\/\d+/i.test(trimmed) ||
-      /loom\.com\/(share|embed)\/[a-zA-Z0-9]+/i.test(trimmed) ||
-      /drive\.google\.com\/file\/d\//i.test(trimmed);
-    return valid ? null : "Enter a YouTube, Vimeo, Loom, or Google Drive URL.";
+    return isSupportedVideoUrl(trimmed)
+      ? null
+      : describeVideoUrlProblem(trimmed);
   };
 
   // Column spec for "Export teams CSV" (everything the table shows).

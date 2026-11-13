@@ -132,6 +132,9 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_project_saved` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: <team id> }` | First successful autosave per page load only (not every keystroke). |
 | `team_project_submitted` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: "submitted" \| "late" }` | Fired after `POST /api/team/<id>/project/submit` succeeds. The core conversion of the dashboard. |
 | `team_demo_video_saved` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /demo-video`. |
+| `team_demo_video_help_open` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category }` | First time the "Free tools and other places to host" disclosure opens per mount. |
+| `team_demo_video_check_click` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category, event_label: <team id> }` | "Check it plays ↗" opened the saved link. |
+| `team_demo_video_unavailable_warning` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category, event_label: <team id> }` | YouTube oEmbed said the link can't be played by others (Private?). Once per distinct URL. |
 | `team_devpost_saved` | `TeamDashboard/DevPostEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /devpost` (DevPost is optional now — expect this to trend down). |
 | `team_mentor_availability_toggled` | `TeamDashboard/MentorAvailabilityToggle.js` | `{ event_category, event_label: "open" \| "heads_down" }` | Signal-only toggle; fired on the optimistic change (reverted UI does not un-fire). |
 | `team_slack_tip_click` | `TeamDashboard/SlackCoachCard.js` | `{ event_category, event_label: <tip id> }` | Which Slack coaching tips get used (standup template copy, ask-a-mentor, pin links, threads). |
