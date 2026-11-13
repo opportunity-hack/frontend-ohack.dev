@@ -143,4 +143,70 @@ describe("VolunteerExportDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download CSV/ })).toBeDisabled();
   });
+
+  describe('mode="emails"', () => {
+    let writeText;
+    beforeEach(() => {
+      writeText = jest.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText },
+        configurable: true,
+      });
+    });
+
+    it("defaults to the event roster and copies a comma-separated list", async () => {
+      renderDialog({ mode: "emails" });
+      expect(screen.getByText("Copy judges emails")).toBeInTheDocument();
+      expect(screen.getByLabelText(/On roster \(2\)/)).toBeChecked();
+      expect(screen.queryByText("Columns")).not.toBeInTheDocument();
+
+      const field = screen.getByLabelText(/Emails \(2\)/);
+      expect(field).toHaveValue("ada@x.org, cy@x.org");
+
+      fireEvent.click(screen.getByRole("button", { name: /Copy 2 emails/ }));
+      expect(await screen.findByText("Copied 2 emails.")).toBeInTheDocument();
+      expect(writeText).toHaveBeenCalledWith("ada@x.org, cy@x.org");
+      expect(ga.trackStructuredEvent).toHaveBeenCalledWith(
+        "admin",
+        "admin_volunteer_emails_copied",
+        "volunteer_judges",
+        2,
+        expect.objectContaining({ roster: "yes", clipboard: "ok" }),
+      );
+      expect(downloadCsv).not.toHaveBeenCalled();
+    });
+
+    it("re-scopes with the status checkboxes and notes rows without an email", () => {
+      renderDialog({
+        mode: "emails",
+        volunteers: [
+          ...judges,
+          { id: "e", name: "Ed", status: "approved", isSelected: true },
+        ],
+      });
+      expect(screen.getByLabelText(/Emails \(2\)/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/1 application has no valid email/),
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText(/Denied \(1\)/)); // uncheck Cy
+      expect(screen.getByLabelText(/Emails \(1\)/)).toHaveValue("ada@x.org");
+    });
+
+    it("keeps an explicit 'Not on roster' table filter", () => {
+      renderDialog({
+        mode: "emails",
+        filterState: {
+          statusFilter: "all",
+          selectedFilter: "no",
+          preset: "none",
+          checkedInFilter: "all",
+          filter: "",
+        },
+      });
+      expect(screen.getByLabelText(/Emails \(2\)/)).toHaveValue(
+        "bob@x.org, di@x.org",
+      );
+    });
+  });
 });
