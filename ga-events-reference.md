@@ -130,6 +130,7 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `team_dashboard_view` | `pages/hack/[event_id]/manageteam.js` | `{ event_category, event_label: <team status>, event_id }` | Once per page load (ref guard) when a team is present. Funnel top for everything below. |
 | `team_deadline_strip_view` | `TeamDashboard/DeadlineStrip.js` | `{ event_category, event_label: <deadlineState kind: open\|late_open\|closed\|submitted\|event_ends\|none> }` | Once per mount. Compare `submitted` vs `closed` counts to measure late-submission drop. |
 | `team_project_saved` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: <team id> }` | First successful autosave per page load only (not every keystroke). |
+| `team_project_conflict_resolved` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: "<field>:mine" \| "<field>:theirs" }` | A teammate saved the same write-up field first and this person chose which version to keep. |
 | `team_project_submitted` | `TeamDashboard/ProjectWriteupEditor.js` | `{ event_category, event_label: "submitted" \| "late" }` | Fired after `POST /api/team/<id>/project/submit` succeeds. The core conversion of the dashboard. |
 | `team_demo_video_saved` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category, event_label: <team id> }` | Successful `POST /demo-video`. |
 | `team_demo_video_help_open` | `TeamDashboard/DemoVideoEditor.js` | `{ event_category }` | First time the "Free tools and other places to host" disclosure opens per mount. |

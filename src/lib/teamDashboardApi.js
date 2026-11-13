@@ -55,6 +55,18 @@ async function request(path, { method = "GET", token, body } = {}) {
   return data;
 }
 
+/**
+ * True when a project save was refused because a teammate saved one of the
+ * same fields first (409 `{error: "project_conflict", fields, team}`).
+ */
+export function isProjectConflict(error) {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.body?.error === "project_conflict"
+  );
+}
+
 /** True when `error` is the 409 the backend returns once a deadline has passed. */
 export function isSubmissionsClosed(error) {
   return (

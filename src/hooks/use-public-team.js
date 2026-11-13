@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPublicTeam } from "../lib/teamDashboardApi";
 
+const LIVE_TEAM_FIELDS = new Set([
+  "demo_video_url",
+  "demo_video_url_submitted",
+  "devpost_link",
+]);
+
+export function isLiveTeamField(key) {
+  return (
+    key.startsWith("mentor_") ||
+    key.startsWith("project_") ||
+    LIVE_TEAM_FIELDS.has(key)
+  );
+}
+
 /**
  * Team roster for the dashboard's "Who's on the team" section.
  *
@@ -12,9 +26,11 @@ import { getPublicTeam } from "../lib/teamDashboardApi";
  *
  * Refetches on tab refocus (`visibilitychange`) so mentor activity that
  * happened while the tab was backgrounded shows up without a manual
- * reload, mirroring `use-live-team.js`. `mentor_*` fields on the refreshed
- * payload are merged back into the shared team state via `onTeamUpdated` so
- * `MentorSupportCard` benefits from the same refetch without its own call.
+ * reload, mirroring `use-live-team.js`. `mentor_*` fields and the fields
+ * teammates edit on the dashboard (`project_*`, demo video, DevPost) on the
+ * refreshed payload are merged back into the shared team state via
+ * `onTeamUpdated`, so `MentorSupportCard` and the editors benefit from the
+ * same refetch without their own call.
  */
 export default function usePublicTeam(team, onTeamUpdated) {
   const teamId = team?.id;
@@ -31,11 +47,14 @@ export default function usePublicTeam(team, onTeamUpdated) {
         if (!fresh) return;
         setUsers(Array.isArray(fresh.users) ? fresh.users : []);
         if (onTeamUpdated) {
-          const mentorFields = Object.fromEntries(
-            Object.entries(fresh).filter(([key]) => key.startsWith("mentor_")),
+          // Mentor activity plus everything teammates edit on this same
+          // dashboard (write-up, demo video, DevPost) — so a page left open
+          // doesn't keep showing, and then save over, an old version.
+          const liveFields = Object.fromEntries(
+            Object.entries(fresh).filter(([key]) => isLiveTeamField(key)),
           );
-          if (Object.keys(mentorFields).length > 0) {
-            onTeamUpdated(id, mentorFields);
+          if (Object.keys(liveFields).length > 0) {
+            onTeamUpdated(id, liveFields);
           }
         }
       } catch {
