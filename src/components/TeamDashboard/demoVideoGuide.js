@@ -2,7 +2,10 @@
 // tests assert on it. Tone: gentle and encouraging, one recommended path.
 
 export const DEMO_VIDEO_INTRO =
-  "4 minutes or less. Show the problem, the demo, and who it helps.";
+  "4 minutes or less. Ideally spend under 10 seconds on team introductions, 30 seconds on the problem you're solving, 1 minute on how you solved it overall, and the rest on how what you built addresses the";
+
+export const JUDGING_CRITERIA_LINK_TEXT = "judging criteria";
+export const JUDGING_CRITERIA_HREF = "/about/judges#judging-criteria";
 
 export const EASY_STEPS_HEADING = "The easiest way";
 

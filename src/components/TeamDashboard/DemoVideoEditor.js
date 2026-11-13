@@ -28,6 +28,8 @@ import {
 } from "../../lib/videoLinks";
 import {
   DEMO_VIDEO_INTRO,
+  JUDGING_CRITERIA_LINK_TEXT,
+  JUDGING_CRITERIA_HREF,
   EASY_STEPS_HEADING,
   EASY_STEPS,
   DEMO_VIDEO_FIELD_HELP,
@@ -301,7 +303,16 @@ export default function DemoVideoEditor({
       title="Demo video"
     >
       <Box sx={{ color: "var(--muted)", mb: 2, maxWidth: "40em" }}>
-        {DEMO_VIDEO_INTRO}
+        {DEMO_VIDEO_INTRO}{" "}
+        <a
+          href={JUDGING_CRITERIA_HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-link"
+        >
+          {JUDGING_CRITERIA_LINK_TEXT}
+        </a>
+        .
       </Box>
       <EasySteps />
       <Box
