@@ -35,9 +35,24 @@ jest.mock("../../lib/ga", () => ({
 import RecruitTechTalent, {
   getStaticProps,
   FAQ_ITEMS,
+  twoUpGrid,
+  rolesGrid,
+  threeUpGrid,
 } from "../../pages/recruit-tech-talent/index";
 
 describe("/recruit-tech-talent", () => {
+  it("card grid gaps are px strings, not theme-spacing units", () => {
+    // In `sx`, a numeric gap is multiplied by theme.spacing (8px):
+    // `gap: 20` rendered a 160px gutter between cards.
+    for (const grid of [twoUpGrid, rolesGrid, threeUpGrid]) {
+      expect(typeof grid.gap).toBe("string");
+      expect(grid.gap).toMatch(/^\d+px$/);
+    }
+    expect(twoUpGrid.gap).toBe("20px");
+    expect(threeUpGrid.gap).toBe("20px");
+    expect(rolesGrid.gap).toBe("16px");
+  });
+
   it("renders one h1 and every card heading", () => {
     render(<RecruitTechTalent />);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

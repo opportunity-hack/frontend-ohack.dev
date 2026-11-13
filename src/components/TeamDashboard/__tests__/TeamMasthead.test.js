@@ -66,4 +66,31 @@ describe("TeamMasthead", () => {
     );
     expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
   });
+
+  it("shows the assigned project from /me, and nothing when absent", () => {
+    const { rerender } = render(
+      <TeamMasthead
+        eventId="e1"
+        hasTeam
+        team={{
+          id: "t1",
+          name: "Team Rocket",
+          status: "NONPROFIT_SELECTED",
+          project: { id: "ps1", title: "Volunteer scheduler" },
+        }}
+      />,
+    );
+    expect(
+      screen.getByText("Project: Volunteer scheduler"),
+    ).toBeInTheDocument();
+
+    rerender(
+      <TeamMasthead
+        eventId="e1"
+        hasTeam
+        team={{ id: "t1", name: "Team Rocket", status: "IN_REVIEW" }}
+      />,
+    );
+    expect(screen.queryByText(/^Project:/)).not.toBeInTheDocument();
+  });
 });

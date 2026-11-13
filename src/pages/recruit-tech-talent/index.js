@@ -125,19 +125,22 @@ const iconWrap = {
   marginBottom: 14,
 };
 
+// Gaps are px STRINGS: inside `sx`, a bare number goes through theme.spacing
+// (8px per unit), so `gap: 20` rendered a 160px gutter.
+//
 // Column counts are chosen to divide each set's item count, so a section
 // never ends in a lone orphan card floating over empty space. Every plain
 // `div` grid on this page uses one of these — not `auto-fit minmax(...)`,
 // whose columns stretch to the content width and orphan the remainder.
-const twoUpGrid = {
+export const twoUpGrid = {
   display: "grid",
-  gap: 20,
+  gap: "20px",
   gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
 };
 
-const rolesGrid = {
+export const rolesGrid = {
   display: "grid",
-  gap: 16,
+  gap: "16px",
   gridTemplateColumns: {
     xs: "1fr",
     sm: "repeat(2, 1fr)",
@@ -155,9 +158,9 @@ const rolesGrid = {
   },
 };
 
-const threeUpGrid = {
+export const threeUpGrid = {
   display: "grid",
-  gap: 20,
+  gap: "20px",
   gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
 };
 

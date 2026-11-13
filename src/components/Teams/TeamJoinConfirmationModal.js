@@ -67,6 +67,9 @@ export default function TeamJoinConfirmationModal({
   onConfirm,
   teamName,
   loading = false,
+  // false when the viewer logged in without Slack: join_team only invites
+  // Slack logins to the team channel.
+  slackInvite = true,
 }) {
   const [confirmations, setConfirmations] = useState(EMPTY);
 
@@ -255,7 +258,9 @@ export default function TeamJoinConfirmationModal({
           }}
         >
           {allConfirmed
-            ? "All set. You'll be added to the team and its Slack channel."
+            ? slackInvite
+              ? "All set. You'll be added to the team and its Slack channel."
+              : "All set. You'll be added to the team — then join its channel in Slack."
             : "Confirm the three items above to join."}
         </Typography>
       </DialogContent>

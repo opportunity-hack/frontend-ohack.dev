@@ -19,11 +19,12 @@ import {
   isWinningStatus,
   getWinningStatus,
 } from "../../../../../constants/teamStatus";
-import { parseLocalDate } from "../../../../../lib/dateUtils";
+import { isEventEnded, parseLocalDate } from "../../../../../lib/dateUtils";
 import { RefinedRoot, Eyebrow } from "../../../../../components/design/refined";
 import useTeamJoinLeave from "../../../../../hooks/use-team-join-leave";
 import useHeartsSummary from "../../../../../hooks/use-hearts-summary";
 import TeamMembershipActions from "../../../../../components/Teams/TeamMembershipActions";
+import { isSlackLogin } from "../../../../../lib/teamInvite";
 import {
   teamJoinBlockedReason,
   teamLeaveBlockedReason,
@@ -411,13 +412,7 @@ export default function TeamDetailPage({
   const hasAnyProjectData = hasProjectContent(team);
 
   // Event ended = after 23:59:59 on end_date in local time.
-  const eventEnded = (() => {
-    if (!event?.end_date) return false;
-    const end = parseLocalDate(event.end_date);
-    if (Number.isNaN(end.getTime())) return false;
-    end.setHours(23, 59, 59, 999);
-    return end < new Date();
-  })();
+  const eventEnded = isEventEnded(event?.end_date);
 
   // Same gates as the event page's team cards (Hackathon/TeamList).
   const teamJoinEnabled = event?.constraints?.team_join_enabled !== false;
@@ -1132,7 +1127,12 @@ export default function TeamDetailPage({
                 )}
                 <TeamMembershipActions
                   eventId={event_id}
+                  teamId={team_id}
                   teamName={teamName}
+                  eventTitle={event?.title}
+                  users={Array.isArray(team.users) ? team.users : []}
+                  // null until the own profile loads (logged-out: null).
+                  isSlackLogin={ownProfile ? isSlackLogin(ownProfile) : null}
                   slackChannel={team.slack_channel}
                   isLoggedIn={membership.isLoggedIn}
                   isOnTeam={isOnTeam}

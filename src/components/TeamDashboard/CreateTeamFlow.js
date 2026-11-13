@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -16,17 +16,28 @@ import {
   refinedFormTheme,
   refinedStepperSx,
 } from "../ApplicationForm/refinedStyles";
+import { scrollToStepContent } from "../ApplicationForm/stepScroll";
 
+// One hint per step, shown while Next is disabled. Index-aligned with the
+// page's `steps` array (Team details → GitHub → Choose projects →
+// Teammates & notes → Confirm).
 const STEP_HELP = [
-  "Please complete your team details to continue",
-  "Please provide a valid GitHub username",
-  "Please select a nonprofit organization",
+  "Enter a team name and a new Slack channel name to continue",
+  "Enter a GitHub username we can find to continue",
+  "Rank the projects you want to build to continue",
+  "",
   "",
 ];
 
 /**
  * The team-creation stepper shell — JSX only. All form state/handlers stay
  * in the page (`manageteam.js`); this just renders them.
+ *
+ * Enter-to-submit: the browser submits a <form> when Enter is pressed in a
+ * text field. That used to call handleSubmit directly, so Enter on the
+ * GitHub step could create a team without ever reaching Confirm. Now the
+ * form's submit only ever means "Next"; the team is created ONLY by the
+ * Confirm step's explicit "Create team" button.
  */
 export default function CreateTeamFlow({
   steps,
@@ -40,6 +51,23 @@ export default function CreateTeamFlow({
   children,
 }) {
   const nextDisabled = isNextDisabled();
+  const isLastStep = activeStep === steps.length - 1;
+  const stepContentRef = useRef(null);
+  const firstRenderRef = useRef(true);
+
+  // Move focus + scroll to the new step on Next/Back (not on first mount).
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
+    scrollToStepContent(stepContentRef);
+  }, [activeStep]);
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    if (!isLastStep && !nextDisabled && !loading) handleNext();
+  };
 
   return (
     <ThemeProvider theme={refinedFormTheme}>
@@ -56,34 +84,31 @@ export default function CreateTeamFlow({
           ))}
         </Stepper>
 
-        <form onSubmit={handleSubmit}>
-          {children}
+        <form onSubmit={onFormSubmit} noValidate>
+          <Box
+            ref={stepContentRef}
+            tabIndex={-1}
+            sx={{ scrollMarginTop: 96, outline: "none" }}
+          >
+            {children}
+          </Box>
 
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
             <Button
               type="button"
-              disabled={activeStep === 0}
+              disabled={activeStep === 0 || loading}
               onClick={handleBack}
               sx={{ textTransform: "none" }}
             >
               Back
             </Button>
             <Button
-              // Explicit "button" (not the HTML default of "submit" a
-              // button gets inside a <form>) — `handleNext`/`handleBack`
-              // don't call preventDefault, so an implicit-submit button
-              // here also fires the form's onSubmit={handleSubmit} right
-              // after its own onClick. On the confirmation step, where
-              // every field already passes validateForm(), clicking "Back"
-              // would have silently created the team a second way.
+              // Explicit "button": the create action must be a deliberate
+              // click, never an implicit form submit.
               type="button"
               variant="contained"
-              onClick={
-                activeStep === steps.length - 1 ? handleSubmit : handleNext
-              }
-              disabled={
-                activeStep === steps.length - 1 ? loading : nextDisabled
-              }
+              onClick={isLastStep ? handleSubmit : handleNext}
+              disabled={isLastStep ? loading : nextDisabled}
               sx={{
                 textTransform: "none",
                 bgcolor: "var(--brand, #1B3A6B)",
@@ -94,7 +119,7 @@ export default function CreateTeamFlow({
                 },
               }}
             >
-              {activeStep === steps.length - 1 ? "Create Team" : "Next"}
+              {isLastStep ? "Create team" : "Next"}
               {loading && (
                 <Puff
                   stroke="#fff"
@@ -107,13 +132,13 @@ export default function CreateTeamFlow({
           </Box>
         </form>
 
-        {nextDisabled && !formError && (
+        {nextDisabled && !formError && !isLastStep && STEP_HELP[activeStep] && (
           <Typography
             color="textSecondary"
             align="right"
             sx={{ mt: 1, fontSize: "0.875rem", fontStyle: "italic" }}
           >
-            {STEP_HELP[activeStep] || ""}
+            {STEP_HELP[activeStep]}
           </Typography>
         )}
 
@@ -128,7 +153,7 @@ export default function CreateTeamFlow({
                 align="center"
                 sx={{ mt: 1, color: "var(--muted)" }}
               >
-                Creating your Slack channel and GitHub repo — this takes up to a
+                Creating your team and its Slack channel — this can take up to a
                 minute…
               </Typography>
             </Box>
@@ -137,7 +162,7 @@ export default function CreateTeamFlow({
 
         {formError && (
           <Fade in={!!formError}>
-            <Alert severity="error" sx={{ mt: 2 }}>
+            <Alert severity="error" role="alert" sx={{ mt: 2 }}>
               {formError}
             </Alert>
           </Fade>

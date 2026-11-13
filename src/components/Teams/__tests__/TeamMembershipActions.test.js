@@ -110,7 +110,9 @@ describe("TeamMembershipActions", () => {
     fireEvent.click(
       within(group).getByRole("button", { name: /stay on the team/i }),
     );
-    expect(screen.queryByRole("group")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: /leave night owls/i }),
+    ).toBeNull();
     expect(baseProps.onLeave).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: /^leave team$/i }));
@@ -146,5 +148,57 @@ describe("TeamMembershipActions", () => {
     expect(alert).toHaveTextContent(/boom/);
     fireEvent.click(within(alert).getByRole("button", { name: /dismiss/i }));
     expect(baseProps.onDismissFeedback).toHaveBeenCalled();
+  });
+
+  it("non-member checklist: logged out → Slack, log in with Slack, application, join", () => {
+    renderActions({ isLoggedIn: false, hackerStatus: "none" });
+    const list = screen.getByRole("list", { name: /how to join night owls/i });
+    const steps = within(list).getAllByRole("listitem");
+    expect(steps).toHaveLength(4);
+    expect(steps[0]).toHaveTextContent(/join the opportunity hack slack/i);
+    // next/link is globally mocked to its children, so assert the copy.
+    expect(steps[0]).toHaveTextContent(/how to join slack/i);
+    expect(steps[1]).toHaveTextContent(/sign in with slack/i);
+    expect(steps[1]).toHaveAttribute("aria-current", "step");
+    fireEvent.click(
+      within(steps[1]).getByRole("button", { name: /log in to join/i }),
+    );
+    expect(baseProps.onLogin).toHaveBeenCalled();
+    expect(
+      within(steps[3]).queryByRole("button", { name: /join team/i }),
+    ).toBeNull();
+  });
+
+  it("non-member checklist: approved Slack login gets the Join button on step 4", () => {
+    renderActions({
+      isLoggedIn: true,
+      hackerStatus: "approved",
+      isSlackLogin: true,
+    });
+    const steps = within(
+      screen.getByRole("list", { name: /how to join night owls/i }),
+    ).getAllByRole("listitem");
+    expect(steps[0]).toHaveTextContent(/you're on slack/i);
+    expect(steps[3]).toHaveAttribute("aria-current", "step");
+    fireEvent.click(
+      within(steps[3]).getByRole("button", { name: /join team/i }),
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("non-member logged in without Slack is told to join the channel themselves", () => {
+    renderActions({
+      isLoggedIn: true,
+      hackerStatus: "approved",
+      isSlackLogin: false,
+    });
+    expect(screen.getByText(/logged in without slack/i)).toBeInTheDocument();
+  });
+
+  it("member sees the invite kit (copy invite message)", () => {
+    renderActions({ isOnTeam: true, teamId: "t1" });
+    expect(
+      screen.getByRole("button", { name: /copy invite message/i }),
+    ).toBeInTheDocument();
   });
 });

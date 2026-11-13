@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Snackbar, Alert } from "@mui/material";
 import TeamStatusHero from "./TeamStatusHero";
+import { isPendingReview } from "../../constants/teamStatus";
 import DeadlineStrip from "./DeadlineStrip";
 import DeliverablesChecklist from "./DeliverablesChecklist";
 import HackersChoiceCard from "./HackersChoiceCard";
@@ -16,6 +17,11 @@ import JudgingAssignmentCard from "../Teams/JudgingAssignmentCard";
 import useTeamProject from "../../hooks/use-team-project";
 import usePublicTeam from "../../hooks/use-public-team";
 import useGithubActivity from "../../hooks/use-github-activity";
+import {
+  leaveTeam,
+  teamLeaveBlockedReason,
+} from "../../lib/teamMembershipApi";
+import { isEventEnded } from "../../lib/dateUtils";
 import {
   deriveDeliverables,
   summarizeGithubActivity,
@@ -37,6 +43,7 @@ export default function TeamDashboard({
   accessToken,
   profile,
   onTeamUpdated,
+  onLeftTeam,
   teamFindingEnabled,
 }) {
   const codeCardRef = useRef(null);
@@ -97,7 +104,38 @@ export default function TeamDashboard({
     slackConfirmed,
   });
 
-  const isInReview = team?.status === "IN_REVIEW";
+  // APPROVING (a few seconds mid-approval) renders like IN_REVIEW.
+  const isInReview = Boolean(team) && isPendingReview(team.status);
+
+  // Same leave rules as the public team page (twin: backend
+  // api/teams/membership_rules.py).
+  const leaveBlockedReason = teamLeaveBlockedReason({
+    eventEnded: isEventEnded(event?.end_date),
+    teamJoinEnabled: event?.constraints?.team_join_enabled !== false,
+  });
+  const handleLeave = useCallback(async () => {
+    const res = await leaveTeam({
+      accessToken,
+      teamId: team?.id,
+      eventId,
+      source: "team_dashboard",
+    });
+    if (onLeftTeam) onLeftTeam(team?.id, res);
+  }, [accessToken, team?.id, eventId, onLeftTeam]);
+
+  const rosterProps = {
+    users,
+    loading: rosterLoading,
+    ownId: profile?.id,
+    eventId,
+    teamId: team?.id,
+    teamFindingEnabled,
+    teamName: team?.name,
+    eventTitle: event?.title,
+    slackChannel: team?.slack_channel,
+    leaveBlockedReason,
+    onLeave: onLeftTeam ? handleLeave : undefined,
+  };
 
   return (
     <Box>
@@ -108,14 +146,7 @@ export default function TeamDashboard({
       {isInReview ? (
         <>
           <SlackCoachCard team={team} eventId={eventId} />
-          <TeamRoster
-            users={users}
-            loading={rosterLoading}
-            ownId={profile?.id}
-            eventId={eventId}
-            teamId={team?.id}
-            teamFindingEnabled={teamFindingEnabled}
-          />
+          <TeamRoster {...rosterProps} />
         </>
       ) : (
         <>
@@ -191,14 +222,7 @@ export default function TeamDashboard({
 
           <SlackCoachCard team={team} eventId={eventId} />
 
-          <TeamRoster
-            users={users}
-            loading={rosterLoading}
-            ownId={profile?.id}
-            eventId={eventId}
-            teamId={team?.id}
-            teamFindingEnabled={teamFindingEnabled}
-          />
+          <TeamRoster {...rosterProps} />
 
           <DevPostEditor
             team={team}

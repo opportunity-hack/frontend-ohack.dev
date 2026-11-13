@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { FaKey, FaSyncAlt, FaEye, FaEyeSlash, FaCopy } from "react-icons/fa";
+import { isPendingReview } from "../../constants/teamStatus";
 
 /**
  * Status chip config shared by the Teams table column and this popover.
@@ -26,7 +27,8 @@ export const GATEWAY_STATUS_CHIP = {
 
 export function gatewayStatusFor(team, statuses) {
   if (!team) return null;
-  if ((team.status || "IN_REVIEW") === "IN_REVIEW") return "not_approved";
+  // Keys are minted on approval — APPROVING is still "not approved".
+  if (isPendingReview(team.status)) return "not_approved";
   const entry = statuses?.[team.id];
   return entry?.keys?.[0]?.status || "missing";
 }
@@ -48,7 +50,7 @@ const GATEWAY_KEY_SLOTS = 2;
  */
 export function gatewayNeedsProvision(team, statuses) {
   if (!team) return false;
-  if ((team.status || "IN_REVIEW") === "IN_REVIEW") return false;
+  if (isPendingReview(team.status)) return false;
   const keys = statuses?.[team.id]?.keys;
   if (!Array.isArray(keys)) return true;
   for (let i = 0; i < GATEWAY_KEY_SLOTS; i += 1) {

@@ -165,6 +165,14 @@ describe("unassignedActiveTeams", () => {
   it("lists active, non-IN_REVIEW teams with no Round 1 panel, by name", () => {
     expect(unassignedActiveTeams(schedule(), eventData).map((t) => t.id)).toEqual(["t7", "t5"]);
   });
+
+  it("also skips a team caught mid-approval (APPROVING)", () => {
+    const data = {
+      ...eventData,
+      teams: [...eventData.teams, team({ id: "t8", name: "Golf", status: "APPROVING" })],
+    };
+    expect(unassignedActiveTeams(schedule(), data).map((t) => t.id)).toEqual(["t7", "t5"]);
+  });
 });
 
 describe("findTeamAssignments", () => {

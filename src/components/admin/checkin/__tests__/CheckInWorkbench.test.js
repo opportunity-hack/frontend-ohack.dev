@@ -216,6 +216,42 @@ describe("CheckInWorkbench with checkin.admin only", () => {
     );
   });
 
+  it("refuses a QR for another event without posting, even if the server would accept it", async () => {
+    // Last season's QR: the backend compares the doc's event_id to the event
+    // in the QR itself, so it would answer 200 and check the person in on the
+    // OLD event while they stay un-checked-in today.
+    const onSnack = jest.fn();
+    renderEmbedded(onSnack);
+    await screen.findByText("Ada Lovelace");
+    const base = global.fetch.getMockImplementation();
+    global.fetch.mockImplementation(async (url, opts = {}) =>
+      opts.method === "POST"
+        ? {
+            ok: true,
+            status: 200,
+            json: async () => ({ data: { id: "v2", name: "Grace Hopper" } }),
+          }
+        : base(url, opts),
+    );
+    global.fetch.mockClear();
+
+    await scan("fall-2025|v2|hacker");
+
+    expect(
+      global.fetch.mock.calls.some(([, o]) => o && o.method === "POST"),
+    ).toBe(false);
+    expect(
+      await screen.findByText(
+        /This QR code is for a different event or role\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Successfully/)).not.toBeInTheDocument();
+    expect(onSnack).toHaveBeenCalledWith(
+      "Check-in failed: This QR code is for a different event or role.",
+      "error",
+    );
+  });
+
   it("renders nothing when embedded without a check-in permission", () => {
     currentOrg = ORG("heart.admin");
     const { container } = renderEmbedded();

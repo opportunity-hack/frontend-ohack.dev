@@ -12,7 +12,8 @@ import { useRouter } from "next/router";
 // Import components
 import TeamDetailsForm from "../../../components/TeamCreation/TeamDetailsForm";
 import GitHubInfoForm from "../../../components/TeamCreation/GitHubInfoForm";
-import NonprofitSelectionStep from "../../../components/TeamCreation/NonprofitSelectionStep";
+import ProjectSelectionStep from "../../../components/TeamCreation/ProjectSelectionStep";
+import TeammatesStep from "../../../components/TeamCreation/TeammatesStep";
 import ConfirmationSummary from "../../../components/TeamCreation/ConfirmationSummary";
 import { RefinedRoot } from "../../../components/design/refined";
 import SurveyCTA from "../../../components/Survey/SurveyCTA";
@@ -28,13 +29,36 @@ import {
 } from "../../../components/TeamDashboard/GatingPanels";
 import { trackEvent, EventCategory } from "../../../lib/ga";
 import useAuthedResource from "../../../hooks/use-authed-resource";
+import useTeamProjectOptions from "../../../hooks/use-team-project-options";
+import {
+  moveProject,
+  pruneRanked,
+  rankingError,
+  rankingLimits,
+  rankingsPayload,
+  toggleProject,
+} from "../../../lib/projectRanking";
+import { queueTeam } from "../../../lib/teamProjectApi";
+import { isPendingReview } from "../../../constants/teamStatus";
+import {
+  savePendingTeammates,
+  splitTeammates,
+  teammateName,
+} from "../../../lib/teamInvite";
 
 const steps = [
-  "Team Details",
-  "GitHub Information",
-  "Nonprofit Rankings & Team",
-  "Confirming & Creating",
+  "Team details",
+  "GitHub",
+  "Choose projects",
+  "Teammates & notes",
+  "Confirm",
 ];
+// Step indexes — every activeStep comparison goes through these.
+const STEP_DETAILS = 0;
+const STEP_GITHUB = 1;
+const STEP_PROJECTS = 2;
+const STEP_TEAMMATES = 3;
+const STEP_CONFIRM = 4;
 
 // Shared "Find Teammates" CTA — used in both the existing-team and no-team cases
 const FindTeammatesCTA = ({ eventId, teamFindingEnabled, heading, body }) => (
@@ -93,21 +117,26 @@ const ManageTeamComponent = () => {
   const [teamName, setTeamName] = useState("");
   const [slackChannel, setSlackChannel] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
-  const [nonprofits, setNonprofits] = useState([]);
-  const [filteredNonprofits, setFilteredNonprofits] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNonprofits, setSelectedNonprofits] = useState([]);
+  // Ordered: [{nonprofitId, nonprofitName, projectId, title}] — #1 first.
+  const [rankedProjects, setRankedProjects] = useState([]);
+  // Sticky: the project options load the first time the projects step is
+  // reached and stay loaded after that.
+  const [projectsStepReached, setProjectsStepReached] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
-  const [progress, setProgress] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [event, setEvent] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
-  const [memberInput, setMemberInput] = useState("");
   const [comments, setComments] = useState("");
   const [slackUsers, setSlackUsers] = useState([]);
+  // "idle" | "loading" | "ready" | "error" — the picker says when the Slack
+  // directory couldn't load instead of looking empty.
+  const [slackUsersStatus, setSlackUsersStatus] = useState("idle");
   const [showNewTeamForm, setShowNewTeamForm] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState(null);
+  // "You've left …" — lives on the page because leaving unmounts the
+  // dashboard that triggered it.
+  const [leftNotice, setLeftNotice] = useState("");
 
   const [isValidatingGithub, setIsValidatingGithub] = useState(false);
   const [isGithubValid, setIsGithubValid] = useState(null);
@@ -198,6 +227,7 @@ const ManageTeamComponent = () => {
     teamsResource.status === "error" ? [] : (teamsResource.data ?? null);
   const setMyTeams = teamsResource.setData;
   const reloadMyTeams = teamsResource.reload;
+  const refreshMyTeams = teamsResource.refresh;
   const fetchMyTeams = useCallback(() => reloadMyTeams(), [reloadMyTeams]);
 
   const isLoadingApplication =
@@ -218,8 +248,39 @@ const ManageTeamComponent = () => {
 
   // Refs to prevent double-fetching lazy data
   const slackFetchedRef = useRef(false);
-  const nonprofitFetchedRef = useRef(false);
   const gaViewFiredRef = useRef(false);
+  // Double-submit guard: set synchronously on "Create team", cleared only
+  // after the post-create reset (or a failure) finishes.
+  const submittingRef = useRef(false);
+  // Latest typed values — a debounced validation response for an older value
+  // must never mark the current one valid.
+  const latestSlackRef = useRef("");
+  const latestGithubRef = useRef("");
+
+  useEffect(() => {
+    if (activeStep >= STEP_PROJECTS) setProjectsStepReached(true);
+  }, [activeStep]);
+
+  // The ONE project-options request (replaces the per-nonprofit +
+  // per-project fetch waterfall). Lazy: only once the projects step is hit.
+  const projectOptions = useTeamProjectOptions(event_id, {
+    enabled: projectsStepReached,
+  });
+  const totalProjects = projectOptions.totalProjects;
+  const limits = rankingLimits(totalProjects ?? 0);
+
+  // A refetch (Retry, or after an invalid_rankings refusal) may drop
+  // projects — keep only rankings that are still selectable.
+  useEffect(() => {
+    if (!projectOptions.nonprofits) return;
+    setRankedProjects((prev) => {
+      const next = pruneRanked(prev, projectOptions.nonprofits);
+      const same =
+        next.length === prev.length &&
+        next.every((r, i) => r.projectId === prev[i].projectId);
+      return same ? prev : next;
+    });
+  }, [projectOptions.nonprofits]);
 
   // The event payload is public — keyed on the event only.
   useEffect(() => {
@@ -232,7 +293,6 @@ const ManageTeamComponent = () => {
         );
         if (!cancelled && response && response.data) {
           setEvent(response.data);
-          // Nonprofit detail fetch is deferred to step 2 (see useEffect below)
         }
       } catch (err) {
         console.error("Error fetching event details:", err);
@@ -273,6 +333,7 @@ const ManageTeamComponent = () => {
 
   // Lazy Slack user fetch — only when user reaches the team-member step
   const fetchActiveSlackUsers = useCallback(async () => {
+    setSlackUsersStatus("loading");
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/slack/users/active?active_days=365`,
@@ -293,191 +354,62 @@ const ManageTeamComponent = () => {
           })),
         );
       }
+      setSlackUsersStatus("ready");
     } catch (err) {
       console.error("Error fetching active Slack users:", err);
-      // Non-critical — member picker works in freeSolo mode without the list
+      // Non-critical — teammates can still be added to the invite list.
+      setSlackUsersStatus("error");
     }
   }, []);
 
-  // Trigger Slack fetch lazily when step 2 is reached or accordion opened
+  // Trigger the Slack user fetch lazily when the Teammates step is reached
   useEffect(() => {
     if (
-      (activeStep === 2 || showNewTeamForm) &&
+      activeStep === STEP_TEAMMATES &&
       !slackFetchedRef.current &&
       accessToken
     ) {
       slackFetchedRef.current = true;
       fetchActiveSlackUsers();
     }
-  }, [
-    activeStep,
-    showNewTeamForm,
-    Boolean(accessToken),
-    fetchActiveSlackUsers,
-  ]);
+  }, [activeStep, Boolean(accessToken), fetchActiveSlackUsers]);
 
-  // Trigger nonprofit detail fetch lazily when step 2 is reached
-  useEffect(() => {
-    if (
-      (activeStep === 2 || showNewTeamForm) &&
-      !nonprofitFetchedRef.current &&
-      event?.nonprofits?.length > 0 &&
-      nonprofits.length === 0
-    ) {
-      nonprofitFetchedRef.current = true;
-      fetchNonprofitDetails(event.nonprofits);
-    }
-  }, [activeStep, showNewTeamForm, event]);
-
-  const fetchNonprofitDetails = async (nonprofitIds) => {
-    try {
-      const nonprofitResponses = await Promise.all(
-        nonprofitIds.map((npo) =>
-          axios.get(
-            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/npo/${npo.id}`,
-          ),
-        ),
-      );
-      const detailedNonprofits = nonprofitResponses.map(
-        (r) => r.data.nonprofits,
-      );
-      const nonprofitsWithProblems = await Promise.all(
-        detailedNonprofits.map(async (nonprofit) => {
-          if (
-            nonprofit.problem_statements &&
-            nonprofit.problem_statements.length > 0
-          ) {
-            const problemStatementDetails = await Promise.all(
-              nonprofit.problem_statements.map(async (problemId) => {
-                try {
-                  const response = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${problemId}`,
-                  );
-                  const problemData = response.data;
-                  return {
-                    id: problemId,
-                    ...problemData,
-                    displayTitle:
-                      problemData.title ||
-                      (problemData.description &&
-                      problemData.description.length > 30
-                        ? `${problemData.description.substring(0, 30)}...`
-                        : problemData.description) ||
-                      `Need ${problemId.substring(0, 6)}`,
-                  };
-                } catch {
-                  return {
-                    id: problemId,
-                    displayTitle: `Problem ${problemId.substring(0, 6)}...`,
-                    description: "Details could not be loaded",
-                    error: true,
-                  };
-                }
-              }),
-            );
-            nonprofit.problem_statements = problemStatementDetails;
-          } else {
-            nonprofit.problem_statements = [];
-          }
-          return nonprofit;
-        }),
-      );
-      setNonprofits(nonprofitsWithProblems);
-      setFilteredNonprofits(nonprofitsWithProblems);
-    } catch (err) {
-      console.error("Error fetching nonprofit details:", err);
-      // Non-critical — user can still use the search with partial data
-    }
-  };
-
-  const filterNonprofits = useCallback(
-    (term) => {
-      if (!term.trim()) {
-        setFilteredNonprofits(nonprofits);
-        return;
-      }
-      const lowerTerm = term.toLowerCase();
-      setFilteredNonprofits(
-        nonprofits.filter(
-          (nonprofit) =>
-            nonprofit.name.toLowerCase().includes(lowerTerm) ||
-            (nonprofit.description &&
-              nonprofit.description.toLowerCase().includes(lowerTerm)) ||
-            (nonprofit.problem_statements &&
-              nonprofit.problem_statements.some(
-                (p) =>
-                  p.displayTitle.toLowerCase().includes(lowerTerm) ||
-                  (p.description &&
-                    p.description.toLowerCase().includes(lowerTerm)),
-              )),
-        ),
-      );
-    },
-    [nonprofits],
+  const handleToggleProject = useCallback(
+    (entry) =>
+      setRankedProjects((prev) => toggleProject(prev, entry, limits.max)),
+    [limits.max],
+  );
+  const handleMoveProject = useCallback(
+    (from, to) => setRankedProjects((prev) => moveProject(prev, from, to)),
+    [],
+  );
+  const handleRemoveProject = useCallback(
+    (entry) =>
+      setRankedProjects((prev) =>
+        prev.filter((r) => r.projectId !== entry.projectId),
+      ),
+    [],
   );
 
-  const handleSearchChange = useCallback(
-    (e) => {
-      const term = e.target.value;
-      setSearchTerm(term);
-      filterNonprofits(term);
+  // Adds a Slack user object (on the team at creation) or a typed name (an
+  // invite-list reminder — joins later from the team page). Returns an error
+  // message for the field, or null.
+  const handleAddTeamMember = useCallback(
+    (member) => {
+      const name = teammateName(member);
+      if (!name) return null;
+      const value = typeof member === "string" ? name : member;
+      const duplicate = teamMembers.some((existing) =>
+        typeof existing === "object" && typeof value === "object"
+          ? existing.id === value.id
+          : teammateName(existing).toLowerCase() === name.toLowerCase(),
+      );
+      if (duplicate) return `${name} is already on your list.`;
+      setTeamMembers((prev) => [...prev, value]);
+      return null;
     },
-    [filterNonprofits],
+    [teamMembers],
   );
-
-  const clearSearch = useCallback(() => {
-    setSearchTerm("");
-    setFilteredNonprofits(nonprofits);
-  }, [nonprofits]);
-
-  const toggleNonprofitSelection = useCallback((nonprofit) => {
-    setSelectedNonprofits((prev) => {
-      const isSelected = prev.some((np) => np.id === nonprofit.id);
-      return isSelected
-        ? prev.filter((np) => np.id !== nonprofit.id)
-        : [...prev, nonprofit];
-    });
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (result) => {
-      if (!result.destination) return;
-      const items = Array.from(selectedNonprofits);
-      const [reorderedItem] = items.splice(result.source.index, 1);
-      items.splice(result.destination.index, 0, reorderedItem);
-      setSelectedNonprofits(items);
-    },
-    [selectedNonprofits],
-  );
-
-  const handleAddTeamMember = useCallback(() => {
-    if (!memberInput) return;
-    const memberName =
-      typeof memberInput === "string"
-        ? memberInput.trim()
-        : (memberInput.real_name || memberInput.name || "").trim();
-    if (!memberName) return;
-
-    const isDuplicate = teamMembers.some((member) => {
-      if (typeof member === "string" && typeof memberInput === "string")
-        return member === memberName;
-      if (typeof member === "object" && typeof memberInput === "object")
-        return member.id === memberInput.id;
-      if (typeof member === "string" && typeof memberInput === "object")
-        return member === memberInput.real_name || member === memberInput.name;
-      if (typeof member === "object" && typeof memberInput === "string")
-        return member.real_name === memberInput || member.name === memberInput;
-      return false;
-    });
-
-    if (isDuplicate) {
-      setFormError("This team member has already been added");
-      return;
-    }
-    setTeamMembers((prev) => [...prev, memberInput]);
-    setMemberInput("");
-    setFormError("");
-  }, [memberInput, teamMembers]);
 
   const handleRemoveTeamMember = useCallback((index) => {
     setTeamMembers((prev) => {
@@ -501,28 +433,24 @@ const ManageTeamComponent = () => {
 
   const validateGithubUsername = useCallback(
     debounce(async (username) => {
-      if (!username.trim()) {
-        setIsGithubValid(false);
-        setGithubError("GitHub username is required");
-        setIsValidatingGithub(false);
-        return;
-      }
       setIsValidatingGithub(true);
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/github/${username}`,
         );
-        setIsGithubValid(response.data.valid);
+        if (latestGithubRef.current !== username) return;
+        setIsGithubValid(Boolean(response.data.valid));
         setGithubError(
           response.data.valid
             ? "GitHub username exists"
             : response.data.message || "Invalid GitHub username",
         );
       } catch {
+        if (latestGithubRef.current !== username) return;
         setIsGithubValid(false);
         setGithubError("Could not verify GitHub username");
       } finally {
-        setIsValidatingGithub(false);
+        if (latestGithubRef.current === username) setIsValidatingGithub(false);
       }
     }, 400),
     [],
@@ -530,12 +458,6 @@ const ManageTeamComponent = () => {
 
   const validateSlackChannel = useCallback(
     debounce(async (channel) => {
-      if (!channel.trim()) {
-        setIsSlackValid(false);
-        setSlackError("Slack channel is required");
-        setIsValidatingSlack(false);
-        return;
-      }
       if (!channel.match(/^[a-z0-9-_]+$/)) {
         setIsSlackValid(false);
         setSlackError(
@@ -549,32 +471,51 @@ const ManageTeamComponent = () => {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/validate/slack/${channel}`,
         );
+        if (latestSlackRef.current !== channel) return;
         if (response.data.exists) {
           setIsSlackValid(false);
           setSlackError(response.data.message || "Invalid Slack channel");
         } else {
-          setIsSlackValid(response.data.valid);
+          setIsSlackValid(Boolean(response.data.valid));
           setSlackError("Slack channel is available");
         }
       } catch {
+        if (latestSlackRef.current !== channel) return;
         setIsSlackValid(false);
         setSlackError("Slack channel already exists or is invalid");
       } finally {
-        setIsValidatingSlack(false);
+        if (latestSlackRef.current === channel) setIsValidatingSlack(false);
       }
     }, 400),
     [],
   );
 
+  // Every edit resets validity to "not yet known" (null) — Next stays
+  // disabled through the 400ms debounce instead of trusting a stale result.
+  // Clearing the field also clears the old verdict.
   useEffect(() => {
-    if (githubUsername) validateGithubUsername(githubUsername);
+    latestGithubRef.current = githubUsername.trim();
+    setIsGithubValid(null);
+    if (!githubUsername.trim()) {
+      setGithubError("");
+      setIsValidatingGithub(false);
+      return;
+    }
+    validateGithubUsername(githubUsername.trim());
   }, [githubUsername, validateGithubUsername]);
 
   useEffect(() => {
-    if (slackChannel) validateSlackChannel(slackChannel);
+    latestSlackRef.current = slackChannel;
+    setIsSlackValid(null);
+    if (!slackChannel.trim()) {
+      setSlackError("");
+      setIsValidatingSlack(false);
+      return;
+    }
+    validateSlackChannel(slackChannel);
   }, [slackChannel, validateSlackChannel]);
 
-  const validateForm = () => {
+  const validateDetailsStep = () => {
     if (!teamName.trim()) {
       setFormError("Team name is required.");
       return false;
@@ -589,148 +530,126 @@ const ManageTeamComponent = () => {
       );
       return false;
     }
-    if (!githubUsername.trim()) {
-      setFormError("GitHub username is required.");
+    if (isSlackValid === false) {
+      setFormError(slackError || "Invalid Slack channel name.");
       return false;
     }
-    if (isValidatingGithub || isValidatingSlack) {
-      setFormError("Please wait for validation to complete.");
+    if (isSlackValid !== true) {
+      setFormError("Please wait for the Slack channel check to finish.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateGithubStep = () => {
+    if (!githubUsername.trim()) {
+      setFormError("GitHub username is required.");
       return false;
     }
     if (isGithubValid === false) {
       setFormError(githubError || "Invalid GitHub username.");
       return false;
     }
-    if (isSlackValid === false) {
-      setFormError(slackError || "Invalid Slack channel name.");
-      return false;
-    }
-    if (selectedNonprofits.length === 0) {
-      setFormError("Please select and rank at least one nonprofit.");
+    if (isGithubValid !== true) {
+      setFormError("Please wait for the GitHub username check to finish.");
       return false;
     }
     return true;
   };
 
+  const validateProjectsStep = () => {
+    const problem = rankingError(rankedProjects, totalProjects);
+    if (problem) {
+      setFormError(problem);
+      return false;
+    }
+    return true;
+  };
+
+  const validateForm = () =>
+    validateDetailsStep() && validateGithubStep() && validateProjectsStep();
+
   const validateCurrentStep = (step) => {
     switch (step) {
-      case 0:
-        if (!teamName.trim()) {
-          setFormError("Team name is required.");
-          return false;
-        }
-        if (!slackChannel.trim()) {
-          setFormError("Slack channel is required.");
-          return false;
-        }
-        if (!slackChannel.match(/^[a-z0-9-_]+$/)) {
-          setFormError(
-            "Invalid Slack channel name. Use only lowercase letters, numbers, hyphens, and underscores.",
-          );
-          return false;
-        }
-        if (isValidatingSlack) {
-          setFormError("Please wait for Slack channel validation to complete.");
-          return false;
-        }
-        if (isSlackValid === false) {
-          setFormError(slackError || "Invalid Slack channel name.");
-          return false;
-        }
-        return true;
-      case 1:
-        if (!githubUsername.trim()) {
-          setFormError("GitHub username is required.");
-          return false;
-        }
-        if (isValidatingGithub) {
-          setFormError(
-            "Please wait for GitHub username validation to complete.",
-          );
-          return false;
-        }
-        if (isGithubValid === false) {
-          setFormError(githubError || "Invalid GitHub username.");
-          return false;
-        }
-        return true;
-      case 2:
-        if (selectedNonprofits.length === 0) {
-          setFormError("Please select and rank at least one nonprofit.");
-          return false;
-        }
-        return true;
-      case 3:
+      case STEP_DETAILS:
+        return validateDetailsStep();
+      case STEP_GITHUB:
+        return validateGithubStep();
+      case STEP_PROJECTS:
+        return validateProjectsStep();
+      case STEP_CONFIRM:
         return validateForm();
       default:
         return true;
     }
   };
 
+  const resetCreateForm = () => {
+    setActiveStep(STEP_DETAILS);
+    setTeamName("");
+    setSlackChannel("");
+    setIsSlackValid(null);
+    setSlackError("");
+    // Re-prefill from the profile (the effect only fires when it changes).
+    setGithubUsername(profile?.github || "");
+    setIsGithubValid(null);
+    setGithubError("");
+    setRankedProjects([]);
+    setTeamMembers([]);
+    setComments("");
+    setShowNewTeamForm(false);
+  };
+
+  // Only the Confirm step's explicit "Create team" button calls this
+  // (CreateTeamFlow's <form> submit means "Next").
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (submittingRef.current) return;
     if (!validateForm()) return;
 
+    submittingRef.current = true;
     setLoading(true);
     setFormError("");
-    setProgress(0);
 
     try {
-      const rankings = selectedNonprofits.map((nonprofit, index) => ({
-        nonprofit_id: nonprofit.id,
-        rank: index + 1,
-      }));
-
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/queue`,
+      await queueTeam(
         {
           name: teamName,
           slackChannel,
           eventId: event_id,
-          nonprofitRankings: rankings,
+          nonprofitRankings: rankingsPayload(rankedProjects),
           teamMembers,
           githubUsername,
           comments,
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${tokenRef.current}`,
-          },
-        },
+        { token: tokenRef.current },
       );
-
-      setLoading(false);
-      setProgress(100);
-
-      if (response.data.success) {
-        // Refetch teams so the dashboard shows the new IN_REVIEW team
-        await fetchMyTeams();
-        // Reset form
-        setActiveStep(0);
-        setTeamName("");
-        setSlackChannel("");
-        setGithubUsername("");
-        setSelectedNonprofits([]);
-        setTeamMembers([]);
-        setComments("");
-        setShowNewTeamForm(false);
-        // Scroll to team hub
-        setTimeout(() => {
-          const el = document.getElementById("team-hub");
-          if (el) el.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      } else {
-        setFormError(
-          response.data.message || "An error occurred while creating the team.",
-        );
-      }
+      // Typed names become the dashboard's "Still to join" reminder (local
+      // only; keyed by the new team's Slack channel).
+      savePendingTeammates(slackChannel, splitTeammates(teamMembers).joinLater);
+      // Refetch teams so the dashboard shows the new IN_REVIEW team, THEN
+      // reset — the button stays disabled until both are done.
+      await fetchMyTeams();
+      resetCreateForm();
+      setTimeout(() => {
+        const el = document.getElementById("team-hub");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     } catch (err) {
-      setLoading(false);
       setFormError(
-        err.response?.data?.message ||
-          "An unexpected error occurred. Please try again.",
+        err?.message || "An unexpected error occurred. Please try again.",
       );
+      if (err?.code === "invalid_rankings") {
+        // A ranked project was hidden or removed — reload the choices
+        // (pruning drops the stale rows) and send the team back to review.
+        projectOptions.reload();
+        setActiveStep(STEP_PROJECTS);
+      } else if (err?.code === "invalid_github_username") {
+        setActiveStep(STEP_GITHUB);
+      }
+    } finally {
+      setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -749,22 +668,21 @@ const ManageTeamComponent = () => {
   const isNextDisabled = () => {
     if (loading) return true;
     switch (activeStep) {
-      case 0:
+      case STEP_DETAILS:
+        // null = still checking → not yet valid.
         return (
           !teamName.trim() ||
           !slackChannel.trim() ||
           !slackChannel.match(/^[a-z0-9-_]+$/) ||
           isValidatingSlack ||
-          isSlackValid === false
+          isSlackValid !== true
         );
-      case 1:
+      case STEP_GITHUB:
         return (
-          !githubUsername.trim() ||
-          isValidatingGithub ||
-          isGithubValid === false
+          !githubUsername.trim() || isValidatingGithub || isGithubValid !== true
         );
-      case 2:
-        return selectedNonprofits.length === 0;
+      case STEP_PROJECTS:
+        return rankingError(rankedProjects, totalProjects) !== null;
       default:
         return false;
     }
@@ -772,7 +690,7 @@ const ManageTeamComponent = () => {
 
   const getStepContent = (step) => {
     switch (step) {
-      case 0:
+      case STEP_DETAILS:
         return (
           <TeamDetailsForm
             teamName={teamName}
@@ -784,7 +702,7 @@ const ManageTeamComponent = () => {
             slackError={slackError}
           />
         );
-      case 1:
+      case STEP_GITHUB:
         return (
           <GitHubInfoForm
             githubUsername={githubUsername}
@@ -794,34 +712,38 @@ const ManageTeamComponent = () => {
             githubError={githubError}
           />
         );
-      case 2:
+      case STEP_PROJECTS:
         return (
-          <NonprofitSelectionStep
-            searchTerm={searchTerm}
-            filteredNonprofits={filteredNonprofits}
-            selectedNonprofits={selectedNonprofits}
-            handleSearchChange={handleSearchChange}
-            toggleNonprofitSelection={toggleNonprofitSelection}
-            clearSearch={clearSearch}
-            handleDragEnd={handleDragEnd}
-            teamMembers={teamMembers}
-            memberInput={memberInput}
-            setMemberInput={setMemberInput}
-            handleAddTeamMember={handleAddTeamMember}
-            handleRemoveTeamMember={handleRemoveTeamMember}
-            comments={comments}
-            setComments={setComments}
-            slackUsers={slackUsers}
-            error={formError}
+          <ProjectSelectionStep
+            options={projectOptions}
+            ranked={rankedProjects}
+            limits={limits}
+            onToggle={handleToggleProject}
+            onMove={handleMoveProject}
+            onRemove={handleRemoveProject}
           />
         );
-      case 3:
+      case STEP_TEAMMATES:
+        return (
+          <TeammatesStep
+            teamMembers={teamMembers}
+            onAddMember={handleAddTeamMember}
+            onRemoveMember={handleRemoveTeamMember}
+            slackUsers={slackUsers}
+            slackUsersStatus={slackUsersStatus}
+            slackChannel={slackChannel}
+            eventId={event_id}
+            comments={comments}
+            setComments={setComments}
+          />
+        );
+      case STEP_CONFIRM:
         return (
           <ConfirmationSummary
             teamName={teamName}
             slackChannel={slackChannel}
             githubUsername={githubUsername}
-            selectedNonprofits={selectedNonprofits}
+            rankedProjects={rankedProjects}
             teamMembers={teamMembers}
             comments={comments}
           />
@@ -841,14 +763,34 @@ const ManageTeamComponent = () => {
     );
   }, []);
 
+  // Leave from the dashboard roster: drop the team locally (the dashboard
+  // unmounts), switch to the next team, then let a background /me refresh
+  // confirm it — refresh() keeps the data if that call fails.
+  const handleLeftTeam = useCallback(
+    (teamId, result) => {
+      const left = (myTeams || []).find((t) => t.id === teamId);
+      const remaining = (myTeams || []).filter((t) => t.id !== teamId);
+      setMyTeams(remaining);
+      setActiveTeamId(remaining[0]?.id ?? null);
+      setLeftNotice(
+        result?.noop
+          ? "You weren't on that team anymore."
+          : `You've left ${left?.name || "the team"}.`,
+      );
+      refreshMyTeams();
+    },
+    [myTeams, setMyTeams, refreshMyTeams],
+  );
+
   const hasExistingTeam = myTeams && myTeams.length > 0;
+  // Hidden while teams load (no flash) and whenever the create-team flow is
+  // showing: no team yet, or the "Create another team" form is open.
+  const showSurvey = !isLoadingTeams && hasExistingTeam && !showNewTeamForm;
   // Bug #8: the old check compared against "APPROVED"/"PROJECT_COMPLETE",
   // neither of which exists in TEAM_STATUS_OPTIONS, so it was always false.
   const hasApprovedTeam =
     myTeams &&
-    myTeams.some(
-      (t) => t.status && t.status !== "IN_REVIEW" && t.status !== "INACTIVE",
-    );
+    myTeams.some((t) => !isPendingReview(t.status) && t.status !== "INACTIVE");
   const teamCreationEnabled =
     event?.constraints?.team_creation_enabled !== false;
   const teamFindingEnabled =
@@ -912,12 +854,48 @@ const ManageTeamComponent = () => {
           hasTeam={hasExistingTeam}
         />
 
-        <SurveyCTA
-          eventId={event_id}
-          startDate={event?.start_date}
-          endDate={event?.end_date}
-          timezone={event?.timezone}
-        />
+        {/* The live/post-event survey only makes sense once you're on a
+            team — never while the create-team flow is on screen. */}
+        {showSurvey && (
+          <SurveyCTA
+            eventId={event_id}
+            startDate={event?.start_date}
+            endDate={event?.end_date}
+            timezone={event?.timezone}
+          />
+        )}
+
+        {leftNotice && (
+          <Box
+            role="status"
+            className="ohx-card"
+            sx={{
+              p: 2,
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 1.5,
+              borderLeft: "3px solid var(--accent)",
+            }}
+          >
+            <span>{leftNotice}</span>
+            <button
+              type="button"
+              className="ohx-link"
+              onClick={() => setLeftNotice("")}
+              style={{
+                background: "none",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+          </Box>
+        )}
 
         {/* Team dashboard */}
         <div id="team-hub">
@@ -965,6 +943,7 @@ const ManageTeamComponent = () => {
                 accessToken={accessToken}
                 profile={profile}
                 onTeamUpdated={handleTeamUpdated}
+                onLeftTeam={handleLeftTeam}
                 teamFindingEnabled={teamFindingEnabled}
               />
             </>

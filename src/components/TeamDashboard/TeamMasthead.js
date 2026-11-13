@@ -63,6 +63,11 @@ export default function TeamMasthead({
               <span className="ohx-tag">{teamStatusTag(team.status)}</span>
             )}
             {nonprofitName && <span className="ohx-tag">{nonprofitName}</span>}
+            {/* `project` comes from /me once the team is approved for a
+                specific project; absent on older backends → nothing. */}
+            {team.project?.title && (
+              <span className="ohx-tag">Project: {team.project.title}</span>
+            )}
             {Array.isArray(team.awards) &&
               team.awards.map((award) => (
                 <span key={award} className="ohx-tag ohx-tag--accent">

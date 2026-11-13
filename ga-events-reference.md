@@ -143,6 +143,14 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 |------------|-------------|------------|---------------|
 | `profile_my_teams_click` | Click on a link in the profile's "Your teams" card | `{ event_label: "manage" \| "team_page" \| "find_team" \| "create_team" \| "browse_events", event_id? }` | Does the profile actually route people to their team dashboard / team formation |
 
+### Giveaways tab on `/profile#giveaways` (Nov 2026, `event_category: "engagement"`)
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `giveaway_enter` | First save of a giveaway entry (`Profile/Giveaways/GiveawaysTab.jsx`) | `{ event_label: <giveaway_id>, value: <prizes picked> }` | How many people enter, and for how many prizes |
+| `giveaway_update` | Saved again (changed picks or refreshed entry count) | `{ event_label: <giveaway_id>, value: <prizes picked> }` | Do people come back after improving their profile |
+| `giveaway_withdraw` | Withdrew after the two-step confirm | `{ event_label: <giveaway_id>, value: <prizes they had picked> }` | Friction / regret signal |
+
 ### Team membership (`/hack/[event_id]#teams` cards + `/hack/[event_id]/team/[team_id]#members`, Nov 2026, `event_category: "engagement"`)
 
 Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — only after the backend confirmed the change (never on a 200 + "Error: …" soft failure).
@@ -150,7 +158,8 @@ Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — 
 | Event Name | Description | Parameters | Business Value |
 |------------|-------------|------------|---------------|
 | `team_join` | Hacker joined a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Which surface forms teams; join volume per event |
-| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page", event_id, team_id }` | Churn between teams before/during the event |
+| `team_leave` | Member left a team | `{ event_label: "event_page" \| "team_page" \| "team_dashboard", event_id, team_id }` | Churn between teams before/during the event |
+| `team_invite_copy` | `Teams/TeamInviteKit.js` | `{ event_label: "message" \| "link", source: "team_dashboard" \| "team_page", event_id }` | Teams bringing teammates who weren't on Slack at creation onto the roster |
 
 ### Hackers' Choice peer vote (`/hack/[event_id]/vote` + CTAs)
 
@@ -244,6 +253,11 @@ All fire from `components/JudgingSchedule/JudgingSchedule.js` with `{ event_cate
 | `admin_judging_schedule_publish` | `admin/hackathon-edit/sections/JudgingSection.js` | `{ event_category: "admin", event_label: <event_id>, value: 1\|0 }` | "Publish the judging schedule" switch flipped on (1) / off (0) — writes `constraints.judging_schedule_published` (autosave). |
 | `admin_submissions_csv_export` | `admin/TeamManagement.js` | `{ event_category: "admin", event_label: <event_id> }` | "Export submissions CSV" download. |
 | `admin_checkin_reset` | `admin/checkin/CheckInWorkbench.js` | `{ event_category: "admin", event_label: <volunteer_type>, value: <people reset>, event_id }` | "Reset check-ins…" confirmed in the Check-in section (full admins only). |
+| `admin_giveaway_save` | `admin/giveaways/SetupTab.js` | `{ event_category: "admin", event_label: <giveaway_id>, value: <prize count> }` | Setup tab Save on `/admin/giveaways`. The table export there reports `admin_csv_export` with `event_label: "giveaway_entries"`. |
+| `admin_giveaway_draw_start` | `admin/giveaways/DrawTab.js` | `{ event_category: "admin", event_label: <giveaway_id>, value: <people with entries> }` | "Start the draw" — seed stored, entries locked. |
+| `admin_giveaway_winner_confirmed` | `admin/giveaways/DrawStage.js` | `{ event_category: "admin", event_label: <giveaway_id>, value: <attempt> }` | "They're here" recorded a winner (`attempt` = how many "not here" redraws came first). |
+| `admin_giveaway_redraw` | `admin/giveaways/DrawStage.js` | `{ event_category: "admin", event_label: <giveaway_id>, value: <attempt> }` | "Not here — draw again". |
+| `admin_giveaway_draw_finish` | `admin/giveaways/DrawStage.js` | `{ event_category: "admin", event_label: <giveaway_id>, value: <winners> }` | Last slot settled; giveaway marked `drawn`. Winner exports report `admin_csv_export` with `event_label: "giveaway_winners"`. |
 | `admin_csv_export` | `admin/ExportCsvButton.js`, `admin/volunteer/VolunteerExportDialog.js`, `admin/JudgingResults.js` | `{ event_category: "admin", event_label: <table>, value: <row count>, event_id }` — the volunteer dialog adds `{ roster: all\|yes\|no, statuses: "all" \| "a\|b", columns: all\|essentials, kept_view_filters }` | Any "Download CSV" on `/admin/hackathons/<event>`: `event_label` names the table (`volunteer_<type>`, `teams`, `team_assignments_*`, `judging_round1_*`, `judging_round2_results`, `judging_round1_progress`, `judging_round2_progress`, `peer_vote_*`, `checkin_people`, `nonprofits`, `schedule_countdowns`, `meals`, `links`). |
 
 ## Business Intelligence Applications
