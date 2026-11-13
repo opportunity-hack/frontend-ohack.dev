@@ -36,7 +36,7 @@ const WEIGHT = {
   entries: 42,
   breakdown: {
     profile_fields: 6,
-    profile_fields_total: 17,
+    profile_fields_total: 12,
     profile_entries: 30,
     github_entries: 12,
     github_cap: 45,
@@ -84,7 +84,7 @@ test("shows the weight, the close time and gentle must-be-present copy", async (
   render(<GiveawaysTab profile={{ role: "hacker" }} />);
   expect(await screen.findByText("Fall giveaway")).toBeInTheDocument();
   expect(screen.getByText("42")).toBeInTheDocument();
-  expect(screen.getByText(/30 from your profile \(6 of 17\s+fields\) · 12 from GitHub \(max 45\)/)).toBeInTheDocument();
+  expect(screen.getByText(/30 from your profile \(6 of 12\s+fields\) · 12 from GitHub \(max 45\)/)).toBeInTheDocument();
   expect(screen.getByText(/Entries close Sat Nov 14, 4:00 PM Arizona time/)).toBeInTheDocument();
   expect(screen.getByText(/plan to be there/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Enter giveaway" })).toBeDisabled();
@@ -172,4 +172,8 @@ test("missingProfileFields lists fillable fields only", () => {
   expect(missing).not.toContain("Role");
   expect(missing).not.toContain("Propel ID");
   expect(missing).toContain("Shirt Size");
+  // Optional / situational fields are never nudged.
+  for (const label of ["Apartment, suite, etc.", "Company", "Instagram Profile", "Would you like stickers?"]) {
+    expect(missing).not.toContain(label);
+  }
 });

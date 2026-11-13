@@ -41,7 +41,7 @@ const isFilled = (value) => {
 export function missingProfileFields(profile) {
   if (!profile) return [];
   return profileFields
-    .filter((f) => f.name !== "propel_id" && !isFilled(profile[f.name]))
+    .filter((f) => !isFilled(profile[f.name]))
     .map((f) => f.label);
 }
 
