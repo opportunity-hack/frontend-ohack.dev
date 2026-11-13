@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DashboardSection from "./DashboardSection";
+import ProjectConflictNotice from "./ProjectConflictNotice";
 import { trackEvent, EventCategory } from "../../lib/ga";
 import { warningAlertSx } from "../ApplicationForm/refinedStyles";
 import {
@@ -97,7 +98,13 @@ function prefersReducedMotion() {
   }
 }
 
-function SaveIndicator({ saveState }) {
+function SaveIndicator({ saveState, hasConflicts, lastSavedBy }) {
+  if (hasConflicts)
+    return (
+      <span style={{ color: "var(--accent, #E2552E)" }}>
+        Waiting on your choice above — the rest is saved
+      </span>
+    );
   if (saveState.status === "saving")
     return <span style={{ color: "var(--muted)" }}>Saving…</span>;
   if (saveState.status === "saved")
@@ -109,6 +116,10 @@ function SaveIndicator({ saveState }) {
           ? saveState.error
           : "Couldn't save — we'll retry on your next edit"}
       </span>
+    );
+  if (lastSavedBy)
+    return (
+      <span style={{ color: "var(--muted)" }}>Last saved by {lastSavedBy}</span>
     );
   return null;
 }
@@ -168,7 +179,9 @@ export default function ProjectWriteupEditor({
   submitting,
   onSubmittingChange,
 }) {
-  const { draft, setField, saveState, submit } = projectApi;
+  const { draft, setField, saveState, submit, conflicts, resolveConflict } =
+    projectApi;
+  const hasConflicts = Object.keys(conflicts || {}).length > 0;
   const [preview, setPreview] = useState("edit");
   const [showConfetti, setShowConfetti] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -234,6 +247,39 @@ export default function ProjectWriteupEditor({
     const next = [...(draft.project_links || [])];
     next.splice(idx, 1);
     setField("project_links", next);
+  };
+
+  // "Use theirs" replaces what this person typed, so hand their own text
+  // back on the clipboard first (best effort — some browsers refuse).
+  const handleResolveConflict = async (key, choice) => {
+    const who = conflicts?.[key]?.by || "your teammate";
+    const mine = resolveConflict?.(key, choice);
+    trackEvent({
+      action: "team_project_conflict_resolved",
+      params: {
+        event_category: EventCategory.ENGAGEMENT,
+        event_label: `${key}:${choice}`,
+      },
+    });
+    if (choice !== "theirs") {
+      onNotify?.("Keeping your version.", "success");
+      return;
+    }
+    let copied = false;
+    if (typeof mine === "string" && mine.trim()) {
+      try {
+        await navigator.clipboard.writeText(mine);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+    onNotify?.(
+      copied
+        ? `Switched to ${who}'s version. Your text is on your clipboard if you need it.`
+        : `Switched to ${who}'s version.`,
+      "success",
+    );
   };
 
   const handleSubmit = async () => {
@@ -335,6 +381,11 @@ export default function ProjectWriteupEditor({
           <strong>{closedCopy.headline}</strong> {closedCopy.detail}
         </Alert>
       )}
+
+      <ProjectConflictNotice
+        conflicts={conflicts}
+        onResolve={handleResolveConflict}
+      />
 
       <TextField
         fullWidth
@@ -528,7 +579,11 @@ export default function ProjectWriteupEditor({
         }}
       >
         <Box sx={{ fontSize: "0.85rem" }}>
-          <SaveIndicator saveState={saveState} />
+          <SaveIndicator
+            saveState={saveState}
+            hasConflicts={hasConflicts}
+            lastSavedBy={team?.project_updated_by_name}
+          />
         </Box>
         <Box
           sx={{

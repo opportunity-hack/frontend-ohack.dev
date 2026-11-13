@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
 import DashboardSection from "./DashboardSection";
 import {
@@ -32,6 +32,18 @@ export default function DevPostEditor({
   onNotify,
 }) {
   const [value, setValue] = useState(team?.devpost_link || "");
+  // A teammate may save this link from their own dashboard; follow the saved
+  // value while this input is untouched (never over something being typed).
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const seededRef = useRef(team?.devpost_link || "");
+  const savedValue = team?.devpost_link || "";
+  useEffect(() => {
+    if (valueRef.current.trim() === seededRef.current.trim()) {
+      setValue(savedValue);
+    }
+    seededRef.current = savedValue;
+  }, [savedValue]);
   const [saving, setSaving] = useState(false);
 
   const showError = value && !isValidDevPostUrl(value);

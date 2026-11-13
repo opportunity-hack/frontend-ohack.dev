@@ -201,6 +201,18 @@ export default function DemoVideoEditor({
   onNotify,
 }) {
   const [value, setValue] = useState(team?.demo_video_url || "");
+  // A teammate may save this link from their own dashboard; follow the saved
+  // value while this input is untouched (never over something being typed).
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const seededRef = useRef(team?.demo_video_url || "");
+  const savedValue = team?.demo_video_url || "";
+  useEffect(() => {
+    if (valueRef.current.trim() === seededRef.current.trim()) {
+      setValue(savedValue);
+    }
+    seededRef.current = savedValue;
+  }, [savedValue]);
   const [saving, setSaving] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
 
