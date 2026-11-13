@@ -14,9 +14,11 @@ class SlackInviteService {
    * Invite a single user to a Slack channel
    * @param {string} slackUserId - The Slack user ID
    * @param {string} channel - The Slack channel name
+   * @param {Object} [person] - The application row; only used so the backend's
+   *   audit line can name the person (name, email, id, type, event).
    * @returns {Promise<{success: boolean, error?: string}>}
    */
-  async inviteUser(slackUserId, channel) {
+  async inviteUser(slackUserId, channel, person = null) {
     try {
       const response = await fetch(`${this.apiServerUrl}/api/slack/invite-to-channel`, {
         method: 'POST',
@@ -28,6 +30,7 @@ class SlackInviteService {
         body: JSON.stringify({
           user_id: slackUserId,
           channel: channel,
+          ...SlackInviteService.auditContext(person),
         }),
       });
 
@@ -47,6 +50,23 @@ class SlackInviteService {
         error: error.message || 'Network error occurred'
       };
     }
+  }
+
+  /**
+   * Who is being invited, for the backend audit line. Empty values are left out.
+   */
+  static auditContext(person) {
+    if (!person) return {};
+    const context = {
+      name: person.name,
+      email: person.email,
+      volunteer_id: person.id,
+      volunteer_type: person.volunteer_type,
+      event_id: person.event_id,
+    };
+    return Object.fromEntries(
+      Object.entries(context).filter(([, value]) => typeof value === 'string' && value.trim())
+    );
   }
 
   /**
@@ -76,7 +96,7 @@ class SlackInviteService {
         percentage: Math.round(((i + 1) / users.length) * 100)
       });
 
-      const result = await this.inviteUser(user.slack_user_id, channel);
+      const result = await this.inviteUser(user.slack_user_id, channel, user);
       
       const userResult = {
         user: user,
@@ -103,6 +123,81 @@ class SlackInviteService {
     }
 
     return { results, summary };
+  }
+
+  /**
+   * Re-check an event's applicants against the Slack workspace and save the
+   * Slack id for anyone who joined Slack after they applied.
+   *
+   * THROWS on any failure — a failed check must never read as "nobody new".
+   * @param {string} eventId
+   * @param {string} [volunteerType] mentor | judge | volunteer | hacker | sponsor
+   * @returns {Promise<{checked: number, updated: Array, unmatched: Array}>}
+   */
+  async refreshSlackIds(eventId, volunteerType) {
+    let response;
+    try {
+      response = await fetch(
+        `${this.apiServerUrl}/api/slack/admin/volunteers/${encodeURIComponent(eventId)}/refresh`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Org-Id': this.orgId,
+          },
+          body: JSON.stringify(volunteerType ? { volunteer_type: volunteerType } : {}),
+        }
+      );
+    } catch (error) {
+      throw new Error("Couldn't reach the server to check Slack. Try again.");
+    }
+
+    if (response.status === 404) {
+      throw new Error("Checking Slack for new members isn't available on this backend yet.");
+    }
+    if (response.status === 502) {
+      throw new Error("Slack couldn't be reached, so nothing was changed. Try again in a minute.");
+    }
+    if (!response.ok) {
+      throw new Error(`Couldn't check Slack for new members (HTTP ${response.status}).`);
+    }
+
+    const data = await response.json().catch(() => null);
+    if (!data || !Array.isArray(data.updated)) {
+      throw new Error("Couldn't read the Slack check result. Try again.");
+    }
+    return {
+      checked: data.checked || 0,
+      updated: data.updated,
+      unmatched: Array.isArray(data.unmatched) ? data.unmatched : [],
+    };
+  }
+
+  /**
+   * Roster people who can't be invited yet because no Slack account is linked.
+   * @param {Array} users
+   * @returns {Array}
+   */
+  static filterRosterWithoutSlack(users) {
+    return users.filter(user =>
+      user.isSelected &&
+      !(user.slack_user_id && user.slack_user_id.trim() !== '')
+    );
+  }
+
+  /**
+   * One-line summary of a refreshSlackIds() result for a toast.
+   * @param {{updated: Array, unmatched: Array}} result
+   * @returns {string}
+   */
+  static refreshSummary(result) {
+    const found = result.updated.length;
+    const missing = result.unmatched.length;
+    const head = found > 0
+      ? `Found ${found} ${found === 1 ? 'person' : 'people'} who joined Slack`
+      : 'No new Slack members found';
+    return missing > 0 ? `${head} · ${missing} still not on Slack` : head;
   }
 
   /**
@@ -147,5 +242,6 @@ class SlackInviteService {
     return channel.startsWith('#') ? channel.slice(1).toLowerCase() : channel.toLowerCase();
   }
 }
+
 
 export default SlackInviteService;

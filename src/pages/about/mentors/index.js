@@ -43,12 +43,12 @@ const FAQ_DATA = [
     {
         question: "What does a mentor do at an Opportunity Hack hackathon?",
         answer:
-            "Mentors guide hackathon teams during the build phase — answering technical questions, helping debug tricky bugs, advising on architecture and scope, reviewing code, and unblocking teams when they get stuck. A typical mentor circulates among 3-5 teams over the weekend, spending 30-60 minutes with each team across multiple touchpoints. Mentors do not score or judge projects; that role belongs to judges, who are intentionally separate.",
+            "Mentors guide hackathon teams during the build phase — answering technical questions, helping debug tricky bugs, advising on architecture and scope, reviewing code, and unblocking teams when they get stuck. Most mentors pick one team as their home team and stay with it for the duration, so the team has one person who knows their project, their stack, and where they got stuck. More senior mentors may float across several teams instead, and if you have a specific skill several teams need, like cloud deployment, you can drop in on those teams just for that. Before you reach out to a team, check whether they want support: teams set their own status, Open to mentors or Heads-down. Open means they welcome you dropping in. Heads-down means they are focused, so hold off unless they ask in #ask-a-mentor. Some teams get a lot of mentors reaching out, so respect the signal. Mentors do not score or judge projects; that role belongs to judges, who are intentionally separate.",
     },
     {
         question: "What's the time commitment to mentor a hackathon?",
         answer:
-            "Plan on 8-16 hours over the hackathon weekend. A typical Saturday is 4-6 hours of in-event mentoring, Sunday is another 4-6 hours, plus a 30-minute Friday kickoff briefing. We use a shift signup so mentors can come and go — you do not need to be present continuously. For online events, mentor availability is asynchronous through Discord and the time investment is similar but more flexible.",
+            "There is no fixed number and no minimum shift, because every hackathon runs on a different schedule. Check the countdown and timeline on the event page you are mentoring: that is your schedule. Sign up for the blocks you can make on the application, and be there as long as you can. The longer you stay, the more teams you can help build solutions that help the world. For online events, mentor availability is asynchronous through Slack.",
     },
     {
         question: "Can I earn a Heart Certificate for mentoring?",
@@ -68,12 +68,12 @@ const FAQ_DATA = [
     {
         question: "Can I mentor a hackathon remotely?",
         answer:
-            "Yes. We run online-only events during the summer where all mentoring is remote (Discord and Slack), and most in-person events also have a remote mentor track for our distributed volunteers. Roughly 30% of our mentor pool participates remotely. In-person mentoring tends to be higher-impact for first-time teams (the in-room presence helps), but remote mentoring works well for code-review, architecture discussions, and senior engineers who can't travel.",
+            "Yes. We run online-only events during the summer where all mentoring is remote over Slack, and most in-person events also have a remote mentor track for our distributed volunteers. Roughly 30% of our mentor pool participates remotely. In-person mentoring tends to be higher-impact for first-time teams (the in-room presence helps), but remote mentoring works well for code-review, architecture discussions, and senior engineers who can't travel.",
     },
     {
         question: "What if I've never mentored a hackathon before?",
         answer:
-            "First-time mentors are welcome. We pair new mentors with veterans for their first event so you can shadow before you mentor solo. Before each event we run a 30-minute orientation covering mentor expectations, the team-matching system, escalation paths for hard questions, and the boundary between mentoring (helping the team build) and doing (writing code for the team). After the orientation most first-timers feel ready to jump in.",
+            "First-time mentors are welcome. Before each event we post short overview videos on the website and share them in Slack. Watch them before the hackathon; they cover mentor expectations, how to pick a team, escalation paths for hard questions, and the boundary between mentoring (helping the team build) and doing (writing code for the team). After watching, most first-timers feel ready to jump in.",
     },
     {
         question: "Can I keep working with a team after the hackathon ends?",

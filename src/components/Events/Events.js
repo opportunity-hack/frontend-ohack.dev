@@ -196,7 +196,7 @@ export default function Events({ events, teamsByEvent = {} }) {
               >
                 <EventIcon sx={{ fontSize: 13 }} /> Event page
               </Link>
-              {event.devpost_url && (
+              {past && event.devpost_url && (
                 <a
                   href={event.devpost_url}
                   target="_blank"
@@ -205,7 +205,7 @@ export default function Events({ events, teamsByEvent = {} }) {
                   style={smallButtonStyle}
                 >
                   <LaunchIcon sx={{ fontSize: 13 }} />
-                  {past ? "View on DevPost" : "Register on DevPost"}
+                  View on DevPost
                 </a>
               )}
             </div>
