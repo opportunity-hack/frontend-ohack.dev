@@ -37,6 +37,7 @@ import {
   ContentCopy as CopyIcon,
   Close as CloseIcon,
   Download as DownloadIcon,
+  ContentCopy as ContentCopyIcon,
 } from "@mui/icons-material";
 
 // Import components individually to avoid circular dependencies
@@ -190,6 +191,11 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [videoDialog, setVideoDialog] = useState({ open: false, url: null, name: null });
   // "Download CSV" dialog — scoped by roster / status, seeded from the tab's filters.
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportMode, setExportMode] = useState("csv"); // csv | emails
+  const openExportDialog = useCallback((mode) => {
+    setExportMode(mode);
+    setExportDialogOpen(true);
+  }, []);
 
   // Filter state management
   const [filterStates, setFilterStates] = useState(() =>
@@ -1195,13 +1201,26 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
               <Tooltip title="Download this tab as CSV (by status / roster)">
                 <span>
                   <IconButton
-                    onClick={() => setExportDialogOpen(true)}
+                    onClick={() => openExportDialog("csv")}
                     color="primary"
                     disabled={!selectedEventId || loading}
                     size={isSmallMobile ? 'small' : 'medium'}
                     aria-label="Download CSV"
                   >
                     <DownloadIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Copy emails (e.g. for a Slack invite)">
+                <span>
+                  <IconButton
+                    onClick={() => openExportDialog("emails")}
+                    color="primary"
+                    disabled={!selectedEventId || loading}
+                    size={isSmallMobile ? 'small' : 'medium'}
+                    aria-label="Copy emails"
+                  >
+                    <ContentCopyIcon />
                   </IconButton>
                 </span>
               </Tooltip>
@@ -1327,11 +1346,26 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                   <Button
                     variant="outlined"
                     startIcon={<DownloadIcon />}
-                    onClick={() => setExportDialogOpen(true)}
+                    onClick={() => openExportDialog("csv")}
                     disabled={!selectedEventId || loading}
                     sx={{ whiteSpace: "nowrap" }}
                   >
                     Download CSV
+                  </Button>
+                </span>
+              </Tooltip>
+            </Grid>
+            <Grid>
+              <Tooltip title="Copy a comma-separated email list — paste into Slack's Invite people box">
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={() => openExportDialog("emails")}
+                    disabled={!selectedEventId || loading}
+                    sx={{ whiteSpace: "nowrap" }}
+                  >
+                    Copy emails
                   </Button>
                 </span>
               </Tooltip>
@@ -1563,6 +1597,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         eventId={selectedEventId}
         filterState={getCurrentFilterState()}
         searchText={viewMode === "table" ? filter : getCurrentFilterState().filter}
+        mode={exportMode}
       />
 
       {/* Intro-video player — one dialog for every row/card */}

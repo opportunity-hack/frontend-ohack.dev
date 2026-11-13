@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -15,15 +15,21 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-import { Download as DownloadIcon } from "@mui/icons-material";
+import {
+  ContentCopy as ContentCopyIcon,
+  Download as DownloadIcon,
+} from "@mui/icons-material";
 import { buildCsv, csvFilename, downloadCsv } from "../../../lib/csvExport";
 import * as ga from "../../../lib/ga";
 import {
   COLUMN_SETS,
+  EMAIL_SEPARATOR,
   ROSTER_SCOPES,
   buildVolunteerExportColumns,
+  collectEmails,
   exportScopeSlug,
   rosterBreakdown,
   scopeVolunteersForExport,
@@ -46,6 +52,10 @@ const TYPE_LABELS = {
  * decision axes — roster (isSelected) and review status — before downloading.
  * Counts update live and always match what the table would show for the
  * same filters (shared `filterByDecision`).
+ *
+ * `mode="emails"` reuses the same scoping to copy a comma-separated email
+ * list instead (for Slack's "Invite people" box). It defaults to the event
+ * roster — Slack invites key on `isSelected`, like the "Email roster" action.
  */
 const VolunteerExportDialog = ({
   open,
@@ -55,7 +65,9 @@ const VolunteerExportDialog = ({
   eventId,
   filterState, // { statusFilter, selectedFilter, preset, checkedInFilter, filter }
   searchText, // the workbench search box value (table mode)
+  mode = "csv", // "csv" | "emails"
 }) => {
+  const isEmailMode = mode === "emails";
   const list = useMemo(
     () => (Array.isArray(volunteers) ? volunteers.filter(Boolean) : []),
     [volunteers],
@@ -85,6 +97,8 @@ const VolunteerExportDialog = ({
   const [statuses, setStatuses] = useState(() => new Set());
   const [keepView, setKeepView] = useState(false);
   const [columnSet, setColumnSet] = useState("all");
+  const [copied, setCopied] = useState(null); // null | "ok" | "manual"
+  const emailFieldRef = useRef(null);
 
   // Re-seed from the live filters every time the dialog opens.
   useEffect(() => {
@@ -93,8 +107,11 @@ const VolunteerExportDialog = ({
       filterState?.selectedFilter === "yes" ||
         filterState?.selectedFilter === "no"
         ? filterState.selectedFilter
-        : "all",
+        : isEmailMode
+          ? "yes"
+          : "all",
     );
+    setCopied(null);
     const current = filterState?.statusFilter;
     setStatuses(
       new Set(
@@ -148,6 +165,54 @@ const VolunteerExportDialog = ({
     [type, rows, columnSet],
   );
 
+  const emailInfo = useMemo(() => collectEmails(rows), [rows]);
+  const emailText = emailInfo.emails.join(EMAIL_SEPARATOR);
+  // A changed scope invalidates "Copied" — the list on the clipboard is old.
+  useEffect(() => {
+    setCopied(null);
+  }, [emailText]);
+
+  const handleCopyEmails = async () => {
+    if (emailInfo.emails.length === 0) return;
+    let ok = false;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(emailText);
+        ok = true;
+      }
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok) {
+      // Clipboard API blocked (non-secure origin, permissions) — select the
+      // text so a manual ⌘C/Ctrl+C works.
+      const el = emailFieldRef.current;
+      if (el) {
+        el.focus();
+        el.select();
+        try {
+          ok = document.execCommand?.("copy") === true;
+        } catch (_) {
+          ok = false;
+        }
+      }
+    }
+    setCopied(ok ? "ok" : "manual");
+    ga.trackStructuredEvent(
+      ga.EventCategory.ADMIN,
+      "admin_volunteer_emails_copied",
+      `volunteer_${type}`,
+      emailInfo.emails.length,
+      {
+        event_id: eventId || undefined,
+        roster: rosterScope,
+        statuses: statusesArg ? statusesArg.join("|") : "all",
+        kept_view_filters: keepView,
+        clipboard: ok ? "ok" : "manual",
+      },
+    );
+  };
+
   const toggleStatus = (value) =>
     setStatuses((prev) => {
       const next = new Set(prev);
@@ -185,7 +250,9 @@ const VolunteerExportDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Download {typeLabel} CSV</DialogTitle>
+      <DialogTitle>
+        {isEmailMode ? `Copy ${typeLabel} emails` : `Download ${typeLabel} CSV`}
+      </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
           <FormControl component="fieldset">
@@ -289,56 +356,107 @@ const VolunteerExportDialog = ({
 
           <Divider />
 
-          <FormControl component="fieldset">
-            <FormLabel component="legend" sx={{ fontWeight: 600, mb: 0.5 }}>
-              Columns
-            </FormLabel>
-            <RadioGroup
-              value={columnSet}
-              onChange={(e) => setColumnSet(e.target.value)}
-            >
-              {COLUMN_SETS.map((opt) => (
-                <FormControlLabel
-                  key={opt.value}
-                  value={opt.value}
-                  control={<Radio size="small" />}
-                  label={
-                    <Box>
-                      <Typography variant="body2">{opt.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {opt.description}
-                      </Typography>
-                    </Box>
-                  }
-                  sx={{ alignItems: "flex-start", mb: 0.5 }}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
+          {isEmailMode ? (
+            <Box>
+              <TextField
+                label={`Emails (${emailInfo.emails.length})`}
+                value={emailText}
+                inputRef={emailFieldRef}
+                multiline
+                minRows={3}
+                maxRows={8}
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+                onFocus={(e) => e.target.select()}
+                placeholder={`No ${typeLabel} with an email match these filters.`}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 0.5 }}
+              >
+                Comma-separated — paste into Slack's "Invite people" email box.
+                {emailInfo.missing > 0 &&
+                  ` ${emailInfo.missing} ${emailInfo.missing === 1 ? "application has" : "applications have"} no valid email and ${emailInfo.missing === 1 ? "is" : "are"} left out.`}
+              </Typography>
+            </Box>
+          ) : (
+            <FormControl component="fieldset">
+              <FormLabel component="legend" sx={{ fontWeight: 600, mb: 0.5 }}>
+                Columns
+              </FormLabel>
+              <RadioGroup
+                value={columnSet}
+                onChange={(e) => setColumnSet(e.target.value)}
+              >
+                {COLUMN_SETS.map((opt) => (
+                  <FormControlLabel
+                    key={opt.value}
+                    value={opt.value}
+                    control={<Radio size="small" />}
+                    label={
+                      <Box>
+                        <Typography variant="body2">{opt.label}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {opt.description}
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ alignItems: "flex-start", mb: 0.5 }}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between", px: 3 }}>
         <Typography
           variant="body2"
-          color={rows.length === 0 ? "error" : "text.secondary"}
+          role={isEmailMode && copied ? "status" : undefined}
+          color={
+            rows.length === 0
+              ? "error"
+              : isEmailMode && copied === "ok"
+                ? "success.main"
+                : "text.secondary"
+          }
         >
           {rows.length === 0
             ? `No ${typeLabel} match these filters.`
-            : `${rows.length} of ${list.length} ${typeLabel} · ${columns.length} columns`}
+            : isEmailMode
+              ? copied === "ok"
+                ? `Copied ${emailInfo.emails.length} emails.`
+                : copied === "manual"
+                  ? "Couldn't reach the clipboard — the list is selected, press ⌘C / Ctrl+C."
+                  : `${emailInfo.emails.length} emails from ${rows.length} of ${list.length} ${typeLabel}`
+              : `${rows.length} of ${list.length} ${typeLabel} · ${columns.length} columns`}
         </Typography>
         <Box>
           <Button onClick={onClose} color="inherit">
-            Cancel
+            {isEmailMode ? "Close" : "Cancel"}
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownload}
-            disabled={rows.length === 0}
-            sx={{ ml: 1 }}
-          >
-            Download CSV
-          </Button>
+          {isEmailMode ? (
+            <Button
+              variant="contained"
+              startIcon={<ContentCopyIcon />}
+              onClick={handleCopyEmails}
+              disabled={emailInfo.emails.length === 0}
+              sx={{ ml: 1 }}
+            >
+              {`Copy ${emailInfo.emails.length} emails`}
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownload}
+              disabled={rows.length === 0}
+              sx={{ ml: 1 }}
+            >
+              Download CSV
+            </Button>
+          )}
         </Box>
       </DialogActions>
     </Dialog>

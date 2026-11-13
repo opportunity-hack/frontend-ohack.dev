@@ -39,11 +39,13 @@ export const MENTOR_COVERAGE_ITEMS = [
       "Team has been shown the judging rubric (Scope, Documentation, Polish, Security, plus Accessibility) and knows what judges look for.",
   },
   {
+    // Slug keeps its old name on purpose: renaming it would orphan every
+    // sign-off already stored under it. DevPost is optional now, so the item
+    // is about the demo video only.
     slug: "demo_devpost_reviewed",
     cadence: "recurring",
-    label: "Demo video + DevPost reviewed",
-    blurb:
-      "A mentor has reviewed at least a draft of the demo video and DevPost submission.",
+    label: "Demo video reviewed",
+    blurb: "A mentor has watched at least a draft of the team's demo video.",
   },
 ];
 
