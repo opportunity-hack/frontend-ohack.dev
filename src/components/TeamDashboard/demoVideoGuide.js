@@ -7,6 +7,11 @@ export const DEMO_VIDEO_INTRO =
 export const JUDGING_CRITERIA_LINK_TEXT = "judging criteria";
 export const JUDGING_CRITERIA_HREF = "/about/judges#judging-criteria";
 
+export const EXAMPLE_TEAM_LEAD_IN = "Want an example? See a";
+export const EXAMPLE_TEAM_LINK_TEXT = "winning team from Fall 2025";
+export const EXAMPLE_TEAM_HREF =
+  "/hack/2025_fall/team/65c46df0a21a11f08fb3deade60c0544";
+
 export const EASY_STEPS_HEADING = "The easiest way";
 
 export const EASY_STEPS = [

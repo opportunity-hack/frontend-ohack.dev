@@ -30,6 +30,9 @@ import {
   DEMO_VIDEO_INTRO,
   JUDGING_CRITERIA_LINK_TEXT,
   JUDGING_CRITERIA_HREF,
+  EXAMPLE_TEAM_LEAD_IN,
+  EXAMPLE_TEAM_LINK_TEXT,
+  EXAMPLE_TEAM_HREF,
   EASY_STEPS_HEADING,
   EASY_STEPS,
   DEMO_VIDEO_FIELD_HELP,
@@ -311,6 +314,15 @@ export default function DemoVideoEditor({
           className="ohx-link"
         >
           {JUDGING_CRITERIA_LINK_TEXT}
+        </a>
+        . {EXAMPLE_TEAM_LEAD_IN}{" "}
+        <a
+          href={EXAMPLE_TEAM_HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ohx-link"
+        >
+          {EXAMPLE_TEAM_LINK_TEXT}
         </a>
         .
       </Box>
