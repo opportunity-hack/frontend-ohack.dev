@@ -33,11 +33,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import EditIcon from "@mui/icons-material/Edit";
 import PublicIcon from "@mui/icons-material/Public";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import SyncIcon from "@mui/icons-material/Sync";
 import { Email as EmailIcon, VolunteerActivism as CertificateIcon, OpenInNew as OpenInNewIcon, PlayCircleFilled as PlayCircleIcon } from '@mui/icons-material';
 import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
@@ -253,6 +255,8 @@ const VolunteerTable = ({
   onEditVolunteer,
   onMessageVolunteer,
   onSlackInvite,
+  onRefreshSlack, // re-check who has joined Slack since applying
+  slackRefreshing = false,
   // onBatchEmail(volunteers, type, audience) — audience: "roster" | "denied" | "waitlisted" | "pending"
   onBatchEmail,
   onBulkCertificate, // New prop for bulk certificate sending
@@ -581,6 +585,10 @@ const VolunteerTable = ({
       volunteer.isSelected && volunteer.slack_user_id && volunteer.slack_user_id.trim() !== ''
     ).length;
   }, [volunteers]);
+
+  // On the roster but no Slack account linked yet — can't be invited until
+  // they join Slack and the status is re-checked.
+  const rosterWithoutSlackCount = selectedCount - eligibleForSlackCount;
 
   const eligibleForEmailCount = useMemo(() => {
     return volunteers.filter((volunteer) =>
@@ -2054,20 +2062,51 @@ const VolunteerTable = ({
               </Button>
             </Tooltip>
           )}
-          {onSlackInvite && eligibleForSlackCount > 0 && (
-            <Tooltip title={`Invite ${eligibleForSlackCount} to Slack`}>
+          {onSlackInvite && selectedCount > 0 && (
+            <Tooltip
+              title={
+                rosterWithoutSlackCount > 0
+                  ? `Invite ${eligibleForSlackCount} to a Slack channel · ${rosterWithoutSlackCount} on the roster not on Slack yet (re-checked when you open this)`
+                  : `Invite ${eligibleForSlackCount} to a Slack channel`
+              }
+            >
               <Button
                 variant="contained"
                 color="primary"
                 onClick={() => onSlackInvite(volunteers, type)}
                 size={isMobile ? 'small' : 'small'}
                 sx={{ minWidth: 'auto', px: 1 }}
+                aria-label={`Invite ${type} to a Slack channel`}
               >
                 <FaSlack size={14} />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
                   {eligibleForSlackCount}
                 </Typography>
               </Button>
+            </Tooltip>
+          )}
+          {onRefreshSlack && volunteers.length > 0 && (
+            <Tooltip title="Check who has joined Slack since they applied">
+              <span>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={onRefreshSlack}
+                  disabled={slackRefreshing}
+                  size="small"
+                  sx={{ minWidth: 'auto', px: 1 }}
+                  aria-label="Check who has joined Slack since they applied"
+                >
+                  {slackRefreshing ? (
+                    <CircularProgress size={14} />
+                  ) : (
+                    <SyncIcon sx={{ fontSize: 16 }} />
+                  )}
+                  <Typography variant="caption" sx={{ ml: 0.5 }}>
+                    Slack
+                  </Typography>
+                </Button>
+              </span>
             </Tooltip>
           )}
           {onBulkCertificate && eligibleForCertificateCount > 0 && (

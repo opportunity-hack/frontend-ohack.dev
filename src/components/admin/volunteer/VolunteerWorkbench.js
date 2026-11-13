@@ -47,6 +47,8 @@ import VolunteerEditDialog from "../../../components/admin/VolunteerEditDialog";
 import ApplicationReviewList from "../../../components/admin/ApplicationReviewList";
 import VolunteerCommunication from "../../../components/admin/VolunteerCommunication";
 import SlackInviteDialog from "../../../components/admin/SlackInviteDialog";
+import SlackInviteService from "../../../lib/slackInviteService";
+import * as ga from "../../../lib/ga";
 import BatchEmailDialog from "../../../components/admin/BatchEmailDialog";
 import BulkCertificateDialog from "../../../components/admin/BulkCertificateDialog";
 import HackerDepositRefundDialog from "../../../components/admin/HackerDepositRefundDialog";
@@ -178,6 +180,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   const [slackInviteDialogOpen, setSlackInviteDialogOpen] = useState(false);
   const [volunteersForSlackInvite, setVolunteersForSlackInvite] = useState([]);
   const [volunteerTypeForSlackInvite, setVolunteerTypeForSlackInvite] = useState('');
+  const [slackRefreshing, setSlackRefreshing] = useState(false);
   const [batchEmailDialogOpen, setBatchEmailDialogOpen] = useState(false);
   const [volunteersForBatchEmail, setVolunteersForBatchEmail] = useState([]);
   const [volunteerTypeForBatchEmail, setVolunteerTypeForBatchEmail] = useState('');
@@ -729,15 +732,13 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
   }, []);
 
   const handleSlackInviteComplete = useCallback((summary) => {
-    setSnackbar({
-      open: true,
-      message: `Slack invitations completed: ${summary.successful} successful, ${summary.failed} failed`,
-      severity: summary.failed > 0 ? "warning" : "success",
-    });
-    setSlackInviteDialogOpen(false);
-    setVolunteersForSlackInvite([]);
-    setVolunteerTypeForSlackInvite('');
-  }, []);
+    // The dialog stays open so the per-person results (and any failures)
+    // can be read; closing it is the admin's call.
+    const message = `Slack invitations completed: ${summary.successful} successful, ${summary.failed} failed`;
+    const severity = summary.failed > 0 ? "warning" : "success";
+    setSnackbar({ open: true, message, severity });
+    if (embedded && typeof onSnack === "function") onSnack(message, severity);
+  }, [embedded, onSnack]);
 
   // audience: "roster" (isSelected) | "denied" | "waitlisted" | "pending" (by status).
   // Rejection emails key on status — NOT on "not selected", which under the
@@ -854,6 +855,49 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     // Embedded mode: AdminPage's Snackbar isn't mounted, the host page owns it.
     if (embedded && typeof onSnack === "function") onSnack(message, severity);
   }, [embedded, onSnack]);
+
+  // Slack status is saved on the application when it is created, so people
+  // who join Slack later look "not on Slack" until this re-check runs. The
+  // backend matches by email / login and saves the id; we merge it locally.
+  // Resolves { ok: true, updated, unmatched } or { ok: false, error } — a
+  // failed check is reported as a failure, never as "nobody new".
+  const refreshSlackStatus = useCallback(async ({ quiet = false, source = "toolbar" } = {}) => {
+    const typeSingular = getCurrentVolunteerTypeSingular(tabValue);
+    const plural = getCurrentVolunteerType(tabValue);
+    setSlackRefreshing(true);
+    try {
+      const service = new SlackInviteService(
+        process.env.NEXT_PUBLIC_API_SERVER_URL,
+        accessToken,
+        orgId,
+      );
+      const result = await service.refreshSlackIds(selectedEventId, typeSingular);
+      const found = new Map(result.updated.map((u) => [u.id, u.slack_user_id]));
+      if (found.size > 0) {
+        setVolunteers((prev) => ({
+          ...prev,
+          [plural]: (prev[plural] || []).map((v) =>
+            found.has(v?.id) ? { ...v, slack_user_id: found.get(v.id) } : v,
+          ),
+        }));
+      }
+      ga.trackStructuredEvent(
+        ga.EventCategory.ADMIN,
+        "admin_slack_status_refresh",
+        `${typeSingular}_${source}`,
+        result.updated.length,
+        { event_id: selectedEventId || undefined },
+      );
+      if (!quiet) snack(SlackInviteService.refreshSummary(result), "success");
+      return { ok: true, ...result };
+    } catch (err) {
+      const message = err?.message || "Couldn't check Slack for new members.";
+      if (!quiet) snack(message, "error");
+      return { ok: false, error: message };
+    } finally {
+      setSlackRefreshing(false);
+    }
+  }, [tabValue, accessToken, orgId, selectedEventId, snack]);
 
   // Optimistic single write with revert.
   const writeDecision = useCallback(async (application, changes, send, successMsg) => {
@@ -1519,6 +1563,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 onEditVolunteer={handleEditVolunteer}
                 onMessageVolunteer={handleMessageVolunteer}
                 onSlackInvite={handleSlackInvite}
+                onRefreshSlack={() => refreshSlackStatus({ source: "toolbar" })}
+                slackRefreshing={slackRefreshing}
                 onBatchEmail={handleBatchEmail}
                 onBulkCertificate={handleBulkCertificate}
                 onStatusChange={handleStatusChange}
@@ -1679,6 +1725,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         accessToken={accessToken}
         orgId={orgId}
         onComplete={handleSlackInviteComplete}
+        onRefresh={() => refreshSlackStatus({ quiet: true, source: "invite_dialog" })}
       />
 
       {/* Batch Email Dialog */}
