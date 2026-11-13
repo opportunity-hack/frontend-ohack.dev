@@ -14,9 +14,11 @@ class SlackInviteService {
    * Invite a single user to a Slack channel
    * @param {string} slackUserId - The Slack user ID
    * @param {string} channel - The Slack channel name
+   * @param {Object} [person] - The application row; only used so the backend's
+   *   audit line can name the person (name, email, id, type, event).
    * @returns {Promise<{success: boolean, error?: string}>}
    */
-  async inviteUser(slackUserId, channel) {
+  async inviteUser(slackUserId, channel, person = null) {
     try {
       const response = await fetch(`${this.apiServerUrl}/api/slack/invite-to-channel`, {
         method: 'POST',
@@ -28,6 +30,7 @@ class SlackInviteService {
         body: JSON.stringify({
           user_id: slackUserId,
           channel: channel,
+          ...SlackInviteService.auditContext(person),
         }),
       });
 
@@ -47,6 +50,23 @@ class SlackInviteService {
         error: error.message || 'Network error occurred'
       };
     }
+  }
+
+  /**
+   * Who is being invited, for the backend audit line. Empty values are left out.
+   */
+  static auditContext(person) {
+    if (!person) return {};
+    const context = {
+      name: person.name,
+      email: person.email,
+      volunteer_id: person.id,
+      volunteer_type: person.volunteer_type,
+      event_id: person.event_id,
+    };
+    return Object.fromEntries(
+      Object.entries(context).filter(([, value]) => typeof value === 'string' && value.trim())
+    );
   }
 
   /**
@@ -76,7 +96,7 @@ class SlackInviteService {
         percentage: Math.round(((i + 1) / users.length) * 100)
       });
 
-      const result = await this.inviteUser(user.slack_user_id, channel);
+      const result = await this.inviteUser(user.slack_user_id, channel, user);
       
       const userResult = {
         user: user,
