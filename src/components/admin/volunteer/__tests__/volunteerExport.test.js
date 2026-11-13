@@ -1,6 +1,7 @@
 import { buildCsv } from "../../../../lib/csvExport";
 import {
   buildVolunteerExportColumns,
+  collectEmails,
   exportScopeSlug,
   rosterBreakdown,
   scopeVolunteersForExport,
@@ -182,5 +183,25 @@ describe("buildVolunteerExportColumns", () => {
     expect(keys).toContain("isSelected");
     expect(keys[keys.length - 1]).toBe("id");
     expect(keys.length).toBeLessThan(12);
+  });
+});
+
+describe("collectEmails", () => {
+  it("trims, validates and de-duplicates case-insensitively in order", () => {
+    const { emails, missing } = collectEmails([
+      { email: " Ada@X.org " },
+      { email: "bob@x.org" },
+      { email: "ada@x.org" }, // duplicate of the first
+      { email: "not-an-email" },
+      { email: "" },
+      {},
+      null,
+    ]);
+    expect(emails).toEqual(["Ada@X.org", "bob@x.org"]);
+    expect(missing).toBe(4);
+  });
+
+  it("tolerates a non-array", () => {
+    expect(collectEmails(undefined)).toEqual({ emails: [], missing: 0 });
   });
 });

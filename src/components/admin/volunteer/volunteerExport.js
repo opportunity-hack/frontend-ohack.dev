@@ -36,6 +36,7 @@ import {
   normalizeStatus,
   statusLabel,
 } from "../../../lib/applicationStatus";
+import { validateEmail } from "../../../lib/emailParsing";
 
 export const ROSTER_SCOPES = [
   { value: "all", label: "Everyone" },
@@ -275,3 +276,32 @@ export function exportScopeSlug({
 }
 
 export const pluralType = (type) => toPluralType(type);
+
+/**
+ * Emails for the "Copy emails" mode of the export dialog (paste into Slack's
+ * "Invite people" box, a BCC line, …). Trimmed, validated, de-duplicated
+ * case-insensitively (first-seen casing kept), in list order.
+ *
+ * Returns `{ emails, missing }` — `missing` counts rows with no usable email
+ * so the dialog can say who was left out instead of dropping them silently.
+ */
+export function collectEmails(rows) {
+  const seen = new Set();
+  const emails = [];
+  let missing = 0;
+  (Array.isArray(rows) ? rows : []).forEach((doc) => {
+    const raw = typeof doc?.email === "string" ? doc.email.trim() : "";
+    if (!raw || !validateEmail(raw)) {
+      missing += 1;
+      return;
+    }
+    const key = raw.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    emails.push(raw);
+  });
+  return { emails, missing };
+}
+
+/** Slack's invite box (and most mail clients) take a comma-separated list. */
+export const EMAIL_SEPARATOR = ", ";
