@@ -858,9 +858,10 @@ export default function Profile() {
 
               <GiveawaysTab
                 profile={profile}
-                onOpenBasic={() => {
-                  setActiveTab(0);
-                  router.push('/profile#basic', undefined, { shallow: true });
+                onOpenTab={(slug = 'basic') => {
+                  const index = { basic: 0, swag: 3, portfolio: 6 }[slug] ?? 0;
+                  setActiveTab(index);
+                  router.push(`/profile#${slug}`, undefined, { shallow: true });
                   if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               />
@@ -869,7 +870,7 @@ export default function Profile() {
                 How to Earn More Entries
               </h3>
               <Box component="ul" sx={{ pl: 2, color: 'var(--muted)' }}>
-                <Box component="li" sx={{ mb: 1 }}>Complete your profile — 5 entries for each field you fill in</Box>
+                <Box component="li" sx={{ mb: 1 }}>Complete your profile — 5 entries for each field you fill in, including your public portfolio (it can stay private)</Box>
                 <Box component="li" sx={{ mb: 1 }}>Contribute to Opportunity Hack projects on GitHub — 1 entry per commit, pull request, issue, or review, up to 45</Box>
                 <Box component="li">Save your entry again after you update your profile so the new count is used</Box>
               </Box>

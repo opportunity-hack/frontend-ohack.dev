@@ -37,17 +37,21 @@ const isFilled = (value) => {
   return Boolean(value);
 };
 
+const missingFields = (profile) => (profile ? profileFields.filter((f) => !isFilled(profile[f.name])) : []);
+
 /** Profile fields the person can still fill (labels), for the nudge line. */
 export function missingProfileFields(profile) {
-  if (!profile) return [];
-  return profileFields
-    .filter((f) => !isFilled(profile[f.name]))
-    .map((f) => f.label);
+  return missingFields(profile).map((f) => f.label);
+}
+
+/** The /profile tab slug of the first unfilled field (where the nudge links). */
+export function missingProfileTab(profile) {
+  return missingFields(profile)[0]?.tab || "basic";
 }
 
 const sameSet = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
 
-function EntryBreakdown({ breakdown, total, onOpenBasic, missing }) {
+function EntryBreakdown({ breakdown, total, onOpenTab, missing, missingTab = "basic" }) {
   const b = breakdown || {};
   const profileEntries = b.profile_entries ?? 0;
   const githubEntries = b.github_entries ?? 0;
@@ -70,17 +74,17 @@ function EntryBreakdown({ breakdown, total, onOpenBasic, missing }) {
           <>
             {" "}Still open on your profile: {missing.slice(0, 3).join(", ")}
             {missing.length > 3 ? ` and ${missing.length - 3} more` : ""}.{" "}
-            {onOpenBasic ? (
+            {onOpenTab ? (
               <button
                 type="button"
                 className="ohx-link"
-                onClick={onOpenBasic}
+                onClick={() => onOpenTab(missingTab)}
                 style={{ background: "none", border: 0, padding: 0, cursor: "pointer", font: "inherit" }}
               >
                 Complete your profile
               </button>
             ) : (
-              <a className="ohx-link" href="/profile#basic">Complete your profile</a>
+              <a className="ohx-link" href={`/profile#${missingTab}`}>Complete your profile</a>
             )}
           </>
         )}
@@ -92,8 +96,9 @@ function EntryBreakdown({ breakdown, total, onOpenBasic, missing }) {
 EntryBreakdown.propTypes = {
   breakdown: PropTypes.object,
   total: PropTypes.number,
-  onOpenBasic: PropTypes.func,
+  onOpenTab: PropTypes.func,
   missing: PropTypes.arrayOf(PropTypes.string),
+  missingTab: PropTypes.string,
 };
 
 function StatusLine({ message }) {
@@ -115,7 +120,7 @@ function StatusLine({ message }) {
 
 StatusLine.propTypes = { message: PropTypes.object };
 
-export function GiveawayCard({ giveaway, weight, onSaved, onWithdrawn, onOpenBasic, missing }) {
+export function GiveawayCard({ giveaway, weight, onSaved, onWithdrawn, onOpenTab, missing, missingTab }) {
   const { accessToken } = useAuthInfo();
   const prizes = useMemo(() => sortedPrizes(giveaway), [giveaway]);
   const entry = giveaway.my_entry;
@@ -242,7 +247,8 @@ export function GiveawayCard({ giveaway, weight, onSaved, onWithdrawn, onOpenBas
             <EntryBreakdown
               breakdown={breakdown}
               total={total}
-              onOpenBasic={accepting ? onOpenBasic : undefined}
+              onOpenTab={accepting ? onOpenTab : undefined}
+              missingTab={missingTab}
               missing={accepting ? missing : []}
             />
             {accepting && weightDiffers && (
@@ -364,7 +370,7 @@ GiveawayCard.propTypes = {
   weight: PropTypes.object,
   onSaved: PropTypes.func.isRequired,
   onWithdrawn: PropTypes.func.isRequired,
-  onOpenBasic: PropTypes.func,
+  onOpenTab: PropTypes.func,
   missing: PropTypes.arrayOf(PropTypes.string),
 };
 
@@ -378,9 +384,10 @@ function QuietCard({ children }) {
 
 QuietCard.propTypes = { children: PropTypes.node };
 
-export default function GiveawaysTab({ profile, onOpenBasic }) {
+export default function GiveawaysTab({ profile, onOpenTab }) {
   const { status, data, reload, setData } = useOpenGiveaways();
   const missing = useMemo(() => missingProfileFields(profile), [profile]);
+  const missingTab = useMemo(() => missingProfileTab(profile), [profile]);
 
   if (status === "loading" || status === "idle" || (status === "ready" && !data)) {
     return (
@@ -433,8 +440,9 @@ export default function GiveawaysTab({ profile, onOpenBasic }) {
           weight={data.my_weight}
           onSaved={updateEntry}
           onWithdrawn={(id) => updateEntry(id, null)}
-          onOpenBasic={onOpenBasic}
+          onOpenTab={onOpenTab}
           missing={missing}
+          missingTab={missingTab}
         />
       ))}
     </div>
@@ -443,5 +451,5 @@ export default function GiveawaysTab({ profile, onOpenBasic }) {
 
 GiveawaysTab.propTypes = {
   profile: PropTypes.object,
-  onOpenBasic: PropTypes.func,
+  onOpenTab: PropTypes.func,
 };

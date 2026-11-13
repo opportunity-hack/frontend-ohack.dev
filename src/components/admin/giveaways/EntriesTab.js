@@ -1,10 +1,16 @@
 import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -14,10 +20,19 @@ import {
   TableRow,
   TableSortLabel,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
+import { DeleteOutline as DeleteIcon } from "@mui/icons-material";
+import { useAuthInfo } from "@propelauth/react";
 import ExportCsvButton from "../ExportCsvButton";
-import { entryCoversPrize, sortedPrizes } from "../../../lib/giveawayApi";
+import {
+  entryCoversPrize,
+  giveawayErrorMessage,
+  removeGiveawayEntries,
+  sortedPrizes,
+} from "../../../lib/giveawayApi";
 
 // Search, prize filter and sort here are DISPLAY ONLY. The draw reads the full
 // entry list from useAdminGiveaway — never these rows (the old page built the
@@ -30,6 +45,9 @@ export function picksLabel(entry, prizesById) {
   if (entry.all_prizes) return "Everything";
   return (entry.prize_ids || []).map((id) => prizesById[id]?.name || "Removed prize").join(", ");
 }
+
+/** The entry's Firestore doc id (the admin list sends it as `id`). */
+export const entryDocId = (entry, giveawayId) => entry.id || `${giveawayId}__${entry.user_id}`;
 
 export function filterEntries(entries, { query, prizeId }) {
   const q = (query || "").trim().toLowerCase();
@@ -57,7 +75,20 @@ const formatWhen = (iso) => {
     : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 };
 
-export default function EntriesTab({ giveaway, entries }) {
+// Typed confirm for "Remove all" — it can't be undone.
+export const REMOVE_ALL_CONFIRM = "REMOVE";
+
+export default function EntriesTab({ giveaway, entries, orgId, onEntriesChanged, onSnack }) {
+  const { accessToken } = useAuthInfo();
+  // A started draw ranks the list it loaded at Start, and a recorded winner
+  // must keep their entry — the backend refuses removals until a reset.
+  const drawStarted = Boolean(giveaway.draw?.seed);
+  const accepting = giveaway.accepting_entries ?? giveaway.status === "open";
+  // `null` | {kind: "one", entry} | {kind: "all"}
+  const [removing, setRemoving] = useState(null);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const prizes = useMemo(() => sortedPrizes(giveaway), [giveaway]);
   const prizesById = useMemo(() => Object.fromEntries(prizes.map((p) => [p.id, p])), [prizes]);
   const [query, setQuery] = useState("");
@@ -105,6 +136,36 @@ export default function EntriesTab({ giveaway, entries }) {
     [prizesById],
   );
 
+  const closeRemove = () => {
+    if (busy) return;
+    setRemoving(null);
+    setConfirmText("");
+    setRemoveError("");
+  };
+
+  const confirmRemove = async () => {
+    if (!removing) return;
+    setBusy(true);
+    setRemoveError("");
+    const body =
+      removing.kind === "all" ? { all: true } : { entry_ids: [entryDocId(removing.entry, giveaway.id)] };
+    try {
+      const out = await removeGiveawayEntries(giveaway.id, body, { token: accessToken, orgId });
+      onEntriesChanged?.(out?.entries || []);
+      const n = out?.removed ?? 0;
+      let message = "That entry was already gone.";
+      if (removing.kind === "all") message = `Removed ${n} ${n === 1 ? "entry" : "entries"}.`;
+      else if (n) message = `Removed ${removing.entry.user?.name || "the"}${removing.entry.user?.name ? "'s" : ""} entry.`;
+      onSnack?.(message);
+      setRemoving(null);
+      setConfirmText("");
+    } catch (err) {
+      setRemoveError(giveawayErrorMessage(err, "Couldn't remove entries. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const toggleSort = (key) =>
     setSort((s) => ({ key, dir: s.key === key && s.dir === "desc" ? "asc" : "desc" }));
 
@@ -148,7 +209,22 @@ export default function EntriesTab({ giveaway, entries }) {
           filenameParts={["giveaway-entries", giveaway.id]}
           table="giveaway_entries"
         />
+        {onEntriesChanged && (
+          <Button
+            color="error"
+            variant="outlined"
+            onClick={() => setRemoving({ kind: "all" })}
+            disabled={drawStarted || (entries || []).length === 0}
+          >
+            Remove all entries…
+          </Button>
+        )}
       </Box>
+      {drawStarted && onEntriesChanged && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          The draw has started, so entries can&apos;t be removed. Reset the draw on the Draw tab first.
+        </Alert>
+      )}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         Search and filters only change this table — the draw always uses every entry.
       </Typography>
@@ -174,6 +250,11 @@ export default function EntriesTab({ giveaway, entries }) {
                   Updated
                 </TableSortLabel>
               </TableCell>
+              {onEntriesChanged && (
+                <TableCell align="right">
+                  <Box component="span" sx={visuallyHidden}>Actions</Box>
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -206,11 +287,27 @@ export default function EntriesTab({ giveaway, entries }) {
                 </TableCell>
                 <TableCell sx={{ maxWidth: 320 }}>{picksLabel(e, prizesById)}</TableCell>
                 <TableCell sx={{ whiteSpace: "nowrap" }}>{formatWhen(e.updated_at)}</TableCell>
+                {onEntriesChanged && (
+                  <TableCell align="right" sx={{ width: 56 }}>
+                    <Tooltip title={drawStarted ? "Reset the draw to remove entries" : "Remove entry"}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label={`Remove ${e.user?.name || e.user_id}'s entry`}
+                          onClick={() => setRemoving({ kind: "one", entry: e })}
+                          disabled={drawStarted}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={onEntriesChanged ? 6 : 5}>
                   <Typography color="text.secondary" sx={{ py: 2 }}>
                     {(entries || []).length === 0 ? "No one has entered yet." : "No entries match."}
                   </Typography>
@@ -228,6 +325,50 @@ export default function EntriesTab({ giveaway, entries }) {
           <Button onClick={() => setVisibleCount(rows.length)}>Show all {rows.length}</Button>
         </Box>
       )}
+
+      <Dialog open={Boolean(removing)} onClose={closeRemove} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {removing?.kind === "all"
+            ? `Remove all ${(entries || []).length} entries?`
+            : `Remove ${removing?.entry?.user?.name || "this person"}'s entry?`}
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: removing?.kind === "all" ? 2 : 0 }}>
+            {removing?.kind === "all"
+              ? "Everyone is taken out of this giveaway's draw."
+              : "They're taken out of this giveaway's draw."}{" "}
+            Nobody is notified.{" "}
+            {accepting
+              ? "Entries are still open, so people can enter again from their profile."
+              : "Entries are closed, so they can't enter again."}
+          </Typography>
+          {removing?.kind === "all" && (
+            <TextField
+              fullWidth
+              size="small"
+              label={`Type "${REMOVE_ALL_CONFIRM}" to confirm`}
+              value={confirmText}
+              onChange={(ev) => setConfirmText(ev.target.value)}
+            />
+          )}
+          {removeError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {removeError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRemove} disabled={busy}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmRemove}
+            disabled={busy || (removing?.kind === "all" && confirmText !== REMOVE_ALL_CONFIRM)}
+          >
+            {removing?.kind === "all" ? "Remove all" : "Remove entry"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -235,4 +376,8 @@ export default function EntriesTab({ giveaway, entries }) {
 EntriesTab.propTypes = {
   giveaway: PropTypes.object.isRequired,
   entries: PropTypes.arrayOf(PropTypes.object).isRequired,
+  orgId: PropTypes.string,
+  /** Receives the fresh entry list after a removal; omit for a read-only table. */
+  onEntriesChanged: PropTypes.func,
+  onSnack: PropTypes.func,
 };

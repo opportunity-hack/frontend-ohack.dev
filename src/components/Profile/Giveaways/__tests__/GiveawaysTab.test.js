@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import GiveawaysTab, { missingProfileFields } from "../GiveawaysTab";
+import GiveawaysTab, { missingProfileFields, missingProfileTab } from "../GiveawaysTab";
 import { ApiError } from "../../../../lib/teamDashboardApi";
 
 const mockAuth = {
@@ -36,7 +36,7 @@ const WEIGHT = {
   entries: 42,
   breakdown: {
     profile_fields: 6,
-    profile_fields_total: 12,
+    profile_fields_total: 18,
     profile_entries: 30,
     github_entries: 12,
     github_cap: 45,
@@ -84,7 +84,7 @@ test("shows the weight, the close time and gentle must-be-present copy", async (
   render(<GiveawaysTab profile={{ role: "hacker" }} />);
   expect(await screen.findByText("Fall giveaway")).toBeInTheDocument();
   expect(screen.getByText("42")).toBeInTheDocument();
-  expect(screen.getByText(/30 from your profile \(6 of 12\s+fields\) · 12 from GitHub \(max 45\)/)).toBeInTheDocument();
+  expect(screen.getByText(/30 from your profile \(6 of 18\s+fields\) · 12 from GitHub \(max 45\)/)).toBeInTheDocument();
   expect(screen.getByText(/Entries close Sat Nov 14, 4:00 PM Arizona time/)).toBeInTheDocument();
   expect(screen.getByText(/plan to be there/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Enter giveaway" })).toBeDisabled();
@@ -173,7 +173,18 @@ test("missingProfileFields lists fillable fields only", () => {
   expect(missing).not.toContain("Propel ID");
   expect(missing).toContain("Shirt Size");
   // Optional / situational fields are never nudged.
-  for (const label of ["Apartment, suite, etc.", "Company", "Instagram Profile", "Would you like stickers?"]) {
+  for (const label of ["Apartment, suite, etc.", "Company", "Would you like stickers?"]) {
     expect(missing).not.toContain(label);
   }
+  expect(missing).toContain("Instagram Profile");
+  expect(missing).toContain("Portfolio headline");
+});
+
+test("missingProfileTab points the nudge at the tab of the first open field", () => {
+  const basic = { role: "r", github: "g", expertise: ["x"], education: "e", why: "w", linkedin_url: "l", instagram_url: "i" };
+  expect(missingProfileTab({})).toBe("basic");
+  expect(missingProfileTab(basic)).toBe("swag");
+  const swag = { shirt_size: "M", street_address: "1 Main", city: "Tempe", state: "AZ", postal_code: "85281", country: "US" };
+  expect(missingProfileTab({ ...basic, ...swag })).toBe("portfolio");
+  expect(missingProfileTab({ ...basic, ...swag, profile_slug: "ada", headline: "h", bio: "b", bio_video_url: "v", portfolio_links: [{}] })).toBe("basic");
 });
