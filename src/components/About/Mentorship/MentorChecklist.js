@@ -57,6 +57,7 @@ const MentorChecklist = () => {
           title: "Review the judging criteria thoroughly",
           details:
             "Understand the metrics teams will be evaluated on to provide targeted guidance.",
+          link: { href: "/about/judges#judging-criteria", label: "See the judging criteria" },
           checked: false,
         },
         {
@@ -74,13 +75,19 @@ const MentorChecklist = () => {
         {
           title: "Review provided materials on mentoring best practices",
           details:
-            "Refresh your knowledge on effective mentoring techniques for hackathons. Review the judging criteria, and peek at DevPost to understand prizes.",
+            "Refresh your knowledge on effective mentoring techniques for hackathons. Review the judging criteria and the prizes for this event.",
+          checked: false,
+        },
+        {
+          title: "Study the problem statements and the software requirements document",
+          details:
+            "They are released the day before the hackathon. Find them on Slack and in your email. Watch the nonprofit pitch at kickoff too: the more of that context you absorb, the more effective you are as a mentor.",
           checked: false,
         },
         {
           title: "Block off your mentoring time in your calendar",
           details:
-            "Commit to your 3-hour shift and any additional time you can offer.",
+            "Check the countdown and timeline on the event page, sign up for the blocks you can make, and be there as long as you can. The longer you stay, the more teams you can help.",
           checked: false,
         },
         {
@@ -91,6 +98,12 @@ const MentorChecklist = () => {
         },
       ],
       early: [
+        {
+          title: "Check whether a team wants support before you reach out",
+          details:
+            "Every team sets its own status: Open to mentors means they welcome you dropping in; Heads-down means they are focused, so hold off unless they ask in #ask-a-mentor. Some teams get overloaded with mentors reaching out, so respect what they chose.",
+          checked: false,
+        },
         {
           title: "Join the #ask-a-mentor Slack channel",
           details: "This is the main channel for mentor coordination.",
@@ -150,7 +163,7 @@ const MentorChecklist = () => {
         {
           title: "Provide constructive feedback",
           details:
-            "Offer insights on code quality, project direction, and presentation skills. Use the private mentor Slack channel if you aren't able to get a response from a team.",
+            "Offer insights on code quality, project direction, and presentation skills. If you can't get a response from a team, raise a flag on their mentor support panel and leave a public note there: what you observed, and what the team needs next. Another mentor can take ownership of the flag instead of duplicating your effort, and the next mentor on shift sees the full history.",
           checked: false,
         },
         {
@@ -179,9 +192,9 @@ const MentorChecklist = () => {
           checked: false,
         },
         {
-          title: "Remind teams about DevPost submissions",
+          title: "Remind teams about video submissions",
           details:
-            "Ensure teams understand the submission process and requirements.",
+            "Ensure teams understand the submission process: code checked in to GitHub, demo video submitted on ohack.dev. DevPost is optional.",
           checked: false,
         },
         {
@@ -277,7 +290,17 @@ const MentorChecklist = () => {
               </ListItemIcon>
               <ListItemText
                 primary={item.title}
-                secondary={item.details}                
+                secondary={
+                  <>
+                    {item.details}
+                    {item.link && (
+                      <>
+                        {" "}
+                        <Link href={item.link.href}>{item.link.label}</Link>
+                      </>
+                    )}
+                  </>
+                }
                 primaryTypographyProps={{ fontWeight: "bold", fontSize: "16px" }}
                 secondaryTypographyProps={{ style: { whiteSpace: "normal", fontSize: "14px" } }}
               />
