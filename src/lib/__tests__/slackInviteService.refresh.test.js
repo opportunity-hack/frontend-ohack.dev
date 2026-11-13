@@ -72,3 +72,29 @@ describe("SlackInviteService helpers", () => {
     );
   });
 });
+
+describe("invite audit context", () => {
+  afterEach(() => { delete global.fetch; });
+
+  it("sends who is being invited along with the Slack id", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+    const service = new SlackInviteService("https://api.test", "tok", "org1");
+    await service.inviteMultipleUsers(
+      [{ id: "v1", name: "Ada L", email: "ada@example.com", volunteer_type: "judge", event_id: "ev1", slack_user_id: "U1", notes: "private" }],
+      "fall-judges"
+    );
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      user_id: "U1", channel: "fall-judges", name: "Ada L", email: "ada@example.com",
+      volunteer_id: "v1", volunteer_type: "judge", event_id: "ev1",
+    });
+  });
+
+  it("leaves out empty fields and works with no person", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    const service = new SlackInviteService("https://api.test", "tok", "org1");
+    await service.inviteUser("U2", "c");
+    await service.inviteUser("U3", "c", { name: " ", email: null });
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({ user_id: "U2", channel: "c" });
+    expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual({ user_id: "U3", channel: "c" });
+  });
+});
