@@ -276,7 +276,7 @@ export function deriveDeliverables({
       label: "Add a demo video",
       state: video ? "done" : "todo",
       href: "#demo",
-      hint: video ? null : "4 minutes or less",
+      hint: video ? null : "4 minutes or less · YouTube Unlisted is easiest",
     },
     {
       key: "submit",
