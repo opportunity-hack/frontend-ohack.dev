@@ -621,6 +621,31 @@ export default function TeamDetailPage({
             )}
           </Box>
 
+          {/* Members: the way to edit the project lives up here, not at the
+              bottom of a long page. */}
+          {isOnTeam && (
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <NextLink
+                href={`/hack/${event_id}/manageteam`}
+                className="ohx-btn ohx-btn--primary"
+              >
+                Manage your team
+              </NextLink>
+              <Box sx={{ color: "var(--muted)", fontSize: "0.92rem" }}>
+                You&apos;re on this team — edit your project story, demo video
+                and more.
+              </Box>
+            </Box>
+          )}
+
           <hr className="ohx-rule" style={{ marginTop: 24 }} />
         </Box>
 
@@ -1157,14 +1182,7 @@ export default function TeamDetailPage({
 
             {/* Actions */}
             <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-              {isOnTeam ? (
-                <NextLink
-                  href={`/hack/${event_id}/manageteam`}
-                  className="ohx-btn ohx-btn--primary"
-                >
-                  Manage your team
-                </NextLink>
-              ) : (
+              {!isOnTeam && (
                 <NextLink
                   href={`/hack/${event_id}/findteam`}
                   className="ohx-btn ohx-btn--ghost"

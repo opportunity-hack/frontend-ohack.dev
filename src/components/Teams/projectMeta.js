@@ -15,11 +15,7 @@ import {
 } from "../../lib/timezoneUtils";
 import { repoEntriesFromTeam } from "../../lib/githubLinks";
 import { OG_IMAGE } from "./teamPageData";
-
-// Matches LiteVideoThumbnail.js's YouTube regex so the same URL yields the
-// same extracted video id everywhere.
-const YOUTUBE_REGEX =
-  /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+import { youtubeIdFromUrl } from "../../lib/videoLinks";
 
 function clamp(text, max = 160) {
   if (!text) return text;
@@ -100,8 +96,8 @@ export function projectThumbUrl(team) {
   if (team?.project_thumbnail_url) return team.project_thumbnail_url;
   const videoUrl = team?.demo_video_url;
   if (videoUrl) {
-    const match = String(videoUrl).match(YOUTUBE_REGEX);
-    if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+    const youtubeId = youtubeIdFromUrl(String(videoUrl));
+    if (youtubeId) return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
   }
   return null;
 }

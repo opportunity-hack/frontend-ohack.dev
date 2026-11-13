@@ -106,6 +106,11 @@ export const undoGiveawayResult = (giveawayId, resultId, opts = {}) =>
     body: { result_id: resultId },
   });
 
+/** Remove entries — `{entry_ids: [...]}` or `{all: true}` → `{entries, count, removed}`.
+ * 409 `draw_started` once a draw has a seed (reset the draw first). */
+export const removeGiveawayEntries = (giveawayId, body, opts = {}) =>
+  request(`/admin/${enc(giveawayId)}/entries/remove`, { ...opts, method: "POST", body });
+
 export const resetGiveawayDraw = (giveawayId, opts = {}) =>
   request(`/admin/${enc(giveawayId)}/draw/reset`, { ...opts, method: "POST", body: {} });
 

@@ -212,7 +212,16 @@ const AdminGiveawaysPage = withRequiredAuthInfo(({ userClass }) => {
         />
       );
     } else if (tabIndex === 1) {
-      tabBody = <EntriesTab key={giveaway.id} giveaway={giveaway} entries={entries} />;
+      tabBody = (
+        <EntriesTab
+          key={giveaway.id}
+          giveaway={giveaway}
+          entries={entries}
+          orgId={orgId}
+          onEntriesChanged={onEntriesLoaded}
+          onSnack={onSnack}
+        />
+      );
     } else {
       tabBody = (
         <DrawTab

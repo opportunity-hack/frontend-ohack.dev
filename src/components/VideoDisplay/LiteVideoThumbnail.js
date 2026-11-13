@@ -2,24 +2,7 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-
-// Match VideoDisplay.js regex so we extract the same YouTube ID
-const YOUTUBE_REGEX =
-  /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-const VIMEO_REGEX = /vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)/;
-const LOOM_REGEX = /loom\.com\/(?:share|embed)\//;
-const DRIVE_REGEX = /drive\.google\.com\/file\/d\//;
-const RAW_VIDEO_REGEX = /\.(mp4|webm|mov)(\?|#|$)/i;
-
-const providerLabel = (url) => {
-  if (!url) return null;
-  if (YOUTUBE_REGEX.test(url)) return "YouTube";
-  if (VIMEO_REGEX.test(url)) return "Vimeo";
-  if (LOOM_REGEX.test(url)) return "Loom";
-  if (DRIVE_REGEX.test(url)) return "Google Drive";
-  if (RAW_VIDEO_REGEX.test(url)) return "Video";
-  return null;
-};
+import { youtubeIdFromUrl, videoProviderLabel } from "../../lib/videoLinks";
 
 const LiteVideoThumbnail = ({
   url,
@@ -31,9 +14,8 @@ const LiteVideoThumbnail = ({
 }) => {
   if (!url) return null;
 
-  const youtubeMatch = url.match(YOUTUBE_REGEX);
-  const youtubeId = youtubeMatch ? youtubeMatch[1] : null;
-  const provider = providerLabel(url);
+  const youtubeId = youtubeIdFromUrl(url);
+  const provider = videoProviderLabel(url);
   // A supplied poster (e.g. for raw mp4s) renders exactly like a YouTube thumb
   const posterSrc = posterUrl || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : null);
 
