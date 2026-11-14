@@ -253,7 +253,7 @@ const ParticipantsSection = ({ admin }) => {
             helperText={
               capacityInvalid
                 ? "Enter a whole number from 1 to 10,000, or leave blank for no limit."
-                : "Shown on the application form. Auto-approve stops adding people once the roster reaches this number. Leave blank for no limit."
+                : "Shown on the application form as the seat count. Auto-approve approves everyone while it is on, even past this number; seats at the door are first come, first served. Leave blank for no limit."
             }
             sx={{ maxWidth: 320 }}
           />
@@ -279,9 +279,8 @@ const ParticipantsSection = ({ admin }) => {
                   Auto-approve hacker applications
                 </Typography>
                 <Typography variant="caption" color="text.secondary" component="div">
-                  Every new or still-pending hacker application goes straight onto the roster
-                  {constraints.hacker_capacity ? ` (until ${constraints.hacker_capacity} hackers)` : " (until capacity)"}
-                  ; after that people are waitlisted. Turn on the morning of the event for walk-ins; turn
+                  Every new or still-pending hacker application goes straight onto the roster,
+                  even past the capacity number. Turn on the morning of the event for walk-ins; turn
                   off afterwards. Denied applications are never auto-approved.
                 </Typography>
               </Box>
