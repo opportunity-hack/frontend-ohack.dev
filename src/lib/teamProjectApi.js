@@ -60,9 +60,34 @@ export function teamProjectErrorCopy(code) {
   return CODE_COPY[code] || null;
 }
 
-/** Turn an axios error into a TeamProjectError with a showable message. */
-export function toTeamProjectError(err, fallback) {
+// Approving creates the GitHub repo, seeds ~10 files, mints AI keys and posts
+// to Slack (~40s); creating a team makes a Slack channel and sends ~8
+// invites. Both outlast the global 30s axios timeout, which used to show
+// "Failed" for an approval/creation that finished a few seconds later.
+export const APPROVE_TIMEOUT_MS = 120000;
+export const QUEUE_TIMEOUT_MS = 90000;
+
+export const APPROVE_TIMEOUT_COPY =
+  "Approval is taking longer than usual and may still finish. Refreshing the team list…";
+export const QUEUE_TIMEOUT_COPY =
+  "Creating your team is taking longer than usual. It may still have gone through, so check your teams before trying again.";
+
+/** True when axios gave up waiting (no response arrived). */
+export function isRequestTimeout(err) {
+  if (!err || err.response) return false;
+  return err.code === "ECONNABORTED" || err.code === "ETIMEDOUT";
+}
+
+/**
+ * Turn an axios error into a TeamProjectError with a showable message. A
+ * client-side timeout becomes `code: "timeout"` — the server may still be
+ * finishing, so callers refresh instead of reporting a failure.
+ */
+export function toTeamProjectError(err, fallback, timeoutMessage = null) {
   if (err instanceof TeamProjectError) return err;
+  if (isRequestTimeout(err)) {
+    return new TeamProjectError(timeoutMessage || fallback, { code: "timeout" });
+  }
   const status = err?.response?.status ?? null;
   const body = err?.response?.data ?? null;
   const code = typeof body?.error === "string" ? body.error : null;
@@ -104,11 +129,13 @@ export async function queueTeam(body, { token } = {}, { client = axios } = {}) {
   try {
     response = await client.post(`${apiBase()}/api/team/queue`, body, {
       headers: authHeaders(token),
+      timeout: QUEUE_TIMEOUT_MS,
     });
   } catch (err) {
     throw toTeamProjectError(
       err,
       "An unexpected error occurred. Please try again.",
+      QUEUE_TIMEOUT_COPY,
     );
   }
   const data = response?.data || {};
@@ -132,10 +159,10 @@ export async function approveTeamProject(
     response = await client.post(
       `${apiBase()}/api/team/approve`,
       { teamId, nonprofitId, problemStatementId },
-      { headers: authHeaders(token, orgId) },
+      { headers: authHeaders(token, orgId), timeout: APPROVE_TIMEOUT_MS },
     );
   } catch (err) {
-    throw toTeamProjectError(err, "Failed to approve team");
+    throw toTeamProjectError(err, "Failed to approve team", APPROVE_TIMEOUT_COPY);
   }
   const data = response?.data || {};
   // The backend still answers some handled failures (e.g. GitHub org
