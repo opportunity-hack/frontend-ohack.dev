@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
 import {
   Avatar,
@@ -26,8 +26,72 @@ import {
 import CoverageMeter from "../Teams/CoverageMeter";
 import useCoverageNow from "../../hooks/use-coverage-now";
 
+// Problem-statement ids on a team doc (strings; tolerate {id} objects).
+function teamProjectIds(team) {
+  const list = Array.isArray(team?.problem_statements)
+    ? team.problem_statements
+    : [];
+  return list.map((p) => (typeof p === "string" ? p : p?.id)).filter(Boolean);
+}
+
+// The event payload carries problem-statement ids only, so titles come from
+// one batched fetch per page (ONE setState). A failed lookup just leaves the
+// title unknown — the cell still links to the project page.
+function useProblemStatementTitles(teams) {
+  const [titles, setTitles] = useState({});
+  const requestedRef = useRef(new Set());
+
+  const ids = useMemo(() => {
+    const set = new Set();
+    (teams || []).forEach((t) =>
+      teamProjectIds(t).forEach((id) => set.add(id)),
+    );
+    return [...set].sort();
+  }, [teams]);
+  const idsKey = ids.join(",");
+
+  useEffect(() => {
+    const pending = ids.filter((id) => !requestedRef.current.has(id));
+    if (!pending.length) return undefined;
+    pending.forEach((id) => requestedRef.current.add(id));
+    let cancelled = false;
+    Promise.all(
+      pending.map(async (id) => {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/messages/problem_statement/${encodeURIComponent(id)}`,
+          );
+          if (!res.ok) return [id, null];
+          const data = await res.json();
+          return [id, data?.title || null];
+        } catch {
+          return [id, null];
+        }
+      }),
+    ).then((entries) => {
+      if (cancelled) {
+        // Let a later mount retry the ones this run never stored.
+        pending.forEach((id) => requestedRef.current.delete(id));
+        return;
+      }
+      setTitles((prev) => {
+        const next = { ...prev };
+        entries.forEach(([id, title]) => {
+          if (title) next[id] = title;
+        });
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [idsKey]);
+
+  return titles;
+}
+
 // ---- derive one team's mentor-relevant signals from the raw team doc -------
-function deriveTeam(team, nonprofitMap, coverageNow) {
+function deriveTeam(team, nonprofitMap, coverageNow, projectTitles = {}) {
   const checklist = team?.mentor_checklist || {};
   // Share of all 18 possible sign-offs + distinct mentors — not the old
   // all-or-nothing "items with 3 of 3" count. Sign-offs over 5h old are
@@ -62,6 +126,10 @@ function deriveTeam(team, nonprofitMap, coverageNow) {
     nonprofitName: team?.selected_nonprofit_id
       ? nonprofitMap[team.selected_nonprofit_id] || null
       : null,
+    projects: teamProjectIds(team).map((id) => ({
+      id,
+      title: projectTitles[id] || null,
+    })),
     members,
     memberCount: members.length,
     coverage,
@@ -81,6 +149,26 @@ function deriveTeam(team, nonprofitMap, coverageNow) {
     // "mentor_help_wanted absent ⇒ true").
     isHeadsDown: team?.mentor_help_wanted === false,
   };
+}
+
+// Problem statement(s) the team is working on — links to the project page.
+function ProjectCell({ d }) {
+  if (!d.projects.length)
+    return <span style={{ color: "var(--faint)" }}>—</span>;
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+      {d.projects.map((p) => (
+        <NextLink
+          key={p.id}
+          href={`/project/${p.id}`}
+          className="ohx-link"
+          style={{ fontSize: "0.88rem", lineHeight: 1.35 }}
+        >
+          {p.title || "View project"}
+        </NextLink>
+      ))}
+    </Box>
+  );
 }
 
 const FILTERS = [
@@ -312,12 +400,14 @@ export default function MentorTeamsTable({
     return m;
   }, [nonprofits]);
 
+  const projectTitles = useProblemStatementTitles(teams);
+
   const derived = useMemo(
     () =>
       teams
-        .map((t) => deriveTeam(t, nonprofitMap, coverageNow))
+        .map((t) => deriveTeam(t, nonprofitMap, coverageNow, projectTitles))
         .filter((d) => d.id),
-    [teams, nonprofitMap, coverageNow],
+    [teams, nonprofitMap, coverageNow, projectTitles],
   );
 
   const attentionCount = useMemo(
@@ -335,6 +425,7 @@ export default function MentorTeamsTable({
       return (
         d.name.toLowerCase().includes(q) ||
         (d.nonprofitName || "").toLowerCase().includes(q) ||
+        d.projects.some((p) => (p.title || "").toLowerCase().includes(q)) ||
         (d.slackChannel || "").toLowerCase().includes(q)
       );
     });
@@ -391,7 +482,7 @@ export default function MentorTeamsTable({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search teams, nonprofits, Slack channels…"
+          placeholder="Search teams, nonprofits, projects, Slack…"
           aria-label="Search teams"
           sx={inputSx}
         />
@@ -502,6 +593,11 @@ export default function MentorTeamsTable({
                   {d.nonprofitName}
                 </Box>
               )}
+              {d.projects.length > 0 && (
+                <Box sx={{ mt: 0.5 }}>
+                  <ProjectCell d={d} />
+                </Box>
+              )}
               <Box
                 sx={{
                   display: "flex",
@@ -573,7 +669,7 @@ export default function MentorTeamsTable({
       <Box className="ohx-card" sx={{ overflowX: "auto", p: 0 }}>
         <Box
           component="table"
-          sx={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}
+          sx={{ width: "100%", borderCollapse: "collapse", minWidth: 1160 }}
         >
           <Box component="thead">
             <Box component="tr">
@@ -585,6 +681,9 @@ export default function MentorTeamsTable({
               </Box>
               <Box component="th" sx={thSx}>
                 Nonprofit
+              </Box>
+              <Box component="th" sx={thSx}>
+                Problem statement
               </Box>
               <Box component="th" sx={thSx}>
                 Members
@@ -657,6 +756,12 @@ export default function MentorTeamsTable({
                   }}
                 >
                   {d.nonprofitName || "—"}
+                </Box>
+                <Box
+                  component="td"
+                  sx={{ ...tdSx, minWidth: 180, maxWidth: 240 }}
+                >
+                  <ProjectCell d={d} />
                 </Box>
                 <Box component="td" sx={tdSx}>
                   <Members d={d} />
