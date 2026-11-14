@@ -130,6 +130,8 @@ function deriveTeam(team, nonprofitMap, coverageNow, projectTitles = {}) {
       id,
       title: projectTitles[id] || null,
     })),
+    // "Location at Hackathon" (admin Teams section) — table/room at the venue.
+    location: typeof team?.location === "string" ? team.location.trim() : "",
     members,
     memberCount: members.length,
     coverage,
@@ -248,6 +250,13 @@ function AvailabilityCell({ d }) {
       </span>
     </Tooltip>
   );
+}
+
+function LocationCell({ d }) {
+  if (!d.location) {
+    return <span style={{ color: "var(--faint)" }}>—</span>;
+  }
+  return <span style={{ color: "var(--ink)" }}>{d.location}</span>;
 }
 
 function FlagsCell({ d }) {
@@ -425,6 +434,7 @@ export default function MentorTeamsTable({
       return (
         d.name.toLowerCase().includes(q) ||
         (d.nonprofitName || "").toLowerCase().includes(q) ||
+        d.location.toLowerCase().includes(q) ||
         d.projects.some((p) => (p.title || "").toLowerCase().includes(q)) ||
         (d.slackChannel || "").toLowerCase().includes(q)
       );
@@ -482,7 +492,7 @@ export default function MentorTeamsTable({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search teams, nonprofits, projects, Slack…"
+          placeholder="Search teams, nonprofits, projects, locations, Slack…"
           aria-label="Search teams"
           sx={inputSx}
         />
@@ -609,6 +619,11 @@ export default function MentorTeamsTable({
               >
                 <CoverageCell d={d} />
                 <AvailabilityCell d={d} />
+                {d.location && (
+                  <span className="ohx-tag" title="Location at the hackathon">
+                    📍 {d.location}
+                  </span>
+                )}
                 <FlagsCell d={d} />
                 <span className="ohx-tag">
                   {d.lastTouchedAt
@@ -669,7 +684,7 @@ export default function MentorTeamsTable({
       <Box className="ohx-card" sx={{ overflowX: "auto", p: 0 }}>
         <Box
           component="table"
-          sx={{ width: "100%", borderCollapse: "collapse", minWidth: 1160 }}
+          sx={{ width: "100%", borderCollapse: "collapse", minWidth: 1280 }}
         >
           <Box component="thead">
             <Box component="tr">
@@ -693,6 +708,9 @@ export default function MentorTeamsTable({
               </Box>
               <Box component="th" sx={thSx}>
                 Availability
+              </Box>
+              <Box component="th" sx={thSx}>
+                Location
               </Box>
               <Box component="th" sx={thSx}>
                 Flags
@@ -771,6 +789,12 @@ export default function MentorTeamsTable({
                 </Box>
                 <Box component="td" sx={tdSx}>
                   <AvailabilityCell d={d} />
+                </Box>
+                <Box
+                  component="td"
+                  sx={{ ...tdSx, minWidth: 110, maxWidth: 180 }}
+                >
+                  <LocationCell d={d} />
                 </Box>
                 <Box component="td" sx={tdSx}>
                   <FlagsCell d={d} />
