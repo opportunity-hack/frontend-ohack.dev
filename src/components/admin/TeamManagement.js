@@ -1329,6 +1329,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       setTeamData((prev) => approvedTeamState(prev, selectedProjectId));
       fetchTeams(selectedHackathon);
     } catch (error) {
+      // A client timeout isn't a failure: approval runs ~40s (repo + seed
+      // files + AI keys + Slack) and usually finishes — refresh and look.
+      if (error.code === "timeout") {
+        notify(error.message, "info");
+        setApprovalDialogOpen(false);
+        fetchTeams(selectedHackathon);
+        return;
+      }
       console.error("Error approving team:", error);
       // 400 problem_statement_required / invalid_problem_statement,
       // 409 already_approved, or a handled 200 {success:false, message}.

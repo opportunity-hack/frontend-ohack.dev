@@ -378,6 +378,36 @@ it("a 400 refusal shows the server's message and returns to the right step", asy
   await waitFor(() => expect(callsTo("/project-options")).toBe(2));
 });
 
+it("a create that outlasts the client timeout refreshes teams instead of saying it failed", async () => {
+  mockCreateFlowBackend();
+  const timeout = new Error("timeout of 90000ms exceeded");
+  timeout.code = "ECONNABORTED";
+  axios.post.mockRejectedValue(timeout);
+  await goToProjectsStep();
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: "Add to my ranking" }))[0],
+  );
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Add to my ranking" })[0],
+  );
+  await waitEnabled(nextButton);
+  fireEvent.click(nextButton());
+  fireEvent.click(nextButton());
+  const mesBefore = callsTo("/api/team/fall-2026/me");
+  fireEvent.click(await screen.findByRole("button", { name: "Create team" }));
+
+  expect(
+    await screen.findByText(/taking longer than usual/),
+  ).toBeInTheDocument();
+  // Form closed (no second "Create team" click → no duplicate team) and the
+  // teams list re-read to show the team if it did get created.
+  expect(screen.queryByRole("button", { name: "Create team" })).toBeNull();
+  await waitFor(() =>
+    expect(callsTo("/api/team/fall-2026/me")).toBeGreaterThan(mesBefore),
+  );
+  expect(screen.queryByText(/unexpected error/i)).toBeNull();
+});
+
 it("a project-options 500 shows a Retry card, never a 'no projects' claim", async () => {
   let fail = true;
   mockCreateFlowBackend({

@@ -636,6 +636,16 @@ const ManageTeamComponent = () => {
         if (el) el.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } catch (err) {
+      if (err?.code === "timeout") {
+        // The server is most likely still finishing (Slack channel + invites).
+        // Close the form and show the teams list rather than inviting a
+        // second "Create team" click that would make a duplicate team.
+        savePendingTeammates(slackChannel, splitTeammates(teamMembers).joinLater);
+        await fetchMyTeams();
+        resetCreateForm();
+        setLeftNotice(err.message);
+        return;
+      }
       setFormError(
         err?.message || "An unexpected error occurred. Please try again.",
       );
