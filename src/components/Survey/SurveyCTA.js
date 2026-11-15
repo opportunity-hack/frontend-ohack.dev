@@ -18,13 +18,30 @@ function eventHasStarted(startDate) {
   return Date.now() >= d.getTime();
 }
 
-export default function SurveyCTA({ eventId, startDate, endDate, timezone, style }) {
+// `postOpensAt` = constraints.survey_post_opens_at (admin Deadlines section):
+// the end-of-event survey can open before the last day is over.
+function postSurveyOpen(postOpensAt) {
+  if (!postOpensAt) return false;
+  const t = new Date(postOpensAt).getTime();
+  return !isNaN(t) && Date.now() >= t;
+}
+
+export default function SurveyCTA({
+  eventId,
+  startDate,
+  endDate,
+  timezone,
+  postOpensAt,
+  style,
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (!eventId || !mounted || !eventHasStarted(startDate)) return null;
 
-  const ended = endDate ? isHackathonExpired(endDate, timezone) : false;
+  const ended =
+    postSurveyOpen(postOpensAt) ||
+    (endDate ? isHackathonExpired(endDate, timezone) : false);
   const eyebrow = ended ? "Post-event survey" : "Live check-in";
   const heading = ended ? "How was the event?" : "How's it going?";
   const sub = ended

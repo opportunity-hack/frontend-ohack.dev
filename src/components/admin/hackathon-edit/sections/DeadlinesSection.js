@@ -8,6 +8,7 @@ import {
   CardHeader,
   Divider,
   FormControlLabel,
+  Link,
   Stack,
   Switch,
   TextField,
@@ -269,6 +270,47 @@ const DeadlinesSection = ({ admin, accessToken, orgId, onSnack }) => {
             hackers see it on the event page too.
           </Typography>
         </Box>
+
+        <Divider />
+
+        <Card variant="outlined">
+          <CardHeader
+            title="Feedback survey"
+            subheader="The survey at /survey asks the during-the-event questions until the event's last day is over, then switches to the end-of-hackathon questions. Set a time here to switch earlier — e.g. at the closing ceremony. Saves automatically."
+          />
+          <CardContent>
+            <Stack spacing={1.5}>
+              <DeadlineField
+                label="End-of-hackathon survey opens"
+                description="Leave empty to switch at the end of the event's last day."
+                value={constraints.survey_post_opens_at || null}
+                onChange={(v) => setConstraint("survey_post_opens_at", v)}
+                tz={tz}
+              />
+              {eventId && (
+                <Typography variant="body2" color="text.secondary">
+                  Links that always show one form, whatever the time (once the
+                  event has started):{" "}
+                  <Link
+                    href={`/hack/${eventId}/survey/during`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    /hack/{eventId}/survey/during
+                  </Link>{" "}
+                  ·{" "}
+                  <Link
+                    href={`/hack/${eventId}/survey/complete`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    /hack/{eventId}/survey/complete
+                  </Link>
+                </Typography>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
 
         <Divider />
 

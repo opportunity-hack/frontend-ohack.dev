@@ -654,6 +654,7 @@ export default function TeamDetailPage({
           startDate={event?.start_date}
           endDate={event?.end_date}
           timezone={event?.timezone}
+          postOpensAt={event?.constraints?.survey_post_opens_at}
         />
 
         {/* Member nudge — one combined notice for a missing story/demo video.

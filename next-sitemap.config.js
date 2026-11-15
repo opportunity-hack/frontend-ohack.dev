@@ -18,6 +18,7 @@ module.exports = {
     "/project/*",
     "/hack/*/vote",
     "/hack/*/survey",
+    "/hack/*/survey/*",
     "/hack/*/feedback",
     "/hack/*/share/*",
     "/hack/*/judging",
