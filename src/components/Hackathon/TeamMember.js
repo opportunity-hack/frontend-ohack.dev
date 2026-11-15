@@ -10,10 +10,11 @@ import {
 } from "@mui/material";
 import { FaGithub } from "react-icons/fa";
 
+import { memberProfileHref } from "../../lib/teamMemberLinks";
+
 const TeamMember = ({ user, isCurrentUser }) => {
   if (!user) return null;
 
-  const userId = typeof user === "string" ? user : user.user_id || user.id;
   const displayName =
     typeof user === "string" ? "" : user.name || user.nickname || "";
   const githubUsername =
@@ -22,7 +23,8 @@ const TeamMember = ({ user, isCurrentUser }) => {
   const cleanGithubUsername = githubUsername
     ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, "")
     : null;
-  const profileUrl = `/profile/${userId}`;
+  // Document id only — never the login provider's id (see teamMemberLinks).
+  const profileUrl = memberProfileHref(user);
   const firstLetter = displayName && displayName.length > 0 ? displayName[0] : "?";
   const profileImage = typeof user === "string" ? undefined : user.profile_image;
 
@@ -34,9 +36,11 @@ const TeamMember = ({ user, isCurrentUser }) => {
             <div>
               {isCurrentUser
                 ? "This is you"
-                : displayName
-                  ? `View ${displayName}'s profile`
-                  : "View profile"}
+                : !profileUrl
+                  ? displayName || "Team member"
+                  : displayName
+                    ? `View ${displayName}'s profile`
+                    : "View profile"}
             </div>
             {cleanGithubUsername && (
               <div style={{ marginTop: "4px", fontSize: "11px", opacity: 0.8 }}>
@@ -48,9 +52,14 @@ const TeamMember = ({ user, isCurrentUser }) => {
         }
       >
         <IconButton
-          component={Link}
-          href={profileUrl}
-          aria-label={`${displayName || "Team member"}'s profile`}
+          {...(profileUrl
+            ? { component: Link, href: profileUrl }
+            : { component: "span", disableRipple: true })}
+          aria-label={
+            profileUrl
+              ? `${displayName || "Team member"}'s profile`
+              : displayName || "Team member"
+          }
           sx={{
             p: 0,
             "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },

@@ -138,8 +138,9 @@ const PraiseCard = ({ praise }) => {
   //Function to handle clicking on a user's profile on a Praise Card
   const handleUserClick = (ohackId) => {
     try {
-      const profileId = ohackId || 'unknown';
-      router.push(`/profile/${profileId}`);
+      // No linked account -> nowhere to go (this used to open /profile/unknown).
+      if (!ohackId) return;
+      router.push(`/profile/${ohackId}`);
     } catch (error) {
       console.error('Error navigating to user profile:', error);
     }
