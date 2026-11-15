@@ -6,6 +6,7 @@ jest.mock("../../lib/teamDashboardApi", () => ({
 
 import { getGithubActivity } from "../../lib/teamDashboardApi";
 import useTeamsGithubActivity, {
+  GITHUB_FLUSH_MS,
   GITHUB_POOL_SIZE,
 } from "../use-teams-github-activity";
 
@@ -68,6 +69,48 @@ describe("useTeamsGithubActivity", () => {
     await waitFor(() => expect(result.current.status).toBe("ready"));
     expect(getGithubActivity).toHaveBeenCalledTimes(15);
     expect(peak).toBeLessThanOrEqual(GITHUB_POOL_SIZE);
+  });
+
+  it("reads a null or commits-less payload as unavailable, not 0 commits", async () => {
+    getGithubActivity.mockImplementation(async (org, repo) =>
+      repo === "null-body" ? null : { success: true },
+    );
+    const teams = [
+      { id: "n", github_links: [gh("o", "null-body")] },
+      { id: "m", github_links: [gh("o", "no-commits-key")] },
+    ];
+    const { result } = renderHook(() => useTeamsGithubActivity(teams));
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    expect(result.current.byTeam).toEqual({
+      n: { commits: 0, lastCommitAt: null, unavailable: true },
+      m: { commits: 0, lastCommitAt: null, unavailable: true },
+    });
+  });
+
+  it("shows finished teams while a slow repo is still loading", async () => {
+    let releaseSlow;
+    getGithubActivity.mockImplementation((org, repo) =>
+      repo === "slow"
+        ? new Promise((resolve) => {
+            releaseSlow = () => resolve({ commits: { total_recent: 1 } });
+          })
+        : Promise.resolve({ commits: { total_recent: 3 } }),
+    );
+    const teams = [
+      { id: "fast", github_links: [gh("o", "fast")] },
+      { id: "slow", github_links: [gh("o", "slow")] },
+    ];
+    const { result } = renderHook(() => useTeamsGithubActivity(teams));
+    await waitFor(
+      () => expect(result.current.byTeam.fast?.commits).toBe(3),
+      { timeout: GITHUB_FLUSH_MS + 1500 },
+    );
+    expect(result.current.status).toBe("loading");
+    expect(result.current.byTeam.slow).toBeUndefined(); // still "Checking…"
+
+    releaseSlow();
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    expect(result.current.byTeam.slow.commits).toBe(1);
   });
 
   it("does nothing when disabled or when no team has a repo", async () => {

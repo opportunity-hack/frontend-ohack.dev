@@ -37,7 +37,7 @@ async function parseBody(res) {
   }
 }
 
-async function request(path, { method = "GET", token, body } = {}) {
+async function request(path, { method = "GET", token, body, timeoutMs } = {}) {
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   let payload;
@@ -45,14 +45,29 @@ async function request(path, { method = "GET", token, body } = {}) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: payload,
-  });
-  const data = await parseBody(res);
-  if (!res.ok) throw new ApiError(res.status, data);
-  return data;
+  // Optional client-side timeout: a hung upstream must surface as an error,
+  // not leave the caller pending forever.
+  const controller =
+    timeoutMs && typeof AbortController !== "undefined"
+      ? new AbortController()
+      : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: payload,
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    const data = await parseBody(res);
+    if (!res.ok) throw new ApiError(res.status, data);
+    return data;
+  } catch (e) {
+    if (e?.name === "AbortError") throw new ApiError(0, { error: "timeout" });
+    throw e;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 /**
@@ -170,9 +185,12 @@ export function setMentorAvailability(teamId, open, token) {
 
 // --- GitHub activity (Part 3: GET /api/github/activity) ---
 
+export const GITHUB_ACTIVITY_TIMEOUT_MS = 15000;
+
 export function getGithubActivity(org, repo) {
   return request(
     `/api/github/activity?org=${encodeURIComponent(org)}&repo=${encodeURIComponent(repo)}`,
+    { timeoutMs: GITHUB_ACTIVITY_TIMEOUT_MS },
   );
 }
 
