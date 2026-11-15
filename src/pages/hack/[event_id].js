@@ -1441,6 +1441,7 @@ export default function HackathonEvent({ eventData }) {
                     eventName={event.title}
                     startDate={event.start_date}
                     endDate={event.end_date}
+                    timezone={event.timezone}
                   />
                 </Box>
               </Grid>
