@@ -874,6 +874,8 @@ const isAdmin = org?.hasPermission("volunteer.admin");
 - `/profile/[userid].js` expects the **Firestore document ID** (`User.id`), not the PropelAuth `user_id` / `propel_id`.
 - Things stored across the system as `propel_user_id` (assignees, editors, mentions, etc.) cannot be plugged directly into the profile URL — you need the `db_id` field too.
 - When the backend bundles user profiles for a list view (planning board users map, team rosters, etc.), it should include BOTH `user_id` (propel) AND `db_id`. The frontend uses propel for matching and db_id for linking.
+- **Team roster links go through `src/lib/teamMemberLinks.js`** (`memberProfileHref(member)` / `memberDocId`, tested): roster entries are `{id, user_id, …}` objects (or a doc-id string) and ONLY `id` is linkable — `user_id` there is the login provider's id (`oauth2|slack|…` / `oauth2|google-oauth2|…`). `TeamList`'s `TeamMemberWithStats` and `TeamMember` (winner cards) used `user.user_id || user.id` and linked every member to `/profile/oauth2|…` (Nov 2026). No doc id ⇒ render the avatar unlinked, never a guessed URL.
+- **One person can have two logins** (Google and Slack, same email = one PropelAuth account). The backend resolves the caller by PropelAuth account (`resolve_caller`, Nov 2026, issue #501), so don't compare `profile.user_id` to decide who someone is — use the doc `id`, or ask the backend (`GET /api/team/<event>/me`).
 
 ### MUI TextField in custom theme + Portal — pin colors explicitly
 

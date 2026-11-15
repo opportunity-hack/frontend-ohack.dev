@@ -78,6 +78,7 @@ import {
 } from "../Teams/mentorCoverage";
 import CoverageMeter from "../Teams/CoverageMeter";
 import useCoverageNow from "../../hooks/use-coverage-now";
+import { memberProfileHref } from "../../lib/teamMemberLinks";
 import FlagIcon from "@mui/icons-material/Flag";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
@@ -376,8 +377,6 @@ const TeamMemberWithStats = ({
 }) => {
   if (!user) return null;
 
-  // Handle both profile objects and user ID strings
-  const userId = typeof user === "string" ? user : user.user_id || user.id;
   const displayName = user.name || user.nickname || "";
   const githubUsername = user.github || user.github_username;
 
@@ -385,7 +384,8 @@ const TeamMemberWithStats = ({
   const cleanGithubUsername = githubUsername
     ? githubUsername.replace(/^https?:\/\/(www\.)?github\.com\//, "")
     : null;
-  const profileUrl = `/profile/${userId}`;
+  // Document id only — never the login provider's id (see teamMemberLinks).
+  const profileUrl = memberProfileHref(user);
   const firstLetter =
     displayName && displayName.length > 0 ? displayName[0] : "?";
 
@@ -467,9 +467,14 @@ const TeamMemberWithStats = ({
         }
       >
         <IconButton
-          component={Link}
-          href={profileUrl}
-          aria-label={`${displayName}'s profile`}
+          {...(profileUrl
+            ? { component: Link, href: profileUrl }
+            : { component: "span", disableRipple: true })}
+          aria-label={
+            profileUrl
+              ? `${displayName || "Team member"}'s profile`
+              : displayName || "Team member"
+          }
           sx={{
             p: 0,
             "&:hover": {
@@ -1558,6 +1563,7 @@ const TeamList = ({
 
               // Add user ID to the profile object for reference
               if (profile) {
+                profile.id = userId; // roster strings are document ids
                 profile.user_id = userId;
               }
 
@@ -1579,7 +1585,7 @@ const TeamList = ({
           ...team,
           users: Array.isArray(team?.users)
             ? team.users.map(
-                (userId) => profileMap[userId] || { user_id: userId },
+                (userId) => profileMap[userId] || { id: userId, user_id: userId },
               )
             : [],
         }));
@@ -1721,6 +1727,7 @@ const TeamList = ({
             if (!response.ok) return;
             const profile = await response.json();
             if (profile) {
+              profile.id = userId; // roster strings are document ids
               profile.user_id = userId;
               profileMap[userId] = profile;
             }
@@ -1740,7 +1747,7 @@ const TeamList = ({
                 users: Array.isArray(t.users)
                   ? t.users.map((u) =>
                       typeof u === "string"
-                        ? profileMap[u] || { user_id: u }
+                        ? profileMap[u] || { id: u, user_id: u }
                         : u,
                     )
                   : t.users,
