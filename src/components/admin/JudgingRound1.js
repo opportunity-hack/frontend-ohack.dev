@@ -50,12 +50,18 @@ import axios from 'axios';
 import ExportCsvButton from './ExportCsvButton';
 import judgeApi, { isNotFound } from '../../lib/judgeApi';
 import JudgeProgressPanel from './judging/JudgeProgressPanel';
+import { fetchTeamProjectOptions } from '../../lib/teamProjectApi';
 
 const judgeDisplayName = (j) => j?.name || [j?.firstName, j?.lastName].filter(Boolean).join(' ');
 
+// The team's assigned project (problem statement) id — set on approve / admin
+// edit; the team list endpoint sends ids, not refs.
+const teamProjectId = (t) => (Array.isArray(t?.problem_statements) ? t.problem_statements[0] : null) || null;
+
 // One row per panel — mirrors the panel cards. `nonprofitNames` is the
-// id→name map the component already loads for the team list.
-const panelCsvColumns = (nonprofitNames) => [
+// id→name map the component already loads for the team list; `projectTitles`
+// is the same for problem statements.
+const panelCsvColumns = (nonprofitNames, projectTitles) => [
   { key: 'name', label: 'Panel' },
   { key: 'judge_count', label: 'Judge count', get: (g) => (g.judges || []).length },
   { key: 'judges', label: 'Judges', get: (g) => (g.judges || []).map(judgeDisplayName) },
@@ -67,6 +73,11 @@ const panelCsvColumns = (nonprofitNames) => [
     key: 'team_nonprofits',
     label: 'Team nonprofits',
     get: (g) => (g.teams || []).map((t) => (t?.selected_nonprofit_id ? nonprofitNames?.[t.selected_nonprofit_id] || t.selected_nonprofit_id : '')),
+  },
+  {
+    key: 'team_projects',
+    label: 'Team projects',
+    get: (g) => (g.teams || []).map((t) => projectTitles?.[teamProjectId(t)] || ''),
   },
 ];
 
@@ -127,6 +138,8 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
   const [saving, setSaving] = useState(false);
   const [nonprofitNames, setNonprofitNames] = useState({});
   const [loadingNonprofits, setLoadingNonprofits] = useState(false);
+  const [projectTitles, setProjectTitles] = useState({});
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingPanels, setLoadingPanels] = useState(false);
   const [loadingJudgeDetails, setLoadingJudgeDetails] = useState({});
   
@@ -243,6 +256,42 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     }
   }, [accessToken, orgId]);
 
+  // Fetch project (problem statement) titles for teams: ONE project-options
+  // request covers the event's selectable projects; any id it doesn't list
+  // (production / hidden since approval) falls back to the single-PS route.
+  const fetchProjectTitles = useCallback(async (teams) => {
+    const ids = [...new Set((teams || []).map(teamProjectId).filter(Boolean))];
+    if (ids.length === 0 || !selectedHackathon) return;
+
+    setLoadingProjects(true);
+    const titles = {};
+    try {
+      const data = await fetchTeamProjectOptions(selectedHackathon, { token: accessToken, orgId });
+      (data?.nonprofits || []).forEach((npo) => {
+        (npo?.projects || []).forEach((p) => {
+          if (p?.id && p?.title) titles[p.id] = p.title;
+        });
+      });
+    } catch (error) {
+      console.error('Error fetching project options:', error);
+    }
+
+    const missing = ids.filter((id) => !titles[id]);
+    await Promise.all(missing.map(async (id) => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/problem-statements/${encodeURIComponent(id)}`
+        );
+        if (response?.data?.title) titles[id] = response.data.title;
+      } catch (error) {
+        console.error(`Error fetching problem statement ${id}:`, error);
+      }
+    }));
+
+    setProjectTitles(titles);
+    setLoadingProjects(false);
+  }, [accessToken, orgId, selectedHackathon]);
+
   // Track initial data fetch to prevent loops
   const [initialDataFetched, setInitialDataFetched] = useState(false);
   
@@ -318,6 +367,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       
       // Step 3: Fetch nonprofit names for teams (in background)
       fetchNonprofitNames(teamsData);
+      fetchProjectTitles(teamsData);
       
       setDataLoadComplete(true);
       setInitialDataFetched(true);
@@ -330,7 +380,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
     } finally {
       setLoading(false);
     }
-  }, [selectedHackathon, accessToken, orgId, selectedHackathonData, notify, fetchNonprofitNames]);
+  }, [selectedHackathon, accessToken, orgId, selectedHackathonData, notify, fetchNonprofitNames, fetchProjectTitles]);
 
   // Only fetch data when hackathon changes, not when internal state changes
   useEffect(() => {
@@ -611,11 +661,14 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
       team.status !== 'INACTIVE'
     );
 
-    // Sort teams by nonprofit name, with teams without nonprofits at the end
+    // Sort teams by nonprofit name, then project title, with teams without
+    // nonprofits/projects at the end
     return filteredTeams.sort((a, b) => {
       const nonprofitA = a.selected_nonprofit_id ? (nonprofitNames[a.selected_nonprofit_id] || a.selected_nonprofit_id) : 'ZZZ_No Nonprofit';
       const nonprofitB = b.selected_nonprofit_id ? (nonprofitNames[b.selected_nonprofit_id] || b.selected_nonprofit_id) : 'ZZZ_No Nonprofit';
-      return nonprofitA.localeCompare(nonprofitB);
+      const projectA = projectTitles[teamProjectId(a)] || 'ZZZ_No Project';
+      const projectB = projectTitles[teamProjectId(b)] || 'ZZZ_No Project';
+      return nonprofitA.localeCompare(nonprofitB) || projectA.localeCompare(projectB);
     });
   };
 
@@ -934,7 +987,7 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
               </Button>
               <ExportCsvButton
                 rows={judgeGroups}
-                columns={panelCsvColumns(nonprofitNames)}
+                columns={panelCsvColumns(nonprofitNames, projectTitles)}
                 filenameParts={[selectedHackathon, 'round1-panels']}
                 table="judging_round1_panels"
                 eventId={selectedHackathon}
@@ -1427,6 +1480,11 @@ const JudgingRound1 = ({ orgId, hackathons, selectedHackathon, setSelectedHackat
                             {team.selected_nonprofit_id && (
                               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.75rem' }}>
                                 {loadingNonprofits ? 'Loading nonprofit...' : (nonprofitNames[team.selected_nonprofit_id] || team.selected_nonprofit_id)}
+                              </Typography>
+                            )}
+                            {teamProjectId(team) && (loadingProjects || projectTitles[teamProjectId(team)]) && (
+                              <Typography variant="body2" sx={{ mb: 1, mt: -0.5, fontSize: '0.8rem' }}>
+                                {loadingProjects ? 'Loading project...' : <>Project: <strong>{projectTitles[teamProjectId(team)]}</strong></>}
                               </Typography>
                             )}
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
