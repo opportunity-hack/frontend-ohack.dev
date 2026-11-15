@@ -1,5 +1,6 @@
 import { FONT_BODY, FONT_DISPLAY } from "../../styles/fonts";
 import React, { useState, useEffect } from "react";
+import moment from "moment-timezone";
 import {
   Paper,
   Typography,
@@ -328,6 +329,7 @@ const HackathonLeaderboard = ({
   eventId,
   startDate,
   endDate,
+  timezone,
 }) => {
   const [generalStats, setGeneralStats] = useState(initialGeneralStats || []);
   const [individualAchievements, setIndividualAchievements] = useState(
@@ -344,8 +346,16 @@ const HackathonLeaderboard = ({
   const [loadingAttempted, setLoadingAttempted] = useState(false);
 
   const now = new Date();
-  const eventStartDate = startDate ? new Date(startDate) : null;
-  const eventEndDate = endDate ? new Date(endDate) : null;
+  // Dates are date-only strings (e.g. "2026-11-15"); new Date() would read them
+  // as UTC midnight, ending the event a day early in US timezones. Treat them as
+  // start/end of day in the event's timezone (or the viewer's, if unset).
+  const parseEventDay = (value, edge) => {
+    if (!value) return null;
+    const m = timezone ? moment.tz(value, timezone) : moment(value);
+    return m.isValid() ? m[edge]("day").toDate() : null;
+  };
+  const eventStartDate = parseEventDay(startDate, "startOf");
+  const eventEndDate = parseEventDay(endDate, "endOf");
 
   const eventStatus = React.useMemo(() => {
     if (!eventStartDate || !eventEndDate) return "unknown";
