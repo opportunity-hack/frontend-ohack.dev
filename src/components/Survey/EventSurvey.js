@@ -21,10 +21,16 @@ const SCALE_VALUES = [1, 2, 3, 4, 5];
 
 // --- input atoms (module scope so they don't remount on every answer keystroke)
 
-function ChoiceInput({ options, value, onChange, multi }) {
+function ChoiceInput({ options, value, onChange, multi, details }) {
   const selectedSet = multi ? new Set(value || []) : null;
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    <div
+      style={
+        details
+          ? { display: "grid", gap: 8 }
+          : { display: "flex", flexWrap: "wrap", gap: 8 }
+      }
+    >
       {options.map((opt) => {
         const selected = multi ? selectedSet.has(opt) : value === opt;
         return (
@@ -53,9 +59,13 @@ function ChoiceInput({ options, value, onChange, multi }) {
               border: `1px solid ${selected ? "var(--brand)" : "var(--line)"}`,
               background: selected ? "var(--brand)" : "var(--surface)",
               color: selected ? "#fff" : "var(--ink)",
+              ...(details ? { textAlign: "left", lineHeight: 1.45 } : null),
             }}
           >
             {opt}
+            {details?.[opt] && (
+              <span style={{ fontWeight: 400 }}> — {details[opt]}</span>
+            )}
           </button>
         );
       })}
@@ -144,7 +154,8 @@ const YESNO = ["Yes", "No"];
 const YESNOMAYBE = ["Yes", "No", "Maybe"];
 
 function isAnswered(v) {
-  if (v === null || v === undefined || v === "") return false;
+  if (v === null || v === undefined) return false;
+  if (typeof v === "string") return v.trim() !== "";
   if (Array.isArray(v)) return v.length > 0;
   if (typeof v === "object") {
     return (v.value !== null && v.value !== undefined) || !!v.note;
@@ -172,6 +183,7 @@ function QuestionField({ q, mode, value, onChange }) {
           options={q.options}
           value={value ?? null}
           onChange={onChange}
+          details={q.optionDetails}
         />
       );
       break;
@@ -200,6 +212,7 @@ function QuestionField({ q, mode, value, onChange }) {
           value={value || []}
           onChange={onChange}
           multi
+          details={q.optionDetails}
         />
       );
       break;
@@ -332,11 +345,15 @@ function Shell({ eventTitle, children }) {
 }
 
 /**
- * Event feedback survey. Renders at /hack/[event_id]/survey and /feedback.
+ * Event feedback survey. Renders at /hack/[event_id]/survey and /feedback,
+ * plus the forced forms /survey/during (live) and /survey/complete (post).
  * Public route: logged-in selected volunteers are verified server-side and
  * skip the CAPTCHA; nonprofit partners and anonymous visitors are CAPTCHA-gated.
  */
-export default function EventSurvey({ source = "survey" }) {
+// `forceMode` ("live" | "post") comes from /survey/during and /survey/complete:
+// the backend serves that form whatever the clock says (never before the event
+// starts), and a submit is filed under the form the person actually saw.
+export default function EventSurvey({ source = "survey", forceMode = null }) {
   const router = useRouter();
   const { event_id: eventId } = router.query;
   const { getRecaptchaToken } = useRecaptcha();
@@ -348,15 +365,13 @@ export default function EventSurvey({ source = "survey" }) {
   // appears, and — unlike the old effect keyed on the raw token — fires no
   // request and shows no spinner on a refocus token rotation (Class C, Nov 2026).
   const context = useAuthedResource(
-    ["survey-context", eventId],
+    ["survey-context", eventId, forceMode],
     async ({ token }) => {
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await axios.get(
         `${apiServerUrl}/api/surveys/${eventId}/context`,
-        {
-          headers,
-        },
+        { headers, params: forceMode ? { mode: forceMode } : undefined },
       );
       const data = res.data || {};
       if (!data.success) {
@@ -427,6 +442,15 @@ export default function EventSurvey({ source = "survey" }) {
         mode === "live"
           ? "Please rate how it's going (the starred question)."
           : "Please rate your experience (the starred question).",
+      );
+      return;
+    }
+    const missing = visibleQuestions.find(
+      (q) => q.required && !isAnswered(answers[q.id]),
+    );
+    if (missing) {
+      setError(
+        `Please answer the starred question: "${questionLabel(missing, mode)}"`,
       );
       return;
     }

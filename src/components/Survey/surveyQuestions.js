@@ -8,6 +8,10 @@
 //   mode    — "both" | "live" | "post" — when the question is asked.
 //   type    — how to render + store it (see TYPES below).
 //   showIf  — optional (answers, mode) => boolean for conditional questions.
+//   required — the form blocks submit until it is answered (only while the
+//             question is visible).
+//   optionDetails — optional { [option]: description } for choice questions;
+//             options then render as stacked rows. Only the option is stored.
 //
 // Storage shapes by type:
 //   scale .................. number 1..5
@@ -197,6 +201,32 @@ export const SURVEY_QUESTIONS = [
     showIf: (a) => ["Yes", "Somewhat"].includes(a.mentor_meaningful_help),
   },
   {
+    id: "mentor_support_kind",
+    roles: ["hacker"],
+    mode: "post",
+    type: "multi",
+    required: true,
+    label: "How would you describe the mentor support your team received?",
+    helper: "Pick all that apply.",
+    showIf: (a) => ["Yes", "Somewhat"].includes(a.mentor_meaningful_help),
+    options: [
+      "Actionable technical guidance",
+      "Useful domain insight",
+      "Helped us unblock",
+      "Supportive, but limited impact",
+    ],
+    optionDetails: {
+      "Actionable technical guidance":
+        "They gave specific suggestions that improved our design, implementation, or architecture.",
+      "Useful domain insight":
+        "They helped us understand the real-world nonprofit or industry context behind the problem.",
+      "Helped us unblock":
+        "They were most useful when we got stuck and needed direction on next steps.",
+      "Supportive, but limited impact":
+        "They were engaged and helpful, but their input did not significantly change our project.",
+    },
+  },
+  {
     id: "mentor_unreachable",
     roles: ["hacker"],
     mode: "both",
@@ -207,6 +237,24 @@ export const SURVEY_QUESTIONS = [
     showIf: (a, mode) =>
       mode === "live" ||
       ["No", "Didn't interact with a mentor"].includes(a.mentor_meaningful_help),
+  },
+  {
+    id: "confidence_real_world",
+    roles: ["hacker"],
+    mode: "post",
+    type: "scale",
+    required: true,
+    label: "Did this event increase your confidence in solving real-world problems?",
+    scaleLabels: { 1: "Not at all", 5: "A lot" },
+  },
+  {
+    id: "skills_applied",
+    roles: ["hacker"],
+    mode: "post",
+    type: "text",
+    required: true,
+    label:
+      "What skills, tools, or knowledge did you get to apply or grow through your project?",
   },
   {
     id: "learning_areas",

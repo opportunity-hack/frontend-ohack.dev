@@ -770,6 +770,7 @@ export default function HackathonEvent({ eventData }) {
             startDate={event.start_date}
             endDate={event.end_date}
             timezone={event.timezone}
+            postOpensAt={event.constraints?.survey_post_opens_at}
           />
 
           <PeerVoteCTA
