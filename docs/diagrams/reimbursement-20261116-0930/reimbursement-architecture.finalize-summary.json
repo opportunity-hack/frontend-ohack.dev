@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+    "sha256": "4fbe54f09739031efbd05c83fdd90aae2540d3fd8e922c7ab2b4a46b73d43464",
+    "bytes": 3679
+  },
+  "artifact": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+    "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+    "bytes": 846239
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "skipped"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.finalize.json",
+    "summaryReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.finalize-summary.json",
+    "browserCheckReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-16T16:23:37.482Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 4009,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

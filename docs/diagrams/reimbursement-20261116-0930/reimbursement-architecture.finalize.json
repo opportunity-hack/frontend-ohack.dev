@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-16T16:24:32.167Z",
+  "specification": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+    "sha256": "4fbe54f09739031efbd05c83fdd90aae2540d3fd8e922c7ab2b4a46b73d43464",
+    "bytes": 3679
+  },
+  "artifact": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+    "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+    "bytes": 846239
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/usr/bin/node",
+        "/home/hatch/workspace/archify-skill/agent/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "4fbe54f09739031efbd05c83fdd90aae2540d3fd8e922c7ab2b4a46b73d43464",
+          "bytes": 3679
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2320,
+      "command": [
+        "/usr/bin/node",
+        "/home/hatch/workspace/archify-skill/agent/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "5c7f4abe-bae6-402c-a8a9-b4a405523006",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+        "output": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "specification": {
+          "sha256": "4fbe54f09739031efbd05c83fdd90aae2540d3fd8e922c7ab2b4a46b73d43464",
+          "bytes": 3679
+        },
+        "artifact": {
+          "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+          "bytes": 846239
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/opportunity-hack/frontend-ohack.dev",
+          "revision": "c6d11f3d552caaa8afa3fc5e6c6e5dc3e0e37638",
+          "references": 2
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 804,
+      "command": [
+        "/usr/bin/node",
+        "/home/hatch/workspace/archify-skill/agent/skills/archify/bin/archify.mjs",
+        "check",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "artifact": {
+          "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+          "bytes": 846239
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 18.5,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 7.2,
+            "maxBends": 2,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1.278,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 24,
+            "minInteriorSegmentPx": 173,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 60,
+            "emptyTopRatio": 0.117,
+            "occupiedTop": 60,
+            "viewBoxTop": 0,
+            "canvasHeight": 512,
+            "typicalNodeHeight": 64,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1120,
+            "actualBudgetPx": 1120,
+            "actualReaderWidth": 1150,
+            "desiredReaderWidth": 1150,
+            "viewportCap": 1376,
+            "limit": "source-size",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "reviewer"
+            },
+            "minimumSourceTextPx": 7.2,
+            "minimumProjectedTextPx": 7.2,
+            "semanticTextCount": 25
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "5c7f4abe-bae6-402c-a8a9-b4a405523006"
+      }
+    },
+    "browser-check": {
+      "status": "skipped",
+      "exitCode": 2,
+      "durationMs": 86,
+      "command": [
+        "/usr/bin/node",
+        "/home/hatch/workspace/archify-skill/agent/skills/archify/bin/archify.mjs",
+        "browser-check",
+        "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "skipped",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "5c7f4abe-bae6-402c-a8a9-b4a405523006",
+        "artifact": {
+          "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+          "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+          "bytes": 846239
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "unavailable",
+          "executable": null
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/chrome-unavailable",
+            "severity": "warning",
+            "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+            "subject": {
+              "artifact": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html"
+            },
+            "evidence": {
+              "executable": null
+            },
+            "supportedFixes": [
+              "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "skipped",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "readability": {
+          "status": "skipped",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "reimbursement-architecture.browser-check.json",
+          "files": []
+        },
+        "error": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.finalize.json",
+    "summaryReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.finalize-summary.json",
+    "browserCheckReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-16T16:24:36.176Z",
+  "durationMs": 4009,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-16T16:23:37.482Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}
