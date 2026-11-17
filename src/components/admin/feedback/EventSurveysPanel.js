@@ -56,6 +56,8 @@ import {
   qLabel,
 } from "./surveyAnalytics";
 import CrossEventSurveys from "./CrossEventSurveys";
+import FeedbackToolbar, { PrintContext } from "./FeedbackToolbar";
+import { surveyResponseColumns } from "./feedbackExport";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
@@ -229,6 +231,10 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
   const flags = useMemo(() => redFlags(filtered), [filtered]);
 
   // Questions that actually have data, in catalog order.
+  const eventTitle = selectedEvent?.title || eventId;
+  const csvColumns = useMemo(() => surveyResponseColumns(filtered, eventTitle), [filtered, eventTitle]);
+  const modeLabel = { all: "All responses", live: "Live (during-event) responses", post: "Post-event responses" }[modeFilter];
+
   const textBlocks = QUESTION_ORDER.filter((id) => agg.texts[id]?.length);
   const quantBlocks = QUESTION_ORDER.filter((id) => agg.scale[id] || agg.choice[id]);
 
@@ -239,6 +245,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
   return (
     <Box>
       <ToggleButtonGroup
+        className="fb-no-print"
         size="small"
         exclusive
         value={view}
@@ -253,7 +260,11 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
         <CrossEventSurveys accessToken={accessToken} orgId={orgId} onError={onError} />
       ) : (
         <>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }} alignItems={{ sm: "center" }}>
+          <PrintContext>
+            <strong>{eventTitle}</strong>
+            {selectedEvent?.start_date ? ` (${selectedEvent.start_date})` : ""} · {modeLabel} · {filtered.length} response{filtered.length === 1 ? "" : "s"}
+          </PrintContext>
+          <Stack className="fb-no-print" direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }} alignItems={{ sm: "center" }}>
             <FormControl sx={{ minWidth: 280 }} size="small">
               <InputLabel id="event-select-label">Event</InputLabel>
               <Select
@@ -280,6 +291,17 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
               <ToggleButton value="live">Live</ToggleButton>
               <ToggleButton value="post">Post</ToggleButton>
             </ToggleButtonGroup>
+            <Box sx={{ flexGrow: 1 }} />
+            <FeedbackToolbar
+              table="event_surveys"
+              disabled={loadingData || !filtered.length}
+              exports={[{
+                label: "Download CSV",
+                rows: filtered,
+                columns: csvColumns,
+                filenameParts: [eventId, "survey-responses", modeFilter === "all" ? "" : modeFilter],
+              }]}
+            />
           </Stack>
 
           {loadingData ? (
@@ -366,12 +388,12 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
                             <Legend />
                             <ReferenceLine yAxisId="left" x={24} stroke="#bdbdbd" strokeDasharray="4 3" label={{ value: "Day 2", position: "top", fontSize: 10, fill: "#9e9e9e" }} />
                             <ReferenceLine yAxisId="left" x={48} stroke="#bdbdbd" strokeDasharray="4 3" label={{ value: "Day 3", position: "top", fontSize: 10, fill: "#9e9e9e" }} />
-                            <Bar yAxisId="right" dataKey="count" name="Responses" barSize={18} radius={[3, 3, 0, 0]}>
+                            <Bar isAnimationActive={false} yAxisId="right" dataKey="count" name="Responses" fill="#90caf9" barSize={18} radius={[3, 3, 0, 0]}>
                               {pulseSeries.map((b) => (
                                 <Cell key={b.hour} fill={b.lowN ? "#cfd8dc" : "#90caf9"} />
                               ))}
                             </Bar>
-                            <Line yAxisId="left" type="monotone" dataKey="avgRating" name="Avg rating" stroke="#5e35b1" strokeWidth={2} connectNulls dot={{ r: 3 }} />
+                            <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="avgRating" name="Avg rating" stroke="#5e35b1" strokeWidth={2} connectNulls dot={{ r: 3 }} />
                           </ComposedChart>
                         </ResponsiveContainer>
                       </Box>
@@ -385,7 +407,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
 
               {/* ----------------------------------------------- needs attention */}
               {flags.length > 0 && (
-                <Card variant="outlined" sx={{ mb: 3 }}>
+                <Card variant="outlined" className="fb-flow" sx={{ mb: 3 }}>
                   <CardContent>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                       <WarningIcon fontSize="small" color="warning" />
@@ -393,7 +415,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
                     </Stack>
                     <Stack divider={<Divider flexItem />} spacing={1}>
                       {flags.map((r) => (
-                        <Box key={r.id}>
+                        <Box key={r.id} className="fb-keep">
                           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                             <Chip size="small" color="primary" label={ROLE_LABEL[r.role] || r.role} />
                             <Chip size="small" variant="outlined" label={r.mode} />
@@ -447,7 +469,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
 
               {/* ------------------------------------------- qualitative (the gold) */}
               {textBlocks.length > 0 && (
-                <Card variant="outlined" sx={{ mb: 3 }}>
+                <Card variant="outlined" className="fb-flow" sx={{ mb: 3 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>What people said</Typography>
                     {textBlocks.map((id) => {
@@ -460,7 +482,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
                           </Typography>
                           <Stack spacing={1}>
                             {entries.map((e, i) => (
-                              <Box key={i} sx={{ display: "flex", gap: 1, pl: 1, borderLeft: "3px solid", borderColor: "grey.200" }}>
+                              <Box key={i} className="fb-keep" sx={{ display: "flex", gap: 1, pl: 1, borderLeft: "3px solid", borderColor: "grey.200" }}>
                                 <QuoteIcon fontSize="small" sx={{ color: "grey.400", mt: 0.3 }} />
                                 <Typography variant="body2" sx={{ flexGrow: 1 }}>{e.text}</Typography>
                                 {e.role && <Chip size="small" variant="outlined" label={ROLE_LABEL[e.role] || e.role} />}
@@ -476,7 +498,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
 
               {/* ----------------------------------------------- quantitative breakdown */}
               {quantBlocks.length > 0 && (
-                <Card variant="outlined" sx={{ mb: 3 }}>
+                <Card variant="outlined" className="fb-flow" sx={{ mb: 3 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Question breakdown</Typography>
                     <Grid container spacing={3}>
@@ -485,7 +507,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
                         const s = agg.scale[id];
                         const c = agg.choice[id];
                         return (
-                          <Grid size={{ xs: 12, md: 6 }} key={id}>
+                          <Grid size={{ xs: 12, md: 6 }} key={id} className="fb-keep">
                             <Typography variant="subtitle2" gutterBottom>{qLabel(q)}</Typography>
                             {s && (
                               <>
@@ -505,6 +527,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
               )}
 
               {/* ------------------------------------------------ individual responses */}
+              <Box className="fb-print-detail">
               <Typography variant="h6" gutterBottom>Individual responses ({filtered.length})</Typography>
               {filtered.map((r) => {
                 const answered = Object.keys(r.answers || {})
@@ -541,6 +564,7 @@ const EventSurveysPanel = ({ accessToken, orgId, onError }) => {
                   </Accordion>
                 );
               })}
+              </Box>
             </>
           )}
         </>

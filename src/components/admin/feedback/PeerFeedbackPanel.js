@@ -24,6 +24,9 @@ import {
   ArrowForward as ArrowIcon,
 } from "@mui/icons-material";
 
+import FeedbackToolbar, { PrintContext } from "./FeedbackToolbar";
+import { peerFeedbackColumns } from "./feedbackExport";
+
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 
 // Inside the feedback map, numeric values are 0-100 skill scores and string
@@ -96,6 +99,8 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
     });
   }, [items, search]);
 
+  const csvColumns = useMemo(() => peerFeedbackColumns(filtered), [filtered]);
+
   if (loading) {
     return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>;
   }
@@ -108,14 +113,28 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
 
   return (
     <Box>
+      <PrintContext>
+        {filtered.length} of {items.length} peer feedback entries
+        {search.trim() ? <> · matching “{search.trim()}”</> : null}
+      </PrintContext>
+      <FeedbackToolbar
+        table="peer_feedback"
+        sx={{ mb: 2 }}
+        exports={[{
+          label: "Download CSV",
+          rows: filtered,
+          columns: csvColumns,
+          filenameParts: ["peer-feedback", search.trim()],
+        }]}
+      />
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined"><CardContent>
             <Typography variant="overline" color="text.secondary">Total</Typography>
             <Typography variant="h4">{items.length}</Typography>
           </CardContent></Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined"><CardContent>
             <Typography variant="overline" color="text.secondary">By relationship</Typography>
             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
@@ -123,7 +142,7 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
             </Stack>
           </CardContent></Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined"><CardContent>
             <Typography variant="overline" color="text.secondary">By role</Typography>
             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
@@ -134,6 +153,7 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
       </Grid>
 
       <TextField
+        className="fb-no-print"
         fullWidth
         size="small"
         placeholder="Search by name, relationship, or role…"
@@ -143,6 +163,7 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
         InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
       />
 
+      <Box className="fb-print-detail">
       {filtered.map((f) => {
         const fb = f.feedback || {};
         const scores = Object.entries(fb).filter(
@@ -194,6 +215,7 @@ const PeerFeedbackPanel = ({ accessToken, orgId, onError }) => {
           </Accordion>
         );
       })}
+      </Box>
     </Box>
   );
 };

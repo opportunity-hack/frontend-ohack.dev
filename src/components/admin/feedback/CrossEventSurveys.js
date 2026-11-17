@@ -47,6 +47,8 @@ import {
   eventDurationHours,
   SERIES_COLORS,
 } from "./surveyAnalytics";
+import FeedbackToolbar, { PrintContext } from "./FeedbackToolbar";
+import { SURVEY_OVERVIEW_COLUMNS } from "./feedbackExport";
 
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 const LOW_N = 5; // events with fewer responses are flagged as small-sample
@@ -198,6 +200,20 @@ const CrossEventSurveys = ({ accessToken, orgId, onError }) => {
 
   return (
     <Box>
+      <PrintContext>
+        <strong>All events compared</strong> · {totals.responses || 0} responses across {totals.events || 0} events
+      </PrintContext>
+      <FeedbackToolbar
+        table="survey_overview"
+        hasDetail={false}
+        sx={{ mb: 2 }}
+        exports={[{
+          label: "Download CSV",
+          rows: events,
+          columns: SURVEY_OVERVIEW_COLUMNS,
+          filenameParts: ["survey-overview-by-event"],
+        }]}
+      />
       {/* ------------------------------------------------------------ KPI band */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -247,13 +263,13 @@ const CrossEventSurveys = ({ accessToken, orgId, onError }) => {
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <RTooltip />
                 <Legend />
-                <Bar yAxisId="right" dataKey="count" name="Responses" barSize={26} radius={[3, 3, 0, 0]}>
+                <Bar isAnimationActive={false} yAxisId="right" dataKey="count" name="Responses" fill="#90caf9" barSize={26} radius={[3, 3, 0, 0]}>
                   {macroData.map((d, i) => (
                     <Cell key={i} fill={d.lowN ? "#cfd8dc" : "#90caf9"} />
                   ))}
                 </Bar>
-                <Line yAxisId="left" type="monotone" dataKey="rating" name="Avg overall rating" stroke="#5e35b1" strokeWidth={2} connectNulls dot={{ r: 3 }} />
-                <Line yAxisId="left" type="monotone" dataKey="wouldReturn" name="Avg would return" stroke="#2e7d32" strokeWidth={2} strokeDasharray="5 3" connectNulls dot={{ r: 3 }} />
+                <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="rating" name="Avg overall rating" stroke="#5e35b1" strokeWidth={2} connectNulls dot={{ r: 3 }} />
+                <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="wouldReturn" name="Avg would return" stroke="#2e7d32" strokeWidth={2} strokeDasharray="5 3" connectNulls dot={{ r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </Box>
@@ -305,7 +321,7 @@ const CrossEventSurveys = ({ accessToken, orgId, onError }) => {
                     <ReferenceLine x={24} stroke="#bdbdbd" strokeDasharray="4 3" label={{ value: "Day 2", position: "top", fontSize: 10, fill: "#9e9e9e" }} />
                     <ReferenceLine x={48} stroke="#bdbdbd" strokeDasharray="4 3" label={{ value: "Day 3", position: "top", fontSize: 10, fill: "#9e9e9e" }} />
                     {selectedIds.filter((id) => overlaySeries[id]?.length).map((id, i) => (
-                      <Line key={id} type="monotone" dataKey={id} name={shortTitle(titleFor(id), 22)} stroke={SERIES_COLORS[i % SERIES_COLORS.length]} strokeWidth={2} connectNulls dot={false} />
+                      <Line isAnimationActive={false} key={id} type="monotone" dataKey={id} name={shortTitle(titleFor(id), 22)} stroke={SERIES_COLORS[i % SERIES_COLORS.length]} strokeWidth={2} connectNulls dot={false} />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>
