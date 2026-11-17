@@ -25,7 +25,9 @@ import {
 import ReceiptUploadField from "../../components/Reimbursement/ReceiptUploadField";
 import reimbursementApi from "../../lib/reimbursementApi";
 import {
+  MAX_FIELD_LENGTHS,
   formatDollars,
+  statusHint,
   statusLabel,
   validateReimbursementForm,
 } from "../../lib/reimbursementValidation";
@@ -47,6 +49,30 @@ const initialFormState = {
 };
 
 const fieldSx = { ...refinedFieldSx, mb: 0 };
+
+// Local calendar date (not toISOString, which is UTC and is already
+// "tomorrow" in the evening in US timezones).
+const todayLocalIso = () => {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// Field order on screen, used to move focus to the first problem.
+const FIELD_ORDER = [
+  "submitterName",
+  "submitterEmail",
+  "phone",
+  "expenseDate",
+  "amount",
+  "vendor",
+  "businessPurpose",
+  "fedDescription",
+  "paymentMethod",
+  "reimbursementMethod",
+  "receipt",
+  "attestation",
+];
 
 const ReimbursementPage = () => {
   const {
@@ -95,7 +121,20 @@ const ReimbursementPage = () => {
     e.preventDefault();
     const errors = validateReimbursementForm(formState, receipt);
     setFormErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      // The form is long; a failed submit used to look like nothing happened
+      // when the first problem was off-screen.
+      const first = FIELD_ORDER.find((key) => errors[key]);
+      const target =
+        first === "receipt"
+          ? document.getElementById("reimbursement-receipt")
+          : e.currentTarget.querySelector(`[name="${first}"]`);
+      target?.scrollIntoView({ block: "center" });
+      target?.focus?.({ preventScroll: true });
+      setSubmitError("Please fix the highlighted fields and submit again.");
+      return;
+    }
+    const method = formState.reimbursementMethod;
     setIsSubmitting(true);
     setSubmitError("");
     try {
@@ -123,7 +162,10 @@ const ReimbursementPage = () => {
         receiptContentType: receipt.contentType,
         recaptchaToken,
       });
-      setSuccess({ referenceId: result.referenceId || result.reference_id });
+      setSuccess({
+        referenceId: result.referenceId || result.reference_id,
+        method,
+      });
       trackEvent({
         action: "reimbursement_submit",
         params: { page: "reimbursement" },
@@ -156,7 +198,7 @@ const ReimbursementPage = () => {
     try {
       const result = await reimbursementApi.lookupStatus(
         lookupEmail.trim(),
-        lookupReferenceId.trim(),
+        lookupReferenceId.trim().toUpperCase(),
       );
       setLookupResult(result);
     } catch (error) {
@@ -294,9 +336,9 @@ const ReimbursementPage = () => {
                         detail.
                       </li>
                       <li>
-                        Once approved, the treasurer will contact you separately
-                        to collect your ACH details. Never send bank details
-                        through this form.
+                        {success.method === "check"
+                          ? "Once approved, the treasurer will contact you to confirm where to mail your check."
+                          : "Once approved, the treasurer will contact you separately to collect your ACH details. Never send bank details through this form."}
                       </li>
                     </ul>
                   </div>
@@ -329,6 +371,10 @@ const ReimbursementPage = () => {
                     <TextField
                       label="Your name"
                       name="submitterName"
+                      autoComplete="name"
+                      inputProps={{
+                        maxLength: MAX_FIELD_LENGTHS.submitterName,
+                      }}
                       value={formState.submitterName}
                       onChange={handleChange}
                       fullWidth
@@ -340,8 +386,15 @@ const ReimbursementPage = () => {
                     />
                     <TextField
                       label="Email address"
-                      name="email"
+                      // Must match the formState key: handleChange writes
+                      // formState[name], so name="email" left this field
+                      // impossible to type into.
+                      name="submitterEmail"
                       type="email"
+                      autoComplete="email"
+                      inputProps={{
+                        maxLength: MAX_FIELD_LENGTHS.submitterEmail,
+                      }}
                       value={formState.submitterEmail}
                       onChange={handleChange}
                       fullWidth
@@ -356,6 +409,8 @@ const ReimbursementPage = () => {
                     label="Phone (optional)"
                     name="phone"
                     type="tel"
+                    autoComplete="tel"
+                    inputProps={{ maxLength: MAX_FIELD_LENGTHS.phone }}
                     value={formState.phone}
                     onChange={handleChange}
                     fullWidth
@@ -391,12 +446,16 @@ const ReimbursementPage = () => {
                       disabled={isSubmitting}
                       sx={fieldSx}
                       InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: todayLocalIso() }}
                     />
                     <TextField
                       label="Amount ($)"
                       name="amount"
-                      type="number"
-                      inputProps={{ min: 0, step: "0.01" }}
+                      // Text + decimal keypad: type="number" changes the
+                      // value on an accidental scroll over the field.
+                      type="text"
+                      inputProps={{ inputMode: "decimal", maxLength: 9 }}
+                      placeholder="0.00"
                       value={formState.amount}
                       onChange={handleChange}
                       fullWidth
@@ -412,6 +471,7 @@ const ReimbursementPage = () => {
                   <TextField
                     label="Vendor"
                     name="vendor"
+                    inputProps={{ maxLength: MAX_FIELD_LENGTHS.vendor }}
                     value={formState.vendor}
                     onChange={handleChange}
                     fullWidth
@@ -447,6 +507,9 @@ const ReimbursementPage = () => {
                   <TextField
                     label="Business purpose"
                     name="businessPurpose"
+                    inputProps={{
+                      maxLength: MAX_FIELD_LENGTHS.businessPurpose,
+                    }}
                     value={formState.businessPurpose}
                     onChange={handleChange}
                     multiline
@@ -464,6 +527,7 @@ const ReimbursementPage = () => {
                   <TextField
                     label="Who did this food feed?"
                     name="fedDescription"
+                    inputProps={{ maxLength: MAX_FIELD_LENGTHS.fedDescription }}
                     value={formState.fedDescription}
                     onChange={handleChange}
                     multiline
@@ -529,12 +593,18 @@ const ReimbursementPage = () => {
                     </TextField>
                   </div>
 
-                  <ReceiptUploadField
-                    value={receipt}
-                    onChange={handleReceiptChange}
-                    getRecaptchaToken={getRecaptchaToken}
-                    error={formErrors.receipt}
-                  />
+                  <div
+                    id="reimbursement-receipt"
+                    tabIndex={-1}
+                    style={{ outline: "none", scrollMarginTop: 96 }}
+                  >
+                    <ReceiptUploadField
+                      value={receipt}
+                      onChange={handleReceiptChange}
+                      getRecaptchaToken={getRecaptchaToken}
+                      error={formErrors.receipt}
+                    />
+                  </div>
 
                   <FormControlLabel
                     control={
@@ -623,6 +693,8 @@ const ReimbursementPage = () => {
                   />
                   <TextField
                     label="Reference ID"
+                    placeholder="REIMB-2026-XXXXXX"
+                    autoComplete="off"
                     value={lookupReferenceId}
                     onChange={(e) => setLookupReferenceId(e.target.value)}
                     fullWidth
@@ -656,8 +728,13 @@ const ReimbursementPage = () => {
                   >
                     <p style={{ margin: 0 }}>
                       <strong>Status:</strong>{" "}
-                      {statusLabel(lookupResult.status || lookupResult.status)}
+                      {statusLabel(lookupResult.status)}
                     </p>
+                    {statusHint(lookupResult.status) && (
+                      <p style={{ margin: "4px 0 0", color: "var(--muted)" }}>
+                        {statusHint(lookupResult.status)}
+                      </p>
+                    )}
                     {lookupResult.amountCents !== undefined && (
                       <p style={{ margin: "4px 0 0" }}>
                         <strong>Amount:</strong>{" "}

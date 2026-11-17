@@ -149,30 +149,35 @@ describe("self-approval", () => {
     expect(isOwnClaim("a@example.org", "b@example.org")).toBe(false);
     expect(isOwnClaim("", "b@example.org")).toBe(false);
   });
-  it("blocks approve and paid on own claims, nothing else", () => {
-    expect(
-      isActionBlockedForSelfApproval("approved", "a@x.org", "a@x.org"),
-    ).toBe(true);
-    expect(isActionBlockedForSelfApproval("paid", "a@x.org", "a@x.org")).toBe(
-      true,
-    );
-    expect(isActionBlockedForSelfApproval("denied", "a@x.org", "a@x.org")).toBe(
-      false,
-    );
+  it("blocks every action on own claims, like the backend", () => {
+    for (const status of ["approved", "paid", "denied", "under_review"]) {
+      expect(isActionBlockedForSelfApproval(status, "a@x.org", "a@x.org")).toBe(
+        true,
+      );
+    }
     expect(
       isActionBlockedForSelfApproval("approved", "a@x.org", "b@x.org"),
     ).toBe(false);
+  });
+  it("rejects more than two decimals, typeless and empty receipts", () => {
+    expect(validateAmount("12.345")).toMatch(/two decimal/);
+    expect(validateAmount("19.99")).toBe("");
+    expect(validateReceiptFile({ name: "r.pdf", type: "", size: 9 })).toMatch(
+      /JPG, PNG/,
+    );
+    expect(
+      validateReceiptFile({ name: "r.pdf", type: "application/pdf", size: 0 }),
+    ).toMatch(/empty/);
   });
   it("reviewActionsFor flags the blocked actions with a reason", () => {
     const actions = reviewActionsFor(
       { status: "submitted", submitterEmail: "a@x.org" },
       "a@x.org",
     );
-    const approve = actions.find((a) => a.status === "approved");
-    const underReview = actions.find((a) => a.status === "under_review");
-    expect(approve.blocked).toBe(true);
-    expect(approve.blockedReason).toMatch(/cannot approve/);
-    expect(underReview.blocked).toBe(false);
+    expect(actions.length).toBeGreaterThan(0);
+    expect(
+      actions.every((a) => a.blocked && /cannot review/.test(a.blockedReason)),
+    ).toBe(true);
     // A different reviewer sees no blocks.
     const others = reviewActionsFor(
       { status: "submitted", submitterEmail: "a@x.org" },

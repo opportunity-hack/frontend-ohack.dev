@@ -30,6 +30,30 @@ export const REIMBURSEMENT_STATUS_LABELS = {
 export const statusLabel = (status) =>
   REIMBURSEMENT_STATUS_LABELS[status] || status || "Unknown";
 
+// One plain sentence per status for the public lookup: what it means and
+// what, if anything, the submitter should do.
+const STATUS_HINTS = {
+  submitted: "We have your request. The treasurer has not opened it yet.",
+  under_review: "The treasurer is reviewing your receipt.",
+  needs_info:
+    "We need more detail. Check your email for a note from the treasurer.",
+  approved: "Approved. The treasurer will be in touch to arrange your payment.",
+  paid: "Paid. Thank you for helping feed the event.",
+  denied:
+    "This request was not approved. Reply to the treasurer's email if you have questions.",
+};
+export const statusHint = (status) => STATUS_HINTS[status] || "";
+
+export const PAYMENT_METHOD_LABELS = {
+  personal_card: "Personal card",
+  personal_cash: "Personal cash",
+  other: "Other",
+};
+export const REIMBURSEMENT_METHOD_LABELS = {
+  ach: "Direct deposit (ACH)",
+  check: "Check",
+};
+
 // Allowed transitions, per the API contract. The backend enforces these
 // server-side; the UI mirrors them so reviewers never see a dead button.
 export const ALLOWED_TRANSITIONS = {
@@ -61,18 +85,20 @@ export const isOwnClaim = (reviewerEmail, submitterEmail) => {
   );
 };
 
-// Approve and Mark paid both move money, so both are blocked on own claims.
-// The other transitions (under review, needs info, deny, back to submitted)
-// stay available so a reviewer can still triage their own claim.
-export const SELF_APPROVAL_BLOCKED_STATUSES = ["approved", "paid"];
-
+// The backend refuses EVERY change a reviewer makes to their own claim
+// (403 self_approval, status moves and notes alike), so every action is
+// blocked here too. Showing "triage" buttons that always 403 was the bug.
 export const isActionBlockedForSelfApproval = (
   targetStatus,
   reviewerEmail,
   submitterEmail,
-) =>
-  SELF_APPROVAL_BLOCKED_STATUSES.includes(targetStatus) &&
-  isOwnClaim(reviewerEmail, submitterEmail);
+) => isOwnClaim(reviewerEmail, submitterEmail);
+
+// Denying or asking for more detail without saying why leaves the next
+// reviewer (and the submitter, who is emailed by hand) guessing.
+export const NOTE_REQUIRED_STATUSES = ["denied", "needs_info"];
+export const isNoteRequired = (targetStatus) =>
+  NOTE_REQUIRED_STATUSES.includes(targetStatus);
 
 /**
  * The review actions shown for one claim: every allowed transition, with
@@ -93,7 +119,7 @@ export const reviewActionsFor = (claim, reviewerEmail) => {
       label: actionLabel(status),
       blocked,
       blockedReason: blocked
-        ? "You submitted this claim, so you cannot approve or pay it. Another admin needs to review it."
+        ? "You submitted this claim, so you cannot review it. Another admin needs to."
         : "",
     };
   });
@@ -138,6 +164,17 @@ export const formatDollars = (cents) => {
 
 // ---- Form validation ------------------------------------------------------
 
+// Mirrors the backend's MAX_FIELD_LENGTHS / MAX_REVIEW_NOTE_LENGTH.
+export const MAX_FIELD_LENGTHS = {
+  submitterName: 200,
+  submitterEmail: 254,
+  phone: 40,
+  vendor: 200,
+  businessPurpose: 2000,
+  fedDescription: 2000,
+};
+export const MAX_REVIEW_NOTE_LENGTH = 2000;
+
 export const MAX_AMOUNT_DOLLARS = 10000;
 export const MAX_EXPENSE_AGE_DAYS = 120;
 export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
@@ -179,16 +216,18 @@ export const validateAmount = (amount) => {
   if (value <= 0) return "Amount must be more than $0";
   if (value > MAX_AMOUNT_DOLLARS)
     return `Amount cannot be more than $${MAX_AMOUNT_DOLLARS.toLocaleString()}`;
+  if (Math.abs(value * 100 - Math.round(value * 100)) > 1e-6)
+    return "Amount can have at most two decimal places";
   return "";
 };
 
 export const validateReceiptFile = (file) => {
   if (!file) return "An itemized receipt is required";
-  if (
-    !ACCEPTED_RECEIPT_TYPES.includes(file.type) &&
-    !/\.(jpe?g|png|webp|pdf)$/i.test(file.name || "")
-  )
+  // The MIME type is what the upload sends and the backend checks, so a
+  // matching extension alone is not enough.
+  if (!ACCEPTED_RECEIPT_TYPES.includes(file.type))
     return "Receipt must be a JPG, PNG, WebP image or PDF";
+  if (file.size <= 0) return "That file is empty. Choose the receipt again.";
   if (file.size > MAX_RECEIPT_BYTES) return "Receipt must be under 10MB";
   return "";
 };

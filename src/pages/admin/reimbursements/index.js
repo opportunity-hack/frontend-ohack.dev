@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 import {
   Box,
@@ -23,9 +29,13 @@ import AdminPage from "../../../components/admin/AdminPage";
 import SectionContainer from "../../../components/admin/hackathon-edit/SectionContainer";
 import reimbursementApi from "../../../lib/reimbursementApi";
 import {
+  MAX_REVIEW_NOTE_LENGTH,
+  PAYMENT_METHOD_LABELS,
+  REIMBURSEMENT_METHOD_LABELS,
   REIMBURSEMENT_STATUSES,
   actionLabel,
   formatDollars,
+  isNoteRequired,
   isOwnClaim,
   reviewActionsFor,
   statusLabel,
@@ -48,9 +58,24 @@ const rowSubmittedAt = (row) =>
   pick(row, "created_at", "createdAt") ||
   pick(row, "submitted_at", "submittedAt");
 const rowEventId = (row) => pick(row, "event_id", "eventId");
+// The backend nests the receipt: { receipt: { final_url, filename,
+// content_type, size_bytes } }. Reading flat receipt_url keys meant the
+// dialog always said "No receipt link on file".
+const rowReceipt = (row) => row?.receipt || {};
 const rowReceiptUrl = (row) =>
-  pick(row, "receipt_url", "receiptUrl") ||
-  pick(row, "receipt_final_url", "receiptFinalUrl");
+  pick(rowReceipt(row), "final_url", "finalUrl") ||
+  pick(row, "receipt_url", "receiptUrl");
+const rowReceiptFilename = (row) =>
+  rowReceipt(row).filename || pick(row, "receipt_filename", "receiptFilename");
+const rowReceiptIsImage = (row) =>
+  String(pick(rowReceipt(row), "content_type", "contentType")).startsWith(
+    "image/",
+  );
+
+// One request, filtered on screen: the status chips and event options stay
+// stable while a filter is on (they used to be built from the filtered rows,
+// so picking a status hid every other chip).
+const FETCH_LIMIT = 200;
 
 const statusColor = (status) => {
   switch (status) {
@@ -84,19 +109,23 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [reviewNote, setReviewNote] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [noteError, setNoteError] = useState("");
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
   const orgId = org.orgId;
   const reviewerEmail = user?.email || "";
+  const accessTokenRef = useRef(accessToken);
+  accessTokenRef.current = accessToken;
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
-      const query = { limit: 100, offset: 0 };
-      if (statusFilter !== "all") query.status = statusFilter;
-      if (eventFilter.trim()) query.event_id = eventFilter.trim();
-      const data = await reimbursementApi.listAdmin(query, accessToken, orgId);
+      const data = await reimbursementApi.listAdmin(
+        { limit: FETCH_LIMIT, offset: 0 },
+        accessTokenRef.current,
+        orgId,
+      );
       setRows(data.data || []);
       setCount(data.count ?? (data.data || []).length);
     } catch (error) {
@@ -108,21 +137,25 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, eventFilter, accessToken, orgId]);
+  }, [orgId]);
 
+  // Keyed on token PRESENCE: PropelAuth rotates the token on tab refocus,
+  // and refetching then would reload the table under an open review.
+  const hasToken = Boolean(accessToken);
   useEffect(() => {
-    if (isAdmin) fetchRows();
-  }, [isAdmin, fetchRows]);
+    if (isAdmin && hasToken) fetchRows();
+  }, [isAdmin, hasToken, fetchRows]);
 
   const openDetail = async (row) => {
     setSelected(row);
     setReviewNote("");
+    setNoteError("");
     setDetailOpen(true);
     setDetailLoading(true);
     try {
       const full = await reimbursementApi.getAdmin(
-        row.id || rowReferenceId(row),
-        accessToken,
+        row.id,
+        accessTokenRef.current,
         orgId,
       );
       setSelected(full?.data || full || row);
@@ -140,12 +173,19 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
 
   const handleReview = async (targetStatus) => {
     if (!selected) return;
+    if (isNoteRequired(targetStatus) && !reviewNote.trim()) {
+      setNoteError(
+        `Add a note saying why before you ${actionLabel(targetStatus).toLowerCase()}.`,
+      );
+      return;
+    }
+    setNoteError("");
     setReviewBusy(true);
     try {
       await reimbursementApi.reviewAdmin(
-        selected.id || rowReferenceId(selected),
+        selected.id,
         { status: targetStatus, reviewNote: reviewNote.trim() || undefined },
-        accessToken,
+        accessTokenRef.current,
         orgId,
       );
       setSnackbar({
@@ -176,6 +216,20 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
   }, {});
 
   const eventOptions = [...new Set(rows.map(rowEventId).filter(Boolean))];
+
+  const visibleRows = useMemo(
+    () =>
+      rows.filter(
+        (row) =>
+          (statusFilter === "all" ||
+            (row.status || "submitted") === statusFilter) &&
+          (!eventFilter || rowEventId(row) === eventFilter),
+      ),
+    [rows, statusFilter, eventFilter],
+  );
+  const openTotalCents = rows
+    .filter((row) => !["paid", "denied"].includes(row.status))
+    .reduce((sum, row) => sum + (Number(rowAmountCents(row)) || 0), 0);
 
   if (!isAdmin) {
     return (
@@ -213,8 +267,7 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Requests from people who bought food out of pocket for Opportunity
           Hack events. Review the receipt and business purpose, then approve,
-          deny, or ask for more detail. You cannot approve or pay your own
-          claim.
+          deny, or ask for more detail. You cannot review your own claim.
         </Typography>
 
         {/* Summary chips */}
@@ -235,7 +288,18 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
               }
             />
           ))}
+          {openTotalCents > 0 && (
+            <Chip
+              variant="outlined"
+              label={`Not yet paid: ${formatDollars(openTotalCents)}`}
+            />
+          )}
         </Box>
+        {count > rows.length && (
+          <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
+            Showing the newest {rows.length} of {count} requests.
+          </Typography>
+        )}
 
         <Box sx={{ mb: 3, width: "100%" }}>
           <Grid container spacing={2} alignItems="center">
@@ -283,9 +347,11 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress />
           </Box>
-        ) : rows.length === 0 ? (
+        ) : visibleRows.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            No reimbursement requests match these filters.
+            {rows.length === 0
+              ? "No reimbursement requests yet."
+              : "No reimbursement requests match these filters."}
           </Typography>
         ) : (
           <Box sx={{ overflowX: "auto" }}>
@@ -303,7 +369,7 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {visibleRows.map((row) => (
                   <TableRow key={row.id || rowReferenceId(row)} hover>
                     <TableCell>{rowReferenceId(row)}</TableCell>
                     <TableCell>
@@ -372,8 +438,8 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
               </Box>
               {ownClaim && (
                 <Typography variant="body2" color="warning.main">
-                  This is your claim. You can triage it, but you cannot approve
-                  it or mark it paid. Another admin needs to do that.
+                  This is your claim, so you cannot review it. Another admin
+                  needs to approve, deny, or pay it.
                 </Typography>
               )}
               <Grid container spacing={2}>
@@ -382,7 +448,13 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                   <Typography variant="body2">
                     {rowSubmitterName(selected)}
                     <br />
-                    {rowSubmitterEmail(selected)}
+                    <a
+                      href={`mailto:${rowSubmitterEmail(selected)}?subject=${encodeURIComponent(
+                        `Your Opportunity Hack reimbursement ${rowReferenceId(selected)}`,
+                      )}`}
+                    >
+                      {rowSubmitterEmail(selected)}
+                    </a>
                     {pick(selected, "phone", "phone") &&
                       ` · ${pick(selected, "phone", "phone")}`}
                   </Typography>
@@ -396,17 +468,29 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">Paid with</Typography>
                   <Typography variant="body2">
-                    {pick(selected, "payment_method", "paymentMethod") || "—"}
+                    {PAYMENT_METHOD_LABELS[
+                      pick(selected, "payment_method", "paymentMethod")
+                    ] ||
+                      pick(selected, "payment_method", "paymentMethod") ||
+                      "—"}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2">Pay back by</Typography>
                   <Typography variant="body2">
-                    {pick(
-                      selected,
-                      "reimbursement_method",
-                      "reimbursementMethod",
-                    ) || "—"}
+                    {REIMBURSEMENT_METHOD_LABELS[
+                      pick(
+                        selected,
+                        "reimbursement_method",
+                        "reimbursementMethod",
+                      )
+                    ] ||
+                      pick(
+                        selected,
+                        "reimbursement_method",
+                        "reimbursementMethod",
+                      ) ||
+                      "—"}
                   </Typography>
                 </Grid>
               </Grid>
@@ -425,17 +509,47 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
               <Box>
                 <Typography variant="subtitle2">Receipt</Typography>
                 {rowReceiptUrl(selected) ? (
-                  <Button
-                    component="a"
-                    href={rowReceiptUrl(selected)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View receipt
-                    {pick(selected, "receipt_filename", "receiptFilename")
-                      ? ` (${pick(selected, "receipt_filename", "receiptFilename")})`
-                      : ""}
-                  </Button>
+                  <>
+                    {/* Inline so the reviewer checks the line items against
+                        the amount without leaving the dialog. Plain <img>:
+                        this is an authed admin dialog, not a CWV surface. */}
+                    {rowReceiptIsImage(selected) && (
+                      <Box
+                        component="a"
+                        href={rowReceiptUrl(selected)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ display: "block", mt: 1 }}
+                      >
+                        <Box
+                          component="img"
+                          src={rowReceiptUrl(selected)}
+                          alt={`Receipt from ${selected.vendor || "vendor"}`}
+                          sx={{
+                            display: "block",
+                            maxWidth: "100%",
+                            maxHeight: 420,
+                            minHeight: 120,
+                            objectFit: "contain",
+                            border: "1px solid",
+                            borderColor: "divider",
+                            borderRadius: 1,
+                          }}
+                        />
+                      </Box>
+                    )}
+                    <Button
+                      component="a"
+                      href={rowReceiptUrl(selected)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open receipt in a new tab
+                      {rowReceiptFilename(selected)
+                        ? ` (${rowReceiptFilename(selected)})`
+                        : ""}
+                    </Button>
+                  </>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     No receipt link on file.
@@ -460,14 +574,22 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                 </Box>
               )}
               <TextField
-                label="Review note (optional)"
+                label="Review note"
                 value={reviewNote}
-                onChange={(e) => setReviewNote(e.target.value)}
+                onChange={(e) => {
+                  setReviewNote(e.target.value);
+                  if (noteError) setNoteError("");
+                }}
                 multiline
                 rows={2}
                 fullWidth
-                disabled={reviewBusy}
-                helperText="Saved with the status change. Visible to the other admins."
+                disabled={reviewBusy || ownClaim}
+                error={!!noteError}
+                inputProps={{ maxLength: MAX_REVIEW_NOTE_LENGTH }}
+                helperText={
+                  noteError ||
+                  "Required to deny or ask for more info. Saved with the status change; only admins see it, so email the submitter yourself."
+                }
               />
             </Box>
           )}
