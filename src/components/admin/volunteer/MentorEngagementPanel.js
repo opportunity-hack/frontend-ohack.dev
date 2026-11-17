@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -6,6 +6,10 @@ import {
   Chip,
   CircularProgress,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Link,
   Paper,
   Stack,
@@ -58,14 +62,14 @@ const csvCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export const engagementCsv = (rows) => {
   const header = [
-    "Rank", "Name", "Email", "Level", "On roster", "Checked in", "Self check-ins",
+    "Rank", "Score", "Name", "Email", "Level", "On roster", "Checked in", "Self check-ins",
     "Hours checked in", "Desk check-in", "Teams helped", "Panel actions",
     "Coverage sign-offs", "Notes", "Flags raised", "Flags resolved", "Ratings",
     "Last panel activity", "Teams",
   ];
   const lines = rows.map((r) =>
     [
-      r.rank, r.name, r.email, LEVELS[r.level]?.label || r.level, r.isSelected ? "yes" : "no",
+      r.rank, r.score, r.name, r.email, LEVELS[r.level]?.label || r.level, r.isSelected ? "yes" : "no",
       r.checked_in ? "yes" : "no", r.self_checkin_count, r.checked_in_hours,
       r.desk_checked_in ? "yes" : "no", r.teams_helped, r.panel_actions,
       r.coverage_signoffs, r.notes, r.flags_raised, r.flags_resolved, r.ratings,
@@ -75,33 +79,118 @@ export const engagementCsv = (rows) => {
   return [header.map(csvCell).join(","), ...lines].join("\n");
 };
 
-const MentorEngagementPanel = ({ eventId, accessToken, orgId, mentors = [], onBulkCertificate }) => {
+const scoreChipSx = { fontWeight: 700, cursor: "pointer" };
+
+// The one-number summary used in the Mentors table, the mobile cards and the
+// ranked panel. Click opens the detail dialog.
+export const EngagementScoreChip = ({ row, onClick }) => {
+  if (!row) return null;
+  const level = LEVELS[row.level] || {};
+  return (
+    <Tooltip title={`${level.label || row.level} · rank #${row.rank} · click for details`}>
+      <Chip
+        size="small"
+        color={level.color || "default"}
+        variant={row.level === "engaged" ? "filled" : "outlined"}
+        label={row.score}
+        onClick={onClick}
+        sx={scoreChipSx}
+        aria-label={`Engagement score ${row.score}, ${level.label || row.level}. Show details`}
+      />
+    </Tooltip>
+  );
+};
+
+const DetailLine = ({ label, value }) => (
+  <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ py: 0.25 }}>
+    <Typography variant="body2" color="text.secondary">{label}</Typography>
+    <Typography variant="body2" sx={{ textAlign: "right" }}>{value}</Typography>
+  </Stack>
+);
+
+// Why a mentor has the score they have.
+export const MentorEngagementDialog = ({ row, eventId, thresholds, onClose }) => (
+  <Dialog open={Boolean(row)} onClose={onClose} maxWidth="xs" fullWidth>
+    {row && (
+      <>
+        <DialogTitle>
+          {row.name || row.email || "Mentor"}
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+            <Chip size="small" color={LEVELS[row.level]?.color || "default"} label={LEVELS[row.level]?.label || row.level} />
+            <Typography variant="body2" color="text.secondary">
+              Score {row.score} · rank #{row.rank}
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2">How the score adds up</Typography>
+          {(row.score_breakdown || []).map((part) => (
+            <DetailLine key={part.label} label={`${part.label} (${part.detail})`} value={`+${part.points}`} />
+          ))}
+          <DetailLine label="Total" value={<strong>{row.score}</strong>} />
+
+          <Typography variant="subtitle2" sx={{ mt: 2 }}>Check-in</Typography>
+          <DetailLine label="Status" value={`${checkinText(row)}${row.currently_checked_in ? " · here now" : ""}`} />
+          <DetailLine label="First check-in" value={formatWhen(row.first_checkin_at)} />
+          {row.sessions_without_checkout > 0 && (
+            <DetailLine label="Sessions with no check-out (hours not counted)" value={row.sessions_without_checkout} />
+          )}
+
+          <Typography variant="subtitle2" sx={{ mt: 2 }}>Mentor panel</Typography>
+          <DetailLine label="Coverage sign-offs" value={row.coverage_signoffs} />
+          <DetailLine label="Notes" value={row.notes} />
+          <DetailLine label="Flags raised / resolved" value={`${row.flags_raised} / ${row.flags_resolved}`} />
+          <DetailLine label="Readiness ratings" value={row.ratings} />
+          <DetailLine label="Last activity" value={formatWhen(row.last_panel_activity_at)} />
+
+          <Typography variant="subtitle2" sx={{ mt: 2 }}>Teams helped ({row.teams_helped})</Typography>
+          {(row.teams || []).length === 0 ? (
+            <Typography variant="body2" color="text.secondary">None recorded in the mentor panel.</Typography>
+          ) : (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
+              {row.teams.map((team) => (
+                <Chip
+                  key={team.id}
+                  size="small"
+                  variant="outlined"
+                  label={team.name}
+                  component="a"
+                  clickable
+                  href={`/hack/${eventId}/team/${team.id}/mentor`}
+                  target="_blank"
+                  rel="noopener"
+                />
+              ))}
+            </Stack>
+          )}
+          {thresholds && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+              Engaged = checked in and at least {thresholds.min_actions} panel actions on at least{" "}
+              {thresholds.min_teams} {thresholds.min_teams === 1 ? "team" : "teams"}. Help given only in
+              Slack or in person is not counted.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </>
+    )}
+  </Dialog>
+);
+
+const MentorEngagementPanel = ({
+  eventId,
+  data,
+  loading,
+  error,
+  onReload: load,
+  mentors = [],
+  onBulkCertificate,
+  onShowDetails,
+}) => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [data, setData] = useState(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/admin/mentor-engagement/${eventId}`,
-        { headers: { authorization: `Bearer ${accessToken}`, "X-Org-Id": orgId } },
-      );
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      setData(await res.json());
-    } catch (e) {
-      setError(`Could not load mentor engagement. ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId, accessToken, orgId]);
-
-  const toggle = () => {
-    if (!open && !data && !loading) load();
-    setOpen((v) => !v);
-  };
+  const toggle = () => setOpen((v) => !v);
 
   const rows = data?.mentors || [];
   const engagedVolunteers = useMemo(() => {
@@ -165,7 +254,7 @@ const MentorEngagementPanel = ({ eventId, accessToken, orgId, mentors = [], onBu
                 )}
               </Stack>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                Ranked most engaged first. Engaged = checked in and at least {t.min_actions} panel
+                Ranked most engaged first; click a score for the breakdown. Engaged = checked in and at least {t.min_actions} panel
                 actions on at least {t.min_teams} {t.min_teams === 1 ? "team" : "teams"}. It is a
                 suggestion: “Review” mentors used the panel but are
                 under that bar or never checked in, and help given only in Slack or in person is
@@ -182,6 +271,7 @@ const MentorEngagementPanel = ({ eventId, accessToken, orgId, mentors = [], onBu
                       <TableRow>
                         <TableCell align="right">#</TableCell>
                         <TableCell>Mentor</TableCell>
+                        <TableCell>Score</TableCell>
                         <TableCell>Suggestion</TableCell>
                         <TableCell>Check-in</TableCell>
                         <TableCell align="right">Actions</TableCell>
@@ -204,6 +294,9 @@ const MentorEngagementPanel = ({ eventId, accessToken, orgId, mentors = [], onBu
                                 Not on roster
                               </Typography>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <EngagementScoreChip row={r} onClick={() => onShowDetails?.(r)} />
                           </TableCell>
                           <TableCell>
                             <Chip
