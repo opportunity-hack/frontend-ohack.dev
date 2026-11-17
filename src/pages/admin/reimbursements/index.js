@@ -29,6 +29,7 @@ import AdminPage from "../../../components/admin/AdminPage";
 import SectionContainer from "../../../components/admin/hackathon-edit/SectionContainer";
 import reimbursementApi from "../../../lib/reimbursementApi";
 import {
+  MAX_PAYMENT_REFERENCE_LENGTH,
   MAX_REVIEW_NOTE_LENGTH,
   PAYMENT_METHOD_LABELS,
   REIMBURSEMENT_METHOD_LABELS,
@@ -110,6 +111,9 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
   const [reviewNote, setReviewNote] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
   const [noteError, setNoteError] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [referenceError, setReferenceError] = useState("");
+  const [copiedHandle, setCopiedHandle] = useState(false);
 
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const isAdmin = org.hasPermission("volunteer.admin");
@@ -150,6 +154,9 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
     setSelected(row);
     setReviewNote("");
     setNoteError("");
+    setPaymentReference("");
+    setReferenceError("");
+    setCopiedHandle(false);
     setDetailOpen(true);
     setDetailLoading(true);
     try {
@@ -180,11 +187,23 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
       return;
     }
     setNoteError("");
+    if (targetStatus === "paid" && !paymentReference.trim()) {
+      setReferenceError(
+        "Add the payment reference so the books can tie this claim to the transfer.",
+      );
+      return;
+    }
+    setReferenceError("");
     setReviewBusy(true);
     try {
       await reimbursementApi.reviewAdmin(
         selected.id,
-        { status: targetStatus, reviewNote: reviewNote.trim() || undefined },
+        {
+          status: targetStatus,
+          reviewNote: reviewNote.trim() || undefined,
+          paymentReference:
+            targetStatus === "paid" ? paymentReference.trim() : undefined,
+        },
         accessTokenRef.current,
         orgId,
       );
@@ -248,6 +267,7 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
         reviewerEmail,
       )
     : [];
+  const payout = selected?.payout || null;
   const ownClaim =
     selected && isOwnClaim(reviewerEmail, rowSubmitterEmail(selected));
   const history =
@@ -494,6 +514,83 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                   </Typography>
                 </Grid>
               </Grid>
+              {payout?.handle && (
+                <Box
+                  sx={{
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    bgcolor: "action.hover",
+                  }}
+                >
+                  <Typography variant="subtitle2">
+                    Send{" "}
+                    {REIMBURSEMENT_METHOD_LABELS[payout.method] ||
+                      payout.method}{" "}
+                    payment to
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "monospace",
+                        fontSize: 17,
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {payout.handle}
+                    </Typography>
+                    <Button
+                      size="small"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(payout.handle);
+                          setCopiedHandle(true);
+                        } catch {
+                          setCopiedHandle(false);
+                        }
+                      }}
+                    >
+                      {copiedHandle ? "Copied" : "Copy"}
+                    </Button>
+                  </Box>
+                  <Typography variant="body2">
+                    Name on the account:{" "}
+                    <strong>{payout.account_name || "—"}</strong>
+                    {payout.phone_last4
+                      ? ` · phone ends in ${payout.phone_last4}`
+                      : ""}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    Copy it, don&apos;t retype it. Before you send, check the
+                    name the app shows matches the name above. These payments
+                    cannot be pulled back. The submitter cannot change this
+                    destination; treat any request to pay a different account as
+                    suspect and confirm with them directly. Send as a personal
+                    payment (PayPal: Friends and Family), not goods and
+                    services, so no fee comes out of the reimbursement.
+                  </Typography>
+                </Box>
+              )}
+              {pick(selected, "payment_reference", "paymentReference") && (
+                <Box>
+                  <Typography variant="subtitle2">Payment reference</Typography>
+                  <Typography variant="body2">
+                    {pick(selected, "payment_reference", "paymentReference")}
+                  </Typography>
+                </Box>
+              )}
               <Box>
                 <Typography variant="subtitle2">Business purpose</Typography>
                 <Typography variant="body2">
@@ -591,6 +688,24 @@ const AdminReimbursementsPage = withRequiredAuthInfo(({ userClass }) => {
                   "Required to deny or ask for more info. Saved with the status change; only admins see it, so email the submitter yourself."
                 }
               />
+              {selected.status === "approved" && !ownClaim && (
+                <TextField
+                  label="Payment reference"
+                  value={paymentReference}
+                  onChange={(e) => {
+                    setPaymentReference(e.target.value);
+                    if (referenceError) setReferenceError("");
+                  }}
+                  fullWidth
+                  disabled={reviewBusy}
+                  error={!!referenceError}
+                  inputProps={{ maxLength: MAX_PAYMENT_REFERENCE_LENGTH }}
+                  helperText={
+                    referenceError ||
+                    "Required to mark paid: the app's transaction ID, the check number, or the ACH trace. Send the money first, then record it here."
+                  }
+                />
+              )}
             </Box>
           )}
         </DialogContent>

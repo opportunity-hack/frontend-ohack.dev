@@ -12,7 +12,106 @@ import {
   validateExpenseDate,
   validateReceiptFile,
   validateReimbursementForm,
+  payoutPayload,
+  validatePayout,
+  validatePayoutHandle,
 } from "../reimbursementValidation";
+
+describe("payment-app payouts", () => {
+  const app = (method, handle, extra = {}) => ({
+    reimbursementMethod: method,
+    payoutHandle: handle,
+    payoutHandleConfirm: handle,
+    payoutAccountName: "Ada Lovelace",
+    payoutPhoneLast4: "",
+    ...extra,
+  });
+
+  it("accepts the handle shapes each app uses", () => {
+    expect(validatePayoutHandle("venmo", "@ada-lovelace")).toBe("");
+    expect(validatePayoutHandle("venmo", "ada_lovelace")).toBe("");
+    expect(validatePayoutHandle("zelle", "ada@example.com")).toBe("");
+    expect(validatePayoutHandle("zelle", "(480) 555-0100")).toBe("");
+    expect(validatePayoutHandle("paypal", "+1 480 555 0100")).toBe("");
+  });
+
+  it("rejects malformed handles", () => {
+    expect(validatePayoutHandle("venmo", "ab")).toMatch(/Venmo username/);
+    expect(validatePayoutHandle("venmo", "ada lovelace")).toMatch(/Venmo/);
+    expect(validatePayoutHandle("zelle", "555-0100")).toMatch(/area code/);
+    expect(validatePayoutHandle("paypal", "ada@nowhere")).toMatch(/email/);
+    expect(validatePayoutHandle("zelle", "")).toMatch(/required/);
+  });
+
+  it("needs the handle typed twice, compared the way it is stored", () => {
+    expect(validatePayout(app("venmo", "@ada-lovelace"))).toEqual({});
+    expect(
+      validatePayout(
+        app("zelle", "480-555-0100", { payoutHandleConfirm: "4805550100" }),
+      ),
+    ).toEqual({});
+    expect(
+      validatePayout(
+        app("venmo", "@ada-lovelace", { payoutHandleConfirm: "ADA-LOVELACE" }),
+      ),
+    ).toEqual({});
+    expect(
+      validatePayout(
+        app("zelle", "480-555-0100", { payoutHandleConfirm: "480-555-0101" }),
+      ).payoutHandleConfirm,
+    ).toMatch(/do not match/);
+    expect(
+      validatePayout(app("zelle", "a@b.co", { payoutHandleConfirm: "" }))
+        .payoutHandleConfirm,
+    ).toMatch(/again/);
+  });
+
+  it("needs the name on the account and a 4-digit Venmo last4", () => {
+    expect(
+      validatePayout(app("paypal", "a@b.co", { payoutAccountName: " " }))
+        .payoutAccountName,
+    ).toMatch(/name shown/);
+    expect(
+      validatePayout(app("venmo", "@ada-lovelace", { payoutPhoneLast4: "12" }))
+        .payoutPhoneLast4,
+    ).toMatch(/4 digits/);
+  });
+
+  it("asks nothing extra for ACH or check and sends no payout fields", () => {
+    expect(validatePayout({ reimbursementMethod: "ach" })).toEqual({});
+    expect(
+      payoutPayload({ reimbursementMethod: "check", payoutHandle: "@stale" }),
+    ).toEqual({});
+  });
+
+  it("sends only the fields the backend reads, never the confirm entry", () => {
+    expect(
+      payoutPayload(
+        app("venmo", " @ada-lovelace ", { payoutPhoneLast4: "0100" }),
+      ),
+    ).toEqual({
+      payoutHandle: "@ada-lovelace",
+      payoutAccountName: "Ada Lovelace",
+      payoutPhoneLast4: "0100",
+    });
+    expect(
+      payoutPayload(app("zelle", "a@b.co", { payoutPhoneLast4: "0100" })),
+    ).toEqual({ payoutHandle: "a@b.co", payoutAccountName: "Ada Lovelace" });
+  });
+
+  it("the whole form fails without payout details for an app method", () => {
+    const errors = validateReimbursementForm(
+      { ...validForm(), reimbursementMethod: "venmo" },
+      validReceipt,
+      NOW,
+    );
+    expect(Object.keys(errors).sort()).toEqual([
+      "payoutAccountName",
+      "payoutHandle",
+      "payoutHandleConfirm",
+    ]);
+  });
+});
 
 const NOW = new Date("2026-11-16T12:00:00");
 

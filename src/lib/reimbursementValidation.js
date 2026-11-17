@@ -50,8 +50,115 @@ export const PAYMENT_METHOD_LABELS = {
   other: "Other",
 };
 export const REIMBURSEMENT_METHOD_LABELS = {
+  zelle: "Zelle",
+  venmo: "Venmo",
+  paypal: "PayPal",
   ach: "Direct deposit (ACH)",
   check: "Check",
+};
+// Order shown in the form: the app payouts first (most people's pick and
+// the fastest to send), then the two that need a follow-up.
+export const REIMBURSEMENT_METHODS = Object.keys(REIMBURSEMENT_METHOD_LABELS);
+
+// ---- Payment-app payouts ---------------------------------------------------
+
+// Twin of the backend's PAYOUT_APP_METHODS / validate_payout. A PayPal /
+// Venmo / Zelle handle is something people hand out to be paid, so it is
+// collected here; bank account and routing numbers never are.
+export const PAYOUT_APP_METHODS = ["zelle", "venmo", "paypal"];
+export const isPayoutAppMethod = (method) =>
+  PAYOUT_APP_METHODS.includes(method);
+
+const PAYOUT_FIELD_COPY = {
+  zelle: {
+    label: "Zelle email or mobile number",
+    placeholder: "you@example.com or 480-555-0100",
+    helper: "The email or mobile number enrolled with Zelle at your bank.",
+  },
+  venmo: {
+    label: "Venmo username",
+    placeholder: "@your-name",
+    helper: "Your @username, shown under your name in the Venmo app.",
+  },
+  paypal: {
+    label: "PayPal email or mobile number",
+    placeholder: "you@example.com or 480-555-0100",
+    helper: "The email or mobile number on your PayPal account.",
+  },
+};
+export const payoutFieldCopy = (method) => PAYOUT_FIELD_COPY[method] || null;
+
+const VENMO_RE = /^@?[A-Za-z0-9][A-Za-z0-9_-]{4,29}$/;
+const phoneDigits = (value) =>
+  /^\+?[\d\s().-]+$/.test(value) ? value.replace(/\D/g, "") : "";
+
+/** Error string or "" for one payout handle under `method`. */
+export const validatePayoutHandle = (method, handle) => {
+  const value = String(handle || "").trim();
+  if (!value) return "This is required so we know where to send your money";
+  if (method === "venmo")
+    return VENMO_RE.test(value)
+      ? ""
+      : "Enter your Venmo username, like @your-name (5 to 30 letters, numbers, - or _)";
+  if (value.includes("@"))
+    return isValidEmail(value) ? "" : "Enter a valid email address";
+  const digits = phoneDigits(value);
+  return digits.length >= 10 && digits.length <= 15
+    ? ""
+    : "Enter a valid email address or a mobile number with area code";
+};
+
+// Compare the way the backend stores them, so "480-555-0100" typed once
+// and "4805550100" typed again still count as the same destination.
+const canonicalHandle = (method, handle) => {
+  const value = String(handle || "").trim();
+  if (method === "venmo") return value.replace(/^@/, "").toLowerCase();
+  if (value.includes("@")) return value.toLowerCase();
+  return phoneDigits(value);
+};
+
+/**
+ * Errors for the payout block (empty object = valid, or not an app method).
+ * The handle is typed twice: these sends cannot be pulled back, so a typo
+ * pays a stranger.
+ */
+export const validatePayout = (form) => {
+  const errors = {};
+  const method = form.reimbursementMethod;
+  if (!isPayoutAppMethod(method)) return errors;
+  const handleError = validatePayoutHandle(method, form.payoutHandle);
+  if (handleError) errors.payoutHandle = handleError;
+  if (!String(form.payoutHandleConfirm || "").trim()) {
+    errors.payoutHandleConfirm = "Type it again to confirm";
+  } else if (
+    !handleError &&
+    canonicalHandle(method, form.payoutHandle) !==
+      canonicalHandle(method, form.payoutHandleConfirm)
+  ) {
+    errors.payoutHandleConfirm = "The two entries do not match";
+  }
+  if (!String(form.payoutAccountName || "").trim())
+    errors.payoutAccountName = "Enter the name shown on the account";
+  if (
+    method === "venmo" &&
+    form.payoutPhoneLast4 &&
+    !/^\d{4}$/.test(String(form.payoutPhoneLast4).trim())
+  )
+    errors.payoutPhoneLast4 = "Enter the last 4 digits only";
+  return errors;
+};
+
+/** The payout fields to send with the claim ({} for ACH / check). */
+export const payoutPayload = (form) => {
+  if (!isPayoutAppMethod(form.reimbursementMethod)) return {};
+  const last4 = String(form.payoutPhoneLast4 || "").trim();
+  return {
+    payoutHandle: String(form.payoutHandle || "").trim(),
+    payoutAccountName: String(form.payoutAccountName || "").trim(),
+    ...(form.reimbursementMethod === "venmo" && last4
+      ? { payoutPhoneLast4: last4 }
+      : {}),
+  };
 };
 
 // Allowed transitions, per the API contract. The backend enforces these
@@ -172,7 +279,10 @@ export const MAX_FIELD_LENGTHS = {
   vendor: 200,
   businessPurpose: 2000,
   fedDescription: 2000,
+  payoutHandle: 254,
+  payoutAccountName: 200,
 };
+export const MAX_PAYMENT_REFERENCE_LENGTH = 200;
 export const MAX_REVIEW_NOTE_LENGTH = 2000;
 
 export const MAX_AMOUNT_DOLLARS = 10000;
@@ -259,8 +369,9 @@ export const validateReimbursementForm = (form, receipt, now = new Date()) => {
     errors.fedDescription = "Tell us who this food fed";
   if (!["personal_card", "personal_cash", "other"].includes(form.paymentMethod))
     errors.paymentMethod = "How did you pay?";
-  if (!["ach", "check"].includes(form.reimbursementMethod))
+  if (!REIMBURSEMENT_METHODS.includes(form.reimbursementMethod))
     errors.reimbursementMethod = "How should we pay you back?";
+  Object.assign(errors, validatePayout(form));
   if (!form.attestation)
     errors.attestation = "Please confirm the attestation to submit";
   if (!receipt?.blobPath) {

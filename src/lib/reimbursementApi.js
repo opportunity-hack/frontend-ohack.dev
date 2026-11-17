@@ -145,9 +145,15 @@ const reimbursementApi = {
   },
 
   /** Admin review: move a claim to a new status with an optional note. */
-  reviewAdmin(id, { status, reviewNote }, accessToken, orgId) {
+  reviewAdmin(
+    id,
+    { status, reviewNote, paymentReference },
+    accessToken,
+    orgId,
+  ) {
     return request("patch", `/api/reimbursements/admin/${enc(id)}`, {
-      data: { status, reviewNote },
+      // paymentReference is required by the backend when status is "paid".
+      data: { status, reviewNote, paymentReference },
       headers: adminHeaders(accessToken, orgId),
       fallback: "Could not update that reimbursement",
     });

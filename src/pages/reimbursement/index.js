@@ -26,7 +26,12 @@ import ReceiptUploadField from "../../components/Reimbursement/ReceiptUploadFiel
 import reimbursementApi from "../../lib/reimbursementApi";
 import {
   MAX_FIELD_LENGTHS,
+  REIMBURSEMENT_METHODS,
+  REIMBURSEMENT_METHOD_LABELS,
   formatDollars,
+  isPayoutAppMethod,
+  payoutFieldCopy,
+  payoutPayload,
   statusHint,
   statusLabel,
   validateReimbursementForm,
@@ -45,6 +50,10 @@ const initialFormState = {
   fedDescription: "",
   paymentMethod: "",
   reimbursementMethod: "",
+  payoutHandle: "",
+  payoutHandleConfirm: "",
+  payoutAccountName: "",
+  payoutPhoneLast4: "",
   attestation: false,
 };
 
@@ -70,6 +79,10 @@ const FIELD_ORDER = [
   "fedDescription",
   "paymentMethod",
   "reimbursementMethod",
+  "payoutHandle",
+  "payoutHandleConfirm",
+  "payoutAccountName",
+  "payoutPhoneLast4",
   "receipt",
   "attestation",
 ];
@@ -104,7 +117,15 @@ const ReimbursementPage = () => {
   const handleChange = (e) => {
     const { name, value, checked } = e.target;
     const newValue = e.target.type === "checkbox" ? checked : value;
-    setFormState((prev) => ({ ...prev, [name]: newValue }));
+    setFormState((prev) => ({
+      ...prev,
+      [name]: newValue,
+      // A Venmo username is not a Zelle address: switching method clears the
+      // destination so a stale one can never ride along with the new method.
+      ...(name === "reimbursementMethod" && newValue !== prev[name]
+        ? { payoutHandle: "", payoutHandleConfirm: "", payoutPhoneLast4: "" }
+        : {}),
+    }));
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -156,6 +177,7 @@ const ReimbursementPage = () => {
         fedDescription: formState.fedDescription.trim(),
         paymentMethod: formState.paymentMethod,
         reimbursementMethod: formState.reimbursementMethod,
+        ...payoutPayload(formState),
         attestation: true,
         receiptBlobPath: receipt.blobPath,
         receiptFilename: receipt.filename,
@@ -221,6 +243,8 @@ const ReimbursementPage = () => {
       setCopied(false);
     }
   };
+
+  const payoutCopy = payoutFieldCopy(formState.reimbursementMethod);
 
   const eventOptions = (hackathons || [])
     .map((ev) => ({
@@ -336,9 +360,15 @@ const ReimbursementPage = () => {
                         detail.
                       </li>
                       <li>
-                        {success.method === "check"
-                          ? "Once approved, the treasurer will contact you to confirm where to mail your check."
-                          : "Once approved, the treasurer will contact you separately to collect your ACH details. Never send bank details through this form."}
+                        {isPayoutAppMethod(success.method)
+                          ? `Once approved, the treasurer sends your payment by ${REIMBURSEMENT_METHOD_LABELS[success.method]} to the account you gave us. If the amount is over the app's limit, they will contact you about a check or bank transfer instead.`
+                          : success.method === "check"
+                            ? "Once approved, the treasurer will contact you to confirm where to mail your check."
+                            : "Once approved, the treasurer will contact you separately to collect your ACH details. Never send bank details through this form."}
+                      </li>
+                      <li>
+                        We will never ask you to change where your payment goes
+                        by email or message. If someone does, tell us.
                       </li>
                     </ul>
                   </div>
@@ -588,10 +618,139 @@ const ReimbursementPage = () => {
                       <MenuItem value="" disabled>
                         <em>Select an option</em>
                       </MenuItem>
-                      <MenuItem value="ach">Direct deposit (ACH)</MenuItem>
-                      <MenuItem value="check">Check</MenuItem>
+                      {REIMBURSEMENT_METHODS.map((method) => (
+                        <MenuItem key={method} value={method}>
+                          {REIMBURSEMENT_METHOD_LABELS[method]}
+                        </MenuItem>
+                      ))}
                     </TextField>
                   </div>
+
+                  {payoutCopy && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 18,
+                        padding: "18px 20px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line)",
+                        background: "var(--surface-2)",
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6 }}>
+                        <strong>
+                          Where should we send your{" "}
+                          {
+                            REIMBURSEMENT_METHOD_LABELS[
+                              formState.reimbursementMethod
+                            ]
+                          }{" "}
+                          payment?
+                        </strong>{" "}
+                        These payments cannot be pulled back once sent, so we
+                        ask you to type it twice. It cannot be changed after you
+                        submit.
+                      </p>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
+                          gap: 18,
+                        }}
+                      >
+                        <TextField
+                          label={payoutCopy.label}
+                          name="payoutHandle"
+                          placeholder={payoutCopy.placeholder}
+                          value={formState.payoutHandle}
+                          onChange={handleChange}
+                          fullWidth
+                          required
+                          autoComplete="off"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          inputProps={{
+                            maxLength: MAX_FIELD_LENGTHS.payoutHandle,
+                          }}
+                          error={!!formErrors.payoutHandle}
+                          helperText={
+                            formErrors.payoutHandle || payoutCopy.helper
+                          }
+                          disabled={isSubmitting}
+                          sx={fieldSx}
+                        />
+                        <TextField
+                          label="Type it again"
+                          name="payoutHandleConfirm"
+                          placeholder={payoutCopy.placeholder}
+                          value={formState.payoutHandleConfirm}
+                          onChange={handleChange}
+                          // Pasting the first entry would copy its typo too.
+                          onPaste={(e) => e.preventDefault()}
+                          fullWidth
+                          required
+                          autoComplete="off"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          inputProps={{
+                            maxLength: MAX_FIELD_LENGTHS.payoutHandle,
+                          }}
+                          error={!!formErrors.payoutHandleConfirm}
+                          helperText={
+                            formErrors.payoutHandleConfirm ||
+                            "Typed, not pasted, so a typo gets caught"
+                          }
+                          disabled={isSubmitting}
+                          sx={fieldSx}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
+                          gap: 18,
+                        }}
+                      >
+                        <TextField
+                          label="Name on the account"
+                          name="payoutAccountName"
+                          value={formState.payoutAccountName}
+                          onChange={handleChange}
+                          fullWidth
+                          required
+                          inputProps={{
+                            maxLength: MAX_FIELD_LENGTHS.payoutAccountName,
+                          }}
+                          error={!!formErrors.payoutAccountName}
+                          helperText={
+                            formErrors.payoutAccountName ||
+                            "We check this against the name the app shows before we send"
+                          }
+                          disabled={isSubmitting}
+                          sx={fieldSx}
+                        />
+                        {formState.reimbursementMethod === "venmo" && (
+                          <TextField
+                            label="Last 4 digits of your phone (optional)"
+                            name="payoutPhoneLast4"
+                            value={formState.payoutPhoneLast4}
+                            onChange={handleChange}
+                            fullWidth
+                            inputProps={{ inputMode: "numeric", maxLength: 4 }}
+                            error={!!formErrors.payoutPhoneLast4}
+                            helperText={
+                              formErrors.payoutPhoneLast4 ||
+                              "Venmo asks us for these the first time we pay you"
+                            }
+                            disabled={isSubmitting}
+                            sx={fieldSx}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div
                     id="reimbursement-receipt"
@@ -778,6 +937,11 @@ const ReimbursementPage = () => {
                   <li>
                     Submit within 60 days of the purchase when you can, so the
                     records stay clean.
+                  </li>
+                  <li>
+                    Get paid by Zelle, Venmo, PayPal, direct deposit or check.
+                    For the apps, we only need the email, mobile number or
+                    username people already use to pay you.
                   </li>
                   <li>
                     Do not send bank account or routing numbers here. The
