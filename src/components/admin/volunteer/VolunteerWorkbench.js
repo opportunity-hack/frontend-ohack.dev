@@ -61,6 +61,7 @@ import { statusLabel, statusSortIndex } from "../../../lib/applicationStatus";
 import { getSearchValues } from "./applicationSchema";
 import { RosterConfirmDialog } from "./RosterControls";
 import VolunteerExportDialog from "./VolunteerExportDialog";
+import MentorEngagementPanel from "./MentorEngagementPanel";
 
 // Define initial state outside component to prevent re-initialization
 const INITIAL_VOLUNTEERS_STATE = {
@@ -1521,6 +1522,16 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         <Box sx={{ mt: 2 }} ref={scrollContainerRef}>
           {viewMode === "table" ? (
             <>
+              {tabValue === 0 && (
+                <MentorEngagementPanel
+                  key={selectedEventId}
+                  eventId={selectedEventId}
+                  accessToken={accessToken}
+                  orgId={orgId}
+                  mentors={volunteers.mentors}
+                  onBulkCertificate={handleBulkCertificate}
+                />
+              )}
               {tabValue === 3 && depositEnabled && (
                 <Box
                   sx={{
