@@ -57,6 +57,7 @@ import {
 import { InlineStatusSelect } from "./volunteer/StatusControls";
 import { RosterToggle, ROSTER_CONSEQUENCES } from "./volunteer/RosterControls";
 import { filterByDecision } from "./volunteer/applicationSchema";
+import { EngagementScoreChip } from "./volunteer/MentorEngagementPanel";
 
 // The roster column is its own zone (review axis = status, roster axis =
 // isSelected); a hairline on its left keeps the two from reading as one.
@@ -283,6 +284,9 @@ const VolunteerTable = ({
   trainingStatusByEmail,
   trainingLmsAccess,
   onPlayVideo,
+  // Mentors tab: { [volunteer.id]: engagement row } + open-details callback
+  engagementByVolunteerId,
+  onShowEngagement,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState({ open: false, message: '' });
   const [resendStatuses, setResendStatuses] = useState({}); // { resend_id: { last_event, ... } }
@@ -490,8 +494,12 @@ const VolunteerTable = ({
     ];
 
     if (type === "mentors") {
+      // Engagement score sits right after the name so it reads first.
+      const nameAt = baseColumns.findIndex((c) => c.id === "name");
       return [
-        ...baseColumns,
+        ...baseColumns.slice(0, nameAt + 1),
+        { id: "engagement", label: "Engagement", minWidth: 80 },
+        ...baseColumns.slice(nameAt + 1),
         { id: "checkedIn", label: "Checked In", minWidth: 80, priority: 2 },
         { id: "availability", label: "Slots", minWidth: 100, priority: 2 },
         { id: "participationCount", label: "Experience", minWidth: 90, priority: 2 },
@@ -662,6 +670,16 @@ const VolunteerTable = ({
 
   const renderCellContent = (volunteer, column) => {
     switch (column.id) {
+      case "engagement": {
+        const row = engagementByVolunteerId?.[volunteer.id];
+        return row ? (
+          <EngagementScoreChip row={row} onClick={() => onShowEngagement?.(row)} />
+        ) : (
+          <Typography variant="caption" color="text.secondary">
+            —
+          </Typography>
+        );
+      }
       case "training": {
         const chip = trainingChipConfig(
           trainingStatusByEmail?.[normalizeEmail(volunteer.email)],
@@ -1840,6 +1858,16 @@ const VolunteerTable = ({
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                     Background: {volunteer.background.substring(0, 60)}{volunteer.background.length > 60 ? '...' : ''}
                   </Typography>
+                )}
+
+                {type === 'mentors' && engagementByVolunteerId?.[volunteer.id] && (
+                  <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="caption" color="text.secondary">Engagement</Typography>
+                    <EngagementScoreChip
+                      row={engagementByVolunteerId[volunteer.id]}
+                      onClick={() => onShowEngagement?.(engagementByVolunteerId[volunteer.id])}
+                    />
+                  </Box>
                 )}
 
                 {type === 'mentors' && volunteer.expertise && (
