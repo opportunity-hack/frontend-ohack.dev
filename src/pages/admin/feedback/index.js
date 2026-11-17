@@ -14,6 +14,12 @@ import AdminPage from "../../../components/admin/AdminPage";
 import EventSurveysPanel from "../../../components/admin/feedback/EventSurveysPanel";
 import PeerFeedbackPanel from "../../../components/admin/feedback/PeerFeedbackPanel";
 import OnboardingPanel from "../../../components/admin/feedback/OnboardingPanel";
+import {
+  FEEDBACK_PRINT_ROOT_ID,
+  FeedbackPrintStyles,
+  PrintHeader,
+  PrintFooter,
+} from "../../../components/admin/feedback/FeedbackToolbar";
 
 const TABS = [
   { label: "Event Surveys", icon: <SurveyIcon /> },
@@ -65,11 +71,14 @@ const AdminFeedbackPage = () => {
         onSnackbarClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         isAdmin={isAdmin}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <FeedbackPrintStyles />
+        <Box id={FEEDBACK_PRINT_ROOT_ID}>
+        <PrintHeader section={TABS[tab].label} />
+        <Typography className="fb-no-print" variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Review event surveys, peer-to-peer feedback, and onboarding feedback in one place.
         </Typography>
 
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Box className="fb-no-print" sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}
@@ -87,6 +96,8 @@ const AdminFeedbackPage = () => {
         {tab === 0 && <EventSurveysPanel accessToken={accessToken} orgId={orgId} onError={notify} />}
         {tab === 1 && <PeerFeedbackPanel accessToken={accessToken} orgId={orgId} onError={notify} />}
         {tab === 2 && <OnboardingPanel accessToken={accessToken} orgId={orgId} onError={notify} />}
+        <PrintFooter />
+        </Box>
       </AdminPage>
     </RequiredAuthProvider>
   );

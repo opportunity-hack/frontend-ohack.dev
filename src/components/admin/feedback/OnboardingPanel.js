@@ -55,8 +55,12 @@ import {
   parseDevice,
 } from "./onboardingAnalytics";
 
+import FeedbackToolbar, { PrintContext } from "./FeedbackToolbar";
+import { ONBOARDING_COLUMNS } from "./feedbackExport";
+
 const API = process.env.NEXT_PUBLIC_API_SERVER_URL;
 const RANGE_DAYS = { "90d": 90, "12mo": 365, all: null };
+const RANGE_LABEL = { "90d": "Last 90 days", "12mo": "Last 12 months", all: "All time" };
 
 const fmtDate = (iso) => {
   const d = parseTs(iso);
@@ -260,8 +264,12 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
 
   return (
     <Box>
+      <PrintContext>
+        <strong>{RANGE_LABEL[range]}</strong> · {items.length} of {allItems.length} responses
+        {easeFilter !== "all" ? ` · individual responses limited to “${easeFilter}”` : ""}
+      </PrintContext>
       {/* range control (drives the whole dashboard) */}
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack className="fb-no-print" direction="row" spacing={1} sx={{ mb: 2 }} alignItems="center" flexWrap="wrap" useFlexGap>
         <Typography variant="caption" color="text.secondary">Window:</Typography>
         <ToggleButtonGroup size="small" exclusive value={range} onChange={(_, v) => v && setRange(v)}>
           <ToggleButton value="90d">90 days</ToggleButton>
@@ -272,6 +280,15 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
         <Typography variant="caption" color="text.secondary">
           {items.length} of {allItems.length} responses
         </Typography>
+        <FeedbackToolbar
+          table="onboarding_feedback"
+          exports={[{
+            label: "Download CSV",
+            rows: responseList,
+            columns: ONBOARDING_COLUMNS,
+            filenameParts: ["onboarding-feedback", range === "all" ? "" : range, easeFilter === "all" ? "" : easeFilter],
+          }]}
+        />
       </Stack>
 
       {/* ----------------------------------------------------------- KPI band */}
@@ -311,11 +328,11 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
       </Grid>
 
       {/* --------------------------------------------------- trends over time */}
-      <Card variant="outlined" sx={{ mb: 3 }}>
+      <Card variant="outlined" className="fb-flow" sx={{ mb: 3 }}>
         <CardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
             <Typography variant="h6">Feedback over time</Typography>
-            <ToggleButtonGroup size="small" exclusive value={granularity} onChange={(_, v) => v && setGranularity(v)}>
+            <ToggleButtonGroup className="fb-no-print" size="small" exclusive value={granularity} onChange={(_, v) => v && setGranularity(v)}>
               <ToggleButton value="week">Weekly</ToggleButton>
               <ToggleButton value="month">Monthly</ToggleButton>
             </ToggleButtonGroup>
@@ -334,12 +351,12 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} allowDecimals={false} />
                     <RTooltip />
                     <Legend />
-                    <Bar yAxisId="right" dataKey="count" name="Responses" barSize={28} radius={[3, 3, 0, 0]}>
+                    <Bar isAnimationActive={false} yAxisId="right" dataKey="count" name="Responses" fill="#90caf9" barSize={28} radius={[3, 3, 0, 0]}>
                       {buckets.map((b) => (
                         <Cell key={b.key} fill={b.lowN ? "#cfd8dc" : "#90caf9"} />
                       ))}
                     </Bar>
-                    <Line yAxisId="left" type="monotone" dataKey="avgRating" name="Avg rating" stroke="#5e35b1" strokeWidth={2} connectNulls={false} dot={{ r: 3 }} />
+                    <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="avgRating" name="Avg rating" stroke="#5e35b1" strokeWidth={2} connectNulls={false} dot={{ r: 3 }} />
                     {eventMarkers.map((m) => (
                       <ReferenceLine
                         key={m.label}
@@ -361,14 +378,14 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
               <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>Clarity mix over time (% of responses by ease)</Typography>
               <Box sx={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={claritySeries} margin={{ top: 4, right: 8, bottom: 0, left: -8 }} stackOffset="expand">
+                  <BarChart data={claritySeries} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
                     <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
                     <RTooltip formatter={(v, name) => [`${v}%`, name]} />
                     <Legend />
                     {EASE_ORDER.map((e) => (
-                      <Bar key={e} dataKey={e} name={e} stackId="ease" fill={EASE_COLORS[e]} />
+                      <Bar isAnimationActive={false} key={e} dataKey={e} name={e} stackId="ease" fill={EASE_COLORS[e]} />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>
@@ -409,11 +426,11 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
       {/* ----------------------------------------------------------- action lists */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant="outlined" sx={{ height: "100%" }}><CardContent>
+          <Card variant="outlined" className="fb-flow" sx={{ height: "100%" }}><CardContent>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Follow-up queue ({followUps.length})</Typography>
               {followUps.length > 0 && (
-                <Button size="small" startIcon={<CopyIcon />} onClick={copyEmails}>Copy emails</Button>
+                <Button className="fb-no-print" size="small" startIcon={<CopyIcon />} onClick={copyEmails}>Copy emails</Button>
               )}
             </Stack>
             {followUps.length === 0 ? (
@@ -421,7 +438,7 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
             ) : (
               <Stack divider={<Divider flexItem />} spacing={1}>
                 {followUps.map((f) => (
-                  <Box key={f.id}>
+                  <Box key={f.id} className="fb-keep">
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{f.contact.firstName || "—"}</Typography>
                       <Typography variant="caption" color="text.secondary">{f.contact.email}</Typography>
@@ -436,7 +453,7 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant="outlined" sx={{ height: "100%" }}><CardContent>
+          <Card variant="outlined" className="fb-flow" sx={{ height: "100%" }}><CardContent>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
               <WarningIcon fontSize="small" color="warning" />
               <Typography variant="subtitle2">Needs attention ({needsAttention.length})</Typography>
@@ -446,7 +463,7 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
             ) : (
               <Stack divider={<Divider flexItem />} spacing={1}>
                 {needsAttention.map((it) => (
-                  <Box key={it.id}>
+                  <Box key={it.id} className="fb-keep">
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                       {it.overallRating ? <Rating readOnly size="small" value={Number(it.overallRating)} /> : null}
                       {it.easeOfUnderstanding && (
@@ -485,9 +502,10 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
       )}
 
       {/* ----------------------------------------------------- all responses */}
+      <Box className="fb-print-detail">
       <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
         <Typography variant="h6">All responses ({responseList.length})</Typography>
-        <ToggleButtonGroup size="small" exclusive value={easeFilter} onChange={(_, v) => v && setEaseFilter(v)}>
+        <ToggleButtonGroup className="fb-no-print" size="small" exclusive value={easeFilter} onChange={(_, v) => v && setEaseFilter(v)}>
           <ToggleButton value="all">All</ToggleButton>
           {EASE_ORDER.map((e) => (
             <ToggleButton key={e} value={e}>{e.split(" ")[0]}</ToggleButton>
@@ -544,6 +562,7 @@ const OnboardingPanel = ({ accessToken, orgId, onError }) => {
           </Accordion>
         );
       })}
+      </Box>
     </Box>
   );
 };
