@@ -14,6 +14,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  Checkbox,
   Grid,
   IconButton,
   InputLabel,
@@ -74,6 +75,12 @@ import {
   FaKey,
 } from "react-icons/fa";
 import axios from "axios";
+import {
+  DEFAULT_MESSAGE_CHANNELS,
+  summarizeTeamMessageDelivery,
+  teamMessageBlockedReason,
+  teamMessagePayload,
+} from "../../lib/teamMessage";
 import { useAuthInfo } from "@propelauth/react";
 import { useSnackbar } from "notistack";
 import { useRouter } from "next/router";
@@ -480,6 +487,10 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   // Dialog states
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [messageChannels, setMessageChannels] = useState(
+    DEFAULT_MESSAGE_CHANNELS,
+  );
+  const [messageSubject, setMessageSubject] = useState("");
   // Add new states for message templates
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customMessage, setCustomMessage] = useState(false);
@@ -1237,15 +1248,18 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
     setPopoverState((prev) => ({ ...prev, open: false }));
   };
 
-  // Send message to team's slack channel
+  // Send an admin message to the team over Slack and/or email
   const handleSendMessage = async () => {
+    if (!teamData?.id) return;
     setLoading(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/admin/${teamData.id}/message`,
-        {
+        teamMessagePayload({
           message: messageText,
-        },
+          channels: messageChannels,
+          subject: messageSubject,
+        }),
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -1254,15 +1268,22 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
           },
         },
       );
-
-      if (response.data && response.data.success) {
-        enqueueSnackbar("Message sent successfully", { variant: "success" });
+      const { severity, text } = summarizeTeamMessageDelivery(response.data);
+      notify(text, severity);
+      if (response.data?.success) {
         setMessageDialogOpen(false);
         setMessageText("");
+        setMessageSubject("");
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      enqueueSnackbar("Failed to send message", { variant: "error" });
+      const body = error?.response?.data;
+      if (body?.delivery) {
+        const { severity, text } = summarizeTeamMessageDelivery(body);
+        notify(text, severity);
+      } else {
+        notify(body?.message || "Failed to send message", "error");
+      }
     } finally {
       setLoading(false);
       loadTeamDetails(teamData.id); // Reload team details to reflect the message
@@ -1273,6 +1294,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
   const handleCloseMessageDialog = () => {
     setMessageDialogOpen(false);
     setMessageText("");
+    setMessageSubject("");
     setSelectedTemplate(null);
     setCustomMessage(false);
   };
@@ -2585,13 +2607,15 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardHeader
           title="Team Communication"
-          subheader="Send messages to the team's Slack channel"
+          subheader="Message the team in its Slack channel, by email, or both"
         />
         <Divider />
         <CardContent>
           <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center" }}>
             <Typography variant="body2" gutterBottom>
-              Send a message to #{teamData.slack_channel || "team-channel"}
+              {teamData.slack_channel
+                ? `Slack: #${teamData.slack_channel} · Email: every member with an address on file`
+                : "No Slack channel — messages go by email"}
             </Typography>
             <Button
               startIcon={<FaPaperPlane />}
@@ -2602,9 +2626,14 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                 setSelectedTemplate(null);
                 setCustomMessage(false);
                 setMessageText("");
+                setMessageSubject("");
+                setMessageChannels(
+                  teamData.slack_channel
+                    ? DEFAULT_MESSAGE_CHANNELS
+                    : { slack: false, email: true },
+                );
                 setMessageDialogOpen(true);
               }}
-              disabled={!teamData.slack_channel}
             >
               Send Message
             </Button>
@@ -2621,6 +2650,7 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                   <TableRow>
                     <TableCell>Date</TableCell>
                     <TableCell>Sender</TableCell>
+                    <TableCell>Sent via</TableCell>
                     <TableCell>Message</TableCell>
                   </TableRow>
                 </TableHead>
@@ -2631,6 +2661,18 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                         {new Date(message.timestamp).toLocaleString()}
                       </TableCell>
                       <TableCell>{message.sender}</TableCell>
+                      <TableCell>
+                        {Array.isArray(message.channels) &&
+                        message.channels.length
+                          ? message.channels
+                              .map((c) =>
+                                c === "email"
+                                  ? `Email${message.email_count ? ` (${message.email_count})` : ""}`
+                                  : "Slack",
+                              )
+                              .join(" + ")
+                          : "Slack"}
+                      </TableCell>
                       <TableCell>{message.text}</TableCell>
                     </TableRow>
                   ))}
@@ -3559,6 +3601,62 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                   </Button>
                 </Box>
 
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Send via
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={messageChannels.slack}
+                        disabled={!teamData?.slack_channel}
+                        onChange={(e) =>
+                          setMessageChannels((prev) => ({
+                            ...prev,
+                            slack: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label={
+                      teamData?.slack_channel
+                        ? `Slack #${teamData.slack_channel}`
+                        : "Slack (no channel)"
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={messageChannels.email}
+                        onChange={(e) =>
+                          setMessageChannels((prev) => ({
+                            ...prev,
+                            email: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label={`Email each member${
+                      Array.isArray(teamData?.users)
+                        ? ` (${teamData.users.length})`
+                        : ""
+                    }`}
+                  />
+                  {messageChannels.email && (
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Email subject (optional)"
+                      value={messageSubject}
+                      onChange={(e) => setMessageSubject(e.target.value)}
+                      placeholder={`Update for ${teamData?.name || "your team"}`}
+                      inputProps={{ maxLength: 150 }}
+                      helperText="Members without an email on file are listed after sending."
+                      sx={{ mt: 1 }}
+                    />
+                  )}
+                </Box>
+
                 <TextField
                   fullWidth
                   multiline
@@ -3568,7 +3666,13 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Type your message to the team..."
                   variant="outlined"
-                  helperText={`Message will be sent to #${teamData?.slack_channel || "team-channel"}`}
+                  helperText={
+                    teamMessageBlockedReason({
+                      message: messageText,
+                      channels: messageChannels,
+                      slackChannel: teamData?.slack_channel,
+                    }) || "Markdown works in email; Slack shows it as typed."
+                  }
                 />
 
                 {selectedTemplate && (
@@ -3591,7 +3695,16 @@ const TeamManagement = ({ orgId, embeddedHackathonId, onSnack }) => {
               onClick={handleSendMessage}
               variant="contained"
               color="primary"
-              disabled={loading || !messageText.trim()}
+              disabled={
+                loading ||
+                Boolean(
+                  teamMessageBlockedReason({
+                    message: messageText,
+                    channels: messageChannels,
+                    slackChannel: teamData?.slack_channel,
+                  }),
+                )
+              }
               startIcon={
                 loading ? <CircularProgress size={16} /> : <FaPaperPlane />
               }

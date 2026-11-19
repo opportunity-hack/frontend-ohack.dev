@@ -61,6 +61,8 @@ import { statusLabel, statusSortIndex } from "../../../lib/applicationStatus";
 import { getSearchValues } from "./applicationSchema";
 import { RosterConfirmDialog } from "./RosterControls";
 import VolunteerExportDialog from "./VolunteerExportDialog";
+import MentorEngagementPanel, { MentorEngagementDialog } from "./MentorEngagementPanel";
+import useMentorEngagement from "../../../hooks/use-mentor-engagement";
 
 // Define initial state outside component to prevent re-initialization
 const INITIAL_VOLUNTEERS_STATE = {
@@ -311,6 +313,18 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
     judges: volunteers.judges,
     enabled: isAdmin && tabValue === 1 && volunteers.judges.length > 0,
   });
+
+  // Mentor engagement (check-ins + mentor panel use): one fetch feeds the
+  // table's Engagement column, the detail dialog and the ranked panel.
+  const mentorEngagement = useMentorEngagement({
+    eventId: selectedEventId,
+    accessToken,
+    orgId,
+    enabled: isAdmin && tabValue === 0 && Boolean(selectedEventId),
+  });
+  const [engagementDetailId, setEngagementDetailId] = useState(null);
+  const handleShowEngagement = useCallback((row) => setEngagementDetailId(row?.volunteer_id || null), []);
+  const engagementById = mentorEngagement.byVolunteerId;
 
   // Early return if not admin to prevent further execution
   if (!isAdmin) {
@@ -1090,7 +1104,10 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
       .sort((a, b) => {
         let valueA, valueB;
 
-        if (orderBy === "availability") {
+        if (orderBy === "engagement") {
+          valueA = engagementById[a?.id]?.score ?? -1;
+          valueB = engagementById[b?.id]?.score ?? -1;
+        } else if (orderBy === "availability") {
           valueA = countSlots(a?.availability);
           valueB = countSlots(b?.availability);
         } else if (orderBy === "participationCount") {
@@ -1126,7 +1143,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
           v.toLowerCase().includes(searchValue)
         );
       });
-  }, [volunteers, orderBy, order, filter, tabValue]);
+  }, [volunteers, orderBy, order, filter, tabValue, engagementById]);
 
   // Add error boundary-like behavior
   if (!router) {
@@ -1521,6 +1538,19 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         <Box sx={{ mt: 2 }} ref={scrollContainerRef}>
           {viewMode === "table" ? (
             <>
+              {tabValue === 0 && (
+                <MentorEngagementPanel
+                  key={selectedEventId}
+                  eventId={selectedEventId}
+                  data={mentorEngagement.data}
+                  loading={mentorEngagement.loading}
+                  error={mentorEngagement.error}
+                  onReload={mentorEngagement.reload}
+                  onShowDetails={handleShowEngagement}
+                  mentors={volunteers.mentors}
+                  onBulkCertificate={handleBulkCertificate}
+                />
+              )}
               {tabValue === 3 && depositEnabled && (
                 <Box
                   sx={{
@@ -1585,6 +1615,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 trainingStatusByEmail={trainingStatusByEmail}
                 trainingLmsAccess={trainingLmsAccess}
                 onPlayVideo={handlePlayVideo}
+                engagementByVolunteerId={tabValue === 0 ? engagementById : undefined}
+                onShowEngagement={handleShowEngagement}
               />
               {sortedVolunteers.length === 0 && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
@@ -1644,6 +1676,13 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         filterState={getCurrentFilterState()}
         searchText={viewMode === "table" ? filter : getCurrentFilterState().filter}
         mode={exportMode}
+      />
+
+      <MentorEngagementDialog
+        row={engagementDetailId ? engagementById[engagementDetailId] || null : null}
+        eventId={selectedEventId}
+        thresholds={mentorEngagement.data?.thresholds}
+        onClose={() => setEngagementDetailId(null)}
       />
 
       {/* Intro-video player — one dialog for every row/card */}

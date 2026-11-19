@@ -37,6 +37,7 @@ import {
   Feedback as FeedbackIcon,
   SmartToy as SmartToyIcon,
   WorkOutline as WorkOutlineIcon,
+  Receipt as ReceiptIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import {
@@ -143,6 +144,12 @@ const adminPages = [
     label: "Feedback",
     description: "Review event surveys, peer feedback, and onboarding feedback",
     icon: <FeedbackIcon fontSize="large" style={{ color: "#7b1fa2" }} />,
+  },
+  {
+    path: "/admin/reimbursements",
+    label: "Reimbursements",
+    description: "Review food reimbursement requests and approve or pay them",
+    icon: <ReceiptIcon fontSize="large" style={{ color: "#1B3A6B" }} />,
   },
   {
     path: "/admin/praise-bot",
@@ -252,8 +259,8 @@ const AdminDashboard = () => {
             /admin/check-in sends them straight back here. Say why. */}
         {!isAdmin && !eventsLoading && !checkInEventId && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            No hackathon is running right now, so check-in isn&apos;t open
-            yet. It opens on the first day of the event.
+            No hackathon is running right now, so check-in isn&apos;t open yet.
+            It opens on the first day of the event.
           </Alert>
         )}
 

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "lifecycle",
+  "quality": "showcase",
+  "specification": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/lifecycle-reimbursement-status-20261116-0950/candidate.json",
+    "sha256": "05421433589d4893d2299c6400f4573b0c8774ad5ed95d408b5d5ed14432f965",
+    "bytes": 2843
+  },
+  "artifact": {
+    "path": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0950/reimbursement-status-lifecycle.html",
+    "sha256": "bbad7fae3e3c811af5374e88747f381d652ed36bbe5a5b84acb4aeef06674957",
+    "bytes": 842982
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "skipped"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0950/reimbursement-status-lifecycle.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0950/reimbursement-status-lifecycle.finalize.json",
+    "summaryReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0950/reimbursement-status-lifecycle.finalize-summary.json",
+    "browserCheckReceipt": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0950/reimbursement-status-lifecycle.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-16T16:23:37.482Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 7879,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5c7f4abe-bae6-402c-a8a9-b4a405523006",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/.archify/architecture-reimbursement-20261116-0930/candidate.json",
+  "output": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/reimbursement-20261116-0930/reimbursement-architecture.html",
+  "specification": {
+    "sha256": "4fbe54f09739031efbd05c83fdd90aae2540d3fd8e922c7ab2b4a46b73d43464",
+    "bytes": 3679
+  },
+  "artifact": {
+    "sha256": "3d491faeb0afd3d8b6c9777bd7fe4d6b7af1cca50790d075053036bacf9b54b6",
+    "bytes": 846239
+  }
+}
