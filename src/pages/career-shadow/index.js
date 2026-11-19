@@ -5,14 +5,11 @@
 // and the UA Career Center Job Shadow Program page for employers.
 import React, { useState } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
-import { RefinedFonts, Stat } from "../../components/design/refined";
-import {
-  RefinedPage,
-  PageMasthead,
-  Prose,
-  CtaBand,
-} from "../../components/design/RefinedPage";
+import Box from "@mui/material/Box";
+import { RefinedRoot, Eyebrow, Stat } from "../../components/design/refined";
+import { Prose, CtaBand } from "../../components/design/RefinedPage";
 import { DonateCard } from "../../components/design/DonateNudge";
 import { serializeJsonLd } from "../../lib/jsonLd";
 import { trackEvent } from "../../lib/ga";
@@ -26,6 +23,10 @@ const HOST_FORM_URL =
   "https://uarizona.co1.qualtrics.com/jfe/form/SV_1zVxrgNQE9W5rIW";
 const PROGRAM_URL =
   "https://science.arizona.edu/science-shadows-job-shadow-program";
+const LINKEDIN_URL = "https://www.linkedin.com/in/gregvannoni/";
+const OG_IMAGE = "https://www.ohack.dev/images/career-shadow/og.jpg";
+const PHOTO_MENLO_PARK = "/images/career-shadow/menlo-park-2024.jpg";
+const PHOTO_BELLEVUE = "/images/career-shadow/bellevue-2026.jpg";
 const STUDENT_PROGRAM_URL =
   "https://career.arizona.edu/experiences/job-shadow-program/";
 
@@ -136,51 +137,81 @@ const howToJsonLd = {
   ],
 };
 
-const sectionStyle = {
-  paddingTop: "clamp(40px, 6vh, 72px)",
-  paddingBottom: "clamp(40px, 6vh, 72px)",
+const sectionPad = {
+  paddingTop: "clamp(44px, 7vh, 80px)",
+  paddingBottom: "clamp(44px, 7vh, 80px)",
 };
 
-const sunkenSectionStyle = {
-  ...sectionStyle,
+const sunkenBand = {
   background: "var(--surface-2)",
   borderTop: "1px solid var(--line)",
   borderBottom: "1px solid var(--line)",
 };
 
+const photoFrame = {
+  position: "relative",
+  width: "100%",
+  borderRadius: 10,
+  overflow: "hidden",
+  border: "1px solid var(--line)",
+  background: "var(--surface-2)",
+};
+
+const SIGNUP_STEPS = [
+  {
+    title: "Fill out the Host Interest Form",
+    body: "Describe the shadow you want to offer: what students will see, how many you can host, and any qualifications you need.",
+  },
+  {
+    title: "The program team reviews it",
+    body: "Once approved, your shadow is posted to Handshake and students can find and apply for it.",
+  },
+  {
+    title: "Students apply",
+    body: "The team reviews applicants by career interest, major, and preference, then connects you with your students.",
+  },
+  {
+    title: "Run the day",
+    body: "You set the agenda. The checklist below is the one Greg uses.",
+  },
+];
+
+// "8:00-8:30 AM: Questions." -> ["8:00-8:30 AM", "Questions."]
+const splitTime = (item) => {
+  const match = item.match(/^(\d.*?[AP]M): (.*)$/);
+  return match ? [match[1], match[2]] : [null, item];
+};
+
 function ChecklistGroup({ group, checked, onToggle }) {
   return (
     <div className="ohx-card" style={{ padding: "22px 24px" }}>
-      <h3
-        className="ohx-display"
-        style={{ fontSize: 22, margin: "0 0 6px" }}
-      >
+      <h3 className="ohx-display" style={{ fontSize: 22, margin: 0 }}>
         {group.title}
       </h3>
       <ul
         style={{
           listStyle: "none",
-          margin: "12px 0 0",
+          margin: "16px 0 0",
           padding: 0,
           display: "grid",
-          gap: 10,
+          gap: 12,
         }}
       >
         {group.items.map((item, i) => {
           const key = `${group.id}-${i}`;
           const isChecked = checked.has(key);
+          const [time, text] = splitTime(item);
           return (
             <li key={key}>
               <label
                 style={{
                   display: "flex",
-                  gap: 10,
+                  gap: 12,
                   alignItems: "flex-start",
                   cursor: "pointer",
+                  fontSize: 15.5,
                   lineHeight: 1.55,
-                  color: isChecked
-                    ? "var(--muted)"
-                    : "var(--ink)",
+                  color: isChecked ? "var(--muted)" : "var(--ink)",
                 }}
               >
                 <input
@@ -201,7 +232,20 @@ function ChecklistGroup({ group, checked, onToggle }) {
                     textDecoration: isChecked ? "line-through" : "none",
                   }}
                 >
-                  {item}
+                  {time && (
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        letterSpacing: "0.04em",
+                        color: isChecked ? "var(--muted)" : "var(--brand)",
+                      }}
+                    >
+                      {time}
+                    </span>
+                  )}
+                  {text}
                 </span>
               </label>
             </li>
@@ -209,6 +253,30 @@ function ChecklistGroup({ group, checked, onToggle }) {
         })}
       </ul>
     </div>
+  );
+}
+
+function Photo({ src, width, height, alt, caption, sizes, priority = false }) {
+  return (
+    <figure style={{ margin: 0 }}>
+      <div style={photoFrame}>
+        <Image
+          src={src}
+          width={width}
+          height={height}
+          alt={alt}
+          sizes={sizes}
+          priority={priority}
+          style={{ display: "block", width: "100%", height: "auto" }}
+        />
+      </div>
+      <figcaption
+        className="ohx-faint"
+        style={{ marginTop: 10, fontSize: 13 }}
+      >
+        {caption}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -271,14 +339,17 @@ export default function CareerShadowPage() {
         <meta property="og:title" content={PAGE_TITLE} />
         <meta property="og:description" content={PAGE_DESCRIPTION} />
         <meta property="og:url" content={CANONICAL_URL} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="Opportunity Hack" />
         <meta property="og:locale" content="en_US" />
-        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={PAGE_TITLE} />
         <meta name="twitter:description" content={PAGE_DESCRIPTION} />
+        <meta name="twitter:image" content={OG_IMAGE} />
         <meta name="twitter:creator" content="@opportunityhack" />
         <meta name="twitter:site" content="@opportunityhack" />
-        <RefinedFonts />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -287,260 +358,385 @@ export default function CareerShadowPage() {
         />
       </Head>
 
-      <RefinedPage>
-        <PageMasthead
-          eyebrow="Career Shadow · A host guide"
-          title="Host a job shadow."
-          italic="In one day."
-          lead="One day with a working professional can change what a student thinks is possible. This is the exact checklist a Meta software engineer uses to host University of Arizona Science Shadows students. Copy it."
+      <RefinedRoot>
+        {/* ---------------- HERO ---------------- */}
+        <section
+          className="ohx-wrap"
+          style={{
+            paddingTop: "clamp(96px, 12vh, 140px)",
+            paddingBottom: "clamp(40px, 6vh, 72px)",
+          }}
         >
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1.25fr 0.75fr" },
+              gap: { xs: "36px", md: "56px" },
+              alignItems: "center",
+            }}
+          >
+            <header>
+              <Eyebrow>Career Shadow · A host guide</Eyebrow>
+              <h1
+                className="ohx-display"
+                style={{ marginTop: 14, maxWidth: "14ch" }}
+              >
+                Host a job shadow.{" "}
+                <span className="ohx-italic">In one day.</span>
+              </h1>
+              <p
+                className="ohx-lead"
+                style={{ marginTop: 18, maxWidth: "54ch" }}
+              >
+                One day with a working professional can change what a student
+                thinks is possible. This is the exact checklist Greg Vannoni,
+                a software engineer at Meta and President of Opportunity Hack,
+                uses to host University of Arizona Science Shadows students.
+                Copy it.
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "12px 22px",
+                  alignItems: "center",
+                  marginTop: 26,
+                }}
+              >
+                <a
+                  className="ohx-btn ohx-btn--primary"
+                  href={HOST_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackClick("host_interest_form_hero")}
+                >
+                  Sign up to host
+                </a>
+                <Link href="#checklist" className="ohx-link">
+                  Skip to the checklist <span aria-hidden="true">↓</span>
+                </Link>
+              </div>
+              <hr className="ohx-rule" style={{ marginTop: 36 }} />
+              <div
+                style={{
+                  marginTop: 24,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "20px clamp(28px, 5vw, 56px)",
+                }}
+              >
+                <Stat value="4" label="shadow days hosted since 2024" />
+                <Stat value="2-3" label="students per day" />
+                <Stat value="8 AM-4:30 PM" label="a full shadow day" />
+              </div>
+            </header>
+            <Box sx={{ maxWidth: { xs: 420, md: "none" } }}>
+              <Photo
+                src={PHOTO_MENLO_PARK}
+                width={1200}
+                height={1594}
+                priority
+                sizes="(max-width: 900px) 420px, 400px"
+                alt="Greg Vannoni with a shadow day group in front of the Meta sign at 1 Hacker Way in Menlo Park"
+                caption="Shadow day at Meta in Menlo Park, May 2024."
+              />
+            </Box>
+          </Box>
+        </section>
+
+        {/* ---------------- WHO IS BEHIND THIS ---------------- */}
+        <section style={sunkenBand} id="about-greg">
+          <div className="ohx-wrap" style={sectionPad}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "280px 1fr" },
+                gap: { xs: "28px", md: "56px" },
+                alignItems: "center",
+              }}
+            >
+              <Box sx={{ maxWidth: { xs: 280, md: "none" } }}>
+                <Photo
+                  src={PHOTO_BELLEVUE}
+                  width={768}
+                  height={1024}
+                  sizes="280px"
+                  alt="Greg Vannoni with two students in an office lobby in Bellevue"
+                  caption="Shadow day in Bellevue, 2026."
+                />
+              </Box>
+              <div>
+                <Eyebrow>Who is behind this guide</Eyebrow>
+                <h2
+                  className="ohx-display"
+                  style={{ marginTop: 10, maxWidth: "22ch" }}
+                >
+                  A nonprofit president with a day job.
+                </h2>
+                <Prose style={{ marginTop: 16 }}>
+                  <p>
+                    Greg Vannoni is the President of Opportunity Hack, the
+                    nonprofit that runs this site. That is not his day job.
+                    He works full time at Meta, where he was an engineering
+                    manager and, since May 2026, a software engineer.
+                  </p>
+                  <p>
+                    He hosted Science Shadows students in May 2024 in Menlo
+                    Park and virtually, in January 2025 in Menlo Park, and in
+                    January 2026 in Bellevue. Every item on this page comes
+                    from those days: the briefing doc he sends students, the
+                    agenda he runs, and the follow-up he does after. Nothing
+                    here is theory.
+                  </p>
+                  <p>
+                    <a
+                      className="ohx-link"
+                      href={LINKEDIN_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackClick("greg_linkedin")}
+                    >
+                      Greg on LinkedIn <span aria-hidden="true">→</span>
+                    </a>
+                  </p>
+                </Prose>
+              </div>
+            </Box>
+          </div>
+        </section>
+
+        {/* ---------------- WHAT A SHADOW DAY IS ---------------- */}
+        <section className="ohx-wrap" style={sectionPad}>
+          <Eyebrow>What a shadow day is</Eyebrow>
+          <h2
+            className="ohx-display"
+            style={{ marginTop: 10, maxWidth: "24ch" }}
+          >
+            One day inside a real workplace.
+          </h2>
+          <Prose style={{ marginTop: 16 }}>
+            <p>
+              Science Shadows is the University of Arizona College of Science
+              job shadow program. A student spends one day with a working
+              professional, in person or virtual, to see what the job actually
+              looks like and to ask the questions they cannot ask in class.
+            </p>
+            <p>
+              Any professional can host. Shadows run in any industry, anywhere
+              in the world, as long as the workplace is not a home office.
+              Students cover their own travel. A shadow runs 2 to 8 hours. Most
+              hosts take 1 to 3 students at a time.
+            </p>
+            <p>
+              Students apply on Handshake by searching for{" "}
+              <strong>Science Shadows</strong>. They can apply for up to five
+              shadows per session and do one shadow per academic year. College
+              of Science undergraduates get priority for placement.{" "}
+              <a
+                className="ohx-link"
+                href={STUDENT_PROGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                How students apply
+              </a>
+            </p>
+          </Prose>
+        </section>
+
+        {/* ---------------- SIGN UP ---------------- */}
+        <section style={sunkenBand} id="sign-up">
+          <div className="ohx-wrap" style={sectionPad}>
+            <Eyebrow>Sign up to host</Eyebrow>
+            <h2
+              className="ohx-display"
+              style={{ marginTop: 10, maxWidth: "24ch" }}
+            >
+              Four steps to your first shadow.
+            </h2>
+            <Box
+              component="ol"
+              sx={{
+                listStyle: "none",
+                m: "28px 0 0",
+                p: 0,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(4, 1fr)",
+                },
+                gap: "20px",
+              }}
+            >
+              {SIGNUP_STEPS.map((step, i) => (
+                <li
+                  key={step.title}
+                  className="ohx-card"
+                  style={{ padding: "20px 22px" }}
+                >
+                  <span
+                    className="ohx-display"
+                    style={{ fontSize: 28, color: "var(--accent)" }}
+                  >
+                    {i + 1}
+                  </span>
+                  <h3
+                    className="ohx-display"
+                    style={{ fontSize: 19, marginTop: 10 }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p
+                    className="ohx-muted"
+                    style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55 }}
+                  >
+                    {step.body}
+                  </p>
+                </li>
+              ))}
+            </Box>
+            <div style={{ marginTop: 26 }}>
+              <a
+                className="ohx-btn ohx-btn--primary"
+                href={HOST_FORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackClick("host_interest_form_steps")}
+              >
+                Open the Host Interest Form
+              </a>
+            </div>
+            <Prose style={{ marginTop: 26 }}>
+              <p>
+                Questions about the program? Contact Lyndsey Edmonds, Director
+                of the College of Science Career Center, at{" "}
+                <a
+                  className="ohx-link"
+                  href="mailto:lyndseyedmonds@arizona.edu"
+                >
+                  lyndseyedmonds@arizona.edu
+                </a>
+                . The Science Shadows coordinator is Mitchell Rutherford, at{" "}
+                <a
+                  className="ohx-link"
+                  href="mailto:mrutherford20@arizona.edu"
+                >
+                  mrutherford20@arizona.edu
+                </a>
+                .
+              </p>
+              <p>
+                For the Winter 2026-27 session, student applications run
+                November 2-22, 2026, and shadows take place December 18, 2026
+                to January 12, 2027. Check the{" "}
+                <a
+                  className="ohx-link"
+                  href={PROGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Science Shadows program page
+                </a>{" "}
+                for the current session dates.
+              </p>
+            </Prose>
+          </div>
+        </section>
+
+        {/* ---------------- CHECKLIST ---------------- */}
+        <section
+          className="ohx-wrap"
+          style={{ ...sectionPad, scrollMarginTop: 72 }}
+          id="checklist"
+        >
+          <Eyebrow>The checklist</Eyebrow>
+          <h2
+            className="ohx-display"
+            style={{ marginTop: 10, maxWidth: "24ch" }}
+          >
+            The host checklist, start to finish.
+          </h2>
+          <p className="ohx-lead" style={{ marginTop: 14, maxWidth: "60ch" }}>
+            This is the working checklist behind four shadow days. Check items
+            off as you go, or copy the whole list into your own notes.
+          </p>
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
               gap: "12px 22px",
               alignItems: "center",
-              marginTop: 22,
+              margin: "22px 0 26px",
             }}
           >
-            <a
-              className="ohx-btn ohx-btn--primary"
-              href={HOST_FORM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackClick("host_interest_form_hero")}
+            <button
+              type="button"
+              className="ohx-btn ohx-btn--ghost"
+              onClick={copyChecklist}
             >
-              Sign up to host
-            </a>
-            <Link href="#checklist" className="ohx-link">
-              Skip to the checklist <span aria-hidden="true">↓</span>
-            </Link>
+              {copied ? "Copied to clipboard" : "Copy the checklist"}
+            </button>
+            <span
+              className="ohx-muted"
+              style={{ fontSize: 14 }}
+              role="status"
+            >
+              {checked.size} of {totalItems} done
+            </span>
           </div>
-          <div
-            className="ohx-rule"
-            style={{ marginTop: 28, display: "flex", flexWrap: "wrap" }}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+              gap: "20px",
+              alignItems: "start",
+            }}
           >
-            <Stat value="4" label="shadow days hosted since 2024" />
-            <Stat value="2-3" label="students per day" />
-            <Stat value="8 AM-4:30 PM" label="a full shadow day" />
+            {CHECKLIST.map((group) => (
+              <ChecklistGroup
+                key={group.id}
+                group={group}
+                checked={checked}
+                onToggle={toggle}
+              />
+            ))}
+          </Box>
+          <Prose style={{ marginTop: 28 }}>
+            <p>
+              Times in the day plan are a starting point. Move them to fit your
+              day. The one part to protect is the 3:30 PM session: go over the
+              classes each student is taking and how they relate to the jobs
+              they know about or want. Students get the most from that
+              conversation when it is about their actual classes, not generic
+              career advice.
+            </p>
+          </Prose>
+
+          <div style={{ marginTop: 40 }}>
+            <DonateCard placement="career_shadow">
+              Opportunity Hack is a nonprofit. Donations fund the hackathons
+              and the free software we build for nonprofits. If this guide
+              helps you host a shadow, consider a gift to keep the work going.
+            </DonateCard>
           </div>
-        </PageMasthead>
-      </RefinedPage>
 
-      <section className="ohx-wrap" style={sectionStyle}>
-        <p className="ohx-eyebrow">What a shadow day is</p>
-        <h2 className="ohx-display" style={{ maxWidth: "24ch" }}>
-          One day inside a real workplace.
-        </h2>
-        <Prose>
-          <p>
-            Science Shadows is the University of Arizona College of Science
-            job shadow program. A student spends one day with a working
-            professional, in person or virtual, to see what the job actually
-            looks like and to ask the questions they cannot ask in class.
-          </p>
-          <p>
-            Any professional can host. Shadows run in any industry, anywhere
-            in the world, as long as the workplace is not a home office.
-            Students cover their own travel. A shadow runs 2 to 8 hours. Most
-            hosts take 1 to 3 students at a time.
-          </p>
-          <p>
-            Students apply on Handshake by searching for{" "}
-            <strong>Science Shadows</strong>. They can apply for up to five
-            shadows per session and do one shadow per academic year. College
-            of Science undergraduates get priority for placement.{" "}
-            <a
-              className="ohx-link"
-              href={STUDENT_PROGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              How students apply
-            </a>
-          </p>
-        </Prose>
-      </section>
-
-      <section
-        className="ohx-wrap"
-        style={sunkenSectionStyle}
-        id="sign-up"
-      >
-        <p className="ohx-eyebrow">Sign up to host</p>
-        <h2 className="ohx-display" style={{ maxWidth: "24ch" }}>
-          Four steps to your first shadow.
-        </h2>
-        <Prose>
-          <ol>
-            <li>
-              <strong>Fill out the Host Interest Form.</strong> Describe the
-              shadow you want to offer: what students will see, how many you
-              can host, and any qualifications you need.{" "}
-              <a
-                className="ohx-link"
-                href={HOST_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackClick("host_interest_form_steps")}
-              >
-                Host Interest Form
-              </a>
-            </li>
-            <li>
-              <strong>The program team reviews it.</strong> Once approved,
-              your shadow is posted to Handshake and students can find and
-              apply for it.
-            </li>
-            <li>
-              <strong>Students apply.</strong> The team reviews applicants by
-              career interest, major, and preference, then connects you with
-              your students.
-            </li>
-            <li>
-              <strong>Run the day.</strong> You set the agenda. The checklist
-              below is the one on this page.
-            </li>
-          </ol>
-          <p>
-            Questions about the program? Contact Lyndsey Edmonds, Director of
-            the College of Science Career Center, at{" "}
-            <a
-              className="ohx-link"
-              href="mailto:lyndseyedmonds@arizona.edu"
-            >
-              lyndseyedmonds@arizona.edu
-            </a>
-            . The Science Shadows coordinator is Mitchell Rutherford, at{" "}
-            <a
-              className="ohx-link"
-              href="mailto:mrutherford20@arizona.edu"
-            >
-              mrutherford20@arizona.edu
-            </a>
-            .
-          </p>
-          <p>
-            For the Winter 2026-27 session, student applications run November
-            2-22, 2026, and shadows take place December 18, 2026 to January
-            12, 2027. Check the{" "}
-            <a
-              className="ohx-link"
-              href={PROGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Science Shadows program page
-            </a>{" "}
-            for the current session dates.
-          </p>
-        </Prose>
-      </section>
-
-      <section className="ohx-wrap" style={sectionStyle} id="checklist">
-        <p className="ohx-eyebrow">The checklist</p>
-        <h2 className="ohx-display" style={{ maxWidth: "24ch" }}>
-          The host checklist, start to finish.
-        </h2>
-        <p className="ohx-lead" style={{ maxWidth: "60ch" }}>
-          This is the working checklist behind four shadow days. Check items
-          off as you go, or copy the whole list into your own notes.
-        </p>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "12px 22px",
-            alignItems: "center",
-            margin: "18px 0 26px",
-          }}
-        >
-          <button
-            type="button"
-            className="ohx-btn ohx-btn--ghost"
-            onClick={copyChecklist}
-          >
-            {copied ? "Copied to clipboard" : "Copy the checklist"}
-          </button>
-          <span className="ohx-muted" style={{ fontSize: 14 }}>
-            {checked.size} of {totalItems} done
-          </span>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 20,
-          }}
-        >
-          {CHECKLIST.map((group) => (
-            <ChecklistGroup
-              key={group.id}
-              group={group}
-              checked={checked}
-              onToggle={toggle}
-            />
-          ))}
-        </div>
-        <Prose style={{ marginTop: 26 }}>
-          <p>
-            Times in the day plan are a starting point. Move them to fit your
-            day. The one part to protect is the 3:30 PM session: go over the
-            classes each student is taking and how they relate to the jobs
-            they know about or want. Students get the most from that
-            conversation when it is about their actual classes, not generic
-            career advice.
-          </p>
-        </Prose>
-      </section>
-
-      <section
-        className="ohx-wrap"
-        style={sunkenSectionStyle}
-      >
-        <p className="ohx-eyebrow">Who wrote this</p>
-        <h2 className="ohx-display" style={{ maxWidth: "24ch" }}>
-          Tested on real shadow days.
-        </h2>
-        <Prose>
-          <p>
-            Greg Vannoni is a software engineer at Meta Reality Labs, on the
-            Health Insights team. He hosted Science Shadows students in May
-            2024 in Menlo Park and virtually, in January 2025 in Menlo Park,
-            and in January 2026 in Bellevue. He is also president of
-            Opportunity Hack.
-          </p>
-          <p>
-            Every item on this page comes from those days: the briefing doc he
-            sends students, the agenda he runs, and the follow-up he does
-            after. Nothing here is theory.
-          </p>
-        </Prose>
-        <div style={{ marginTop: 28 }}>
-          <DonateCard placement="career_shadow">
-            Opportunity Hack is a nonprofit. Donations fund the hackathons and
-            the free software we build for nonprofits. If this guide helps you
-            host a shadow, consider a gift to keep the work going.
-          </DonateCard>
-        </div>
-      </section>
-
-      <RefinedPage>
-        <CtaBand
-          eyebrow="Ready when you are"
-          title="Host a student. Change a career path."
-          body="Fill out the Host Interest Form and the University of Arizona team will take it from there."
-          primary={{
-            label: "Sign up to host",
-            href: HOST_FORM_URL,
-            onClick: () => trackClick("host_interest_form_cta"),
-          }}
-          secondary={{
-            label: "Science Shadows program page",
-            href: PROGRAM_URL,
-          }}
-        />
-      </RefinedPage>
+          <CtaBand
+            eyebrow="Ready when you are"
+            title="Host a student. Change a career path."
+            body="Fill out the Host Interest Form and the University of Arizona team will take it from there."
+            primary={{
+              label: "Sign up to host",
+              href: HOST_FORM_URL,
+              onClick: () => trackClick("host_interest_form_cta"),
+            }}
+            secondary={{
+              label: "Science Shadows program page",
+              href: PROGRAM_URL,
+            }}
+          />
+        </section>
+      </RefinedRoot>
     </>
   );
 }
