@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3f45c3fa-7df7-4e4a-af42-20b5d444926d",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/career-shadow-20261119-002806/candidate.json",
+  "output": "/home/hatch/workspace/ohack-repos/frontend-ohack.dev/docs/diagrams/career-shadow-20261119-002806/career-shadow-architecture.html",
+  "specification": {
+    "sha256": "02a13b9ed862da6324c3322686d398c2dfa53abf8156c5ed43238224093bb082",
+    "bytes": 3713
+  },
+  "artifact": {
+    "sha256": "762309f29edc5059d94087bd145fe757ba7878f465cae621aa87cfe2235f5f95",
+    "bytes": 845348
+  }
+}
