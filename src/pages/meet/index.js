@@ -125,6 +125,56 @@ const AnswerMark = ({ answer }) => (
   </span>
 );
 
+// Autosave status line. Fixed height so the page doesn't jump as it changes.
+const SaveStatus = ({ state, dirty, nameMissing, onRetry }) => {
+  let text = "Saved. Changes save automatically.";
+  let color = "var(--muted)";
+  if (nameMissing) {
+    text = "Add your name and your change will save.";
+    color = "var(--danger)";
+  } else if (state === "error") {
+    text = "Your last change isn't saved.";
+    color = "var(--danger)";
+  } else if (state === "saving" || dirty) {
+    text = "Saving…";
+  } else if (state === "saved") {
+    text = "✓ Saved. Changes save automatically.";
+    color = "var(--success)";
+  }
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        minHeight: 28,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        fontSize: 14,
+        color,
+      }}
+    >
+      <span>{text}</span>
+      {state === "error" && !nameMissing && (
+        <button
+          type="button"
+          className="ohx-link"
+          onClick={onRetry}
+          style={{
+            border: 0,
+            padding: 0,
+            backgroundColor: "transparent",
+            font: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+};
+
 const CodeEntry = ({ onSubmit }) => {
   const [value, setValue] = useState("");
   return (
@@ -179,6 +229,10 @@ const MeetPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
+  // Autosave status once a response exists: idle | saving | saved | error
+  const [saveState, setSaveState] = useState("idle");
+  const editRevRef = useRef(0);
+  const savingRef = useRef(false);
   const seededRef = useRef("");
 
   // Browser timezone is only known on the client; set after mount so the
@@ -259,19 +313,28 @@ const MeetPage = () => {
   const finalSlot = slots.find((s) => s.id === poll?.final_slot_id);
   const respondents = others.length + (saved ? 1 : 0);
 
+  const markEdited = () => {
+    editRevRef.current += 1;
+    setDirty(true);
+    setNotice("");
+    setFormError("");
+    setSaveState("idle");
+  };
+
   const cycle = (slotId) => {
     setChoices((current) => ({
       ...current,
       [slotId]: nextAnswer(current[slotId]),
     }));
-    setDirty(true);
-    setNotice("");
+    markEdited();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError("");
-    setNotice("");
+  // One save path. The first save is explicit (name + email are committed
+  // then, and the email can't change afterwards); every later change saves
+  // itself through the effect below. `auto` saves stay quiet: no banner, no
+  // GA event per tap.
+  const save = async ({ auto = false } = {}) => {
+    if (savingRef.current || !poll) return;
     if (!name.trim()) {
       setFormError("Add your name so the others know who answered.");
       return;
@@ -280,12 +343,17 @@ const MeetPage = () => {
       setFormError("Add a valid email. The calendar invite is sent there.");
       return;
     }
+    const revision = editRevRef.current;
+    savingRef.current = true;
     setSubmitting(true);
+    setSaveState("saving");
+    setFormError("");
     try {
       const recaptchaToken = await getRecaptchaToken("meet_vote");
       if (!recaptchaToken && process.env.NODE_ENV !== "development") {
-        setFormError("We couldn't verify your browser. Reload and try again.");
-        return;
+        throw new Error(
+          "We couldn't verify your browser. Reload and try again.",
+        );
       }
       const result = await meetApi.submitVote(poll.code, {
         name: name.trim(),
@@ -303,24 +371,64 @@ const MeetPage = () => {
         name: name.trim(),
         email: email.trim(),
       });
-      setDirty(false);
-      setNotice(
-        result.updated
-          ? "Your answers were updated."
-          : "Thanks, your answers are saved.",
-      );
-      trackEvent({
-        action: result.updated ? "meet_vote_updated" : "meet_vote_submitted",
-        params: { poll_code: poll.code },
-      });
+      // An edit made while this request was in flight is still unsaved; the
+      // autosave effect picks it up when `submitting` clears.
+      if (editRevRef.current === revision) setDirty(false);
+      setSaveState("saved");
+      if (!auto) {
+        setNotice(
+          "Thanks, your answers are saved. Change them any time; changes save on their own.",
+        );
+        trackEvent({
+          action: result.updated ? "meet_vote_updated" : "meet_vote_submitted",
+          params: { poll_code: poll.code },
+        });
+      }
       load(poll.code, { quiet: true });
     } catch (error) {
       if (error.code === "poll_closed") load(poll.code, { quiet: true });
+      setSaveState("error");
       setFormError(error.message || "Could not save your answers.");
     } finally {
+      savingRef.current = false;
       setSubmitting(false);
     }
   };
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setNotice("");
+    save();
+  };
+
+  // Autosave: once a response exists, any change saves itself shortly after
+  // the last tap or keystroke. A failed save waits for the next edit or the
+  // Retry button instead of looping.
+  const canAutosave =
+    Boolean(saved) &&
+    dirty &&
+    isOpen &&
+    !submitting &&
+    saveState !== "error" &&
+    Boolean(name.trim());
+  useEffect(() => {
+    if (!canAutosave) return undefined;
+    const timer = setTimeout(() => saveRef.current({ auto: true }), 700);
+    return () => clearTimeout(timer);
+  }, [canAutosave, choices, name]);
+
+  // Leaving the tab inside the debounce window: save now.
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === "hidden" && canAutosave) {
+        saveRef.current({ auto: true });
+      }
+    };
+    document.addEventListener("visibilitychange", flush);
+    return () => document.removeEventListener("visibilitychange", flush);
+  }, [canAutosave]);
 
   const title = poll?.title ? `${poll.title} - Find a time` : "Find a time";
 
@@ -700,7 +808,10 @@ const MeetPage = () => {
                     label="Your name"
                     name="name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (saved) markEdited();
+                    }}
                     required
                     fullWidth
                     sx={fieldSx}
@@ -749,27 +860,36 @@ const MeetPage = () => {
                         {notice}
                       </p>
                     )}
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <button
-                        type="submit"
-                        className="ohx-btn ohx-btn--primary"
-                        disabled={submitting || recaptchaLoading}
-                        style={
-                          submitting || recaptchaLoading
-                            ? { opacity: 0.6, cursor: "not-allowed" }
-                            : undefined
-                        }
+                    {saved ? (
+                      <SaveStatus
+                        state={saveState}
+                        dirty={dirty}
+                        nameMissing={!name.trim()}
+                        onRetry={() => save({ auto: true })}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
                       >
-                        {submitting
-                          ? "Saving…"
-                          : saved
-                            ? "Update my answers"
-                            : "Save my answers"}
-                      </button>
-                      {submitting && <CircularProgress size={18} />}
-                    </div>
+                        <button
+                          type="submit"
+                          className="ohx-btn ohx-btn--primary"
+                          disabled={submitting || recaptchaLoading}
+                          style={
+                            submitting || recaptchaLoading
+                              ? { opacity: 0.6, cursor: "not-allowed" }
+                              : undefined
+                          }
+                        >
+                          {submitting ? "Saving…" : "Save my answers"}
+                        </button>
+                        {submitting && <CircularProgress size={18} />}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
