@@ -38,6 +38,7 @@ import {
   SmartToy as SmartToyIcon,
   WorkOutline as WorkOutlineIcon,
   Receipt as ReceiptIcon,
+  EventAvailable as EventAvailableIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import {
@@ -150,6 +151,13 @@ const adminPages = [
     label: "Reimbursements",
     description: "Review food reimbursement requests and approve or pay them",
     icon: <ReceiptIcon fontSize="large" style={{ color: "#1B3A6B" }} />,
+  },
+  {
+    path: "/admin/meet",
+    label: "Meeting Scheduler",
+    description:
+      "Poll people for a time that works, then send the Google Meet invite",
+    icon: <EventAvailableIcon fontSize="large" style={{ color: "#2F6E50" }} />,
   },
   {
     path: "/admin/praise-bot",
