@@ -45,6 +45,7 @@ import {
   Feedback as FeedbackIcon,
   SmartToy as SmartToyIcon,
   WorkOutline as WorkOutlineIcon,
+  EventAvailable as EventAvailableIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -102,6 +103,11 @@ const adminPages = [
     label: "Contact",
     icon: <ContactMailIcon style={{ color: "#00897b" }} />
   },  
+  {
+    path: "/admin/meet",
+    label: "Meeting Scheduler",
+    icon: <EventAvailableIcon style={{ color: "#2F6E50" }} />
+  },
   {
     path: "/admin/giveaways",
     label: "Giveaways",
