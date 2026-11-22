@@ -290,6 +290,7 @@ const JudgingResults = ({
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [nonprofitNames, setNonprofitNames] = useState({});
   const [loadingNonprofits, setLoadingNonprofits] = useState(false);
+  const [exportingFeedback, setExportingFeedback] = useState(false);
 
   const eventTimezone = selectedHackathonData?.timezone;
 
@@ -373,7 +374,8 @@ const JudgingResults = ({
         results.forEach((r) => {
           map[r.id] = r.name;
         });
-        setNonprofitNames(map);
+        setNonprofitNames((prev) => ({ ...prev, ...map }));
+        return map;
       } finally {
         setLoadingNonprofits(false);
       }
@@ -591,6 +593,101 @@ const JudgingResults = ({
     notify("Results exported successfully!", { variant: "success" });
   };
 
+  // Anonymous feedback for teams, both rounds: no judge names, no scores, and
+  // sorted by team name so the row order doesn't give away the ranking.
+  // Round 1 scores aren't loaded by this tab, so they're fetched on click.
+  const exportFeedback = async () => {
+    if (!selectedHackathon || !selectedHackathonData) return;
+    setExportingFeedback(true);
+    try {
+      const [bulk, teamsResponse] = await Promise.all([
+        judgeApi.getBulkScores(selectedHackathon, "round1", accessToken, orgId),
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_SERVER_URL}/api/team/${selectedHackathonData.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-Org-Id": orgId,
+            },
+          },
+        ),
+      ]);
+      const teamsById = new Map(
+        (teamsResponse.data.teams || []).map((t) => [t.id, t]),
+      );
+      round2Scores.forEach((r) => {
+        if (r.team?.id && !teamsById.has(r.team.id)) {
+          teamsById.set(r.team.id, r.team);
+        }
+      });
+      const round1Scores = bulk?.scores || [];
+      const names = {
+        ...nonprofitNames,
+        ...((await fetchNonprofitNames(
+          round1Scores.map((s) => teamsById.get(s.team_id)).filter(Boolean),
+        )) || {}),
+      };
+      const toRow = (round, teamId, score) => {
+        const team = teamsById.get(teamId);
+        return {
+          team: team?.name || `Team ${teamId}`,
+          nonprofit: team?.selected_nonprofit_id
+            ? names[team.selected_nonprofit_id] || "Unknown"
+            : "No nonprofit",
+          round,
+          feedback: feedbackOf(score).trim(),
+        };
+      };
+      const rows = [
+        ...round1Scores.map((s) => toRow("Round 1", s.team_id, s)),
+        ...round2Scores.flatMap((r) =>
+          r.scores
+            .filter((js) => js.assigned)
+            .map((js) => toRow("Round 2", r.team.id, js.score)),
+        ),
+      ]
+        .filter((row) => row.feedback)
+        .sort(
+          (a, b) =>
+            a.team.localeCompare(b.team) || a.round.localeCompare(b.round),
+        );
+      if (rows.length === 0) {
+        notify("No feedback to export", { variant: "warning" });
+        return;
+      }
+      const filename = csvFilename(
+        selectedHackathon || selectedHackathonData?.title || "hackathon",
+        "judge-feedback",
+      );
+      downloadCsv(
+        filename,
+        buildCsv(rows, [
+          { key: "team", label: "Team Name" },
+          { key: "nonprofit", label: "Nonprofit" },
+          { key: "round", label: "Round" },
+          { key: "feedback", label: "Feedback" },
+        ]),
+      );
+      ga.trackStructuredEvent(
+        ga.EventCategory.ADMIN,
+        "admin_csv_export",
+        "judging_feedback",
+        rows.length,
+        { event_id: selectedHackathon || undefined },
+      );
+      notify("Feedback exported (no judge names or scores)", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error exporting feedback:", error);
+      notify("Couldn't load Round 1 feedback — nothing was exported", {
+        variant: "error",
+      });
+    } finally {
+      setExportingFeedback(false);
+    }
+  };
+
   const copyAllFeedback = (row) => {
     if (!row || row.scores.length === 0) {
       notify("No feedback available to copy", { variant: "warning" });
@@ -651,6 +748,16 @@ const JudgingResults = ({
               disabled={round2Scores.length === 0 || loadingScores}
             >
               Export Results
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={exportFeedback}
+              disabled={
+                !selectedHackathonData || loadingScores || exportingFeedback
+              }
+            >
+              Export Feedback
             </Button>
             <Button
               variant="outlined"
