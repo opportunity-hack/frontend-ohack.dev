@@ -51,8 +51,8 @@ export class SlackService extends SocialMediaService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to post to Slack');
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || error.error || 'Failed to post to Slack');
       }
 
       const result = await response.json();

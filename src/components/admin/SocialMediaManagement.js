@@ -47,7 +47,7 @@ import { SocialMediaManager } from '../../lib/social-media/SocialMediaManager';
 import { SUPPORTED_PLATFORMS } from '../../lib/social-media/index';
 import { useAuthInfo } from '@propelauth/react';
 
-const SocialMediaManagement = ({ onSnackbar }) => {
+const SocialMediaManagement = ({ onSnackbar, onOpenSlack }) => {
   const { accessToken, userClass } = useAuthInfo();
   const { apiServerUrl } = useEnv();
   const [manager, setManager] = useState(null);
@@ -59,11 +59,6 @@ const SocialMediaManagement = ({ onSnackbar }) => {
   const [previewDialog, setPreviewDialog] = useState({ open: false, newsItem: null, platform: null });
   const [settingsDialog, setSettingsDialog] = useState(false);
   const [postingHistory, setPostingHistory] = useState([]);
-  const [adhocMessage, setAdhocMessage] = useState({
-    text: '',
-    channel: 'general',
-    sending: false
-  });
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -201,35 +196,6 @@ const SocialMediaManagement = ({ onSnackbar }) => {
     }
   };
 
-  // Send adhoc message to Slack
-  const handleSendAdhocMessage = async () => {
-    if (!manager || !adhocMessage.text.trim()) return;
-
-    try {
-      setAdhocMessage({ ...adhocMessage, sending: true });
-
-      const slackService = manager.getService('slack');
-      if (!slackService) {
-        onSnackbar?.('Slack service not available', 'error');
-        return;
-      }
-
-      const result = await slackService.post(adhocMessage.text, adhocMessage.channel);
-
-      if (result.success) {
-        onSnackbar?.(`Message sent to #${adhocMessage.channel}`, 'success');
-        setAdhocMessage({ text: '', channel: adhocMessage.channel, sending: false });
-      } else {
-        onSnackbar?.(result.message || 'Failed to send message', 'error');
-      }
-    } catch (error) {
-      console.error('Error sending adhoc message:', error);
-      onSnackbar?.('Failed to send message', 'error');
-    } finally {
-      setAdhocMessage({ ...adhocMessage, sending: false });
-    }
-  };
-
   const getPlatformStatusColor = (status) => {
     if (!status) return 'default';
     return status.valid ? 'success' : 'error';
@@ -291,47 +257,20 @@ const SocialMediaManagement = ({ onSnackbar }) => {
         </Grid>
       </Box>
 
-      {/* Adhoc Slack Message */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Send Message to Slack
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-          <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel size="small">Channel</InputLabel>
-            <Select
-              size="small"
-              value={adhocMessage.channel}
-              label="Channel"
-              onChange={(e) => setAdhocMessage({ ...adhocMessage, channel: e.target.value })}
-            >
-              <MenuItem value="general">general</MenuItem>
-              <MenuItem value="ask-a-mentor">ask-a-mentor</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            multiline
-            rows={3}
-            placeholder="Type your message here..."
-            value={adhocMessage.text}
-            onChange={(e) => setAdhocMessage({ ...adhocMessage, text: e.target.value })}
-            sx={{ flexGrow: 1 }}
-            disabled={adhocMessage.sending}
-          />
-          <Button
-            variant="contained"
-            startIcon={adhocMessage.sending ? <CircularProgress size={16} /> : <SendIcon />}
-            onClick={handleSendAdhocMessage}
-            disabled={adhocMessage.sending || !adhocMessage.text.trim()}
-            sx={{ height: 'fit-content', mt: 1 }}
-          >
-            Send
-          </Button>
-        </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-          This will send a direct message to the selected Slack channel
-        </Typography>
-      </Paper>
+      <Alert
+        severity="info"
+        sx={{ mb: 4 }}
+        action={
+          onOpenSlack ? (
+            <Button color="inherit" size="small" onClick={onOpenSlack}>
+              Open Slack message
+            </Button>
+          ) : null
+        }
+      >
+        Sending a message to a Slack channel has its own tab now. This tab is
+        for posting news to social platforms.
+      </Alert>
 
       {/* Controls */}
       <Paper sx={{ p: 3, mb: 4 }}>

@@ -5,6 +5,7 @@ import {
   Email as EmailIcon,
   Send as SendIcon,
   Share as ShareIcon,
+  Tag as SlackIcon,
 } from "@mui/icons-material";
 import { useAuthInfo, withRequiredAuthInfo } from "@propelauth/react";
 
@@ -12,8 +13,18 @@ import AdminPage from "../../../components/admin/AdminPage";
 import EmailTemplateManager from "../../../components/admin/EmailTemplateManager";
 import EmailCommunication from "../../../components/admin/EmailCommunication";
 import SocialMediaManagement from "../../../components/admin/SocialMediaManagement";
+import SlackMessageComposer from "../../../components/admin/SlackMessageComposer";
 
-const TAB_SLUGS = ["templates", "email", "social"];
+// Order here is the tab order. Tabs are matched by SLUG, so reordering or
+// adding one never breaks a ?tab= deep link. With no ?tab= the first tab
+// (Slack) opens.
+const TABS = [
+  { slug: "slack", label: "Slack message", icon: <SlackIcon /> },
+  { slug: "email", label: "Email", icon: <SendIcon /> },
+  { slug: "templates", label: "Email templates", icon: <EmailIcon /> },
+  { slug: "social", label: "Social media", icon: <ShareIcon /> },
+];
+const TAB_SLUGS = TABS.map((tab) => tab.slug);
 
 const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
   const { accessToken } = useAuthInfo();
@@ -56,6 +67,7 @@ const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
     );
   };
 
+  const activeSlug = TAB_SLUGS[activeTab] || TAB_SLUGS[0];
   const org = userClass.getOrgByName("Opportunity Hack Org");
   const orgId = org?.orgId;
   const isAdmin = org?.hasPermission("volunteer.admin");
@@ -75,33 +87,52 @@ const CommunicationAdminPage = withRequiredAuthInfo(({ userClass }) => {
       snackbar={snackbar}
       onSnackbarClose={handleSnackbarClose}
     >
-      <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        <Tab
-          icon={<EmailIcon />}
-          iconPosition="start"
-          label="Email Templates"
-        />
-        <Tab icon={<SendIcon />} iconPosition="start" label="Email" />
-        <Tab icon={<ShareIcon />} iconPosition="start" label="Social Media" />
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+      >
+        {TABS.map((tab) => (
+          <Tab
+            key={tab.slug}
+            icon={tab.icon}
+            iconPosition="start"
+            label={tab.label}
+            sx={{ textTransform: "none", minHeight: 48 }}
+          />
+        ))}
       </Tabs>
 
-      {activeTab === 0 && (
-        <EmailTemplateManager
+      {activeSlug === "slack" && (
+        <SlackMessageComposer
           accessToken={accessToken}
           orgId={orgId}
           onSnack={handleSnackbar}
         />
       )}
-      {activeTab === 1 && (
+      {activeSlug === "email" && (
         <EmailCommunication
           accessToken={accessToken}
           orgId={orgId}
           onSnack={handleSnackbar}
         />
       )}
-      {activeTab === 2 && (
+      {activeSlug === "templates" && (
+        <EmailTemplateManager
+          accessToken={accessToken}
+          orgId={orgId}
+          onSnack={handleSnackbar}
+        />
+      )}
+      {activeSlug === "social" && (
         <Box>
-          <SocialMediaManagement onSnackbar={handleSnackbar} />
+          <SocialMediaManagement
+            onSnackbar={handleSnackbar}
+            onOpenSlack={() => handleTabChange(null, TAB_SLUGS.indexOf("slack"))}
+          />
         </Box>
       )}
     </AdminPage>
