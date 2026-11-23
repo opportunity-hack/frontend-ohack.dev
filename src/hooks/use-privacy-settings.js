@@ -23,7 +23,6 @@ const DEFAULT_PRIVACY_SETTINGS = {
   bio_video_url: "private",
   portfolio_links: "private",
   teams: "private",
-  certificates: "private",
   github_history: "private",
   hearts: "private",
 };

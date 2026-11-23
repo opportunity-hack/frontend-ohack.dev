@@ -45,6 +45,7 @@ import { FaPaperPlane, FaSlack, FaLinkedin } from 'react-icons/fa';
 import NextLink from 'next/link';
 import HackerDepositChip from "./HackerDepositChip";
 import { JUDGE_TRAINING_CERTS } from "../../lib/lmsClient";
+import { certificateRoleForType, eventCertificates } from "./volunteer/certificateStatus";
 import { normalizeEmail } from "../../hooks/use-judge-training-status";
 import {
   APPLICATION_STATUSES,
@@ -261,6 +262,10 @@ const VolunteerTable = ({
   // onBatchEmail(volunteers, type, audience) — audience: "roster" | "denied" | "waitlisted" | "pending"
   onBatchEmail,
   onBulkCertificate, // New prop for bulk certificate sending
+  // Event context — lets the Certs column say whether THIS event's
+  // mentor/judge certificate went out (see certificateStatus.js)
+  eventId,
+  eventStartDate,
   // Decision controls: `status` (review axis) and `isSelected` (roster axis)
   onStatusChange,
   onRosterChange,
@@ -1058,15 +1063,29 @@ const VolunteerTable = ({
       case "certificates":
         const certs = volunteer.certificates || [];
         const certCount = certs.length;
+        // Mentors/judges: did this event's certificate go out?
+        const certRole = certificateRoleForType(type);
+        const sentForEvent = eventCertificates(certs, { type, eventId, eventStartDate });
+        const sentFilenames = new Set(sentForEvent.map((c) => c.filename));
 
-        if (certCount === 0) {
+        if (certCount === 0 || (certRole && sentForEvent.length === 0 && volunteer.isSelected)) {
+          const notSent = certRole && volunteer.isSelected;
           return (
-            <Chip
-              label="0"
-              size="small"
-              variant="outlined"
-              sx={{ minWidth: 32, fontSize: '0.75rem' }}
-            />
+            <Tooltip
+              title={
+                notSent
+                  ? `No ${certRole} certificate sent for this event${certCount ? ` (${certCount} from other events/reasons)` : ''}`
+                  : ''
+              }
+            >
+              <Chip
+                label={notSent ? 'Not sent' : '0'}
+                size="small"
+                variant="outlined"
+                color={notSent ? 'warning' : 'default'}
+                sx={{ minWidth: 32, fontSize: '0.75rem' }}
+              />
+            </Tooltip>
           );
         }
 
@@ -1083,6 +1102,7 @@ const VolunteerTable = ({
                 <Box key={idx} sx={{ mb: hasMetadata ? 1 : 0.5, pb: hasMetadata ? 0.5 : 0, borderBottom: hasMetadata && idx < certs.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
                   {hasMetadata && cert.reasons && (
                     <Typography variant="caption" sx={{ display: 'block', color: '#fff', fontWeight: 600, mb: 0.25 }}>
+                      {sentFilenames.has(certFilename) && '✓ This event — '}
                       {cert.hearts && `${cert.hearts} heart${cert.hearts !== 1 ? 's' : ''} - `}{cert.reasons.join(', ')}
                     </Typography>
                   )}
@@ -1132,10 +1152,10 @@ const VolunteerTable = ({
             }}
           >
             <Chip
-              label={certCount}
+              label={sentForEvent.length > 0 ? 'Sent' : certCount}
               size="small"
-              variant="outlined"
-              color="success"
+              variant={sentForEvent.length > 0 ? 'filled' : 'outlined'}
+              color={sentForEvent.length > 0 ? 'success' : 'default'}
               sx={{ cursor: 'pointer', minWidth: 32, fontSize: '0.75rem' }}
             />
           </Tooltip>

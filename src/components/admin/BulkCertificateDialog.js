@@ -67,6 +67,7 @@ const BulkCertificateDialog = ({
   volunteerType, // 'mentors' or 'judges'
   accessToken,
   orgId,
+  eventId, // stamped on each certificate so the admin table can show per-event status
   onComplete,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -137,6 +138,7 @@ const BulkCertificateDialog = ({
                 slack_user_ids: [user.slack_user_id],
                 reasons: [heartType],
                 amount: 1,
+                event_id: eventId,
               }),
             }
           );
