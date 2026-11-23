@@ -39,6 +39,7 @@ import {
   WorkOutline as WorkOutlineIcon,
   Receipt as ReceiptIcon,
   EventAvailable as EventAvailableIcon,
+  VpnKey as VpnKeyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import {
@@ -158,6 +159,13 @@ const adminPages = [
     description:
       "Poll people for a time that works, then send the Google Meet invite",
     icon: <EventAvailableIcon fontSize="large" style={{ color: "#2F6E50" }} />,
+  },
+  {
+    path: "/admin/mcp",
+    label: "MCP Access",
+    description:
+      "Create a personal token so Claude Code can use the admin tools as you",
+    icon: <VpnKeyIcon fontSize="large" style={{ color: "#1B3A6B" }} />,
   },
   {
     path: "/admin/praise-bot",

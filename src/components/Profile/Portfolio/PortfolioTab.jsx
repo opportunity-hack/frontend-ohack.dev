@@ -30,7 +30,6 @@ const SECTION_TOGGLES = [
   { field: "bio_video_url", label: "Bio video" },
   { field: "portfolio_links", label: "My links" },
   { field: "teams", label: "Teams & demo videos" },
-  { field: "certificates", label: "Certificates" },
   { field: "github_history", label: "GitHub contributions" },
   { field: "hearts", label: "Hearts & tier" },
   { field: "hackathon_history", label: "Hackathon history" },

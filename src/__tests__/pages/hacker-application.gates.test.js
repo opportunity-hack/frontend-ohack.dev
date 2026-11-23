@@ -57,6 +57,12 @@ import HackerApplicationPage from "../../pages/hack/[event_id]/hacker-applicatio
 const DAY = 24 * 60 * 60 * 1000;
 const isoDate = (ms) => new Date(ms).toISOString().slice(0, 10);
 
+// The deadline is 8 PM event time three days before the start, which is
+// 03:00 UTC. A start two UTC days out therefore has a deadline that is still
+// in the future between 00:00 and 03:00 UTC; "past the deadline" tests use
+// PAST_DEADLINE_START_IN_DAYS so they hold at any hour.
+const PAST_DEADLINE_START_IN_DAYS = 1;
+
 function mockEvent({ startInDays, constraints = {} }) {
   const start = Date.now() + startInDays * DAY;
   const event = {
@@ -93,7 +99,7 @@ it("is open before the deadline with the normal deadline card", async () => {
 });
 
 it("stays open past the deadline (nudge only) with a 'Still open' card", async () => {
-  mockEvent({ startInDays: 2 });
+  mockEvent({ startInDays: PAST_DEADLINE_START_IN_DAYS });
   renderPage();
   expect(await screen.findByText("Still open — apply now")).toBeInTheDocument();
   expect(screen.getByText(/Our priority deadline was/)).toBeInTheDocument();
@@ -152,7 +158,7 @@ it("unlocks a locked form with the access code", async () => {
 });
 
 it("auto-closes at the deadline only when opted in, with the deadline sentence", async () => {
-  mockEvent({ startInDays: 2, constraints: { application_hacker_close_at_deadline: true } });
+  mockEvent({ startInDays: PAST_DEADLINE_START_IN_DAYS, constraints: { application_hacker_close_at_deadline: true } });
   renderPage();
   expect(await screen.findByText(/The deadline passed on/)).toBeInTheDocument();
 });

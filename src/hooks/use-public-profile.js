@@ -22,7 +22,6 @@ const PRIVATE_FALLBACK = {
   bio_video_url: "private",
   portfolio_links: "private",
   teams: "private",
-  certificates: "private",
   github_history: "private",
   hearts: "private",
 };

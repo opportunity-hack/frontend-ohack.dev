@@ -132,7 +132,8 @@ const PublicProfile = ({ userid, initialData = null }) => {
   const showAbout = showBio || showBioVideo || aboutFields.length > 0 || (isPublic("expertise") && profile?.expertise?.length > 0);
   const teams = isPublic("teams") ? profile?.teams || [] : [];
   const showGitHub = isPublic("github_history") && (profile?.github_history?.length > 0 || profile?.github);
-  const showCertificates = isPublic("certificates") && profile?.certificates &&
+  // Certificates always show — there is no privacy toggle for them.
+  const showCertificates = profile?.certificates &&
     ((profile.certificates.github_certificates || []).length > 0 || (profile.certificates.heart_certificates || []).length > 0);
 
   return (

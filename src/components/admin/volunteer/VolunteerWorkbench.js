@@ -1597,6 +1597,8 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
                 slackRefreshing={slackRefreshing}
                 onBatchEmail={handleBatchEmail}
                 onBulkCertificate={handleBulkCertificate}
+                eventId={selectedEventId}
+                eventStartDate={hackathons.find((h) => h?.event_id === selectedEventId)?.start_date}
                 onStatusChange={handleStatusChange}
                 onRosterChange={handleRosterChange}
                 pendingIds={pendingIds}
@@ -1797,6 +1799,7 @@ const VolunteerWorkbench = ({ userClass, embedded = false, externalEventId, onSn
         volunteerType={volunteerTypeForBulkCertificate}
         accessToken={accessToken}
         orgId={orgId}
+        eventId={selectedEventId}
         onComplete={handleBulkCertificateComplete}
       />
 

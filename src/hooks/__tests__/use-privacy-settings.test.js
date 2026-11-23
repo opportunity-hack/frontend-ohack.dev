@@ -35,7 +35,7 @@ describe('usePrivacySettings', () => {
     expect(settings).not.toHaveProperty('why_are_you_here');
 
     // Portfolio-era fields are present and private
-    ['bio', 'bio_video_url', 'portfolio_links', 'teams', 'certificates',
+    ['bio', 'bio_video_url', 'portfolio_links', 'teams',
       'github_history', 'hearts'].forEach((field) => {
       expect(settings[field]).toBe('private');
     });
