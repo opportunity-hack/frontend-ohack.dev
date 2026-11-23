@@ -22,6 +22,7 @@ module.exports = {
     "/hack/*/feedback",
     "/hack/*/share/*",
     "/hack/*/judging",
+    "/meet",
     "/signup2",
     "/store/cart",
     "/store/success",
