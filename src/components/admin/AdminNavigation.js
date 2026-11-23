@@ -46,6 +46,7 @@ import {
   SmartToy as SmartToyIcon,
   WorkOutline as WorkOutlineIcon,
   EventAvailable as EventAvailableIcon,
+  VpnKey as VpnKeyIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from '@mui/icons-material/Handshake';
 
@@ -107,6 +108,11 @@ const adminPages = [
     path: "/admin/meet",
     label: "Meeting Scheduler",
     icon: <EventAvailableIcon style={{ color: "#2F6E50" }} />
+  },
+  {
+    path: "/admin/mcp",
+    label: "MCP Access",
+    icon: <VpnKeyIcon style={{ color: "#1B3A6B" }} />
   },
   {
     path: "/admin/giveaways",
