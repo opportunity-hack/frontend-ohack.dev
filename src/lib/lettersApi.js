@@ -109,6 +109,45 @@ const lettersApi = {
       fallback: "Could not download the letter",
     });
   },
+
+  // ---- Admin (volunteer.admin; every call carries X-Org-Id) ----
+
+  /** {event_id, event_title, end_date, rows: [{user_id, email, name, role, volunteer_id, eligible, reason, evidence, letter_id, status, issued_at, exception, exception_note, revoked_reason, facts, name_on_letter}]} */
+  adminList(eventId, accessToken, orgId) {
+    return request("get", `/api/admin/letters?${q({ event_id: eventId })}`, accessToken, {
+      orgId,
+      fallback: "Could not load letters",
+    });
+  },
+
+  /** The exact PDF the person gets -> {blob, headers}. Headers:
+   * x-letter-status, x-letter-eligible, x-letter-reason, x-letter-id. */
+  adminPreview({ userId, eventId, role }, accessToken, orgId) {
+    const query = q({ user_id: userId, event_id: eventId, role });
+    return request("get", `/api/admin/letters/preview?${query}`, accessToken, {
+      orgId,
+      blob: true,
+      fallback: "Could not render the letter",
+    });
+  },
+
+  adminRevoke(letterId, reason, accessToken, orgId) {
+    return request(
+      "post",
+      `/api/admin/letters/${encodeURIComponent(letterId)}/revoke`,
+      accessToken,
+      { orgId, data: { reason }, fallback: "Could not revoke the letter" },
+    );
+  },
+
+  /** {email | user_id, event_id, role, note} -> {letter_id, status} */
+  adminException(payload, accessToken, orgId) {
+    return request("post", "/api/admin/letters/exception", accessToken, {
+      orgId,
+      data: payload,
+      fallback: "Could not issue the exception letter",
+    });
+  },
 };
 
 export default lettersApi;
