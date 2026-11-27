@@ -155,6 +155,14 @@ Events added by the DevPost-replacement work (`docs/plans/team-dashboard-devpost
 | `giveaway_update` | Saved again (changed picks or refreshed entry count) | `{ event_label: <giveaway_id>, value: <prizes picked> }` | Do people come back after improving their profile |
 | `giveaway_withdraw` | Withdrew after the two-step confirm | `{ event_label: <giveaway_id>, value: <prizes they had picked> }` | Friction / regret signal |
 
+### Participation letters (`/profile#volunteer-history` + `/letters/verify/[id]`, Nov 2026)
+
+| Event Name | Description | Parameters | Business Value |
+|------------|-------------|------------|---------------|
+| `letter_request` | "Download signed letter" issued (or re-returned) a letter (`Profile/Letters/LetterDialog.jsx`) | `{ event_id, role, created }` | How many people self-serve a letter instead of emailing staff |
+| `letter_download` | The signed PDF was downloaded | `{ event_id, role, source: "dialog" \| "profile" }` | Repeat use of letters |
+| `letter_verify_view` | Someone opened a public verification link | `{ status: "valid" \| "revoked" \| "not_found" \| "unavailable" }` | Are employers/schools actually checking letters |
+
 ### Team membership (`/hack/[event_id]#teams` cards + `/hack/[event_id]/team/[team_id]#members`, Nov 2026, `event_category: "engagement"`)
 
 Fired from `src/lib/teamMembershipApi.js` — the one client both pages use — only after the backend confirmed the change (never on a 200 + "Error: …" soft failure).
