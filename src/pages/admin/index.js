@@ -40,6 +40,7 @@ import {
   Receipt as ReceiptIcon,
   EventAvailable as EventAvailableIcon,
   VpnKey as VpnKeyIcon,
+  HistoryEdu as HistoryEduIcon,
 } from "@mui/icons-material";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import {
@@ -159,6 +160,13 @@ const adminPages = [
     description:
       "Poll people for a time that works, then send the Google Meet invite",
     icon: <EventAvailableIcon fontSize="large" style={{ color: "#2F6E50" }} />,
+  },
+  {
+    path: "/admin/letters",
+    label: "Participation Letters",
+    description:
+      "Check signed participation letters, revoke one, or issue an exception",
+    icon: <HistoryEduIcon fontSize="large" style={{ color: "#1B3A6B" }} />,
   },
   {
     path: "/admin/mcp",
