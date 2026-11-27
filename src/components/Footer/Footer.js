@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { ORG_EIN } from "../../lib/orgInfo";
 
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
@@ -249,7 +250,7 @@ export default function Footer() {
             color: accessibilityStyles.mutedTextColor,
             fontSize: "1rem",
           }}>
-            Opportunity Hack Inc. EIN: 84-5113049
+            Opportunity Hack Inc. EIN: {ORG_EIN}
           </MutedText>
         </TextContainer>
         <TextContainer container item xs={12} md={5} lg={4} style={{ minHeight: '320px' }}>
