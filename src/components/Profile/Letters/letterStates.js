@@ -1,4 +1,5 @@
 // Pure helpers for the participation-letter UI on /profile.
+import { eventCertificates } from "../../admin/volunteer/certificateStatus";
 // Reason codes are twinned with backend api/letters/letter_facts.py
 // (REASON_CODES) — add a code there and here together.
 
@@ -76,4 +77,24 @@ export function verifyUrl(letterId, origin) {
   const host =
     origin || (typeof window !== "undefined" ? window.location.origin : "https://www.ohack.dev");
   return `${host}/letters/verify/${letterId}`;
+}
+
+export const CERTIFICATE_CDN = "https://cdn.ohack.dev/certificates";
+
+/** URL of the person's mentor/judge certificate for this row's event, or
+ * null. Certificates live in the user doc's `history.certificates` (strings
+ * for very old entries, `{filename, reasons, event_id, timestamp}` since);
+ * matching is the admin table's `eventCertificates` (event_id, else a
+ * window after the event start). Hackers and volunteers get none. */
+export function certificateUrlForRow(row, certificates, eventStartDate) {
+  if (!row || (row.role !== "mentor" && row.role !== "judge")) return null;
+  const matches = eventCertificates(certificates, {
+    type: `${row.role}s`,
+    eventId: row.event_id,
+    eventStartDate,
+  });
+  const latest = matches
+    .filter((c) => c && c.filename)
+    .sort((a, b) => String(b.timestamp || "").localeCompare(String(a.timestamp || "")))[0];
+  return latest ? `${CERTIFICATE_CDN}/${latest.filename}` : null;
 }

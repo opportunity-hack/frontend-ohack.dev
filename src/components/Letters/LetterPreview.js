@@ -337,52 +337,6 @@ function OptLetter({ f, s }) {
   );
 }
 
-function ServiceLetter({ f, s, role }) {
-  const isMentor = role === "mentor";
-  const roleWord = isMentor ? "mentor" : "judge";
-  return (
-    <>
-      <RecipientBlock f={f} />
-      <Typography sx={{ ...bodySx, fontWeight: 700 }}>
-        Re: Confirmation of Volunteer Service — {isMentor ? "Mentor" : "Judge"}
-      </Typography>
-      <Typography sx={bodySx}>
-        Dear <V value={f.recipientName} placeholder="[Volunteer Name]" />,
-      </Typography>
-      <Typography sx={bodySx}>
-        Thank you for volunteering with {ORG.name} (“{ORG.shortName}”), a {ORG.taxStatus}{" "}
-        registered with the IRS and the State of Arizona. This letter confirms your volunteer
-        service at the event below.
-      </Typography>
-      <Typography sx={bodySx}>
-        This confirms that{" "}
-        <V value={f.recipientName} placeholder="[Volunteer Name]" /> served as a volunteer{" "}
-        {roleWord} at <V value={f.eventName} placeholder="[Event name]" /> on{" "}
-        <V value={f.eventDates} placeholder="[Event dates]" />
-        {f.eventLocation ? (
-          <> at {f.eventLocation}</>
-        ) : null}
-        ,{" "}
-        {isMentor
-          ? "providing technical and career mentorship to participating teams."
-          : "evaluating team submissions against the event's judging criteria and giving feedback to participating teams."}
-        {f.roleNote ? <> {f.roleNote}</> : null}
-      </Typography>
-      <Typography sx={bodySx}>
-        <strong>Hours contributed:</strong>{" "}
-        <V value={f.hoursContributed} placeholder="[hours]" /> during the event.
-      </Typography>
-      <GuardrailBullets name={f.recipientName} />
-      <Typography sx={bodySx}>
-        We are grateful for this contribution and are glad to serve as a professional
-        reference consistent with our recognition guidelines ({ORG.heartsUrl}). Please reach
-        out with any questions.
-      </Typography>
-      <SignatureBlock s={s} />
-    </>
-  );
-}
-
 export default function LetterPreview({ letterType, fields = {}, signer = {}, id = "letter-print-root" }) {
   const inner = () => {
     switch (letterType) {
@@ -390,10 +344,6 @@ export default function LetterPreview({ letterType, fields = {}, signer = {}, id
         return <GeneralLetter f={fields} s={signer} />;
       case LETTER_TYPES.OPT:
         return <OptLetter f={fields} s={signer} />;
-      case LETTER_TYPES.MENTOR:
-        return <ServiceLetter f={fields} s={signer} role="mentor" />;
-      case LETTER_TYPES.JUDGE:
-        return <ServiceLetter f={fields} s={signer} role="judge" />;
       default:
         return (
           <Typography sx={{ ...bodySx, color: "#666" }}>

@@ -16,18 +16,19 @@ export const ORG = {
   address: "",
 };
 
+// Mentor and judge letters moved to /profile (self-serve, signed, verifiable;
+// backend api/letters). This generator only produces General Volunteer and
+// SE/OPT letters now.
 export const LETTER_TYPES = {
   GENERAL: "general",
   OPT: "opt",
-  MENTOR: "mentor",
-  JUDGE: "judge",
 };
+
+export const PROFILE_LETTERS_PATH = "/profile#volunteer-history";
 
 export const LETTER_LABELS = {
   [LETTER_TYPES.GENERAL]: "General Volunteer",
   [LETTER_TYPES.OPT]: "Software Engineering Volunteer (OPT)",
-  [LETTER_TYPES.MENTOR]: "Mentor",
-  [LETTER_TYPES.JUDGE]: "Judge",
 };
 
 export const STEM_BLOCK_MESSAGE =
@@ -104,8 +105,10 @@ const allAck = (ack) =>
 export function runChecklist(answers) {
   const { role, needsImmigration, optType, ack } = answers || {};
 
-  if (role === "mentor") return { letterType: LETTER_TYPES.MENTOR };
-  if (role === "judge") return { letterType: LETTER_TYPES.JUDGE };
+  // Mentor / judge: signed letters are self-serve on the profile now.
+  if (role === "mentor" || role === "judge") {
+    return { letterType: null, redirectTo: PROFILE_LETTERS_PATH };
+  }
   if (role !== "software") return { letterType: null };
 
   // Q2
@@ -162,14 +165,6 @@ export const ROLE_FIELDS = {
     { key: "supervisorTitle", label: "Supervisor title" },
     { key: "supervisorEmail", label: "Supervisor email" },
     { key: "supervisorPhone", label: "Supervisor phone" },
-  ],
-  [LETTER_TYPES.MENTOR]: [
-    { key: "hoursContributed", label: "Hours contributed (event total)" },
-    { key: "roleNote", label: "Brief role note (optional)", multiline: true },
-  ],
-  [LETTER_TYPES.JUDGE]: [
-    { key: "hoursContributed", label: "Hours contributed (event total)" },
-    { key: "roleNote", label: "Brief role note (optional)", multiline: true },
   ],
 };
 
