@@ -6,6 +6,7 @@ import { Box, Button, Typography } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import LinkIcon from "@mui/icons-material/Link";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 
 import lettersApi, { letterFilename, saveBlob } from "../../../lib/lettersApi";
 import { trackEvent } from "../../../lib/ga";
@@ -22,7 +23,7 @@ import {
  * reason), eligible ("Get your letter" opens LetterDialog), issued (download +
  * copy verification link) or revoked (short notice + contact link).
  */
-function LetterActions({ row, onRequest }) {
+function LetterActions({ row, onRequest, certificateUrl }) {
   const { accessToken } = useAuthInfo();
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -94,6 +95,18 @@ function LetterActions({ row, onRequest }) {
             </Button>
           </>
         )}
+        {certificateUrl && (
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<WorkspacePremiumIcon />}
+            href={certificateUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View certificate
+          </Button>
+        )}
       </Box>
       {state === LETTER_STATES.NOT_ELIGIBLE && (
         <Typography variant="body2" color="text.secondary">
@@ -128,6 +141,7 @@ LetterActions.propTypes = {
     status: PropTypes.string,
   }).isRequired,
   onRequest: PropTypes.func.isRequired,
+  certificateUrl: PropTypes.string,
 };
 
 export default LetterActions;

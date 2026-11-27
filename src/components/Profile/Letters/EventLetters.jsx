@@ -6,7 +6,7 @@ import LetterActions from "./LetterActions";
 
 /** Every letter row for one event (one per role), under a hairline rule —
  * rendered inside a Volunteer History hackathon card. */
-export function EventLetterList({ rows, onRequest }) {
+export function EventLetterList({ rows, onRequest, certificateFor }) {
   if (!rows || rows.length === 0) return null;
   return (
     <>
@@ -16,7 +16,12 @@ export function EventLetterList({ rows, onRequest }) {
           Participation letter
         </Typography>
         {rows.map((row) => (
-          <LetterActions key={`${row.event_id}-${row.role}`} row={row} onRequest={onRequest} />
+          <LetterActions
+            key={`${row.event_id}-${row.role}`}
+            row={row}
+            onRequest={onRequest}
+            certificateUrl={certificateFor ? certificateFor(row) : null}
+          />
         ))}
       </Box>
     </>
@@ -26,11 +31,12 @@ export function EventLetterList({ rows, onRequest }) {
 EventLetterList.propTypes = {
   rows: PropTypes.array,
   onRequest: PropTypes.func.isRequired,
+  certificateFor: PropTypes.func,
 };
 
 /** Letter rows for events that aren't in the attendance list (a judge who
  * scored but never checked in, an admin exception for an older event). */
-export function OtherEventLetters({ groups, onRequest }) {
+export function OtherEventLetters({ groups, onRequest, certificateFor }) {
   if (!groups || groups.length === 0) return null;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
@@ -43,7 +49,12 @@ export function OtherEventLetters({ groups, onRequest }) {
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {group.rows.map((row) => (
-              <LetterActions key={`${row.event_id}-${row.role}`} row={row} onRequest={onRequest} />
+              <LetterActions
+            key={`${row.event_id}-${row.role}`}
+            row={row}
+            onRequest={onRequest}
+            certificateUrl={certificateFor ? certificateFor(row) : null}
+          />
             ))}
           </Box>
         </Paper>
@@ -55,4 +66,5 @@ export function OtherEventLetters({ groups, onRequest }) {
 OtherEventLetters.propTypes = {
   groups: PropTypes.array,
   onRequest: PropTypes.func.isRequired,
+  certificateFor: PropTypes.func,
 };

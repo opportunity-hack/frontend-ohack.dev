@@ -71,3 +71,33 @@ describe("grouping", () => {
     );
   });
 });
+
+describe("certificateUrlForRow", () => {
+  // eslint-disable-next-line global-require
+  const { certificateUrlForRow } = require("../letterStates");
+  const certs = [
+    "legacy_string_only.png",
+    { filename: "mentor_old.png", reasons: ["mentor"], event_id: "fall26", timestamp: "2026-11-20T00:00:00Z" },
+    { filename: "mentor_new.png", reasons: ["mentor"], event_id: "fall26", timestamp: "2026-11-21T00:00:00Z" },
+    { filename: "judge_spring.png", reasons: ["judge"], event_id: "spring26", timestamp: "2026-03-20T00:00:00Z" },
+    { filename: "judge_legacy.png", reasons: ["judge"], timestamp: "2026-11-25T00:00:00Z" },
+  ];
+
+  it("picks the newest certificate for the row's role and event", () => {
+    expect(certificateUrlForRow({ role: "mentor", event_id: "fall26" }, certs, "2026-11-14")).toBe(
+      "https://cdn.ohack.dev/certificates/mentor_new.png",
+    );
+  });
+
+  it("falls back to the date window for entries without event_id", () => {
+    expect(certificateUrlForRow({ role: "judge", event_id: "fall26" }, certs, "2026-11-14")).toBe(
+      "https://cdn.ohack.dev/certificates/judge_legacy.png",
+    );
+  });
+
+  it("returns null for other roles, other events or no certificates", () => {
+    expect(certificateUrlForRow({ role: "hacker", event_id: "fall26" }, certs, "2026-11-14")).toBeNull();
+    expect(certificateUrlForRow({ role: "mentor", event_id: "winter27" }, certs, "2027-01-10")).toBeNull();
+    expect(certificateUrlForRow({ role: "judge", event_id: "fall26" }, [], "2026-11-14")).toBeNull();
+  });
+});

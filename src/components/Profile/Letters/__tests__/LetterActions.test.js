@@ -88,4 +88,18 @@ describe("LetterActions", () => {
     fireEvent.click(screen.getByRole("button", { name: /Download letter/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent("This letter was revoked.");
   });
+
+  it("shows the certificate link beside the letter action", () => {
+    render(
+      <LetterActions
+        row={{ ...base, eligible: false, reason: "no_scores" }}
+        onRequest={jest.fn()}
+        certificateUrl="https://cdn.ohack.dev/certificates/c.png"
+      />,
+    );
+    expect(screen.getByRole("link", { name: /View certificate/ })).toHaveAttribute(
+      "href",
+      "https://cdn.ohack.dev/certificates/c.png",
+    );
+  });
 });

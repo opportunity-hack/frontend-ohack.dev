@@ -22,7 +22,7 @@ import BadgesSection from "./Sections/BadgesSection";
 import HackathonsSection from "./Sections/HackathonsSection";
 import LetterDialog from "./Letters/LetterDialog";
 import { EventLetterList, OtherEventLetters } from "./Letters/EventLetters";
-import { rowsByEvent, rowsMissingFrom } from "./Letters/letterStates";
+import { certificateUrlForRow, rowsByEvent, rowsMissingFrom } from "./Letters/letterStates";
 import useMyLetters from "../../hooks/use-my-letters";
 import FeedbackSection from "./Sections/FeedbackSection";
 import HeartsRewardsTab from "./Sections/HeartsRewardsTab";
@@ -136,6 +136,11 @@ export default function Profile() {
     () => rowsMissingFrom(letterRows, hackathons),
     [letterRows, hackathons],
   );
+  const certificateFor = useMemo(() => {
+    const certs = profile?.history?.certificates || [];
+    const starts = Object.fromEntries((hackathons || []).map((h) => [h.event_id, h.start_date]));
+    return (row) => certificateUrlForRow(row, certs, starts[row.event_id]);
+  }, [profile, hackathons]);
 
   const [role, setRole] = React.useState("");
   const [expertise, setExpertise] = React.useState([]);
@@ -822,11 +827,11 @@ export default function Profile() {
                     hackathons={hackathons}
                     mode="private"
                     renderExtra={(h) => (
-                      <EventLetterList rows={lettersByEvent[h.event_id]} onRequest={setLetterRow} />
+                      <EventLetterList rows={lettersByEvent[h.event_id]} onRequest={setLetterRow} certificateFor={certificateFor} />
                     )}
                   />
                 )}
-                <OtherEventLetters groups={otherLetterGroups} onRequest={setLetterRow} />
+                <OtherEventLetters groups={otherLetterGroups} onRequest={setLetterRow} certificateFor={certificateFor} />
                 {letters.status === "error" && (
                   <p className="ohx-muted" role="alert" style={{ marginTop: 12, fontSize: '0.95rem' }}>
                     We couldn&apos;t load your participation letters.{' '}
