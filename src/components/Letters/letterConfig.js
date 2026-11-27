@@ -1,11 +1,13 @@
 // Pure config + logic for the volunteer letter generator.
 // No JSX here — consumed by LetterChecklist, LetterPreview, and the letters page.
 
+import { ORG_EIN, ORG_LEGAL_NAME, ORG_TAX_STATUS } from "../../lib/orgInfo";
+
 export const ORG = {
-  name: "Opportunity Hack, Inc.",
+  name: ORG_LEGAL_NAME,
   shortName: "Opportunity Hack",
-  taxStatus: "501(c)(3) nonprofit",
-  ein: "81-2917815",
+  taxStatus: ORG_TAX_STATUS,
+  ein: ORG_EIN,
   website: "ohack.dev",
   slack: "slack.ohack.dev",
   heartsUrl: "ohack.dev/about/hearts",

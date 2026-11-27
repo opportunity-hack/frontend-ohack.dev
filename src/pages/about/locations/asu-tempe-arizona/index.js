@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
+import { ORG_EIN, ORG_TAX_STATUS } from "../../../../lib/orgInfo";
 import { Snackbar, SnackbarContent } from "@mui/material";
 import {
   LocationOnRounded,
@@ -1002,9 +1003,9 @@ const EventLocationPage = () => {
                 lineHeight: 1.6,
               }}
             >
-              Opportunity Hack is a 501(c)(3) nonprofit, so volunteers can
+              Opportunity Hack is a {ORG_TAX_STATUS}, so volunteers can
               typically deduct travel expenses incurred while volunteering. Our
-              EIN is <strong style={{ color: "var(--ink)" }}>84-5113049</strong>
+              EIN is <strong style={{ color: "var(--ink)" }}>{ORG_EIN}</strong>
               .
             </p>
             <a
