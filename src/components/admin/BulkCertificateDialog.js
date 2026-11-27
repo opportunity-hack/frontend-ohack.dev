@@ -39,6 +39,10 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/system';
 
+// Judges and mentors download their signed participation letter on /profile
+// (backend api/letters). Absolute URL: this text is emailed.
+export const PARTICIPATION_LETTER_URL = "https://www.ohack.dev/profile#volunteer-history";
+
 const StyledDialog = styled(Dialog)(({ theme}) => ({
   '& .MuiDialog-paper': {
     minWidth: '700px',
@@ -156,6 +160,9 @@ You've been awarded a certificate for your contribution as a ${heartType === 'me
 
 Your certificate has been posted to the #heart-certificates Slack channel where you can view and download it:
 https://opportunity-hack.slack.com/archives/C09L60BQU85
+
+Get your participation letter: a signed letter on Opportunity Hack letterhead, with a link anyone can use to verify it, is ready on your profile once you qualify:
+${PARTICIPATION_LETTER_URL}
 
 Thank you for your dedication and support in making a difference!
 

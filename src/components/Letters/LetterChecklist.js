@@ -11,6 +11,7 @@ import {
   Alert,
   Paper,
 } from "@mui/material";
+import Link from "next/link";
 import {
   ROLE_OPTIONS,
   IMMIGRATION_OPTIONS,
@@ -67,6 +68,17 @@ export default function LetterChecklist({ answers, setAnswers, result }) {
           ))}
         </RadioGroup>
       </Question>
+
+      {/* Mentor / judge — signed letters are self-serve on the profile */}
+      {result.redirectTo && (
+        <Alert severity="info" sx={{ mb: 2.5 }} data-testid="letters-profile-redirect">
+          Mentor and judge letters are now on your profile. If you qualify, you can download
+          a signed letter with a verification link right away, with no review step.{" "}
+          <Link href={result.redirectTo} style={{ fontWeight: 700 }}>
+            Get your participation letter
+          </Link>
+        </Alert>
+      )}
 
       {/* Q2 — software branch only */}
       {role === "software" && (

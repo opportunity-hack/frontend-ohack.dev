@@ -44,7 +44,7 @@ function nonprofitLabel(nonprofit) {
   return nonprofit.name || nonprofit.title || nonprofit.id || "";
 }
 
-function HackathonCard({ hackathon, mode, profileUrl }) {
+function HackathonCard({ hackathon, mode, profileUrl, renderExtra }) {
   const roles = hackathon.roles || [];
   const dateLabel = formatRange(hackathon.start_date, hackathon.end_date);
   const npos = (hackathon.nonprofits || [])
@@ -166,6 +166,8 @@ function HackathonCard({ hackathon, mode, profileUrl }) {
             </Typography>
           </>
         )}
+
+        {mode === "private" && renderExtra ? renderExtra(hackathon) : null}
       </Box>
     </Paper>
   );
@@ -175,9 +177,10 @@ HackathonCard.propTypes = {
   hackathon: PropTypes.object.isRequired,
   mode: PropTypes.oneOf(["public", "private"]).isRequired,
   profileUrl: PropTypes.string,
+  renderExtra: PropTypes.func,
 };
 
-function HackathonsSection({ hackathons, mode = "public", profileUrl }) {
+function HackathonsSection({ hackathons, mode = "public", profileUrl, renderExtra }) {
   if (!hackathons || hackathons.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
@@ -196,6 +199,7 @@ function HackathonsSection({ hackathons, mode = "public", profileUrl }) {
           hackathon={h}
           mode={mode}
           profileUrl={profileUrl}
+          renderExtra={renderExtra}
         />
       ))}
       <Box
@@ -224,6 +228,8 @@ HackathonsSection.propTypes = {
   hackathons: PropTypes.array,
   mode: PropTypes.oneOf(["public", "private"]),
   profileUrl: PropTypes.string,
+  // Private mode only: extra content per card (participation letters).
+  renderExtra: PropTypes.func,
 };
 
 export default memo(HackathonsSection);
