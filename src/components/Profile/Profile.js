@@ -20,6 +20,10 @@ import useProfileApi from "../../hooks/use-profile-api.js";
 import usePrivacySettings from "../../hooks/use-privacy-settings.js";
 import BadgesSection from "./Sections/BadgesSection";
 import HackathonsSection from "./Sections/HackathonsSection";
+import LetterDialog from "./Letters/LetterDialog";
+import { EventLetterList, OtherEventLetters } from "./Letters/EventLetters";
+import { rowsByEvent, rowsMissingFrom } from "./Letters/letterStates";
+import useMyLetters from "../../hooks/use-my-letters";
 import FeedbackSection from "./Sections/FeedbackSection";
 import HeartsRewardsTab from "./Sections/HeartsRewardsTab";
 import HeartsStatusStrip from "./HeartsStatusStrip";
@@ -124,6 +128,14 @@ export default function Profile() {
   const router = useRouter();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [activeTab, setActiveTab] = useState(0);
+  const letters = useMyLetters({ enabled: Boolean(isLoggedIn) });
+  const [letterRow, setLetterRow] = useState(null);
+  const letterRows = useMemo(() => letters.data?.rows || [], [letters.data]);
+  const lettersByEvent = useMemo(() => rowsByEvent(letterRows), [letterRows]);
+  const otherLetterGroups = useMemo(
+    () => rowsMissingFrom(letterRows, hackathons),
+    [letterRows, hackathons],
+  );
 
   const [role, setRole] = React.useState("");
   const [expertise, setExpertise] = React.useState([]);
@@ -182,7 +194,7 @@ export default function Profile() {
   useEffect(() => {
     const hashTabMap = {
       '#basic': 0, '#impact': 1, '#github': 2,
-      '#swag': 3, '#volunteer': 4, '#giveaways': 5,
+      '#swag': 3, '#volunteer': 4, '#volunteer-history': 4, '#giveaways': 5,
       '#portfolio': 6,
       // Tab 1 was renamed Impact -> Hearts (Aug 2026). '#hearts' is the
       // canonical hash now; '#impact' stays as a legacy alias for old links.
@@ -805,7 +817,35 @@ export default function Profile() {
                 <p className="ohx-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: '0.95rem' }}>
                   We've tried our best to keep track of each time you've volunteered, mentored, or judged a hackathon. If anything is missing, please let us know on Slack!
                 </p>
-                {isLoading ? <Skeleton variant="rectangular" height={150} /> : <HackathonsSection hackathons={hackathons} mode="private" />}
+                {isLoading ? <Skeleton variant="rectangular" height={150} /> : (
+                  <HackathonsSection
+                    hackathons={hackathons}
+                    mode="private"
+                    renderExtra={(h) => (
+                      <EventLetterList rows={lettersByEvent[h.event_id]} onRequest={setLetterRow} />
+                    )}
+                  />
+                )}
+                <OtherEventLetters groups={otherLetterGroups} onRequest={setLetterRow} />
+                {letters.status === "error" && (
+                  <p className="ohx-muted" role="alert" style={{ marginTop: 12, fontSize: '0.95rem' }}>
+                    We couldn&apos;t load your participation letters.{' '}
+                    <button type="button" className="ohx-link" onClick={() => letters.reload()} style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}>
+                      Try again
+                    </button>
+                  </p>
+                )}
+                <LetterDialog
+                  open={Boolean(letterRow)}
+                  row={letterRow}
+                  nameDefault={letters.data?.name_default || ""}
+                  titleLine={letters.data?.title_line || ""}
+                  onClose={() => setLetterRow(null)}
+                  onIssued={() => {
+                    setLetterRow(null);
+                    letters.refresh();
+                  }}
+                />
               </Box>
 
               <hr className="ohx-rule" />
